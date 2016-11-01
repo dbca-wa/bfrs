@@ -1,0 +1,46 @@
+# Basics
+*.py[cod]
+*.pyc
+__pycache__
+
+# Pycharm
+.idea
+
+# Eclipse
+.project
+.pydevproject
+.settings
+
+# Vim
+*~
+*.swp
+*.swo
+
+# npm
+node_modules/
+
+# logs
+log/
+*.log
+
+# Environment settings
+.env
+
+# Static files dirs
+/static/
+/media/
+staticfiles/
+
+# everything with local in it
+*local.*
+*local/
+
+# Virtualenv dir
+/venv
+
+# Testing coverage
+.coverage
+
+# pgdump
+*.pgdump
+

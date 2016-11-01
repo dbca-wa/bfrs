@@ -1,0 +1,460 @@
+{% extends "admin/base.html" %}
+{% load static from staticfiles %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <style>
+    .filter-pad {
+        margin-top: 5px;
+        margin-bottom: -17px !important;
+        margin-left: 10px;
+    }
+    .adjust-legend{
+        margin-bottom:-40px;
+    }
+
+    .ui-datepicker {
+        width: 216px;
+        height: auto;
+        margin: 5px auto 0;
+        font: 9pt Arial, sans-serif;
+        -webkit-box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, .5);
+        -moz-box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, .5);
+        box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, .5);
+        background-color: #FFF;
+    }
+
+    .myCollapse {
+            display: none;
+    }
+    .myCollapse.in {
+            display: table-row;
+    }
+
+    #content {
+        float:left;
+        text-align:left;
+        width:90%;
+    }
+
+    .formset {
+        text-indent: -1em;
+        padding-left: 1em;
+    }
+
+    .nonRequiredField {
+        font-weight: normal !important;
+    }
+
+    .requiredField {
+        font-weight: strong !important;
+    }
+
+    hr{
+        padding: 0px;
+        margin: 0px;
+    }
+
+    th, td {
+        padding: 5px 15px;
+    }
+
+    table, tr, td {
+        border: none;
+    }
+
+    .navbar-fixed-bottom {
+    background-color: #F6F6F6;
+    background-image: none;
+    background-repeat: no-repeat;
+    }
+
+    .btn {
+    vertical-align: top;
+    }
+
+    body { padding-bottom: 70px; }
+
+  </style>
+
+  {% endblock %}
+
+  {% block extrastyle %}
+
+  <link rel="stylesheet" href="{% static "css/jquery-ui-1.11.4.min.css" %}">
+  <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+  {% comment %}
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+  {% endcomment %}
+
+  <script src="{% static 'js/jquery-1.9.1.min.js' %}"></script>
+  <script src="{% static 'js/jquery-ui-1.11.4.min.js' %}"></script>
+
+  <script src="{% static 'js/jquery.formset.js' %}"></script>
+  <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+
+  <!-- http://xdsoft.net/jqplugins/datetimepicker/ -->
+  <link rel="stylesheet" type="text/css" href="{% static 'css/jquery.datetimepicker.css' %}"/ >
+  <script src="{% static 'js/jquery.datetimepicker.full.min.js' %}"></script>
+
+  <script>
+    $(function(){
+        if ($('#id_fire_not_found').is(':checked')) {
+            $('#id_latlong').hide();
+            $('#id_mga').hide();
+            $('#id_fd_grid').hide();
+            $('#id_coord_type').prop('selectedIndex', 0);
+        } else {
+            var coord_type = $('#id_coord_type :selected').text();
+            if (coord_type.indexOf('---') > -1) {
+                $('#id_latlong').hide();
+                $('#id_mga').hide();
+                $('#id_fd_grid').hide();
+                $('#id_fire_not_found').prop('checked', true);
+                $('#id_coord_type').prop('selectedIndex', 0);
+            } else if (coord_type=='Lat/Long') {
+                $('#id_latlong').show();
+                $('#id_fd_grid').hide();
+                $('#id_fire_not_found').prop('checked', false);
+
+                // calc MGA
+                $('#id_mga').show();
+                $('#id_mga').find('input, textarea, button, select').prop('disabled',true);
+                $('#id_latlong').find('input, textarea, button, select').prop('disabled',false);
+
+            } else if (coord_type=='MGA') {
+                $('#id_mga').show();
+                $('#id_fd_grid').hide();
+                $('#id_fire_not_found').prop('checked', false);
+
+                // calc Lat/Long
+                $('#id_latlong').show();
+                $('#id_latlong').find('input, textarea, button, select').prop('disabled',true);
+                $('#id_mga').find('input, textarea, button, select').prop('disabled',false);
+
+            } else if (coord_type=='FD Grid') {
+                $('#id_fd_grid').show();
+                $('#id_latlong').hide();
+                $('#id_mga').hide();
+                $('#id_fire_not_found').prop('checked', false);
+            }
+        }
+
+    });
+
+  </script>
+
+  {% endblock %}
+
+
+{% block content %}
+
+{% comment %}
+{% if form.errors %}
+    <div class="alert alert-error">
+        <button type="button" class="close" data-dismiss="alert">×</button>
+        {% for field in form %} 
+            {% if field.errors %}
+            <font color="red"><li>{{ field.label }}: {{ field.errors|striptags }}</li></font>
+            {% endif %}
+        {% endfor %}
+    </div>
+{% endif %}
+{% endcomment %}
+
+{% if form.errors %}
+    <p>Form Errors</p>
+    <div class="alert alert-error">
+        <button type="button" class="close" data-dismiss="alert">×</button>
+        {% for field in form %} 
+            {% if field.errors %}
+            <font color="red"><li>{{ field.label }}: {{ field.errors|striptags }}</li></font>
+            {{ field.meta  }}
+            {% endif %}
+        {% endfor %}
+
+        {% if form.non_field_errors %}
+            {{ form.non_field_errors  }}
+        {% else %}
+            <p>**********</p>
+        {% endif %}
+
+    </div>
+{% endif %}
+
+{% if activity_formset.total_error_count > 0 %}
+    <p>Activity Errors: {{ activity_formset.total_error_count }}</p>
+    <div class="alert alert-error">
+        <button type="button" class="close" data-dismiss="alert">×</button>
+        {% for fs in activity_formset %} 
+            {% for field in fs %} 
+                {% if field.errors %}
+                <font color="red"><li>{{ field.label }}: {{ field.errors|striptags }}</li></font>
+                {% endif %}
+            {% endfor %}
+            {% if fs.non_field_errors %}
+                {{ fs.non_field_errors  }}
+            {% endif %}
+        {% endfor %}
+
+    </div>
+{% endif %}
+
+{% if area_burnt_formset.total_error_count > 0 %}
+    <p>Area Burnt Errors: {{ area_burnt_formset.total_error_count }}</p>
+    <div class="alert alert-error">
+        <button type="button" class="close" data-dismiss="alert">×</button>
+        {% for fs in area_burnt_formset %} 
+            {% for field in fs %} 
+                {% if field.errors %}
+                <font color="red"><li>{{ field.label }}: {{ field.errors|striptags }}</li></font>
+                {% endif %}
+            {% endfor %}
+            {% if fs.non_field_errors %}
+                {{ fs.non_field_errors  }}
+            {% endif %}
+        {% endfor %}
+    </div>
+{% endif %}
+
+{% if attending_org_formset.total_error_count > 0 %}
+    <p>Attending Organisation Errors: {{ attending_org_formset.total_error_count }}</p>
+    <div class="alert alert-error">
+        <button type="button" class="close" data-dismiss="alert">×</button>
+        {% for fs in attending_org_formset %} 
+            {% for field in fs %} 
+                {% if field.errors %}
+                <font color="red"><li>{{ field.label }}: {{ field.errors|striptags }}</li></font>
+                {% endif %}
+            {% endfor %}
+            {% if fs.non_field_errors %}
+                {{ fs.non_field_errors  }}
+            {% endif %}
+        {% endfor %}
+    </div>
+{% endif %}
+
+{% if fire_behaviour_formset.total_error_count > 0 %}
+    <p>Fire behaviour Errors: {{ fire_behaviour_formset.total_error_count }}</p>
+    <div class="alert alert-error">
+        <button type="button" class="close" data-dismiss="alert">×</button>
+        {% for fs in fire_behaviour_formset %} 
+            {% for field in fs %} 
+                {% if field.errors %}
+                <font color="red"><li>{{ field.label }}: {{ field.errors|striptags }}</li></font>
+                {% endif %}
+            {% endfor %}
+            {% if fs.non_field_errors %}
+                {{ fs.non_field_errors  }}
+            {% endif %}
+        {% endfor %}
+    </div>
+{% endif %}
+
+
+  <form action="" method="post">{% csrf_token %}
+
+<h2>{{form.instance.district}} - {{form.instance.season}} - {{form.instance.name}}</h2>
+
+  <ul id="report-tabs" class="nav nav-tabs">
+      <li id="overview-tab"  class="active">
+          <a data-toggle="tab" href="#overview">
+              <i class="icon-tag"></i>
+              Overview
+          </a>
+      </li>
+
+      <li id="origin-tab">
+          <a data-toggle="tab" href="#origin">
+              <i class="icon-tag"></i>
+              Point of Origin
+          </a>
+      </li>
+      <li id="initial-tab">
+          <a data-toggle="tab" href="#initial">
+              <i class="icon-tag"></i>
+              Detail (NA in Final)
+          </a>
+      </li>
+      <li id="effect-tab">
+          <a data-toggle="tab" href="#effect">
+              <i class="icon-tag"></i>
+              Effects/Agencies
+          </a>
+      </li>
+
+      <li id="area-burnt-tab">
+          <a data-toggle="tab" href="#area-burnt">
+              <i class="icon-tag"></i>
+              Areas Burnt/Forces
+          </a>
+      </li>
+
+      <li id="attending-org-tab">
+          <a data-toggle="tab" href="#attending_org">
+              <i class="icon-tag"></i>
+              Attendance/Behaviour
+          </a>
+      </li>
+
+      <li id="damages-tab">
+          <a data-toggle="tab" href="#damages">
+              <i class="icon-tag"></i>
+              Damages/Legal
+          </a>
+      </li>
+
+      <li id="comment-tab">
+          <a data-toggle="tab" href="#comment">
+              <i class="icon-tag"></i>
+              Comment
+          </a>
+      </li>
+
+  </ul>
+
+  <div class="tab-content">
+    <div id="overview" class="tab-pane fade in active">
+        {% include "bushfire/overview.html" %}
+    </div>
+
+    <div id="origin" class="tab-pane fade active">
+        {% include "bushfire/origin.html" %}
+    </div>
+
+    <div id="initial" class="tab-pane fade active">
+        {% include "bushfire/initial_comment.html" %}
+    </div>
+
+    <div id="effect" class="tab-pane fade active">
+        {% include "bushfire/effects.html" %}
+    </div>
+
+    <div id="area-burnt" class="tab-pane fade active">
+        {% include "bushfire/area-burnt.html" %}
+    </div>
+
+    <div id="attending_org" class="tab-pane fade active">
+        {% include "bushfire/attending_org.html" %}
+    </div>
+
+    <div id="damages" class="tab-pane fade active">
+        {% include "bushfire/damages.html" %}
+    </div>
+
+    <div id="comment" class="tab-pane fade active">
+        {% include "bushfire/comment.html" %}
+    </div>
+
+  </div>
+
+<div class="navbar navbar-fixed-bottom">
+  <div class="navbar-inner">
+    <div class="container">
+      <p class="pull-right">
+        <input type="submit" value="Save" class="btn btn-primary btn-success" name="_save" />
+        <a href="javascript: history.go(-1)" class="btn btn-danger">Cancel</a>
+      </p>
+    </div>
+  </div>
+</div>
+
+  </form>
+
+
+<script>
+
+//$('#id_latlong').find('input, textarea, button, select').attr('disabled','disabled');
+//$('#id_mga_zone').find('input, textarea, button, select').attr('disabled','disabled');
+//$('#id_fd_grid').find('input, textarea, button, select').attr('disabled','disabled');
+
+// $('[id^=""]').hide() // starts with 
+$('[id$="-date"]').datetimepicker({ format: "Y-m-d H:i" }); //ends with
+
+$('#id_fire_not_found').click(function() {
+    if ($(this).is(':checked')) {
+        $('#id_latlong').hide();
+        $('#id_mga').hide();
+        $('#id_fd_grid').hide();
+        $('#id_coord_type').prop('selectedIndex', 0);
+    } else {
+        var coord_type = $('#id_coord_type :selected').text();
+        //console.log('Co Ord Type' + coord_type);
+        if (coord_type.indexOf('---') > -1) {
+            $('#id_latlong').hide();
+            $('#id_mga').hide();
+            $('#id_fd_grid').hide();
+            $('#id_fire_not_found').prop('checked', true);
+            $('#id_coord_type').prop('selectedIndex', 0);
+        } else if (coord_type=='Lat/Long') {
+            $('#id_latlong').show();
+            $('#id_fd_grid').hide();
+            $('#id_fire_not_found').prop('checked', false);
+
+            // calc MGA
+            $('#id_mga').show();
+            $('#id_mga').prop("readonly", true);
+        } else if (coord_type=='MGA') {
+            $('#id_mga').show();
+            $('#id_latlong').hide();
+            $('#id_fd_grid').hide();
+            $('#id_fire_not_found').prop('checked', false);
+
+            // calc Lat/Long
+            $('#id_latlong').show();
+            $('#id_latlong').prop("readonly", true);
+        } else if (coord_type=='FD Grid') {
+            $('#id_fd_grid').show();
+            $('#id_latlong').hide();
+            $('#id_mga').hide();
+            $('#id_fire_not_found').prop('checked', false);
+        }
+    }
+});
+
+$('#id_coord_type').on('change', function() {
+    var coord_type = $('#id_coord_type :selected').text();
+    //console.log(' *** Co Ord Type' + coord_type);
+    if (coord_type.indexOf('---') > -1) {
+        $('#id_latlong').hide();
+        $('#id_mga').hide();
+        $('#id_fd_grid').hide();
+        $('#id_fire_not_found').prop('checked', true);
+        $('#id_coord_type').prop('selectedIndex', 0);
+    } else if (coord_type=='Lat/Long') {
+        $('#id_latlong').show();
+        $('#id_mga').hide();
+        $('#id_fd_grid').hide();
+        $('#id_fire_not_found').prop('checked', false);
+
+        // calc MGA
+        $('#id_mga').show();
+        $('#id_mga').find('input, textarea, button, select').prop('disabled',true);
+        $('#id_latlong').find('input, textarea, button, select').prop('disabled',false);
+
+        //$('#id_mga_zone').val(111);
+        //convert_origin();
+    } else if (coord_type=='MGA') {
+        $('#id_mga').show();
+        $('#id_latlong').hide();
+        $('#id_fd_grid').hide();
+        $('#id_fire_not_found').prop('checked', false);
+
+        // calc Lat/Long
+        $('#id_latlong').show();
+        $('#id_latlong').find('input, textarea, button, select').prop('disabled',true);
+        $('#id_mga').find('input, textarea, button, select').prop('disabled',false);
+
+        //$('#id_lat_decimal').val(222);
+        //convert_origin();
+    } else if (coord_type=='FD Grid') {
+        $('#id_fd_grid').show();
+        $('#id_latlong').hide();
+        $('#id_mga').hide();
+        $('#id_fire_not_found').prop('checked', false);
+    }
+});
+
+</script>
+<script src="{% static 'smart-selects/admin/js/chainedfk.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,75 @@
+<h3>Organisations Attending</h3>
+<div id="id_attending_org" class="row formset attending-org-formset">
+    <table border="0" cellpadding="0" cellspacing="0">
+        <tbody>
+            <th>Name</th>
+            <th>Other</th>
+            <th></th>
+            {% for form in attending_org_formset %}
+            <tr>
+               <td>{{ form.name }}</td>
+               <td>{{ form.other }}</td>
+
+               <td>
+                    {% if form.instance.pk %}{{ form.DELETE }}{% endif %}
+                    {{ form.id }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {{ attending_org_formset.management_form }}
+</div>
+
+<hr>
+<h3>Fire Behaviour</h3>
+<div id="id_fire_behaviour" class="row formset fire-behaviour-formset">
+    <table border="0" cellpadding="0" cellspacing="0">
+        <tbody>
+            <th>Name/Description</th>
+            <th>Fuel Type</th>
+            <th>Fuel Weight</th>
+            <th>FDI *</th>
+            <th>ROS</th>
+            <th></th>
+            {% for form in fire_behaviour_formset %}
+            <tr>
+               <td>{{ form.name }}</td>
+               <td>{{ form.fuel_type }}</td>
+               <td>{{ form.fuel_weight }}</td>
+               <td>{{ form.fdi }}</td>
+               <td>{{ form.ros }}</td>
+
+               <td>
+                    {% if form.instance.pk %}{{ form.DELETE }}{% endif %}
+                    {{ form.id }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {{ fire_behaviour_formset.management_form }}
+</div>
+
+
+<script>
+    $('.attending-org-formset tbody tr').formset({
+        prefix: '{{ attending_org_formset.prefix }}',
+        formCssClass: 'attending_org_fs',
+        addText: '<i class="icon-plus"></i> add another attending organisation',
+        deleteText: '<i class="icon-remove"></i>',
+        deleteCssClass: 'delete-row' + '-' + '{{ attending_org_formset.prefix  }}',
+    });
+
+    $('.fire-behaviour-formset tbody tr').formset({
+        prefix: '{{ fire_behaviour_formset.prefix }}',
+        formCssClass: 'fire_behaviour_fs',
+        addText: '<i class="icon-plus"></i> add another fire behaviour',
+        deleteText: '<i class="icon-remove"></i>',
+        deleteCssClass: 'delete-row' + '-' + '{{ fire_behaviour_formset.prefix  }}',
+    });
+
+</script>
+
+
+

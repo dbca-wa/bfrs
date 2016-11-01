@@ -1,0 +1,167 @@
+{% extends "admin/base.html" %}
+{% load static from staticfiles %}
+{% load crispy_forms_tags %}
+{% crispy form %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <style>
+  .filter-pad {
+    margin-top: 5px;
+    margin-bottom: -17px !important;
+    margin-left: 10px;
+  }
+  .adjust-legend{
+    margin-bottom:-40px;
+  }
+
+  .ui-datepicker {
+      width: 216px;
+      height: auto;
+      margin: 5px auto 0;
+      font: 9pt Arial, sans-serif;
+      -webkit-box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, .5);
+      -moz-box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, .5);
+      box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, .5);
+      background-color: #FFF;
+  }
+
+  .myCollapse {
+        display: none;
+  }
+  .myCollapse.in {
+        display: table-row;
+  }
+
+  #content {
+      float:left;
+      text-align:left;
+      width:90%;
+  }
+
+  </style>
+  {% endblock %}
+
+  {% block extrastyle %}
+
+  <link rel="stylesheet" href="{% static "css/jquery-ui-1.11.4.min.css" %}">
+  <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>i
+  <script src="{% static 'js/jquery.formset.js' %}"></script>
+  <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+
+  <script>
+    $(function(){
+        if ($('#id_fire_not_found').is(':checked')) {
+            $('#id_latlong').hide();
+            $('#id_mga_zone').hide();
+            $('#id_fd_grid').hide();
+        } else {
+            if (coord_type.indexOf('---') > -1) {
+                $('#id_latlong').hide();
+                $('#id_mga_zone').hide();
+                $('#id_fd_grid').hide();
+            } else if (coord_type=='Lat/Long') {
+                $('#id_latlong').show();
+                $('#id_mga_zone').hide();
+                $('#id_fd_grid').hide();
+            } else if (coord_type=='MGA') {
+                $('#id_mga_zone').show();
+                $('#id_latlong').hide();
+                $('#id_fd_grid').hide();
+            } else if (coord_type=='FD Grid') {
+                $('#id_fd_grid').show();
+                $('#id_latlong').hide();
+                $('#id_mga_zone').hide();
+            }
+        }
+
+
+    });
+  </script>
+
+  {% endblock %}
+
+
+{% block content %}
+
+
+  <h1>Bushfire Detail</h1>
+  <form action="" method="post">{% csrf_token %}
+  {% crispy form %}
+  {% crispy activity_formset %}
+  <input type="submit" value="Save" />
+  </form>
+
+<script>
+
+/*
+    $('.activity-formset').formset({
+        addText: '<i class="icon-plus"></i> add another activity',
+        deleteText: '<i class="icon-remove"></i>'
+    })
+*/
+
+    $('.activity-formset tbody tr').formset({
+        prefix: '{{ activity_formset.prefix }}',
+        addText: '<i class="icon-plus"></i> add another activity',
+        deleteText: '<i class="icon-remove"></i>'
+    });
+
+//$('#id_latlong').find('input, textarea, button, select').attr('disabled','disabled');
+//$('#id_mga_zone').find('input, textarea, button, select').attr('disabled','disabled');
+//$('#id_fd_grid').find('input, textarea, button, select').attr('disabled','disabled');
+
+$('#id_fire_not_found').click(function() {
+    if ($(this).is(':checked')) {
+        $('#id_latlong').hide();
+        $('#id_mga_zone').hide();
+        $('#id_fd_grid').hide();
+    } else {
+        var coord_type = $('#id_coord_type :selected').text();
+        console.log('Co Ord Type' + coord_type);
+        if (coord_type.indexOf('---') > -1) {
+            $('#id_latlong').hide();
+            $('#id_mga_zone').hide();
+            $('#id_fd_grid').hide();
+        } else if (coord_type=='Lat/Long') {
+            $('#id_latlong').show();
+            $('#id_mga_zone').hide();
+            $('#id_fd_grid').hide();
+        } else if (coord_type=='MGA') {
+            $('#id_mga_zone').show();
+            $('#id_latlong').hide();
+            $('#id_fd_grid').hide();
+        } else if (coord_type=='FD Grid') {
+            $('#id_fd_grid').show();
+            $('#id_latlong').hide();
+            $('#id_mga_zone').hide();
+        }
+    }
+});
+
+$('#id_coord_type').on('change', function() {
+    var coord_type = $('#id_coord_type :selected').text();
+    console.log('Co Ord Type' + coord_type);
+    if (coord_type.indexOf('---') > -1) {
+        $('#id_latlong').hide();
+        $('#id_mga_zone').hide();
+        $('#id_fd_grid').hide();
+    } else if (coord_type=='Lat/Long') {
+        $('#id_latlong').show();
+        $('#id_mga_zone').hide();
+        $('#id_fd_grid').hide();
+    } else if (coord_type=='MGA') {
+        $('#id_mga_zone').show();
+        $('#id_latlong').hide();
+        $('#id_fd_grid').hide();
+    } else if (coord_type=='FD Grid') {
+        $('#id_fd_grid').show();
+        $('#id_latlong').hide();
+        $('#id_mga_zone').hide();
+    }
+});
+
+
+</script>
+{% endblock %}

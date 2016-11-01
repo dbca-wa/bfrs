@@ -1,0 +1,40 @@
+{% extends "admin/base.html" %}
+{% load static from staticfiles %}
+
+{% comment %}
+{% block extra_page_content %}
+{% endcomment %}
+{% block content %}
+
+<h1>Bushfire</h1>
+<a class="btn btn-small btn-info" style="float: right;" href="{% url 'bushfire:bushfire_create' %}"><button style="color: white; background-color: blue;"><i class="icon-plus icon-white"></i> Add Bushfire</button></a>
+
+{% if object_list %}
+<table id="table" class="tablesorter table table-striped table-bordered table-hover table-condensed">
+  <thead>
+    <td><input type="checkbox" name ="check_all" onClick=toggle(this) /></td>
+    <th>Bushfire ID</th>
+    <th>Initial</th>
+    <th>Final</th>
+
+  </thead>
+  <tbody>
+    {% for bushfire in object_list %}
+      <tr>
+        <td><input type="checkbox" name="chkbox" value={{ bushfire.id }}  /></td>
+        <td>{{ bushfire.id }}</td>
+        <td><a href="{% url 'bushfire:bushfire_initial' bushfire.id %}">{{ bushfire.name }}</td>
+        <td><a href="{% url 'bushfire:bushfire_final' bushfire.id %}">{{ bushfire.name }}</td>
+        {% comment %}
+        <td><a href="{% url 'bushfire:bushfire' bushfire.id %}">{{ bushfire.name }}</td>
+        {% endcomment %}
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% else %}
+    <p>No Bushfires are available.</p>
+{% endif %}
+
+{% endblock %}

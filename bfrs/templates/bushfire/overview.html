@@ -1,0 +1,172 @@
+<h1>Bushfire Detail</h1>
+<div class="row">
+    <div class="col-sm-2" > 
+        <div id="div_id_region" class="form-group"> 
+            <label for="id_region" class="control-label requiredField">Region*</label>
+            <div class="controls ">{{form.region}}</div>
+        </div>
+    </div>
+
+    <div class="col-sm-2" > 
+        <div id="div_id_district" class="form-group"> 
+            <label for="id_district" class="control-label requiredField">District*</label>
+            <div class="controls ">{{form.district}}</div>
+        </div>
+    </div>
+
+    <div class="col-sm-2" > 
+        <div id="div_id_incident_no" class="form-group"> 
+            <label for="id_incident_no" class="control-label requiredField">Fire Incident No.*</label>
+            <div class="controls ">{{form.incident_no}}</div>
+        </div>
+    </div>
+
+    <div class="col-sm-2" > 
+        <div id="div_id_season" class="form-group"> 
+            <label for="id_season" class="control-label  requiredField">Season*</label>
+            <div class="controls ">{{form.season}}</div>
+        </div>
+    </div>
+
+    <div class="col-sm-2" > 
+        <div id="div_id_job_code" class="form-group"> 
+            <label for="id_job_code" class="control-label requiredField">Job Code*</label>
+            <div class="controls ">{{form.job_code}}</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-sm-2" > 
+        <div id="div_id_name" class="form-group"> 
+            <label for="id_name" class="control-label  requiredField">Name*</label>
+            <div class="controls ">{{form.name}}</div>
+        </div>
+    </div>
+
+    <div class="col-sm-2" > 
+        <div id="div_id_dfes_incident_no" class="form-group"> 
+            <label for="id_dfes_incident_no" class="control-label  nonRequiredField">DFES Incident No.</label>
+            <div class="controls ">{{form.dfes_incident_no}}</div>
+        </div>
+    </div>
+
+    {% comment %}
+    <div class="col-sm-2" > 
+        <div id="div_potential_fire_level" class="form-group"> 
+            <label for="id_potential_fire_level" class="control-label  requiredField">Potential Fire Level*</label>
+            <div class="controls ">{{form.potential_fire_level}}</div>
+        </div>
+    </div>
+    {% endcomment %}
+
+    <div class="col-sm-2" > 
+        <div id="div_id_authorised_by" class="form-group"> 
+            <label for="id_authorised_by" class="control-label nonRequiredField">Authorised By</label>
+            <div class="controls ">{{form.authorised_by}}</div>
+        </div>
+    </div>
+
+    <div class="col-sm-2" > 
+        <div id="div_id_authorised_date" class="form-group"> 
+            <label for="id_authorised_date" class="control-label nonRequiredField">Authorised Date</label>
+            <div class="controls ">{{form.authorised_date}}</div>
+        </div>
+    </div>
+</div>
+
+<hr>
+<div class="row">
+    <div class="col-sm-4" > 
+        <div id="div_id_source" class="form-group"> 
+            <label for="id_source" class="control-label nonRequiredField">Reported By</label>
+            <div class="controls ">{{form.source}}</div>
+        </div>
+    </div>
+
+    <div class="col-sm-4" > 
+        <div id="div_id_cause" class="form-group"> 
+            <label for="id_cause" class="control-label requiredField">Cause*</label>
+            <div class="controls ">{{form.cause}}</div>
+        </div>
+    </div>
+
+    <div class="col-sm-4" > 
+        <div id="div_id_cause_other" class="form-group"> 
+            <label for="id_cause_other" class="control-label requiredField">Other Cause*</label>
+            <div class="controls ">{{form.other_cause}}</div>
+        </div>
+    </div>
+
+</div>
+
+<div class="row">
+    <div class="col-sm-4" > 
+        <div id="div_id_prescription" class="form-group"> 
+            <label for="id_prescription" class="control-label nonRequiredField">Burn ID (if cause is Escape)</label>
+            <div class="controls ">{{form.prescription}}</div>
+        </div>
+    </div>
+
+    <div class="col-sm-2" > 
+        <div id="div_id_offence_no" class="form-group"> 
+            <label for="id_offence_no" class="control-label nonRequiredField">Offence No.</label>
+            <div class="controls ">{{form.offence_no}}</div>
+        </div>
+    </div>
+
+    <div class="col-sm-2" > 
+        <div id="div_id_arson_squad_notified" class="form-group"> 
+            <label for="id_arson_squad_notified" class="control-label nonRequiredField">Arson Squad Notified</label>
+            <div class="controls ">{{form.arson_squad_notified}}</div>
+        </div>
+    </div>
+
+</div>
+
+<hr>
+<div id="id_activities" class="row formset activity-formset">
+    <table border="0" cellpadding="0" cellspacing="0">
+        <tbody>
+            <th>Activity</th>
+            <th>Date</th>
+            <th></th>
+            <th></th>
+            {% for fs in activity_formset %}
+            <tr>
+               <td>{{ fs.activity }}</td>
+               <td>{{ fs.date }}</td>
+               <td>
+                    {% if fs.instance.pk %}{{ fs.DELETE }}{% endif %}
+                    {{ fs.id }}
+
+                    {% for field in fs %} 
+                        {% if field.errors %}
+                            <font color="red"><li>{{ field.label }}: {{ field.errors|striptags }}</li></font>
+                        {% endif %}
+                    {% endfor %}
+
+               </td>
+
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {{ activity_formset.management_form }}
+</div>
+
+<hr>
+
+<script>
+    $('.activity-formset tbody tr').formset({
+        prefix: '{{ activity_formset.prefix }}',
+        formCssClass: 'activity_fs',
+        addText: '<i class="icon-plus"></i> add another activity',
+        deleteText: '<i class="icon-remove"></i>',
+        deleteCssClass: 'delete-row' + '-' + '{{ activity_formset.prefix  }}',
+    });
+
+</script>
+
+
+

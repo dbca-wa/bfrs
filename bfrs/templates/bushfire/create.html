@@ -1,0 +1,590 @@
+{% extends "admin/base.html" %}
+{% load static from staticfiles %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <style>
+    .filter-pad {
+        margin-top: 5px;
+        margin-bottom: -17px !important;
+        margin-left: 10px;
+    }
+    .adjust-legend{
+        margin-bottom:-40px;
+    }
+
+    .ui-datepicker {
+        width: 216px;
+        height: auto;
+        margin: 5px auto 0;
+        font: 9pt Arial, sans-serif;
+        -webkit-box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, .5);
+        -moz-box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, .5);
+        box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, .5);
+        background-color: #FFF;
+    }
+
+    .myCollapse {
+            display: none;
+    }
+    .myCollapse.in {
+            display: table-row;
+    }
+
+    #content {
+        float:left;
+        text-align:left;
+        width:90%;
+    }
+
+    .formset {
+        text-indent: -1em;
+        padding-left: 1em;
+    }
+
+    .nonRequiredField {
+        font-weight: normal !important;
+    }
+
+    .requiredField {
+        font-weight: strong !important;
+    }
+
+    hr{
+        padding: 0px;
+        margin: 0px;
+    }
+
+    th, td {
+        padding: 5px 15px;
+    }
+
+    table, tr, td {
+        border: none;
+    }
+
+    .navbar-fixed-bottom {
+    background-color: #F6F6F6;
+    background-image: none;
+    background-repeat: no-repeat;
+    }
+
+    .btn {
+    vertical-align: top;
+    }
+
+    body { padding-bottom: 70px; }
+
+  </style>
+  {% endblock %}
+
+  {% block extrastyle %}
+  <link rel="stylesheet" href="{% static "css/jquery-ui-1.11.4.min.css" %}">
+  <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+
+
+
+  {% comment %}
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+  {% endcomment %}
+
+  <script src="{% static 'js/jquery-1.9.1.min.js' %}"></script>
+  <script src="{% static 'js/jquery-ui-1.11.4.min.js' %}"></script>
+
+  <script src="{% static 'js/jquery.formset.js' %}"></script>
+  <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+
+  <!-- http://xdsoft.net/jqplugins/datetimepicker/ -->
+  <link rel="stylesheet" type="text/css" href="{% static 'css/jquery.datetimepicker.css' %}"/ >
+  <script src="{% static 'js/jquery.datetimepicker.full.min.js' %}"></script>
+
+  <script>
+    $(function(){
+        if ($('#id_fire_not_found').is(':checked')) {
+            $('#id_latlong').hide();
+            $('#id_mga').hide();
+            $('#id_fd_grid').hide();
+            $('#id_coord_type').prop('selectedIndex', 0);
+        } else {
+            var coord_type = $('#id_coord_type :selected').text();
+            if (coord_type.indexOf('---') > -1) {
+                $('#id_latlong').hide();
+                $('#id_mga').hide();
+                $('#id_fd_grid').hide();
+                $('#id_fire_not_found').prop('checked', true);
+                $('#id_coord_type').prop('selectedIndex', 0);
+            } else if (coord_type=='Lat/Long') {
+                $('#id_latlong').show();
+                $('#id_fd_grid').hide();
+                $('#id_fire_not_found').prop('checked', false);
+
+                // calc MGA
+                $('#id_mga').show();
+                $('#id_mga').find('input, textarea, button, select').prop('disabled',true);
+                $('#id_latlong').find('input, textarea, button, select').prop('disabled',false);
+
+            } else if (coord_type=='MGA') {
+                $('#id_mga').show();
+                $('#id_fd_grid').hide();
+                $('#id_fire_not_found').prop('checked', false);
+
+                // calc Lat/Long
+                $('#id_latlong').show();
+                $('#id_latlong').find('input, textarea, button, select').prop('disabled',true);
+                $('#id_mga').find('input, textarea, button, select').prop('disabled',false);
+
+            } else if (coord_type=='FD Grid') {
+                $('#id_fd_grid').show();
+                $('#id_latlong').hide();
+                $('#id_mga').hide();
+                $('#id_fire_not_found').prop('checked', false);
+            }
+        }
+
+    });
+  </script>
+
+  {% endblock %}
+
+
+{% block content %}
+
+{% if form.errors %}
+    <p>Form Errors</p>
+    <div class="alert alert-error">
+        <button type="button" class="close" data-dismiss="alert">×</button>
+        {% for field in form %} 
+            {% if field.errors %}
+            <font color="red"><li>{{ field.label }}: {{ field.errors|striptags }}</li></font>
+            {{ field.meta  }}
+            {% endif %}
+        {% endfor %}
+
+        {% if form.non_field_errors %}
+            {{ form.non_field_errors  }}
+        {% else %}
+            <p>**********</p>
+        {% endif %}
+
+    </div>
+{% endif %}
+
+{% if activity_formset.total_error_count > 0 %}
+    <p>Activity Errors: {{ activity_formset.total_error_count }}</p>
+    <div class="alert alert-error">
+        <button type="button" class="close" data-dismiss="alert">×</button>
+        {% for fs in activity_formset %} 
+            {% for field in fs %} 
+                {% if field.errors %}
+                <font color="red"><li>{{ field.label }}: {{ field.errors|striptags }}</li></font>
+                {% endif %}
+            {% endfor %}
+            {% if fs.non_field_errors %}
+                {{ fs.non_field_errors  }}
+            {% endif %}
+        {% endfor %}
+
+    </div>
+{% endif %}
+
+{% if area_burnt_formset.total_error_count > 0 %}
+    <p>Area Burnt Errors: {{ area_burnt_formset.total_error_count }}</p>
+    <div class="alert alert-error">
+        <button type="button" class="close" data-dismiss="alert">×</button>
+        {% for fs in area_burnt_formset %} 
+            {% for field in fs %} 
+                {% if field.errors %}
+                <font color="red"><li>{{ field.label }}: {{ field.errors|striptags }}</li></font>
+                {% endif %}
+            {% endfor %}
+            {% if fs.non_field_errors %}
+                {{ fs.non_field_errors  }}
+            {% endif %}
+        {% endfor %}
+    </div>
+{% endif %}
+
+{% if attending_org_formset.total_error_count > 0 %}
+    <p>Attending Organisation Errors: {{ attending_org_formset.total_error_count }}</p>
+    <div class="alert alert-error">
+        <button type="button" class="close" data-dismiss="alert">×</button>
+        {% for fs in attending_org_formset %} 
+            {% for field in fs %} 
+                {% if field.errors %}
+                <font color="red"><li>{{ field.label }}: {{ field.errors|striptags }}</li></font>
+                {% endif %}
+            {% endfor %}
+            {% if fs.non_field_errors %}
+                {{ fs.non_field_errors  }}
+            {% endif %}
+        {% endfor %}
+    </div>
+{% endif %}
+
+
+
+
+<h1>Bushfire Detail</h1>
+<form action="" method="post">{% csrf_token %}
+
+<div class="row">
+    <div class="col-sm-2" > 
+        <div id="div_id_region" class="form-group"> 
+            <label for="id_region" class="control-label requiredField">Region*</label>
+            <div class="controls ">{{form.region}}</div>
+        </div>
+    </div>
+
+    <div class="col-sm-2" > 
+        <div id="div_id_district" class="form-group"> 
+            <label for="id_district" class="control-label requiredField">District*</label>
+            <div class="controls ">{{form.district}}</div>
+        </div>
+    </div>
+
+    <div class="col-sm-2" > 
+        <div id="div_id_incident_no" class="form-group"> 
+            <label for="id_incident_no" class="control-label requiredField">Fire Incident No.*</label>
+            <div class="controls ">{{form.incident_no}}</div>
+        </div>
+    </div>
+
+    <div class="col-sm-2" > 
+        <div id="div_id_season" class="form-group"> 
+            <label for="id_season" class="control-label  requiredField">Season*</label>
+            <div class="controls ">{{form.season}}</div>
+        </div>
+    </div>
+
+    <div class="col-sm-2" > 
+        <div id="div_id_job_code" class="form-group"> 
+            <label for="id_job_code" class="control-label nonRequiredField">Job Code</label>
+            <div class="controls ">{{form.job_code}}</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-sm-2" > 
+        <div id="div_id_name" class="form-group"> 
+            <label for="id_name" class="control-label  requiredField">Name*</label>
+            <div class="controls ">{{form.name}}</div>
+        </div>
+    </div>
+
+    <div class="col-sm-2" > 
+        <div id="div_potential_fire_level" class="form-group"> 
+            <label for="id_potential_fire_level" class="control-label  requiredField">Potential Fire Level*</label>
+            <div class="controls ">{{form.potential_fire_level}}</div>
+        </div>
+    </div>
+
+    <div class="col-sm-2" > 
+        <div id="div_id_init_authorised_by" class="form-group"> 
+            <label for="id_init_authorised_by" class="control-label nonRequiredField">Authorised By</label>
+            <div class="controls ">{{form.init_authorised_by}}</div>
+        </div>
+    </div>
+
+    <div class="col-sm-2" > 
+        <div id="div_id_init_authorised_date" class="form-group"> 
+            <label for="id_init_authorised_date" class="control-label nonRequiredField">Authorised Date</label>
+            <div class="controls ">{{form.init_authorised_date}}</div>
+        </div>
+    </div>
+</div>
+
+{%comment%}
+<div class="row formset activity-formset2">
+<tbody>
+{% for fs in activity_formset.forms %}
+<tr>
+    <div class="col-sm-2" > 
+        <div id="div_id_formid" class="form-group"> 
+            <div class="controls ">{% if fs.instance.pk %}{{ fs.DELETE }}{% endif %}</div>
+            <div class="controls ">{{ fs.id }}</div>
+        </div>
+    </div>
+    <div class="col-sm-3" > 
+        <div id="div_id_activity" class="form-group"> 
+            <div class="controls ">{{fs.activity}}</div>
+        </div>
+    </div>
+    <div class="col-sm-2" > 
+        <div id="div_id_date" class="form-group"> 
+            <div class="controls ">{{fs.date}}</div>
+        </div>
+    </div>
+</tr>
+{% endfor %}
+</tbody>
+</div>
+{{ activity_formset.management_form }}
+{%endcomment%}
+
+
+<hr>
+<h3>Activities</h3>
+<div id="id_activities" class="row formset activity-formset">
+    <table border="0" cellpadding="0" cellspacing="0">
+        <tbody>
+            <th>Activity</th>
+            <th>Date</th>
+            <th></th>
+            <th></th>
+            {% for fs in activity_formset %}
+            <tr>
+               <td>{{ fs.activity }}</td>
+               <td>{{ fs.date }}</td>
+               <td>
+                    {% if fs.instance.pk %}{{ fs.DELETE }}{% endif %}
+                    {{ fs.id }}
+
+                    {% for field in fs %} 
+                        {% if field.errors %}
+                            <font color="red"><li>{{ field.label }}: {{ field.errors|striptags }}</li></font>
+                        {% endif %}
+                    {% endfor %}
+
+               </td>
+
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {{ activity_formset.management_form }}
+</div>
+<hr>
+
+
+  <ul id="report-tabs" class="nav nav-tabs">
+      <li id="origin-tab" class="active">
+          <a data-toggle="tab" href="#origin"><strong>
+              <i class="icon-tag"></i>
+              Point of Origin
+          </strong></a>
+      </li>
+      <li id="detail-tab">
+          <a data-toggle="tab" href="#detail"><strong>
+              <i class="icon-tag"></i>
+              Details
+          </strong></a>
+      </li>
+      <li id="comments-tab">
+          <a data-toggle="tab" href="#comments"><strong>
+              <i class="icon-tag"></i>
+              Comments
+          </strong></a>
+      </li>
+
+  </ul>
+
+  <div class="tab-content">
+    <div id="origin" class="tab-pane fade in active">
+        {% include "bushfire/origin.html" %}
+    </div>
+
+    <div id="detail" class="tab-pane fade active">
+        {% include "bushfire/initial_detail.html" %}
+    </div>
+
+    <div id="comments" class="tab-pane fade active">
+        {% include "bushfire/initial_comment.html" %}
+    </div>
+  </div>
+
+
+
+
+<div class="navbar navbar-fixed-bottom">
+  <div class="navbar-inner">
+    <div class="container">
+      <p class="pull-right">
+        <input type="submit" value="Save" class="btn btn-primary btn-success" name="_save" />
+        <a href="javascript: history.go(-1)" class="btn btn-danger">Cancel</a>
+      </p>
+    </div>
+  </div>
+</div>
+
+</form>
+
+
+<script>
+
+    $(function(){
+        /**
+        Highlight tabs RED if error field is located in that tab
+        */
+        var origin = ['mga_zone', 'mga_easting', 'mga_northing', 'lat_decimal', 'lat_degrees', 'lat_minutes', 'lon_decimal', 'lon_degrees', 'lon_minutes', 'fd_letter', 'fd_number', 'fd_tenths'];
+        var detail = ['first_attack', 'other_agency', 'cause', 'known_possible', 'other_cause'];
+        var comments = ['field_officer'];
+        var tab_origin_error = false;
+        var tab_detail_error = false;
+        var tab_comments_error = false;
+
+        {% for field in form %} 
+            {% if field.errors %}
+                if (origin.indexOf("{{ field.name }}") > -1) {
+                    tab_origin_error = true;
+                }
+
+                if (detail.indexOf("{{ field.name }}") > -1) {
+                    tab_detail_error = true;
+                    console.log("***** " + "{{ field.name }} : {{ field.label }}: {{ field.errors|striptags }}");
+                }
+
+                if (comments.indexOf("{{ field.name }}") > -1) {
+                    tab_comments_error = true;
+                }
+
+                //console.log("MYTEST ***** " + "{{ field.name }} : {{ field.label }}: {{ field.errors|striptags }}");
+            {% endif %}
+        {% endfor %}
+
+        if (tab_origin_error) {
+            $( "#origin-tab" ).find( "a" ).css( "color", "red" );
+        } else {
+            $( "#origin-tab" ).find( "a" ).css( "color", "" );
+        }
+
+        if (tab_detail_error) {
+            $( "#detail-tab" ).find( "a" ).css( "color", "red" );
+        } else {
+            $( "#detail-tab" ).find( "a" ).css( "color", "" );
+        }
+
+        if (tab_comments_error) {
+            $( "#comments-tab" ).find( "a" ).css( "color", "red" );
+        } else {
+            $( "#comments-tab" ).find( "a" ).css( "color", "" );
+        }
+
+        {% if area_burnt_formset.total_error_count > 0 or attending_org_formset.total_error_count > 0 %}
+            $( "#detail-tab" ).find( "a" ).css( "color", "red" );
+            //console.log('RED area_burnt' + {{ area_burnt_formset.total_error_count }})
+            //console.log('RED attending_org' + {{ area_burnt_formset.total_error_count }})
+        {% else %}
+            if (! tab_detail_error) {
+                $( "#detail-tab" ).find( "a" ).css( "color", "" );
+                //console.log('GREEN area_burnt' + {{ area_burnt_formset.total_error_count }})
+                //console.log('GREEN attending_org' + {{ area_burnt_formset.total_error_count }})
+            }
+        {% endif %}
+    });
+
+
+/*
+    function convert_origin() {
+        if ($('#id_mga_zone').val() != '' && $('#id_mga_easting').val() != '' && $('#id_mga_northing').val() != '') {
+            $('#id_lat_decimal').val($('#id_mga_zone').val()/2.0);
+        }
+
+        if ($('#id_lat_decimal').val() != '' && $('#id_lat_degrees').val() != '' && $('#id_lat_minutes').val() != '' && $('#id_lon_decimal').val() != '' && $('#id_lon_degrees').val() != '' && $('#id_lon_minutes').val() != '') {
+            $('#id_mga_zone').val($('#id_lat_decimal').val()*2.0);
+        }
+
+    };
+*/
+
+    //$('.activity-formset tbody tr').formset({
+    $('.activity-formset tbody tr').formset({
+        prefix: '{{ activity_formset.prefix }}',
+        formCssClass: 'activity_fs',
+        addText: '<i class="icon-plus"></i> add another activity',
+        deleteText: '<i class="icon-remove"></i>',
+        deleteCssClass: 'delete-row' + '-' + '{{ activity_formset.prefix }}',
+    });
+
+// $('[id^=""]').hide() // starts with 
+$('#id_init_authorised_date').datetimepicker({ format: "Y-m-d H:i" }); //ends with
+$('[id$="-date"]').datetimepicker({ format: "Y-m-d H:i" }); //ends with
+
+$('#id_fire_not_found').click(function() {
+    if ($(this).is(':checked')) {
+        $('#id_latlong').hide();
+        $('#id_mga').hide();
+        $('#id_fd_grid').hide();
+        $('#id_coord_type').prop('selectedIndex', 0);
+    } else {
+        var coord_type = $('#id_coord_type :selected').text();
+        //console.log('Co Ord Type' + coord_type);
+        if (coord_type.indexOf('---') > -1) {
+            $('#id_latlong').hide();
+            $('#id_mga').hide();
+            $('#id_fd_grid').hide();
+            $('#id_fire_not_found').prop('checked', true);
+            $('#id_coord_type').prop('selectedIndex', 0);
+        } else if (coord_type=='Lat/Long') {
+            $('#id_latlong').show();
+            $('#id_fd_grid').hide();
+            $('#id_fire_not_found').prop('checked', false);
+
+            // calc MGA
+            $('#id_mga').show();
+            $('#id_mga').prop("readonly", true);
+        } else if (coord_type=='MGA') {
+            $('#id_mga').show();
+            $('#id_latlong').hide();
+            $('#id_fd_grid').hide();
+            $('#id_fire_not_found').prop('checked', false);
+
+            // calc Lat/Long
+            $('#id_latlong').show();
+            $('#id_latlong').prop("readonly", true);
+        } else if (coord_type=='FD Grid') {
+            $('#id_fd_grid').show();
+            $('#id_latlong').hide();
+            $('#id_mga').hide();
+            $('#id_fire_not_found').prop('checked', false);
+        }
+    }
+});
+
+$('#id_coord_type').on('change', function() {
+    var coord_type = $('#id_coord_type :selected').text();
+    //console.log(' *** Co Ord Type' + coord_type);
+    if (coord_type.indexOf('---') > -1) {
+        $('#id_latlong').hide();
+        $('#id_mga').hide();
+        $('#id_fd_grid').hide();
+        $('#id_fire_not_found').prop('checked', true);
+        $('#id_coord_type').prop('selectedIndex', 0);
+    } else if (coord_type=='Lat/Long') {
+        $('#id_latlong').show();
+        $('#id_mga').hide();
+        $('#id_fd_grid').hide();
+        $('#id_fire_not_found').prop('checked', false);
+
+        // calc MGA
+        $('#id_mga').show();
+        $('#id_mga').find('input, textarea, button, select').prop('disabled',true);
+        $('#id_latlong').find('input, textarea, button, select').prop('disabled',false);
+
+        //$('#id_mga_zone').val(111);
+        //convert_origin();
+    } else if (coord_type=='MGA') {
+        $('#id_mga').show();
+        $('#id_latlong').hide();
+        $('#id_fd_grid').hide();
+        $('#id_fire_not_found').prop('checked', false);
+
+        // calc Lat/Long
+        $('#id_latlong').show();
+        $('#id_latlong').find('input, textarea, button, select').prop('disabled',true);
+        $('#id_mga').find('input, textarea, button, select').prop('disabled',false);
+
+        //$('#id_lat_decimal').val(222);
+        //convert_origin();
+    } else if (coord_type=='FD Grid') {
+        $('#id_fd_grid').show();
+        $('#id_latlong').hide();
+        $('#id_mga').hide();
+        $('#id_fire_not_found').prop('checked', false);
+    }
+});
+
+</script>
+
+<script src="{% static 'smart-selects/admin/js/chainedfk.js' %}"></script>
+{% endblock %}
