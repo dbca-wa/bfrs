@@ -98,7 +98,7 @@
   <h1>Bushfire Detail</h1>
 
     {% comment %}
-    {% include "bushfire/main.html" %}
+    {% include "bfrs/main.html" %}
     {% endcomment %}
     <form action="" method="post">{% csrf_token %}
 
@@ -211,31 +211,31 @@
 
   <div class="tab-content">
     <div id="origin" class="tab-pane fade in active">
-        {% include "bushfire/origin.html" %}
+        {% include "bfrs/origin.html" %}
     </div>
 
     <div id="initial" class="tab-pane fade active">
-        {% include "bushfire/initial.html" %}
+        {% include "bfrs/initial.html" %}
     </div>
 
     <div id="effect" class="tab-pane fade active">
-        {% include "bushfire/effects.html" %}
+        {% include "bfrs/effects.html" %}
     </div>
 
     <div id="area-burnt" class="tab-pane fade active">
-        {% include "bushfire/area-burnt.html" %}
+        {% include "bfrs/area-burnt.html" %}
     </div>
 
     <div id="attending_org" class="tab-pane fade active">
-        {% include "bushfire/attending_org.html" %}
+        {% include "bfrs/attending_org.html" %}
     </div>
 
     <div id="damages" class="tab-pane fade active">
-        {% include "bushfire/damages.html" %}
+        {% include "bfrs/damages.html" %}
     </div>
 
     <div id="comment" class="tab-pane fade active">
-        {% include "bushfire/comment.html" %}
+        {% include "bfrs/comment.html" %}
     </div>
 
   </div>

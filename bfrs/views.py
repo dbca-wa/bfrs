@@ -25,7 +25,7 @@ from django.forms import ValidationError
 
 class BushfireView(generic.ListView):
     model = Bushfire
-    template_name = 'bushfire/bushfire.html'
+    template_name = 'bfrs/bushfire.html'
 
 #    def get_queryset(self):
 #        #return Permutation.objects.all().filter(scenario__id=self.kwargs['pk'])
@@ -48,7 +48,7 @@ class BushfireView(generic.ListView):
 class BushfireCreateView(generic.CreateView):
     model = Bushfire
     form_class = BushfireCreateForm
-    template_name = 'bushfire/create.html'
+    template_name = 'bfrs/create.html'
 
     def get_success_url(self):
         return reverse("bushfire:index")
@@ -153,7 +153,7 @@ class BushfireCreateView(generic.CreateView):
 class BushfireInitUpdateView(UpdateView):
     model = Bushfire
     form_class = BushfireInitUpdateForm
-    template_name = 'bushfire/create.html'
+    template_name = 'bfrs/create.html'
 
     def get_success_url(self):
         return reverse("bushfire:index")
@@ -251,7 +251,7 @@ class BushfireInitUpdateView(UpdateView):
 class BushfireUpdateView(UpdateView):
     model = Bushfire
     form_class = BushfireForm
-    template_name = 'bushfire/detail.html'
+    template_name = 'bfrs/detail.html'
     success_url = 'success'
 
 #    def get_form_kwargs(self):
@@ -465,7 +465,7 @@ from bfrs.models import (BushfireTest)
 class BushfireCreateTestView(generic.CreateView):
     model = BushfireTest
     form_class = BushfireTestForm
-    template_name = 'bushfire/create_tmp.html'
+    template_name = 'bfrs/create_tmp.html'
 
     def get_success_url(self):
         return reverse("bushfire:index")
@@ -476,7 +476,7 @@ from bfrs.models import (BushfireTest2)
 class BushfireCreateTest2View(generic.CreateView):
     model = BushfireTest2
     form_class = BushfireCreateForm2
-    template_name = 'bushfire/create2.html'
+    template_name = 'bfrs/create2.html'
 
     def get_success_url(self):
         return reverse("bushfire:index")

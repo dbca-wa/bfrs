@@ -82,16 +82,20 @@
   {% block extrastyle %}
 
   <link rel="stylesheet" href="{% static "css/jquery-ui-1.11.4.min.css" %}">
-  <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+  <link rel="stylesheet" href="{% static "twitter-bootstrap/3.3.7/css/bootstrap.min.css" %}">
   {% comment %}
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+  <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
   {% endcomment %}
 
   <script src="{% static 'js/jquery-1.9.1.min.js' %}"></script>
   <script src="{% static 'js/jquery-ui-1.11.4.min.js' %}"></script>
 
   <script src="{% static 'js/jquery.formset.js' %}"></script>
+  <script src="{% static 'twitter-bootstrap/3.3.7/js/bootstrap.min.js' %}"></script>
+  {% comment %}
   <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+  {% endcomment %}
 
   <!-- http://xdsoft.net/jqplugins/datetimepicker/ -->
   <link rel="stylesheet" type="text/css" href="{% static 'css/jquery.datetimepicker.css' %}"/ >
@@ -315,35 +319,35 @@
 
   <div class="tab-content">
     <div id="overview" class="tab-pane fade in active">
-        {% include "bushfire/overview.html" %}
+        {% include "bfrs/overview.html" %}
     </div>
 
     <div id="origin" class="tab-pane fade active">
-        {% include "bushfire/origin.html" %}
+        {% include "bfrs/origin.html" %}
     </div>
 
     <div id="initial" class="tab-pane fade active">
-        {% include "bushfire/initial_comment.html" %}
+        {% include "bfrs/initial_comment.html" %}
     </div>
 
     <div id="effect" class="tab-pane fade active">
-        {% include "bushfire/effects.html" %}
+        {% include "bfrs/effects.html" %}
     </div>
 
     <div id="area-burnt" class="tab-pane fade active">
-        {% include "bushfire/area-burnt.html" %}
+        {% include "bfrs/area-burnt.html" %}
     </div>
 
     <div id="attending_org" class="tab-pane fade active">
-        {% include "bushfire/attending_org.html" %}
+        {% include "bfrs/attending_org.html" %}
     </div>
 
     <div id="damages" class="tab-pane fade active">
-        {% include "bushfire/damages.html" %}
+        {% include "bfrs/damages.html" %}
     </div>
 
     <div id="comment" class="tab-pane fade active">
-        {% include "bushfire/comment.html" %}
+        {% include "bfrs/comment.html" %}
     </div>
 
   </div>

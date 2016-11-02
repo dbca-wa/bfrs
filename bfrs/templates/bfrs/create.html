@@ -80,7 +80,13 @@
 
   {% block extrastyle %}
   <link rel="stylesheet" href="{% static "css/jquery-ui-1.11.4.min.css" %}">
+  <link rel="stylesheet" href="{% static "twitter-bootstrap/3.3.7/css/bootstrap.min.css" %}">
+  {% comment %}
+  <link rel="stylesheet" href="{% static "css/bootstrap.css" %}">
+  <link rel="stylesheet" href="http://static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/twitter-bootstrap/3.3.6/css/bootstrap.min.css">
+  http://static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/twitter-bootstrap/3.3.7/css/
   <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+  {% endcomment %}
 
 
 
@@ -92,7 +98,12 @@
   <script src="{% static 'js/jquery-ui-1.11.4.min.js' %}"></script>
 
   <script src="{% static 'js/jquery.formset.js' %}"></script>
+  <script src="{% static 'twitter-bootstrap/3.3.7/js/bootstrap.min.js' %}"></script>
+  {% comment %}
+  <script src="{% static 'js/bootstrap.min.js' %}"></script>
+  <script href="http://static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/twitter-bootstrap/3.3.6/css/bootstrap.min.js"></script>
   <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+  {% endcomment %}
 
   <!-- http://xdsoft.net/jqplugins/datetimepicker/ -->
   <link rel="stylesheet" type="text/css" href="{% static 'css/jquery.datetimepicker.css' %}"/ >
@@ -381,15 +392,15 @@
 
   <div class="tab-content">
     <div id="origin" class="tab-pane fade in active">
-        {% include "bushfire/origin.html" %}
+        {% include "bfrs/origin.html" %}
     </div>
 
     <div id="detail" class="tab-pane fade active">
-        {% include "bushfire/initial_detail.html" %}
+        {% include "bfrs/initial_detail.html" %}
     </div>
 
     <div id="comments" class="tab-pane fade active">
-        {% include "bushfire/initial_comment.html" %}
+        {% include "bfrs/initial_comment.html" %}
     </div>
   </div>
 

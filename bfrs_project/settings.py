@@ -1,4 +1,3 @@
-from confy import env, database, cache
 """
 Django settings for bfrs_project project.
 
@@ -11,7 +10,12 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.10/ref/settings/
 """
 
+import dj_database_url
+import ldap
 import os
+import sys
+
+from confy import env, database, cache
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -23,32 +27,41 @@ CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env('SECRET_KEY')
+#SECRET_KEY = os.environ['SECRET_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+#DEBUG = True
+DEBUG = os.environ.get('DEBUG', None) in ["True", "on", "1", "DEBUG"]
 
 ALLOWED_HOSTS = []
 
-#TEMPLATE_DEBUG = True
-
-#ALLOWED_HOSTS = []
+#DEBUG = os.environ.get('DEBUG', None) in ["True", "on", "1", "DEBUG"]
 INTERNAL_IPS = ['127.0.0.1', '::1']
-#if not DEBUG:
-    ## Localhost, UAT and Production hosts
-    #ALLOWED_HOSTS = [
-             #'localhost',
-                     #'127.0.0.1',
-                     #
-    #]
+if not DEBUG:
+    # Localhost, UAT and Production hosts
+    ALLOWED_HOSTS = [
+        'localhost',
+        '127.0.0.1',
+        'bfrs.dpaw.wa.gov.au',
+        'bfrs.dpaw.wa.gov.au.',
+        'bfrs-uat.dpaw.wa.gov.au',
+        'bfrs-uat.dpaw.wa.gov.au.',
+        'bfrs-dev.dpaw.wa.gov.au',
+        'bfrs-dev.dpaw.wa.gov.au.'
+    ]
 
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
+    'bfrs.dpaw.wa.gov.au',
+    'bfrs.dpaw.wa.gov.au.',
+    'bfrs-uat.dpaw.wa.gov.au',
+    'bfrs-uat.dpaw.wa.gov.au.',
+    'bfrs-dev.dpaw.wa.gov.au',
+    'bfrs-dev.dpaw.wa.gov.au.'
 ]
 
-
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -107,14 +120,8 @@ WSGI_APPLICATION = 'bfrs_project.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/1.10/ref/settings/#databases
-
-#DATABASES = {
-#    'default': {
-#        'ENGINE': 'django.db.backends.sqlite3',
-#        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-#    }
-#}
 DATABASES = {'default': database.config()}
+#DATABASES = {'default': dj_database_url.config()}
 
 
 # Password validation
@@ -164,26 +171,3 @@ STATICFILES_FINDERS = (
 
 )
 
-#TEMPLATE_DIRS = (
-#        os.path.join(BASE_DIR, 'templates'),
-#        os.path.join(BASE_DIR, 'bfrs', 'templates'),
-#
-#)
-
-#TEMPLATES = [
-#    {
-#        'DIRS': [
-#            os.path.join(BASE_DIR, 'templates'),
-#            os.path.join(BASE_DIR, 'bfrs', 'templates'),
-#        ],
-#    },
-#]
-#
-#TEMPLATE_LOADERS = (
-#    ('django.template.loaders.cached.Loader', (
-#             'django.template.loaders.filesystem.Loader',
-#             'django.template.loaders.app_directories.Loader',
-#    )),
-#
-#)
-#
