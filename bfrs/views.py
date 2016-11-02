@@ -33,6 +33,7 @@ class BushfireView(generic.ListView):
 #
 #    def get_context_data(self, **kwargs):
 #        context = super(BushfireView, self).get_context_data(**kwargs)
+#        import ipdb; ipdb.set_trace()
 #        bushfire = Bushfire.objects.get(pk=self.kwargs['pk'])
 #
 #        links = [
@@ -41,6 +42,7 @@ class BushfireView(generic.ListView):
 #        ]
 #        context['model_name'] = self.model._meta.model_name
 #        context['breadcrumb_trail'] = breadcrumbs_li(links)
+#        context['has_init_authorised'] = bushfire.has_init_authorised
 #
 #        return context
 

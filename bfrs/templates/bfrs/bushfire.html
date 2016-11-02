@@ -1,5 +1,6 @@
 {% extends "admin/base.html" %}
 {% load static from staticfiles %}
+{% load bfrs_tags %}
 
 {% comment %}
 {% block extra_page_content %}
@@ -20,12 +21,20 @@
   </thead>
   <tbody>
     {% for bushfire in object_list %}
+      {% has_init_authorised bushfire.id as init_authorised %}
       <tr>
         <td><input type="checkbox" name="chkbox" value={{ bushfire.id }}  /></td>
         <td>{{ bushfire.id }}</td>
         <td><a href="{% url 'bushfire:bushfire_initial' bushfire.id %}">{{ bushfire.name }}</td>
-        <td><a href="{% url 'bushfire:bushfire_final' bushfire.id %}">{{ bushfire.name }}</td>
+
+         {% if init_authorised %}
+            <td><a href="{% url 'bushfire:bushfire_final' bushfire.id %}">{{ bushfire.name }}</td>
+         {% else %}
+            <td title="The initial report has not yet been authorised">{{ bushfire.name }}</td>
+         {% endif %}
+
         {% comment %}
+            <td>{% if init_authorised %} <a href="{% url 'bushfire:bushfire_final' bushfire.id %}">{{ bushfire.name }} {% else %} {{bushfire.name}} {% endif %}</td>
         <td><a href="{% url 'bushfire:bushfire' bushfire.id %}">{{ bushfire.name }}</td>
         {% endcomment %}
       </tr>

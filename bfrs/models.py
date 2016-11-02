@@ -113,6 +113,21 @@ class FuelType(models.Model):
 
 
 class Bushfire(Audit):
+    # OriginFDGRID
+    COORD_TYPE_MGAZONE = 1
+    COORD_TYPE_LATLONG = 2
+    COORD_TYPE_FDGRID = 3
+    COORD_TYPE_CHOICES = (
+        (COORD_TYPE_MGAZONE, 'MGA'),
+        (COORD_TYPE_LATLONG, 'Lat/Long'),
+        (COORD_TYPE_FDGRID, 'FD Grid'),
+    )
+
+    CAUSE_CHOICES = (
+        (1, 'Known'),
+        (2, 'Possible'),
+    )
+
     region = models.ForeignKey(Region)
 #    district = models.ForeignKey(District)
     district = ChainedForeignKey(
@@ -129,20 +144,6 @@ class Bushfire(Audit):
     authorised_by = models.ForeignKey(User, verbose_name="Authorised By", blank=True, null=True)
     authorised_date = models.DateTimeField(verbose_name='Authorised Date', default=timezone.now, null=True, blank=True)
 
-    # OriginFDGRID
-    COORD_TYPE_MGAZONE = 1
-    COORD_TYPE_LATLONG = 2
-    COORD_TYPE_FDGRID = 3
-    COORD_TYPE_CHOICES = (
-        (COORD_TYPE_MGAZONE, 'MGA'),
-        (COORD_TYPE_LATLONG, 'Lat/Long'),
-        (COORD_TYPE_FDGRID, 'FD Grid'),
-    )
-
-    CAUSE_CHOICES = (
-        (1, 'Known'),
-        (2, 'Possible'),
-    )
 
     coord_type = models.PositiveSmallIntegerField(choices=COORD_TYPE_CHOICES, verbose_name="Coordinate Type", null=True, blank=True)
     fire_not_found = models.BooleanField(default=False)
@@ -161,7 +162,6 @@ class Bushfire(Audit):
     fd_letter = models.CharField(verbose_name="FD Letter", max_length=2, null=True, blank=True)
     fd_number = models.PositiveSmallIntegerField(verbose_name="FD Number", null=True, blank=True)
     fd_tenths = models.CharField(verbose_name="FD Tenths", max_length=2, null=True, blank=True)
-
 
     # Location
     distance = models.DecimalField(verbose_name="Distance (km)", max_digits=6, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
@@ -219,77 +219,9 @@ class Bushfire(Audit):
     other_cause = models.CharField(verbose_name='Other Cause', max_length=50, null=True, blank=True)
     investigation_req = models.BooleanField(verbose_name="Invest'n Required", default=False)
 
-    #reporting = models.ForeignKey('Reporter', verbose_name="Reporting and  Cause")
-
-
-    # TABS
-
-    # Point of Origin
-    #   location = models.ForeignKey('Location')
-    #   origin = models.ForeignKey('Origin')
-    #   TODO number of dp
-#    coord_type = models.PositiveSmallIntegerField(choices=COORD_TYPE_CHOICES, verbose_name="Coordinates Type", null=True, blank=True)
-#    lat_decimal = models.DecimalField(verbose_name="Latitude (Decimal)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
-#    lat_degrees = models.DecimalField(verbose_name="Latitude (Degrees)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
-#    lat_minutes = models.DecimalField(verbose_name="Latitude (Minutes)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
-#    lon_decimal = models.DecimalField(verbose_name="Longitude (Decimal)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
-#    lon_degrees = models.DecimalField(verbose_name="Longitude (Degrees)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
-#    lon_minutes = models.DecimalField(verbose_name="Longitude (Minutes)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
-#
-#    mga_zone = models.DecimalField(verbose_name="MGA Zone", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
-#    mga_easting = models.DecimalField(verbose_name="MGA Easting", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
-#    mga_northing = models.DecimalField(verbose_name="MGA Northing", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
-#
-#    fd_letter = models.CharField(verbose_name="FD Letter", max_length=2, null=True, blank=True)
-#    fd_number = models.PositiveSmallIntegerField(verbose_name="FD Number", null=True, blank=True)
-#    fd_tenths = models.CharField(verbose_name="FD Tenths", max_length=2, null=True, blank=True)
-
-    # Effects/Agencies
-    #   effect = models.ForeignKey('Effect')
-    #   first_attack = models.ForeignKey('FirstAttackAgency')
-    #   Response goes with this section
-#    frb_effect = models.ForeignKey('FrbEffect', null=True, blank=True)
-    #fire_stopped = models.PositiveSmallIntegerField(verbose_name="Fuel Age - Fire Stopped (Yr)", null=True, blank=True)
-    #waterbomb_effect = models.ForeignKey('WaterBombEffect', null=True, blank=True)
-    #last_burnt = models.PositiveSmallIntegerField(verbose_name="Fuel Age - Area Last Burnt (Yr)", null=True, blank=True)
-    #arrival_area = models.DecimalField(verbose_name="Fire Area at Arrival (ha)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)])
-    #fire_level = models.PositiveSmallIntegerField(choices=FIRE_LEVEL_CHOICES)
-    #rating = models.ForeignKey('PriorityRating', null=True, blank=True, verbose_name="Area Priority Rating")
-
-    #first_attack = models.ForeignKey('Agency', verbose_name="First Attack Agency", null=True, blank=True, related_name='first_attack')
-    #hazard_mgt = models.ForeignKey('Agency', verbose_name="Hazard Management Agency", null=True, blank=True, related_name='hazard_mgt')
-    #initial_control = models.ForeignKey('Agency', verbose_name="Initial Controlling Agency", null=True, blank=True, related_name='initial_control')
-    #final_control = models.ForeignKey('Agency', verbose_name="Final Controlling Agency", null=True, blank=True, related_name='final_control')
-
-#    response = models.ForeignKey('ResponseType')
-
-    # Effects/Agencies
-    #   AreaBurnt goes with this section
-    #   GroundForces goes with this section
-    #   AerialForces goes with this section
-#    tenure = models.ForeignKey('Tenure', related_name='tenures')
-    #fuel_type = models.ForeignKey('FuelType', related_name='fuel_types') # vegetation_type was renamed to fuel_type in PBS
-    #area = models.DecimalField(verbose_name="Area (ha)", max_digits=12, decimal_places=2, validators=[MinValueValidator(0)])
-#    origin = models.BooleanField(verbose_name="Point of Origin", default=False)
-
-
-    # Attendance/Behaviour
-    #   FireBehaviour goes with this section
-    #   AttendingOrganisation goes with this section
-
-    # Damages/Legal
-    #   Legal goes with this section
-    #   PublicDamage goes with this section
-    #   PrivateDamage goes with this section
-
-    # Comments
-    #   FinalComment goes with this section
-
-    # Details (Initial)
-    #details = models.ForeignKey('Detail')
-
-    # Comments (Initial)
-    #comments = models.ForeignKey('Comment')
+    @property
+    def has_init_authorised(self):
+        return True if self.init_authorised_by and self.init_authorised_date else False
 
     def user_unicode_patch(self):
         """ overwrite the User model's __unicode__() method """
