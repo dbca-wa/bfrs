@@ -53,7 +53,8 @@ class BushfireCreateView(generic.CreateView):
     template_name = 'bfrs/create.html'
 
     def get_success_url(self):
-        return reverse("bushfire:index")
+        #return reverse("bushfire:index")
+        return reverse("home")
 
     def post(self, request, *args, **kwargs):
         #self.object = self.get_object()
@@ -158,7 +159,8 @@ class BushfireInitUpdateView(UpdateView):
     template_name = 'bfrs/create.html'
 
     def get_success_url(self):
-        return reverse("bushfire:index")
+        #return reverse("bushfire:index")
+        return reverse("home")
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object() # needed for update
@@ -237,6 +239,8 @@ class BushfireInitUpdateView(UpdateView):
         except:
             context = {}
 
+        #import ipdb; ipdb.set_trace()
+        bushfire = Bushfire.objects.get(id=self.kwargs['pk'])
         form_class = self.get_form_class()
         form = self.get_form(form_class)
         activity_formset        = ActivityFormSet(instance=self.object, prefix='activity_fs') # self.object posts the initial data
@@ -246,6 +250,7 @@ class BushfireInitUpdateView(UpdateView):
                         'activity_formset': activity_formset,
                         'area_burnt_formset': area_burnt_formset,
                         'attending_org_formset': attending_org_formset,
+                        'has_init_authorised': bushfire.has_init_authorised,
             })
         return context
 
@@ -263,7 +268,8 @@ class BushfireUpdateView(UpdateView):
 #        return kwargs
 
     def get_success_url(self):
-        return reverse("bushfire:index")
+        #return reverse("bushfire:index")
+        return reverse("home")
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
@@ -470,7 +476,8 @@ class BushfireCreateTestView(generic.CreateView):
     template_name = 'bfrs/create_tmp.html'
 
     def get_success_url(self):
-        return reverse("bushfire:index")
+        #return reverse("bushfire:index")
+        return reverse("home")
 
 
 from bfrs.forms import (BushfireCreateForm2, ActivityFormSet2, Activity2)
@@ -481,7 +488,8 @@ class BushfireCreateTest2View(generic.CreateView):
     template_name = 'bfrs/create2.html'
 
     def get_success_url(self):
-        return reverse("bushfire:index")
+        #return reverse("bushfire:index")
+        return reverse("home")
 
     def get_context_data(self, **kwargs):
         context = super(BushfireCreateTest2View, self).get_context_data(**kwargs)

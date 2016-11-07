@@ -1,5 +1,6 @@
 {% extends "admin/base.html" %}
 {% load static from staticfiles %}
+{% load bfrs_tags %}
 
 {% block extrahead %}
   {{ block.super }}
@@ -411,7 +412,7 @@
   <div class="navbar-inner">
     <div class="container">
       <p class="pull-right">
-        <input type="submit" value="Save" class="btn btn-primary btn-success" name="_save" />
+      <input type="submit" value="Save" class="btn btn-primary btn-success" name="_save" {% if has_init_authorised %}title="Initial Report cannot be edited" disabled{% endif %} />
         <a href="javascript: history.go(-1)" class="btn btn-danger">Cancel</a>
       </p>
     </div>

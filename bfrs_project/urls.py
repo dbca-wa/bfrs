@@ -4,13 +4,17 @@ from django.contrib import admin
 import debug_toolbar
 from bfrs import views
 
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import redirect
+from django.contrib.auth import views as auth_views
+
 urlpatterns = [
 #    url(r'^login/$', 'django.contrib.auth.views.login', name='login',
 #        kwargs={'template_name': 'login.html'}),
 #    url(r'^logout/$', 'django.contrib.auth.views.logout', name='logout',
 #        kwargs={'template_name': 'logged_out.html'}),
 
-    url(r'^$', views.BushfireView.as_view(), name='index'),
+    url(r'^$', views.BushfireView.as_view(), name='home'),
     url(r'^bfrs/', include('bfrs.urls', namespace='bushfire')),
     url(r'^admin/', include(admin.site.urls)),
     url(r'^chaining/', include('smart_selects.urls')),
