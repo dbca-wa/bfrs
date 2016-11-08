@@ -14,6 +14,16 @@ from django.core.wsgi import get_wsgi_application
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "bfrs_project.settings")
 application = get_wsgi_application()
 
+#from __future__ import absolute_import, unicode_literals, print_function, division
+#
+#import os
+#import confy
+#from django.core.wsgi import get_wsgi_application
+#from dj_static import Cling, MediaCling
+#
+#confy.read_environment_file('.env')
+#os.environ.setdefault("DJANGO_SETTINGS_MODULE", "bfrs_project.settings")
+#application = Cling(MediaCling(get_wsgi_application()))
 
 
 

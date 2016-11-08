@@ -88,9 +88,9 @@
           <ul class="nav pull-right">
             <li>
               <a class="dropdown-toggle" data-toggle="dropdown" href="#">
-                {% trans 'Welcome,' %}
-                <strong>{% filter force_escape %}{% firstof user.get_short_name user.get_username %}{% endfilter %}</strong>.
-                <b class="caret"></b>
+                  {% trans 'Welcome,' %}
+                  <strong>{% filter force_escape %}{% firstof user.get_short_name user.get_username %}{% endfilter %}</strong>
+                  <b class="caret"></b>
               </a>
               <ul class="dropdown-menu">
                   {% block userlinks %}
