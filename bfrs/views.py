@@ -4,6 +4,7 @@ from django.views import generic
 from django.views.generic.edit import CreateView, UpdateView, FormView
 #from django.views.generic import CreateView
 from django.forms.formsets import formset_factory
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 from bfrs.models import (Bushfire, Activity, Response, AreaBurnt, GroundForces, AerialForces,
         AttendingOrganisation, FireBehaviour, Legal, PrivateDamage, PublicDamage, Comment
@@ -23,7 +24,7 @@ from django.db import IntegrityError, transaction
 from django.contrib import messages
 from django.forms import ValidationError
 
-class BushfireView(generic.ListView):
+class BushfireView(LoginRequiredMixin, generic.ListView):
     model = Bushfire
     template_name = 'bfrs/bushfire.html'
 
@@ -47,7 +48,7 @@ class BushfireView(generic.ListView):
 #        return context
 
 
-class BushfireCreateView(generic.CreateView):
+class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
     model = Bushfire
     form_class = BushfireCreateForm
     template_name = 'bfrs/create.html'
@@ -153,7 +154,7 @@ class BushfireCreateView(generic.CreateView):
         return context
 
 
-class BushfireInitUpdateView(UpdateView):
+class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
     model = Bushfire
     form_class = BushfireInitUpdateForm
     template_name = 'bfrs/create.html'
@@ -255,7 +256,7 @@ class BushfireInitUpdateView(UpdateView):
         return context
 
 
-class BushfireUpdateView(UpdateView):
+class BushfireUpdateView(LoginRequiredMixin, UpdateView):
     model = Bushfire
     form_class = BushfireForm
     template_name = 'bfrs/detail.html'
@@ -470,7 +471,7 @@ NEXT - For Testing ONLY
 """
 from bfrs.forms import (BushfireTestForm)
 from bfrs.models import (BushfireTest)
-class BushfireCreateTestView(generic.CreateView):
+class BushfireCreateTestView(LoginRequiredMixin, generic.CreateView):
     model = BushfireTest
     form_class = BushfireTestForm
     template_name = 'bfrs/create_tmp.html'
@@ -482,7 +483,7 @@ class BushfireCreateTestView(generic.CreateView):
 
 from bfrs.forms import (BushfireCreateForm2, ActivityFormSet2, Activity2)
 from bfrs.models import (BushfireTest2)
-class BushfireCreateTest2View(generic.CreateView):
+class BushfireCreateTest2View(LoginRequiredMixin, generic.CreateView):
     model = BushfireTest2
     form_class = BushfireCreateForm2
     template_name = 'bfrs/create2.html'

@@ -2,9 +2,10 @@
 {% load static from staticfiles %}
 {% load bfrs_tags %}
 
-{% comment %}
-{% block extra_page_content %}
-{% endcomment %}
+{% block extrastyle %}
+  <link rel="stylesheet" href="{% static "twitter-bootstrap/3.3.7/css/bootstrap.min.css" %}">
+{% endblock %}
+
 {% block content %}
 
 <h1>Bushfire</h1>
