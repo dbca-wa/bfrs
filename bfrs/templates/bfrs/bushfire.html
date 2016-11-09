@@ -8,8 +8,11 @@
 
 {% block content %}
 
+
 <h1>Bushfire</h1>
-<a class="btn btn-small btn-info" style="float: right;" href="{% url 'bushfire:bushfire_create' %}"><button style="color: white; background-color: blue;"><i class="icon-plus icon-white"></i> Add Bushfire</button></a>
+<a style="float: right;" href="{% url 'bushfire:bushfire_create' %}"><button><i class="icon-plus icon-white"></i> Add Bushfire</button></a>
+<br>
+<br>
 
 {% if object_list %}
 <table id="table" class="tablesorter table table-striped table-bordered table-hover table-condensed">
