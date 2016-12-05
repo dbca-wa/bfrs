@@ -465,7 +465,6 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         return context
 
 
-
 """
 NEXT - For Testing ONLY
 """

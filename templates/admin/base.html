@@ -48,6 +48,7 @@
   <script src="{% static 'js/bootstrap-growl.min.js' %}"></script>
   <script src="{% static 'js/bootstrap-multiselect.js' %}"></script>
 
+{% block extra_js %}{% endblock %}
 {% block extrahead %}{% endblock %}
 {% block blockbots %}<meta name="robots" content="NONE,NOARCHIVE" />{% endblock %}
 </head>
@@ -151,7 +152,7 @@
     <div class="row">
       <div class="span12">
       {% block pretitle %}{% endblock %}
-      {% block co>ntent_title %}{% if title %}<h1>{{ title }}</h1>{% endif %}{% endblock %}
+      {% block content_title %}{% if title %}<h1>{{ title }}</h1>{% endif %}{% endblock %}
       {% block content %}
         {% block object-tools %}{% endblock %}
       {% endblock %}

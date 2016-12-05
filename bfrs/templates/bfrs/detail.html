@@ -80,14 +80,17 @@
   {% endblock %}
 
   {% block extrastyle %}
-
   <link rel="stylesheet" href="{% static "css/jquery-ui-1.11.4.min.css" %}">
   <link rel="stylesheet" href="{% static "twitter-bootstrap/3.3.7/css/bootstrap.min.css" %}">
+  <link rel="stylesheet" type="text/css" href="{% static 'css/jquery.datetimepicker.css' %}"/ >
+  {% endblock %}
+
   {% comment %}
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
   <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
   {% endcomment %}
 
+  {% block extra_js %}
   <script src="{% static 'js/jquery-1.9.1.min.js' %}"></script>
   <script src="{% static 'js/jquery-ui-1.11.4.min.js' %}"></script>
 
@@ -98,7 +101,6 @@
   {% endcomment %}
 
   <!-- http://xdsoft.net/jqplugins/datetimepicker/ -->
-  <link rel="stylesheet" type="text/css" href="{% static 'css/jquery.datetimepicker.css' %}"/ >
   <script src="{% static 'js/jquery.datetimepicker.full.min.js' %}"></script>
 
   <script>
