@@ -80,7 +80,6 @@
   {% endblock %}
 
   {% block extrastyle %}
-  <link rel="stylesheet" href="{% static "css/jquery-ui-1.11.4.min.css" %}">
   <link rel="stylesheet" href="{% static "twitter-bootstrap/3.3.7/css/bootstrap.min.css" %}">
   <link rel="stylesheet" type="text/css" href="{% static 'css/jquery.datetimepicker.css' %}"/ >
   {% endblock %}
@@ -88,12 +87,13 @@
   {% comment %}
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
   <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+
+  <link rel="stylesheet" href="{% static "css/jquery-ui-1.11.4.min.css" %}">
+  <script src="{% static 'js/jquery-1.9.1.min.js' %}"></script>
+  <script src="{% static 'js/jquery-ui-1.11.4.min.js' %}"></script>
   {% endcomment %}
 
   {% block extra_js %}
-  <script src="{% static 'js/jquery-1.9.1.min.js' %}"></script>
-  <script src="{% static 'js/jquery-ui-1.11.4.min.js' %}"></script>
-
   <script src="{% static 'js/jquery.formset.js' %}"></script>
   <script src="{% static 'twitter-bootstrap/3.3.7/js/bootstrap.min.js' %}"></script>
   {% comment %}
@@ -326,31 +326,31 @@
         {% include "bfrs/overview.html" %}
     </div>
 
-    <div id="origin" class="tab-pane fade active">
+    <div id="origin" class="tab-pane fade in active">
         {% include "bfrs/origin.html" %}
     </div>
 
-    <div id="initial" class="tab-pane fade active">
+    <div id="initial" class="tab-pane fade in active">
         {% include "bfrs/initial_comment.html" %}
     </div>
 
-    <div id="effect" class="tab-pane fade active">
+    <div id="effect" class="tab-pane fade in active">
         {% include "bfrs/effects.html" %}
     </div>
 
-    <div id="area-burnt" class="tab-pane fade active">
+    <div id="area-burnt" class="tab-pane fade in active">
         {% include "bfrs/area-burnt.html" %}
     </div>
 
-    <div id="attending_org" class="tab-pane fade active">
+    <div id="attending_org" class="tab-pane fade in active">
         {% include "bfrs/attending_org.html" %}
     </div>
 
-    <div id="damages" class="tab-pane fade active">
+    <div id="damages" class="tab-pane fade in active">
         {% include "bfrs/damages.html" %}
     </div>
 
-    <div id="comment" class="tab-pane fade active">
+    <div id="comment" class="tab-pane fade in active">
         {% include "bfrs/comment.html" %}
     </div>
 
