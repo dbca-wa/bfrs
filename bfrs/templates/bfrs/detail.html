@@ -253,99 +253,271 @@
 
 <h2>{{form.instance.district}} - {{form.instance.season}} - {{form.instance.name}}</h2>
 
-  <ul id="report-tabs" class="nav nav-tabs">
-      <li id="overview-tab"  class="active">
-          <a data-toggle="tab" href="#overview">
-              <i class="icon-tag"></i>
-              Overview
-          </a>
-      </li>
+    {% include "bfrs/overview.html" %}
+    {% include "bfrs/origin.html" %}
+    {% include "bfrs/fuel_age.html" %}
 
-      <li id="origin-tab">
-          <a data-toggle="tab" href="#origin">
-              <i class="icon-tag"></i>
-              Point of Origin
-          </a>
-      </li>
-      <!--
-      <li id="initial-tab">
-          <a data-toggle="tab" href="#initial">
-              <i class="icon-tag"></i>
-              Detail (NA in Final)
-          </a>
-      </li>
-      -->
-      <li id="effect-tab">
-          <a data-toggle="tab" href="#effect">
-              <i class="icon-tag"></i>
-              Effects/Agencies
-          </a>
-      </li>
+    <div class="row">
+        <div class="col-sm-4" > 
+            <div id="div_id_rating" class="form-group"> 
+                <label for="id_rating" class="control-label requiredField">Area Priority Rating*</label>
+                <div class="controls ">{{form.rating}}</div>
+            </div>
+        </div>
 
-      <li id="area-burnt-tab">
-          <a data-toggle="tab" href="#area-burnt">
-              <i class="icon-tag"></i>
-              Areas Burnt/Forces
-          </a>
-      </li>
-
-      <li id="attending-org-tab">
-          <a data-toggle="tab" href="#attending_org">
-              <i class="icon-tag"></i>
-              Attendance/Behaviour
-          </a>
-      </li>
-
-      <li id="damages-tab">
-          <a data-toggle="tab" href="#damages">
-              <i class="icon-tag"></i>
-              Damages/Legal
-          </a>
-      </li>
-
-      <li id="comment-tab">
-          <a data-toggle="tab" href="#comment">
-              <i class="icon-tag"></i>
-              Comment
-          </a>
-      </li>
-
-  </ul>
-
-  <div class="tab-content">
-    <div id="overview" class="tab-pane fade in active">
-        {% include "bfrs/overview.html" %}
+        <div class="col-sm-4" > 
+            <div id="div_id_first_attack" class="form-group"> 
+                <label for="id_first_attack" class="control-label requiredField">First Attack Agency*</label>
+                <div class="controls ">{{form.first_attack}}</div>
+            </div>
+        </div>
+        <div class="col-sm-4" >
+            <div id="div_id_other_first_attack" class="form-group"> 
+                <label for="id_other_first_attack" class="control-label requiredField">Other First Attack Agency*</label>
+                <div class="controls ">{{form.other_first_attack}}</div>
+            </div>
+        </div>
     </div>
 
-    <div id="origin" class="tab-pane fade in active">
-        {% include "bfrs/origin.html" %}
-    </div>
+    {% include "bfrs/area-burnt_fs.html" %}
 
-    <div id="initial" class="tab-pane fade in active">
-        {% include "bfrs/initial_comment.html" %}
-    </div>
+<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
 
-    <div id="effect" class="tab-pane fade in active">
-        {% include "bfrs/effects.html" %}
+  <div class="panel-default">
+    <div class="panel-heading" role="tab" id="pn_waterbomber">
+      <h4 class="panel-title">
+        <a role="button" data-toggle="collapse" data-parent="#accordion" href="#waterbomber" aria-expanded="true" aria-controls="waterbomber">
+          Effects of FRBs/Waterbomber
+        </a>
+      </h4>
     </div>
+    <div id="waterbomber" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pn_waterbomber">
+      <div class="panel-body">
 
-    <div id="area-burnt" class="tab-pane fade in active">
-        {% include "bfrs/area-burnt.html" %}
+        <div class="row">
+            <div class="col-sm-5" > 
+                <div id="div_id_frb_effect" class="form-group"> 
+                    <label for="id_frb_effect" class="control-label nonRequiredField">Presence/Effect of FRB</label>
+                    <div class="controls ">{{form.frb_effect}}</div>
+                </div>
+            </div>
+
+            <div class="col-sm-5" > 
+                <div id="div_waterbomb_effect" class="form-group"> 
+                    <label for="id_waterbomb_effect" class="control-label nonRequiredField">Presence/Effect of WaterBomb</label>
+                    <div class="controls ">{{form.waterbomb_effect}}</div>
+                </div>
+            </div>
+        </div>
+
+      </div>
     </div>
-
-    <div id="attending_org" class="tab-pane fade in active">
-        {% include "bfrs/attending_org.html" %}
-    </div>
-
-    <div id="damages" class="tab-pane fade in active">
-        {% include "bfrs/damages.html" %}
-    </div>
-
-    <div id="comment" class="tab-pane fade in active">
-        {% include "bfrs/comment.html" %}
-    </div>
-
   </div>
+
+  <div class="panel-default">
+    <div class="panel-heading" role="tab" id="pn_attack_agency">
+      <h4 class="panel-title">
+        <a role="button" data-toggle="collapse" data-parent="#accordion" href="#attack_agency" aria-expanded="true" aria-controls="attack_agency">
+          Other Attack Agencies
+        </a>
+      </h4>
+    </div>
+    <div id="attack_agency" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pn_attack_agency">
+      <div class="panel-body">
+
+        <div class="row">
+            <div class="col-sm-4" > 
+                <div id="div_hazard_mgt" class="form-group"> 
+                    <label for="id_hazard_mgt" class="control-label nonRequiredField">Hazard Management Agency</label>
+                    <div class="controls ">{{form.hazard_mgt}}</div>
+                </div>
+            </div>
+            <div class="col-sm-4" >
+                <div id="div_id_other_hazard_mgt" class="form-group"> 
+                    <label for="id_other_hazard_mgt" class="control-label requiredField">Other Hazard Management Agency*</label>
+                    <div class="controls ">{{form.other_hazard_mgt}}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-sm-4" > 
+                <div id="div_id_initial_control" class="form-group"> 
+                    <label for="id_initial_control" class="control-label nonRequiredField">Initial controlling Agency</label>
+                    <div class="controls ">{{form.initial_control}}</div>
+                </div>
+            </div>
+            <div class="col-sm-4" >
+                <div id="div_id_other_initial_control" class="form-group"> 
+                    <label for="id_other_initial_control" class="control-label requiredField">Other Initial Control Agency*</label>
+                    <div class="controls ">{{form.other_initial_ctrl}}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-sm-4" > 
+                <div id="div_id_final_control" class="form-group"> 
+                    <label for="id_final_control" class="control-label nonRequiredField">Final Controlling Agency</label>
+                    <div class="controls ">{{form.final_control}}</div>
+                </div>
+            </div>
+            <div class="col-sm-4" >
+                <div id="div_id_other_final_control" class="form-group"> 
+                    <label for="id_other_final_control" class="control-label requiredField">Other Final Control Agency*</label>
+                    <div class="controls ">{{form.other_final_ctrl}}</div>
+                </div>
+            </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-default">
+    <div class="panel-heading" role="tab" id="pn_first_response">
+      <h4 class="panel-title">
+        <a role="button" data-toggle="collapse" data-parent="#accordion" href="#first_response" aria-expanded="true" aria-controls="first_response">
+          First DPaW Responses
+        </a>
+      </h4>
+    </div>
+    <div id="first_response" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pn_first_response">
+      <div class="panel-body">
+        {% include "bfrs/first_response_fs.html" %}
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-default">
+    <div class="panel-heading" role="tab" id="pn_ground_forces">
+      <h4 class="panel-title">
+        <a role="button" data-toggle="collapse" data-parent="#accordion" href="#ground_forces" aria-expanded="true" aria-controls="ground_forces">
+          Ground Forces at Fire
+        </a>
+      </h4>
+    </div>
+    <div id="ground_forces" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pn_ground_forces">
+      <div class="panel-body">
+        {% include "bfrs/ground_forces_fs.html" %}
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-default">
+    <div class="panel-heading" role="tab" id="pn_aerial_forces">
+      <h4 class="panel-title">
+        <a role="button" data-toggle="collapse" data-parent="#accordion" href="#aerial_forces" aria-expanded="true" aria-controls="aerial_forces">
+          Aerial Forces at Fire
+        </a>
+      </h4>
+    </div>
+    <div id="aerial_forces" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pn_aerial_forces">
+      <div class="panel-body">
+        {% include "bfrs/aerial_forces_fs.html" %}
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-default">
+    <div class="panel-heading" role="tab" id="pn_forces_attending">
+      <h4 class="panel-title">
+        <a role="button" data-toggle="collapse" data-parent="#accordion" href="#forces_attending" aria-expanded="true" aria-controls="forces_attending">
+          Organisations Attending
+        </a>
+      </h4>
+    </div>
+    <div id="forces_attending" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pn_forces_attending">
+      <div class="panel-body">
+        {% include "bfrs/forces_attending_fs.html" %}
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-default">
+    <div class="panel-heading" role="tab" id="pn_fire_behaviour">
+      <h4 class="panel-title">
+        <a role="button" data-toggle="collapse" data-parent="#accordion" href="#fire_behaviour" aria-expanded="true" aria-controls="fire_behaviour">
+          Fire Behaviour
+        </a>
+      </h4>
+    </div>
+    <div id="fire_behaviour" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pn_fire_behaviour">
+      <div class="panel-body">
+        {% include "bfrs/fire_behaviour_fs.html" %}
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-default">
+    <div class="panel-heading" role="tab" id="pn_comm_protection">
+      <h4 class="panel-title">
+        <a role="button" data-toggle="collapse" data-parent="#accordion" href="#comm_protection" aria-expanded="true" aria-controls="comm_protection">
+          Community Protection/Estimates
+        </a>
+      </h4>
+    </div>
+    <div id="comm_protection" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pn_comm_protection">
+      <div class="panel-body">
+        {% include "bfrs/comm_protection_fs.html" %}
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-default">
+    <div class="panel-heading" role="tab" id="pn_private_damage">
+      <h4 class="panel-title">
+        <a role="button" data-toggle="collapse" data-parent="#accordion" href="#private_damage" aria-expanded="true" aria-controls="private_damage">
+          Private Damage and Personal Injury
+        </a>
+      </h4>
+    </div>
+    <div id="private_damage" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pn_private_damage">
+      <div class="panel-body">
+        {% include "bfrs/private_damage_fs.html" %}
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-default">
+    <div class="panel-heading" role="tab" id="pn_public_damage">
+      <h4 class="panel-title">
+        <a role="button" data-toggle="collapse" data-parent="#accordion" href="#public_damage" aria-expanded="true" aria-controls="public_damage">
+          Public Land Damage
+        </a>
+      </h4>
+    </div>
+    <div id="public_damage" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pn_public_damage">
+      <div class="panel-body">
+        {% include "bfrs/public_damage_fs.html" %}
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-default">
+    <div class="panel-heading" role="tab" id="pn_comments">
+      <h4 class="panel-title">
+        <a role="button" data-toggle="collapse" data-parent="#accordion" href="#comments" aria-expanded="true" aria-controls="comments">
+          Comments
+        </a>
+      </h4>
+    </div>
+    <div id="comments" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pn_comments">
+      <div class="panel-body">
+        {% include "bfrs/comments_fs.html" %}
+      </div>
+    </div>
+  </div>
+
+
+
+
+
+
+
+</div>
+
+
 
 <div class="navbar navbar-fixed-bottom">
   <div class="navbar-inner">
@@ -454,6 +626,82 @@ $('#id_coord_type').on('change', function() {
     }
 });
 
+    $(function(){
+        var coord_type = $('#id_first_attack :selected').text();
+        // This first part is needed for first page load
+        if (coord_type.indexOf('OTHER') > -1) {
+            $('#div_id_other_first_attack').show();
+        } else {
+            $('#div_id_other_first_attack').hide();
+        }
+
+        $('#id_first_attack').on('change', function() {
+            var coord_type = $('#id_first_attack :selected').text();
+            //console.log('Co Ord Type' + coord_type);
+            if (coord_type.indexOf('OTHER') > -1) {
+                $('#div_id_other_first_attack').show();
+            } else {
+                $('#div_id_other_first_attack').hide();
+            }
+        });
+    });
+
+    $(function(){
+        var coord_type = $('#id_hazard_mgt :selected').text();
+        if (coord_type.indexOf('OTHER') > -1) {
+            $('#div_id_other_hazard_mgt').show();
+        } else {
+            $('#div_id_other_hazard_mgt').hide();
+        }
+
+        $('#id_hazard_mgt').on('change', function() {
+            var coord_type = $('#id_hazard_mgt :selected').text();
+            if (coord_type.indexOf('OTHER') > -1) {
+                $('#div_id_other_hazard_mgt').show();
+            } else {
+                $('#div_id_other_hazard_mgt').hide();
+            }
+        });
+    });
+
+    $(function(){
+        var coord_type = $('#id_initial_control :selected').text();
+        if (coord_type.indexOf('OTHER') > -1) {
+            $('#div_id_other_initial_control').show();
+        } else {
+            $('#div_id_other_initial_control').hide();
+        }
+
+        $('#id_initial_control').on('change', function() {
+            var coord_type = $('#id_initial_control :selected').text();
+            if (coord_type.indexOf('OTHER') > -1) {
+                $('#div_id_other_initial_control').show();
+            } else {
+                $('#div_id_other_initial_control').hide();
+            }
+        });
+    });
+
+    $(function(){
+        var coord_type = $('#id_final_control :selected').text();
+        if (coord_type.indexOf('OTHER') > -1) {
+            $('#div_id_other_final_control').show();
+        } else {
+            $('#div_id_other_final_control').hide();
+        }
+
+        $('#id_final_control').on('change', function() {
+            var coord_type = $('#id_final_control :selected').text();
+            if (coord_type.indexOf('OTHER') > -1) {
+                $('#div_id_other_final_control').show();
+            } else {
+                $('#div_id_other_final_control').hide();
+            }
+        });
+    });
+
+
+$('.collapse').collapse()
 </script>
 <script src="{% static 'smart-selects/admin/js/chainedfk.js' %}"></script>
 {% endblock %}

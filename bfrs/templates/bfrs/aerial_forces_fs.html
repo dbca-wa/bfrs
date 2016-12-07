@@ -1,0 +1,42 @@
+<div id="id_aerialforces" class="row formset aerialforces-formset">
+    <table border="0" cellpadding="0" cellspacing="0">
+        <tbody>
+            <th>Agency Name</th>
+            <th>Observer</th>
+            <th>Transporter</th>
+            <th>Ignition</th>
+            <th>Water Bomber</th>
+            <th></th>
+            {% for form in aerialforces_formset.forms %}
+            <tr>
+               <td>{{ form.name }}</td>
+               <td>{{ form.observer }}</td>
+               <td>{{ form.transporter }}</td>
+               <td>{{ form.ignition }}</td>
+               <td>{{ form.water_bomber }}</td>
+
+               <td>
+                    {% if form.instance.pk %}{{ form.DELETE }}{% endif %}
+                    {{ form.id }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {{ aerialforces_formset.management_form }}
+</div>
+
+
+<script>
+    $('.aerialforces-formset tbody tr').formset({
+        prefix: '{{ aerialforces_formset.prefix }}',
+        formCssClass: 'aerialforces_fs',
+        addText: '<i class="icon-plus"></i> add another aerial force',
+        deleteText: '<i class="icon-remove"></i>',
+        deleteCssClass: 'delete-row' + '-' + '{{ aerialforces_formset.prefix  }}',
+    });
+
+</script>
+
+
+
