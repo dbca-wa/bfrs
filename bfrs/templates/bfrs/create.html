@@ -80,14 +80,15 @@
   {% endblock %}
 
   {% block extrastyle %}
-  <link rel="stylesheet" href="{% static "twitter-bootstrap/3.3.7/css/bootstrap.min.css" %}">
   <link rel="stylesheet" type="text/css" href="{% static 'css/jquery.datetimepicker.css' %}"/ >
+  <link rel="stylesheet" href="{% static "twitter-bootstrap/3.3.7/css/bootstrap.min.css" %}">
   {% endblock %}
   {% comment %}
   <link rel="stylesheet" href="{% static "css/bootstrap.css" %}">
   <link rel="stylesheet" href="http://static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/twitter-bootstrap/3.3.6/css/bootstrap.min.css">
   http://static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/twitter-bootstrap/3.3.7/css/
   <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+  <link rel="stylesheet" href="{% static "twitter-bootstrap/3.3.7/css/bootstrap.min.css" %}">
   {% endcomment %}
 
 
@@ -102,12 +103,13 @@
 
   {% block extra_js %}
 
-  <script src="{% static 'js/jquery.formset.js' %}"></script>
   <script src="{% static 'twitter-bootstrap/3.3.7/js/bootstrap.min.js' %}"></script>
+  <script src="{% static 'js/jquery.formset.js' %}"></script>
   {% comment %}
   <script src="{% static 'js/bootstrap.min.js' %}"></script>
   <script href="http://static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/twitter-bootstrap/3.3.6/css/bootstrap.min.js"></script>
   <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+  <script src="{% static 'twitter-bootstrap/3.3.7/js/bootstrap.min.js' %}"></script>
   {% endcomment %}
 
   <!-- http://xdsoft.net/jqplugins/datetimepicker/ -->
@@ -295,6 +297,13 @@
     </div>
 
     <div class="col-sm-2" > 
+        <div id="div_id_field_officer" class="form-group"> 
+            <label for="id_field_officer" class="control-label requiredField">Field Officer*</label>
+            <div class="controls ">{{form.field_officer}}</div>
+        </div>
+    </div>
+
+    <div class="col-sm-2" > 
         <div id="div_id_init_authorised_by" class="form-group"> 
             <label for="id_init_authorised_by" class="control-label nonRequiredField">Authorised By</label>
             <div class="controls ">{{form.init_authorised_by}}</div>
@@ -309,36 +318,52 @@
     </div>
 </div>
 
-{%comment%}
-<div class="row formset activity-formset2">
-<tbody>
-{% for fs in activity_formset.forms %}
-<tr>
-    <div class="col-sm-2" > 
-        <div id="div_id_formid" class="form-group"> 
-            <div class="controls ">{% if fs.instance.pk %}{{ fs.DELETE }}{% endif %}</div>
-            <div class="controls ">{{ fs.id }}</div>
+<div class="row">
+    <div class="col-sm-4" >
+        <div id="div_id_cause" class="form-group"> 
+            <label for="id_cause" class="control-label requiredField">Cause*</label>
+            <div class="controls ">{{form.cause}}</div>
         </div>
     </div>
-    <div class="col-sm-3" > 
-        <div id="div_id_activity" class="form-group"> 
-            <div class="controls ">{{fs.activity}}</div>
+    <div class="col-sm-2" >
+        <div id="div_id_known_possible" class="form-group"> 
+            <label for="id_known_possible" class="control-label requiredField">Known/Possible*</label>
+            <div class="controls ">{{form.known_possible}}</div>
         </div>
     </div>
-    <div class="col-sm-2" > 
-        <div id="div_id_date" class="form-group"> 
-            <div class="controls ">{{fs.date}}</div>
+    <div class="col-sm-4" >
+        <div id="div_id_other_cause" class="form-group"> 
+            <label for="id_other_cause" class="control-label nonRequiredField">Other Cause</label>
+            <div class="controls ">{{form.other_cause}}</div>
         </div>
     </div>
-</tr>
-{% endfor %}
-</tbody>
+    <div class="col-sm-2" >
+        <div id="div_id_investigation_req" class="form-group"> 
+            <label for="id_investigation_req" class="control-label nonRequiredField">Investigation Required</label>
+            <div class="controls ">{{form.investigation_req}}</div>
+        </div>
+    </div>
+
 </div>
-{{ activity_formset.management_form }}
-{%endcomment%}
 
+<div class="row">
+    <div class="col-sm-4" >
+        <div id="div_id_first_attack" class="form-group"> 
+            <label for="id_first_attack" class="control-label requiredField">First Attack Agency*</label>
+            <div class="controls ">{{form.first_attack}}</div>
+        </div>
+    </div>
+    <div class="col-sm-4" >
+        <div id="div_id_other_first_attack" class="form-group"> 
+            <label for="id_other_first_attack" class="control-label requiredField">Other Agency*</label>
+            <div class="controls ">{{form.other_first_attack}}</div>
+        </div>
+    </div>
 
-<hr>
+</div>
+
+{% include "bfrs/origin.html" %}
+
 <h3>Activities</h3>
 <div id="id_activities" class="row formset activity-formset">
     <table border="0" cellpadding="0" cellspacing="0">
@@ -371,44 +396,72 @@
 </div>
 <hr>
 
+{% comment %}
+{% endcomment %}
+<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
 
-  <ul id="report-tabs" class="nav nav-tabs">
-      <li id="origin-tab" class="active">
-          <a data-toggle="tab" href="#origin"><strong>
-              <i class="icon-tag"></i>
-              Point of Origin
-          </strong></a>
-      </li>
-      <li id="detail-tab">
-          <a data-toggle="tab" href="#detail"><strong>
-              <i class="icon-tag"></i>
-              Details
-          </strong></a>
-      </li>
-      <li id="comments-tab">
-          <a data-toggle="tab" href="#comments"><strong>
-              <i class="icon-tag"></i>
-              Comments
-          </strong></a>
-      </li>
-
-  </ul>
-
-  <div class="tab-content">
-    <div id="origin" class="tab-pane fade in active">
-        {% include "bfrs/origin.html" %}
+  <div class="panel-default">
+    <div class="panel-heading" role="tab" id="pn_origin">
+      <h4 class="panel-title">
+        <a role="button" data-toggle="collapse" data-parent="#accordion" href="#origin" aria-expanded="true" aria-controls="origin">
+          Add Location
+        </a>
+      </h4>
     </div>
-
-    <div id="detail" class="tab-pane fade in active">
-        {% include "bfrs/initial_detail.html" %}
+    <div id="origin" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pn_origin">
+      <div class="panel-body">
+        {% include "bfrs/location.html" %}
+      </div>
     </div>
+  </div>
 
-    <div id="comments" class="tab-pane fade in active">
-        {% include "bfrs/initial_comment.html" %}
+  <div class="panel-default">
+    <div class="panel-heading" role="tab" id="pn_initial_detail">
+      <h4 class="panel-title">
+          <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#initial_detail" aria-expanded="true" aria-controls="initial_detail">
+          Add Tenure and Vegetation Affected
+        </a>
+      </h4>
+    </div>
+    <div id="initial_detail" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pn_initial_detail">
+      <div class="panel-body">
+        {% include "bfrs/tenure_veg_fs.html" %}
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-default">
+    <div class="panel-heading" role="tab" id="pn_forces_attending">
+      <h4 class="panel-title">
+          <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#forces_attending" aria-expanded="true" aria-controls="forces_attending">
+          Add Forces in Attendance
+        </a>
+      </h4>
+    </div>
+    <div id="forces_attending" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pn_forces_attending">
+      <div class="panel-body">
+        {% include "bfrs/forces_attending_fs.html" %}
+      </div>
     </div>
   </div>
 
 
+  <div class="panel-default">
+    <div class="panel-heading" role="tab" id="pn_initial_comment">
+      <h4 class="panel-title">
+        <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#initial_comment" aria-expanded="true" aria-controls="initial_comment">
+          Add Operation Details
+        </a>
+      </h4>
+    </div>
+    <div id="initial_comment" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pn_initial_comment">
+      <div class="panel-body">
+        {% include "bfrs/initial_comment.html" %}
+      </div>
+    </div>
+  </div>
+
+</div>
 
 
 <div class="navbar navbar-fixed-bottom">
@@ -511,6 +564,7 @@
         deleteCssClass: 'delete-row' + '-' + '{{ activity_formset.prefix }}',
     });
 
+
 // $('[id^=""]').hide() // starts with 
 $('#id_init_authorised_date').datetimepicker({ format: "Y-m-d H:i" }); //ends with
 $('[id$="-date"]').datetimepicker({ format: "Y-m-d H:i" }); //ends with
@@ -599,6 +653,28 @@ $('#id_coord_type').on('change', function() {
     }
 });
 
+$(function(){
+    var coord_type = $('#id_first_attack :selected').text();
+    // This first part is needed for first page load
+    if (coord_type.indexOf('OTHER') > -1) {
+        $('#div_id_other_first_attack').show();
+    } else {
+        $('#div_id_other_first_attack').hide();
+    }
+
+    $('#id_first_attack').on('change', function() {
+        var coord_type = $('#id_first_attack :selected').text();
+        //console.log('Co Ord Type' + coord_type);
+        if (coord_type.indexOf('OTHER') > -1) {
+            $('#div_id_other_first_attack').show();
+        } else {
+            $('#div_id_other_first_attack').hide();
+        }
+    });
+});
+
+
+$('.collapse').collapse()
 </script>
 
 <script src="{% static 'smart-selects/admin/js/chainedfk.js' %}"></script>

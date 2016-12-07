@@ -158,6 +158,7 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
     model = Bushfire
     form_class = BushfireInitUpdateForm
     template_name = 'bfrs/create.html'
+    #template_name = 'bfrs/initial.html'
 
     def get_success_url(self):
         #return reverse("bushfire:index")

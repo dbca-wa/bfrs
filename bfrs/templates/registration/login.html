@@ -1,12 +1,10 @@
 {% extends 'admin/base.html' %}
-
 {% load admin_urls %}
-
 {% load staticfiles %}
 
-{% block extra_style %}
+{% block extrastyle %}
     {{ block.super }}
-    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+    <link rel="stylesheet" href="{% static "twitter-bootstrap/3.3.7/css/bootstrap.min.css" %}">
 {% endblock %}
 
 {% block content %}
