@@ -257,7 +257,11 @@
     {% include "bfrs/origin.html" %}
     {% include "bfrs/fuel_age.html" %}
 
-    <div class="row">
+<table class="table table-bordered table-striped table-condensed">
+  <tbody>
+    <tr>
+      <td>
+
         <div class="col-sm-4" > 
             <div id="div_id_rating" class="form-group"> 
                 <label for="id_rating" class="control-label requiredField">Area Priority Rating*</label>
@@ -277,7 +281,12 @@
                 <div class="controls ">{{form.other_first_attack}}</div>
             </div>
         </div>
-    </div>
+
+      </td>
+    </tr>
+
+  </tbody>
+</table>
 
     {% include "bfrs/area-burnt_fs.html" %}
 

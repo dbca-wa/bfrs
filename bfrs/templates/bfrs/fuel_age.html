@@ -1,34 +1,41 @@
 {% load static from staticfiles %}
 <h3>Effects of FRBs/Waterbomber</h3>
-<div class="row">
-    <div class="col-sm-3" > 
-        <div id="div_id_fire_stopped" class="form-group"> 
-            <label for="id_fire_stopped" class="control-label nonRequiredField">Fuel Age - Fire Stopped (Yr)</label>
-            <div class="controls ">{{form.fire_stopped}}</div>
+<table class="table table-bordered table-striped table-condensed">
+  <tbody>
+    <tr>
+      <td class="cbas">
+
+        <div class="col-sm-3" > 
+            <div id="div_id_fire_stopped" class="form-group"> 
+                <label for="id_fire_stopped" class="control-label nonRequiredField">Fuel Age - Fire Stopped (Yr)</label>
+                <div class="controls ">{{form.fire_stopped}}</div>
+            </div>
         </div>
-    </div>
 
-    <div class="col-sm-3" > 
-        <div id="div_last_burnt" class="form-group"> 
-            <label for="id_last_burnt" class="control-label nonRequiredField">Fuel Age - Area Last Burnt (Yr)</label>
-            <div class="controls ">{{form.last_burnt}}</div>
+        <div class="col-sm-3" > 
+            <div id="div_last_burnt" class="form-group"> 
+                <label for="id_last_burnt" class="control-label nonRequiredField">Fuel Age - Area Last Burnt (Yr)</label>
+                <div class="controls ">{{form.last_burnt}}</div>
+            </div>
         </div>
-    </div>
 
 
-    <div class="col-sm-2" > 
-        <div id="div_id_arrival_area" class="form-group"> 
-            <label for="id_arrival_area" class="control-label requiredField">Fire Area at Arrival (ha)*</label>
-            <div class="controls ">{{form.arrival_area}}</div>
+        <div class="col-sm-2" > 
+            <div id="div_id_arrival_area" class="form-group"> 
+                <label for="id_arrival_area" class="control-label requiredField">Fire Area at Arrival (ha)*</label>
+                <div class="controls ">{{form.arrival_area}}</div>
+            </div>
         </div>
-    </div>
 
-    <div class="col-sm-2" > 
-        <div id="div_id_fire_level" class="form-group"> 
-            <label for="id_fire_level" class="control-label requiredField">Final Fire Level*</label>
-            <div class="controls ">{{form.fire_level}}</div>
+        <div class="col-sm-2" > 
+            <div id="div_id_fire_level" class="form-group"> 
+                <label for="id_fire_level" class="control-label requiredField">Final Fire Level*</label>
+                <div class="controls ">{{form.fire_level}}</div>
+            </div>
         </div>
-    </div>
-</div>
 
+      </td>
+    </tr>
 
+  </tbody>
+</table>
