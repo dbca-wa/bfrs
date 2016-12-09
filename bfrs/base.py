@@ -41,13 +41,13 @@ class Audit(models.Model):
             for field in self._meta.fields:
                 self._initial[field.attname] = getattr(self, field.attname)
 
-    def _has_changed(self):
+    def has_changed(self):
         """
         Returns true if the current data differs from initial.
         """
         return bool(self.changed_data)
 
-    def _get_changed_data(self):
+    def get_changed_data(self):
         if self._changed_data is None:
             self._changed_data = []
             for field, value in self._initial.items():
@@ -56,9 +56,9 @@ class Audit(models.Model):
                 if getattr(self, field) != value:
                     self._changed_data.append(field)
         return self._changed_data
-    changed_data = property(_get_changed_data)
+    changed_data = property(get_changed_data)
 
-    def _save(self, *args, **kwargs):
+    def save(self, *args, **kwargs):
 
         '''
         This falls back on using an admin user if a thread request object wasn't found

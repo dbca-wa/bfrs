@@ -29,6 +29,7 @@ AUTH_TYPE_CHOICES = (
 #    created = models.DateTimeField(default=timezone.now, editable=False)
 #    modified = models.DateTimeField(auto_now=True, editable=False)
 
+
 @python_2_unicode_compatible
 class Prescription(models.Model):
     burn_id = models.CharField(max_length=7)
@@ -66,11 +67,26 @@ class District(models.Model):
     def __str__(self):
         return self.name
 
+
+class Profile(models.Model):
+    DEFAULT_GROUP = "Users"
+
+    user = models.OneToOneField(User, related_name='profile')
+    region = models.ForeignKey(Region, blank=True, null=True)
+    district = ChainedForeignKey(District,
+        chained_field="region", chained_model_field="region",
+        show_all=False, auto_choose=True, blank=True, null=True)
+
+    def __str__(self):
+        return 'Profile of user: {} - {} - {}'.format(self.user.username, self.region, self.district)
+
+
 class BushfireTest(models.Model):
     region = models.ForeignKey(Region)
     district = ChainedForeignKey(
         District, chained_field="region", chained_model_field="region",
         show_all=False, auto_choose=True)
+
 
 #class BushfireTest2(Audit):
 class BushfireTest2(models.Model):

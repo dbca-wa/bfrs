@@ -1,7 +1,7 @@
 from django import forms
 from bfrs.models import (Bushfire, Activity, Response, AreaBurnt, GroundForces, AerialForces,
         AttendingOrganisation, FireBehaviour, Legal, PrivateDamage, PublicDamage, Comment,
-        Region, District
+        Region, District, Profile
     )
 from datetime import datetime, timedelta
 from django.conf import settings
@@ -13,6 +13,57 @@ from django.contrib import messages
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Fieldset, ButtonHolder, Submit, Div, HTML
 from crispy_forms.bootstrap import TabHolder, Tab
+
+
+class BaseFormHelper(FormHelper):
+    """
+    Base helper class for rendering forms via crispy_forms.
+    To remove the default "Save" button from the helper, instantiate it with
+    inputs=[]
+    E.g. helper = BaseFormHelper(inputs=[])
+    """
+    def __init__(self, *args, **kwargs):
+        super(BaseFormHelper, self).__init__(*args, **kwargs)
+        self.form_class = 'horizontal col-lg-2'
+        self.help_text_inline = True
+        self.form_method = 'POST'
+        save_btn = Submit('submit', 'Save')
+        save_btn.field_classes = 'btn btn-primary'
+        cancel_btn = Submit('cancel', 'Cancel')
+        self.add_input(save_btn)
+        self.add_input(cancel_btn)
+
+
+class HelperModelForm(forms.ModelForm):
+    """
+    Stock ModelForm with a property named ``helper`` (used by crispy_forms to
+    render in templates).
+    """
+    @property
+    def helper(self):
+        helper = BaseFormHelper()
+        return helper
+
+
+class ProfileForm(HelperModelForm):
+#class ProfileForm(forms.ModelForm):
+    def clean(self):
+        """District must be child of Region.
+        """
+        cleaned_data = super(ProfileForm, self).clean()
+        district = cleaned_data.get('district', None)
+        if district and district.region != cleaned_data.get('region'):
+            self._errors['district'] = self.error_class(
+                ['Please choose a valid District for this Region (or leave it blank).'])
+        # District may not be chosen if archive_date is set.
+        if district and district.archive_date:
+            self._errors['district'] = self.error_class(
+                ['Please choose a current District for this Region (or leave it blank).'])
+        return cleaned_data
+
+    class Meta:
+        model = Profile
+        exclude = ('user',)
 
 
 class BushfireForm(forms.ModelForm):

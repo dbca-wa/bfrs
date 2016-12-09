@@ -103,6 +103,7 @@
                   {% if perms.auth.change_user %}
                     <li><a href="{% url 'admin:auth_user_changelist' %}">Manage Users</a></li>
                   {% endif %}
+                    <li><a href="{% url 'profile' %}">{% trans 'User profile' %}</a></li>
                     <li><a href="{% url 'admin:logout' %}">{% trans 'Log out' %}</a></li>
                     <li><a href="{% url 'about' %}">{% trans 'About' %}</a></li>
                   {% endblock %}
@@ -152,6 +153,7 @@
       {% block contentwrapper %}
     <div class="row">
       <div class="span12">
+      {% block breadcrumbs %}{% endblock %}
       {% block pretitle %}{% endblock %}
       {% block content_title %}{% if title %}<h1>{{ title }}</h1>{% endif %}{% endblock %}
       {% block content %}

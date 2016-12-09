@@ -39,7 +39,7 @@
                         <div class="form-group">
                             <button type="submit" class="btn btn-primary">Login</button>
                         </div>
-                        <input type="hidden" name="next" value="{% url 'dashboard' %}"/>
+                        <input type="hidden" name="next" value="{% url 'main' %}"/>
                         {% if not user.is_anonymous %}
                             <input type="hidden" id="loggedIn"/>
                         {% endif %}

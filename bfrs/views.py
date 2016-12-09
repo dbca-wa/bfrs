@@ -1,4 +1,5 @@
 from django.http import HttpResponse, HttpResponseRedirect
+from django.template.response import TemplateResponse
 from django.core.urlresolvers import reverse
 from django.views import generic
 from django.views.generic.edit import CreateView, UpdateView, FormView
@@ -6,10 +7,10 @@ from django.views.generic.edit import CreateView, UpdateView, FormView
 from django.forms.formsets import formset_factory
 from django.contrib.auth.mixins import LoginRequiredMixin
 
-from bfrs.models import (Bushfire, Activity, Response, AreaBurnt, GroundForces, AerialForces,
+from bfrs.models import (Profile, Bushfire, Activity, Response, AreaBurnt, GroundForces, AerialForces,
         AttendingOrganisation, FireBehaviour, Legal, PrivateDamage, PublicDamage, Comment
     )
-from bfrs.forms import (BushfireForm, BushfireCreateForm, BushfireInitUpdateForm,
+from bfrs.forms import (ProfileForm, BushfireForm, BushfireCreateForm, BushfireInitUpdateForm,
         ActivityFormSet, ResponseFormSet, AreaBurntFormSet,
         GroundForcesFormSet, AerialForcesFormSet, AttendingOrganisationFormSet, FireBehaviourFormSet,
         LegalFormSet, PrivateDamageFormSet, PublicDamageFormSet, CommentFormSet
@@ -23,6 +24,35 @@ from bfrs.utils import (breadcrumbs_li, calc_coords,
 from django.db import IntegrityError, transaction
 from django.contrib import messages
 from django.forms import ValidationError
+
+
+class ProfileView(LoginRequiredMixin, generic.FormView):
+    model = Profile
+    form_class = ProfileForm
+    template_name = 'registration/profile.html'
+    success_url = 'main'
+
+    def get_success_url(self):
+        return reverse('main')
+
+    def get_initial(self):
+        profile, created = Profile.objects.get_or_create(user=self.request.user)
+        return { 'region': profile.region, 'district': profile.district }
+
+    def post(self, request, *args, **kwargs):
+        """
+        Handles POST requests, instantiating a form instance with the passed
+        POST variables and then checked for validity.
+        """
+
+        form = ProfileForm(request.POST, instance=request.user.profile)
+        if form.is_valid():
+            if 'cancel' not in self.request.POST:
+                form.save()
+            return HttpResponseRedirect(self.get_success_url())
+
+        return TemplateResponse(request, self.template_name)
+
 
 class BushfireView(LoginRequiredMixin, generic.ListView):
     model = Bushfire
@@ -274,6 +304,7 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         return reverse("home")
 
     def post(self, request, *args, **kwargs):
+        #import ipdb; ipdb.set_trace()
         self.object = self.get_object()
         form_class = self.get_form_class()
         form = self.get_form(form_class)

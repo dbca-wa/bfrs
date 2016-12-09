@@ -20,7 +20,7 @@ def admin_view_selection_view(request):
     if request.user.is_superuser:
         return admin.site.index(request)
     elif request.user.is_authenticated():
-        return redirect('dashboard')
+        return redirect('main')
     else:
         return redirect('login')
 
@@ -37,12 +37,15 @@ urlpatterns = [
     url('^', include('django.contrib.auth.urls')),
 
     url(r'^$', home_view_selection_view, name='home'),
-    url(r'^main/', login_required(views.BushfireView.as_view()), name='dashboard'),
+    url(r'^main/', login_required(views.BushfireView.as_view()), name='main'),
     url(r'^admin/$', admin_view_selection_view),
     #url(r'^$', views.BushfireView.as_view(), name='home'),
     url(r'^bfrs/', include('bfrs.urls', namespace='bushfire')),
     url(r'^admin/', include(admin.site.urls)),
     url(r'^about/', TemplateView.as_view(template_name='about.html'), name='about'),
+    #url(r'profile/(?P<username>[a-zA-Z0-9]+)$', views.profile),
+    #url(r'profile/$', views.profile),
+    url(r'profile/$', views.ProfileView.as_view(), name='profile'),
 
     # api
     #url(r'^api/', include(api_urls, namespace='api')),
