@@ -1,0 +1,14 @@
+{% extends "admin/base.html" %}
+{% load staticfiles %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static "twitter-bootstrap/3.3.7/css/bootstrap.min.css" %}">
+{% endblock %}
+
+{% block extra_js %}
+  <script src="{% static 'twitter-bootstrap/3.3.7/js/bootstrap.min.js' %}"></script>
+  <script src="{% static 'smart-selects/admin/js/chainedfk.js' %}"></script>
+{% endblock %}
+
+

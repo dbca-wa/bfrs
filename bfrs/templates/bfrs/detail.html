@@ -1,5 +1,15 @@
 {% extends "admin/base.html" %}
+{% load i18n %}
 {% load static from staticfiles %}
+
+{% block breadcrumbs %}
+<ul class="breadcrumb">
+  <li><a href="{% url 'main' %}">{% trans 'Bushfire Overview' %}</a></li>
+  <li><a href="{% url 'bushfire:bushfire_final' object.id %}">{% trans 'Final' %}</a></li>
+  <li>{{ object.name}}</li>
+</ul>
+{% endblock %}
+
 
 {% block extrahead %}
   {{ block.super }}

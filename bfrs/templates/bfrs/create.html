@@ -1,6 +1,15 @@
-{% extends "admin/base.html" %}
+{% extends "admin/base_site.html" %}
+{% load i18n %}
 {% load static from staticfiles %}
 {% load bfrs_tags %}
+
+{% block breadcrumbs %}
+<ul class="breadcrumb">
+  <li><a href="{% url 'main' %}">{% trans 'Bushfire Overview' %}</a></li>
+  <li><a href="{% url 'bushfire:bushfire_initial' object.id %}">{% trans 'Initial' %}</a></li>
+  <li>{{ object.name}}</li>
+</ul>
+{% endblock %}
 
 {% block extrahead %}
   {{ block.super }}
@@ -80,8 +89,8 @@
   {% endblock %}
 
   {% block extrastyle %}
+  {{ block.super }}
   <link rel="stylesheet" type="text/css" href="{% static 'css/jquery.datetimepicker.css' %}"/ >
-  <link rel="stylesheet" href="{% static "twitter-bootstrap/3.3.7/css/bootstrap.min.css" %}">
   {% endblock %}
   {% comment %}
   <link rel="stylesheet" href="{% static "css/bootstrap.css" %}">
@@ -102,8 +111,7 @@
   {% endcomment %}
 
   {% block extra_js %}
-
-  <script src="{% static 'twitter-bootstrap/3.3.7/js/bootstrap.min.js' %}"></script>
+  {{ block.super }}
   <script src="{% static 'js/jquery.formset.js' %}"></script>
   {% comment %}
   <script src="{% static 'js/bootstrap.min.js' %}"></script>
@@ -677,5 +685,4 @@ $(function(){
 $('.collapse').collapse()
 </script>
 
-<script src="{% static 'smart-selects/admin/js/chainedfk.js' %}"></script>
 {% endblock %}

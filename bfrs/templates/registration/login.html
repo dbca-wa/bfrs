@@ -1,11 +1,6 @@
-{% extends 'admin/base.html' %}
+{% extends 'admin/base_site.html' %}
 {% load admin_urls %}
 {% load staticfiles %}
-
-{% block extrastyle %}
-    {{ block.super }}
-    <link rel="stylesheet" href="{% static "twitter-bootstrap/3.3.7/css/bootstrap.min.css" %}">
-{% endblock %}
 
 {% block content %}
     <div class="row">
