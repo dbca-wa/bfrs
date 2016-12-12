@@ -252,157 +252,180 @@
 <h1>Bushfire Detail</h1>
 <form action="" method="post">{% csrf_token %}
 
-<div class="row">
-    <div class="col-sm-2" > 
-        <div id="div_id_region" class="form-group"> 
-            <label for="id_region" class="control-label requiredField">Region*</label>
-            <div class="controls ">{{form.region}}</div>
-        </div>
-    </div>
+<table class="table table-bordered table-striped table-condensed">
+  <tbody>
 
-    <div class="col-sm-2" > 
-        <div id="div_id_district" class="form-group"> 
-            <label for="id_district" class="control-label requiredField">District*</label>
-            <div class="controls ">{{form.district}}</div>
+    <tr>
+      <td class="cbas">
+        <div class="col-sm-2" > 
+            <div id="div_id_region" class="form-group"> 
+                <label for="id_region" class="control-label requiredField">Region*</label>
+                <div class="controls ">{{form.region}}</div>
+            </div>
         </div>
-    </div>
 
-    <div class="col-sm-2" > 
-        <div id="div_id_incident_no" class="form-group"> 
-            <label for="id_incident_no" class="control-label requiredField">Fire Incident No.*</label>
-            <div class="controls ">{{form.incident_no}}</div>
+        <div class="col-sm-2" > 
+            <div id="div_id_district" class="form-group"> 
+                <label for="id_district" class="control-label requiredField">District*</label>
+                <div class="controls ">{{form.district}}</div>
+            </div>
         </div>
-    </div>
 
-    <div class="col-sm-2" > 
-        <div id="div_id_season" class="form-group"> 
-            <label for="id_season" class="control-label  requiredField">Season*</label>
-            <div class="controls ">{{form.season}}</div>
+        <div class="col-sm-2" > 
+            <div id="div_id_incident_no" class="form-group"> 
+                <label for="id_incident_no" class="control-label requiredField">Fire Incident No.*</label>
+                <div class="controls ">{{form.incident_no}}</div>
+            </div>
         </div>
-    </div>
 
-    <div class="col-sm-2" > 
-        <div id="div_id_job_code" class="form-group"> 
-            <label for="id_job_code" class="control-label nonRequiredField">Job Code</label>
-            <div class="controls ">{{form.job_code}}</div>
+        <div class="col-sm-2" > 
+            <div id="div_id_season" class="form-group"> 
+                <label for="id_season" class="control-label  requiredField">Season*</label>
+                <div class="controls ">{{form.season}}</div>
+            </div>
         </div>
-    </div>
-</div>
 
-<div class="row">
-    <div class="col-sm-2" > 
-        <div id="div_id_name" class="form-group"> 
-            <label for="id_name" class="control-label  requiredField">Name*</label>
-            <div class="controls ">{{form.name}}</div>
+        <div class="col-sm-2" > 
+            <div id="div_id_job_code" class="form-group"> 
+                <label for="id_job_code" class="control-label nonRequiredField">Job Code</label>
+                <div class="controls ">{{form.job_code}}</div>
+            </div>
         </div>
-    </div>
 
-    <div class="col-sm-2" > 
-        <div id="div_potential_fire_level" class="form-group"> 
-            <label for="id_potential_fire_level" class="control-label  requiredField">Potential Fire Level*</label>
-            <div class="controls ">{{form.potential_fire_level}}</div>
-        </div>
-    </div>
+      </td>
+    </tr>
 
-    <div class="col-sm-2" > 
-        <div id="div_id_field_officer" class="form-group"> 
-            <label for="id_field_officer" class="control-label requiredField">Field Officer*</label>
-            <div class="controls ">{{form.field_officer}}</div>
+    <tr>
+      <td>
+        <div class="col-sm-2" > 
+            <div id="div_id_name" class="form-group"> 
+                <label for="id_name" class="control-label  requiredField">Name*</label>
+                <div class="controls ">{{form.name}}</div>
+            </div>
         </div>
-    </div>
 
-    <div class="col-sm-2" > 
-        <div id="div_id_init_authorised_by" class="form-group"> 
-            <label for="id_init_authorised_by" class="control-label nonRequiredField">Authorised By</label>
-            <div class="controls ">{{form.init_authorised_by}}</div>
+        <div class="col-sm-2" > 
+            <div id="div_potential_fire_level" class="form-group"> 
+                <label for="id_potential_fire_level" class="control-label  requiredField">Potential Fire Level*</label>
+                <div class="controls ">{{form.potential_fire_level}}</div>
+            </div>
         </div>
-    </div>
 
-    <div class="col-sm-2" > 
-        <div id="div_id_init_authorised_date" class="form-group"> 
-            <label for="id_init_authorised_date" class="control-label nonRequiredField">Authorised Date</label>
-            <div class="controls ">{{form.init_authorised_date}}</div>
+        <div class="col-sm-2" > 
+            <div id="div_id_field_officer" class="form-group"> 
+                <label for="id_field_officer" class="control-label requiredField">Field Officer*</label>
+                <div class="controls ">{{form.field_officer}}</div>
+            </div>
         </div>
-    </div>
-</div>
 
-<div class="row">
-    <div class="col-sm-4" >
-        <div id="div_id_cause" class="form-group"> 
-            <label for="id_cause" class="control-label requiredField">Cause*</label>
-            <div class="controls ">{{form.cause}}</div>
+        <div class="col-sm-2" > 
+            <div id="div_id_init_authorised_by" class="form-group"> 
+                <label for="id_init_authorised_by" class="control-label nonRequiredField">Authorised By</label>
+                <div class="controls ">{{form.init_authorised_by}}</div>
+            </div>
         </div>
-    </div>
-    <div class="col-sm-2" >
-        <div id="div_id_known_possible" class="form-group"> 
-            <label for="id_known_possible" class="control-label requiredField">Known/Possible*</label>
-            <div class="controls ">{{form.known_possible}}</div>
-        </div>
-    </div>
-    <div class="col-sm-4" >
-        <div id="div_id_other_cause" class="form-group"> 
-            <label for="id_other_cause" class="control-label nonRequiredField">Other Cause</label>
-            <div class="controls ">{{form.other_cause}}</div>
-        </div>
-    </div>
-    <div class="col-sm-2" >
-        <div id="div_id_investigation_req" class="form-group"> 
-            <label for="id_investigation_req" class="control-label nonRequiredField">Investigation Required</label>
-            <div class="controls ">{{form.investigation_req}}</div>
-        </div>
-    </div>
 
-</div>
-
-<div class="row">
-    <div class="col-sm-4" >
-        <div id="div_id_first_attack" class="form-group"> 
-            <label for="id_first_attack" class="control-label requiredField">First Attack Agency*</label>
-            <div class="controls ">{{form.first_attack}}</div>
+        <div class="col-sm-2" > 
+            <div id="div_id_init_authorised_date" class="form-group"> 
+                <label for="id_init_authorised_date" class="control-label nonRequiredField">Authorised Date</label>
+                <div class="controls ">{{form.init_authorised_date}}</div>
+            </div>
         </div>
-    </div>
-    <div class="col-sm-4" >
-        <div id="div_id_other_first_attack" class="form-group"> 
-            <label for="id_other_first_attack" class="control-label requiredField">Other Agency*</label>
-            <div class="controls ">{{form.other_first_attack}}</div>
-        </div>
-    </div>
+      </td>
+    </tr>
 
-</div>
+
+    <tr>
+      <td class="cbas">
+        <div class="col-sm-4" >
+            <div id="div_id_cause" class="form-group"> 
+                <label for="id_cause" class="control-label requiredField">Cause*</label>
+                <div class="controls ">{{form.cause}}</div>
+            </div>
+        </div>
+        <div class="col-sm-2" >
+            <div id="div_id_known_possible" class="form-group"> 
+                <label for="id_known_possible" class="control-label requiredField">Known/Possible*</label>
+                <div class="controls ">{{form.known_possible}}</div>
+            </div>
+        </div>
+        <div class="col-sm-4" >
+            <div id="div_id_other_cause" class="form-group"> 
+                <label for="id_other_cause" class="control-label nonRequiredField">Other Cause</label>
+                <div class="controls ">{{form.other_cause}}</div>
+            </div>
+        </div>
+        <div class="col-sm-2" >
+            <div id="div_id_investigation_req" class="form-group"> 
+                <label for="id_investigation_req" class="control-label nonRequiredField">Investigation Required</label>
+                <div class="controls ">{{form.investigation_req}}</div>
+            </div>
+        </div>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <div class="col-sm-4" >
+            <div id="div_id_first_attack" class="form-group"> 
+                <label for="id_first_attack" class="control-label requiredField">First Attack Agency*</label>
+                <div class="controls ">{{form.first_attack}}</div>
+            </div>
+        </div>
+        <div class="col-sm-4" >
+            <div id="div_id_other_first_attack" class="form-group"> 
+                <label for="id_other_first_attack" class="control-label requiredField">Other Agency*</label>
+                <div class="controls ">{{form.other_first_attack}}</div>
+            </div>
+        </div>
+      </td>
+    </tr>
+
+  </tbody>
+</table>
 
 {% include "bfrs/origin.html" %}
 
 <h3>Activities</h3>
-<div id="id_activities" class="row formset activity-formset">
-    <table border="0" cellpadding="0" cellspacing="0">
-        <tbody>
-            <th>Activity</th>
-            <th>Date</th>
-            <th></th>
-            <th></th>
-            {% for fs in activity_formset %}
-            <tr>
-               <td>{{ fs.activity }}</td>
-               <td>{{ fs.date }}</td>
-               <td>
-                    {% if fs.instance.pk %}{{ fs.DELETE }}{% endif %}
-                    {{ fs.id }}
+<table class="table table-bordered table-striped table-condensed">
+  <tbody>
+    <tr>
+      <td class="cbas">
+        <div id="id_activities" class="row formset activity-formset">
+            <table border="0" cellpadding="0" cellspacing="0">
+                <tbody>
+                    <th>Activity</th>
+                    <th>Date</th>
+                    <th></th>
+                    <th></th>
+                    {% for fs in activity_formset %}
+                    <tr>
+                    <td>{{ fs.activity }}</td>
+                    <td>{{ fs.date }}</td>
+                    <td>
+                            {% if fs.instance.pk %}{{ fs.DELETE }}{% endif %}
+                            {{ fs.id }}
 
-                    {% for field in fs %} 
-                        {% if field.errors %}
-                            <font color="red"><li>{{ field.label }}: {{ field.errors|striptags }}</li></font>
-                        {% endif %}
+                            {% for field in fs %} 
+                                {% if field.errors %}
+                                    <font color="red"><li>{{ field.label }}: {{ field.errors|striptags }}</li></font>
+                                {% endif %}
+                            {% endfor %}
+
+                    </td>
+
+                    </tr>
                     {% endfor %}
+                </tbody>
+            </table>
+            {{ activity_formset.management_form }}
+        </div>
+      </td>
+    </tr>
 
-               </td>
+  </tbody>
+</table>
 
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {{ activity_formset.management_form }}
-</div>
-<hr>
 
 {% comment %}
 {% endcomment %}
