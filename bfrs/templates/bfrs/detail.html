@@ -90,6 +90,7 @@
   {% endblock %}
 
   {% block extrastyle %}
+  {{ block.super }}
   <link rel="stylesheet" type="text/css" href="{% static 'css/jquery.datetimepicker.css' %}"/ >
   {% endblock %}
 
@@ -97,6 +98,7 @@
   {% endcomment %}
 
   {% block extra_js %}
+  {{ block.super }}
   <script src="{% static 'js/jquery.formset.js' %}"></script>
 
   <!-- http://xdsoft.net/jqplugins/datetimepicker/ -->

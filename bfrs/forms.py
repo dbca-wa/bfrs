@@ -432,24 +432,14 @@ CommentFormSet              = inlineformset_factory(Bushfire, Comment, extra=0, 
 NEXT - For Testing ONLY
 """
 
-from bfrs.models import (BushfireTest2, Activity2)
-ActivityFormSet2            = inlineformset_factory(BushfireTest2, Activity2, extra=1, max_num=7, can_delete=True, exclude=())
-class BushfireCreateForm2(forms.ModelForm):
-    class Meta:
-        model = BushfireTest2
-        fields = ('region', 'district', 'incident_no', 'season', 'job_code',
-                  'name', 'potential_fire_level', 'init_authorised_by', 'init_authorised_date',
-#                  'distance', 'direction', 'place', 'lot_no', 'street', 'town',
-#                  'coord_type', 'fire_not_found',
-#                  'lat_decimal', 'lat_degrees', 'lat_minutes', 'lon_decimal', 'lon_degrees', 'lon_minutes',
-#                  'mga_zone', 'mga_easting', 'mga_northing',
-#                  'fd_letter', 'fd_number', 'fd_tenths',
-##                  'source','cause', 'arson_squad_notified', 'prescription', 'offence_no',
-#                  'fuel','ros', 'flame_height', 'assistance_required', 'fire_contained',
-#                  'containment_time', 'ops_point', 'communications', 'weather', 'field_officer',
-#                  'first_attack', 'other_agency',
-#                  'cause', 'known_possible', 'other_cause', 'investigation_req',
-                 )
+#from bfrs.models import (BushfireTest2, Activity2)
+#ActivityFormSet2            = inlineformset_factory(BushfireTest2, Activity2, extra=1, max_num=7, can_delete=True, exclude=())
+#class BushfireCreateForm2(forms.ModelForm):
+#    class Meta:
+#        model = BushfireTest2
+#        fields = ('region', 'district', 'incident_no', 'season', 'job_code',
+#                  'name', 'potential_fire_level', 'init_authorised_by', 'init_authorised_date',
+#                 )
 
 
 from bfrs.models import (BushfireTest)
