@@ -87,6 +87,10 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
         #return reverse("bushfire:index")
         return reverse("home")
 
+    def get_initial(self):
+        profile, created = Profile.objects.get_or_create(user=self.request.user)
+        return { 'region': profile.region, 'district': profile.district }
+
     def post(self, request, *args, **kwargs):
         #self.object = self.get_object()
         form_class = self.get_form_class()
@@ -180,6 +184,7 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
                         'activity_formset': activity_formset,
                         'area_burnt_formset': area_burnt_formset,
                         'attending_org_formset': attending_org_formset,
+                        'create': True,
             })
         return context
 

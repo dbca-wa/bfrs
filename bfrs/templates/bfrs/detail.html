@@ -1,4 +1,4 @@
-{% extends "admin/base.html" %}
+{% extends "admin/base_site.html" %}
 {% load i18n %}
 {% load static from staticfiles %}
 
@@ -90,7 +90,6 @@
   {% endblock %}
 
   {% block extrastyle %}
-  <link rel="stylesheet" href="{% static "twitter-bootstrap/3.3.7/css/bootstrap.min.css" %}">
   <link rel="stylesheet" type="text/css" href="{% static 'css/jquery.datetimepicker.css' %}"/ >
   {% endblock %}
 
@@ -99,7 +98,6 @@
 
   {% block extra_js %}
   <script src="{% static 'js/jquery.formset.js' %}"></script>
-  <script src="{% static 'twitter-bootstrap/3.3.7/js/bootstrap.min.js' %}"></script>
 
   <!-- http://xdsoft.net/jqplugins/datetimepicker/ -->
   <script src="{% static 'js/jquery.datetimepicker.full.min.js' %}"></script>

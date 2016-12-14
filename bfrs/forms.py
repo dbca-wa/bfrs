@@ -9,10 +9,36 @@ from django.forms import ValidationError
 from django.forms.models import inlineformset_factory, formset_factory, BaseInlineFormSet
 #from django.forms.formsets import BaseFormSet
 from django.contrib import messages
+from django.contrib.auth.models import User, Group
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Fieldset, ButtonHolder, Submit, Div, HTML
 from crispy_forms.bootstrap import TabHolder, Tab
+
+
+class UserForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(UserForm, self).__init__(*args, **kwargs)
+        self.fields['is_active'].label = ("Approved User (i.e. enable login for this user?)")
+        #import ipdb; ipdb.set_trace()
+        instance = getattr(self, 'instance', None)
+        if instance and instance.pk:
+            self.fields['username'].widget.attrs['readonly'] = True
+            self.fields['email'].widget.attrs['readonly'] = True
+            self.fields['first_name'].widget.attrs['readonly'] = True
+            self.fields['last_name'].widget.attrs['readonly'] = True
+
+    class Meta:
+        model = User
+        fields = ('is_active', 'groups', 'user_permissions',)
+
+
+class GroupForm(forms.ModelForm):
+    class Meta:
+        model = Group
+        #fields = ('is_active', 'groups', 'user_permissions',)
+        exclude = ()
+
 
 
 class BaseFormHelper(FormHelper):
