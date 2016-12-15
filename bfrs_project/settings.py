@@ -70,11 +70,13 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    #'guardian',
     'smart_selects',
     'django_extensions',
-    'bfrs',
     'debug_toolbar',
     'crispy_forms',
+
+    'bfrs',
 ]
 
 MIDDLEWARE_CLASSES = [
@@ -149,6 +151,7 @@ LOGIN_REDIRECT_URL = '/'
 
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
+    #'guardian.backends.ObjectPermissionBackend',
 )
 
 # Internationalization

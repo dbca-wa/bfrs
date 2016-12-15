@@ -9,7 +9,8 @@
   {% if create %}
     <li>{% trans 'Create' %}</li>
   {% else %}
-    <li><a href="{% url 'bushfire:bushfire_initial' object.id %}">{% trans 'Initial' %}</a></li>
+    {% comment %}<li><a href="{% url 'bushfire:bushfire_initial' object.id %}">{% trans 'Initial' %}</a></li>{% endcomment %}
+    <li>{% trans 'Initial' %}</li>
     <li>{{ object.name}}</li>
   {% endif %}
 </ul>
@@ -503,7 +504,11 @@
   <div class="navbar-inner">
     <div class="container">
       <p class="pull-right">
-      <input type="submit" value="Save" class="btn btn-primary btn-success" name="_save" {% if has_init_authorised %}title="Initial Report cannot be edited" disabled{% endif %} />
+      {% if request.user|can_readonly and not request.user.is_superuser %}
+        <input type="submit" value="Save" class="btn btn-primary btn-success" name="_save" title="You do not have 'Update' permissions" disabled />
+      {% else %}
+        <input type="submit" value="Save" class="btn btn-primary btn-success" name="_save" {% if has_init_authorised %}title="Initial Report cannot be edited" disabled{% endif %} />
+      {% endif %}
         <a href="javascript: history.go(-1)" class="btn btn-danger">Cancel</a>
       </p>
     </div>

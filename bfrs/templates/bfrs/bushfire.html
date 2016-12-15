@@ -10,9 +10,23 @@
     </div>
     <br>
     <div style="float: right;">
+      {% if request.user|can_readonly and not request.user.is_superuser %}
+        <a href="{% url 'bushfire:bushfire_create' %}"><button disabled style="color:Grey;" title="You do not have 'Create' permissions"><i class="icon-plus icon-white"></i> Add Bushfire</button></a>
+      {% else %}
         <a href="{% url 'bushfire:bushfire_create' %}"><button><i class="icon-plus icon-white"></i> Add Bushfire</button></a>
+      {% endif %}
     </div>
 </div>
+
+<br>
+{% comment %}
+<p>perms: {{perms}}</p>
+<p>perms.app_label: {{perms.app_label}}</p>
+<p>perms.bfrs.view_bushfire: {{perms.bfrs.view_bushfire}}</p>
+<p>user: {{user}}</p>
+<p>user.groups 1: {{user.groups.all}}</p>
+<p>user.groups 2: {% if request.user|can_readonly %} True jm 2 {% endif %}</p>
+{% endcomment %}
 
 {% if object_list %}
 <table id="table" class="tablesorter table table-striped table-bordered table-hover table-condensed">

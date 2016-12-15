@@ -11,7 +11,7 @@ from django.contrib.auth import views as auth_views
 
 def home_view_selection_view(request):
     if request.user.is_authenticated():
-        return redirect('dashboard')
+        return redirect('main')
     else:
         return redirect('login')
 

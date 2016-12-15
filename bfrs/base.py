@@ -63,7 +63,7 @@ class Audit(models.Model):
         '''
         This falls back on using an admin user if a thread request object wasn't found
         '''
-        import ipdb; ipdb.set_trace()
+        #import ipdb; ipdb.set_trace()
         User = get_user_model()
         _locals = threading.local()
 

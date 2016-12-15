@@ -36,7 +36,6 @@ class UserForm(forms.ModelForm):
 class GroupForm(forms.ModelForm):
     class Meta:
         model = Group
-        #fields = ('is_active', 'groups', 'user_permissions',)
         exclude = ()
 
 

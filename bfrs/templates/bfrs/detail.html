@@ -5,7 +5,8 @@
 {% block breadcrumbs %}
 <ul class="breadcrumb">
   <li><a href="{% url 'main' %}">{% trans 'Bushfire Overview' %}</a></li>
-  <li><a href="{% url 'bushfire:bushfire_final' object.id %}">{% trans 'Final' %}</a></li>
+  {% comment %}<li><a href="{% url 'bushfire:bushfire_final' object.id %}">{% trans 'Final' %}</a></li> {% endcomment %}
+  <li>{% trans 'Final' %}</li>
   <li>{{ object.name}}</li>
 </ul>
 {% endblock %}
