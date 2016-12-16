@@ -139,55 +139,11 @@
       </td>
     </tr>
 
-    <tr>
-      <td class="cbas">
-
-        <div id="id_activities" class="row formset activity-formset">
-            <table border="0" cellpadding="0" cellspacing="0">
-                <tbody>
-                    <th>Activity</th>
-                    <th>Date</th>
-                    <th></th>
-                    <th></th>
-                    {% for fs in activity_formset %}
-                    <tr>
-                    <td>{{ fs.activity }}</td>
-                    <td>{{ fs.date }}</td>
-                    <td>
-                            {% if fs.instance.pk %}{{ fs.DELETE }}{% endif %}
-                            {{ fs.id }}
-
-                            {% for field in fs %} 
-                                {% if field.errors %}
-                                    <font color="red"><li>{{ field.label }}: {{ field.errors|striptags }}</li></font>
-                                {% endif %}
-                            {% endfor %}
-
-                    </td>
-
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {{ activity_formset.management_form }}
-        </div>
-
-      </td>
-    </tr>
-
   </tbody>
 </table>
 
-<script>
-    $('.activity-formset tbody tr').formset({
-        prefix: '{{ activity_formset.prefix }}',
-        formCssClass: 'activity_fs',
-        addText: '<i class="icon-plus"></i> add another activity',
-        deleteText: '<i class="icon-remove"></i>',
-        deleteCssClass: 'delete-row' + '-' + '{{ activity_formset.prefix  }}',
-    });
+{% include "bfrs/activities_fs.html" %}
 
-</script>
 
 
 

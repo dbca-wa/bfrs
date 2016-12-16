@@ -1,6 +1,89 @@
 {% extends "admin/base.html" %}
 {% load staticfiles %}
 
+{% block extrahead %}
+  {{ block.super }}
+  <style>
+    .filter-pad {
+        margin-top: 5px;
+        margin-bottom: -17px !important;
+        margin-left: 10px;
+    }
+    .adjust-legend{
+        margin-bottom:-40px;
+    }
+
+    .ui-datepicker {
+        width: 216px;
+        height: auto;
+        margin: 5px auto 0;
+        font: 9pt Arial, sans-serif;
+        -webkit-box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, .5);
+        -moz-box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, .5);
+        box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, .5);
+        background-color: #FFF;
+    }
+
+    .myCollapse {
+            display: none;
+    }
+    .myCollapse.in {
+            display: table-row;
+    }
+
+    #content {
+        float:left;
+        text-align:left;
+        width:90%;
+    }
+
+    .formset {
+        text-indent: -1em;
+        padding-left: 1em;
+    }
+
+    .nonRequiredField {
+        font-weight: normal !important;
+    }
+
+    .requiredField {
+        font-weight: strong !important;
+    }
+
+    hr{
+        padding: 0px;
+        margin: 0px;
+    }
+
+    th, td {
+        padding: 5px 15px;
+    }
+
+    table, tr, td {
+        border: none;
+    }
+
+    .table_fs {
+        margin-left:20px;
+    }
+
+    .navbar-fixed-bottom {
+    background-color: #F6F6F6;
+    background-image: none;
+    background-repeat: no-repeat;
+    }
+
+    .btn {
+    vertical-align: top;
+    }
+
+    body { padding-bottom: 70px; }
+
+  </style>
+
+  {% endblock %}
+
+
 {% block extrastyle %}
     {{ block.super }}
     <link rel="stylesheet" href="{% static "twitter-bootstrap/3.3.7/css/bootstrap.min.css" %}">
