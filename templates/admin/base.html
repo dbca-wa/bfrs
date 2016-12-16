@@ -101,9 +101,12 @@
                     <li><a href="{{ docsroot }}">{% trans 'Help' %}</a></li>
                   {% endif %}
                   {% if perms.auth.change_user %}
+                    {% comment %}
+                    <!-- Below is unnecessary because there is an '+' icon under 'Manage Users', if user is superuser -->>
                     {% if request.user.is_superuser %}
                       <li><a href="{% url 'admin:auth_group_changelist' %}">Manage Groups</a></li>
                     {% endif %}
+                    {% endcomment %}
                     <li><a href="{% url 'admin:auth_user_changelist' %}">Manage Users</a></li>
                   {% endif %}
                     <li><a href="{% url 'profile' %}">{% trans 'User profile' %}</a></li>

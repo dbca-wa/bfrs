@@ -374,7 +374,7 @@ class BaseAttendingOrganisationFormSet(BaseInlineFormSet):
                     if duplicates:
                         form.add_error('name', 'Duplicate Organisation: must be unique')
 
-                    if 'other' in name.name.lower() and not other:
+                    if name and 'other' in name.name.lower() and not other:
                         form.add_error('name', 'Must specify other organisation')
 
 
@@ -410,7 +410,7 @@ class BaseFireBehaviourFormSet(BaseInlineFormSet):
                     if duplicates:
                         form.add_error('name', 'Duplicate Fire Behaviour: must be unique')
 
-                    if not fdi:
+                    if name and not fdi:
                         form.add_error('fdi', 'This field is required')
 
 
@@ -420,7 +420,7 @@ AreaBurntFormSet            = inlineformset_factory(Bushfire, AreaBurnt, formset
 GroundForcesFormSet         = inlineformset_factory(Bushfire, GroundForces, extra=0, max_num=3, min_num=1, exclude=())
 AerialForcesFormSet         = inlineformset_factory(Bushfire, AerialForces, extra=0, max_num=2, min_num=1, exclude=())
 AttendingOrganisationFormSet= inlineformset_factory(Bushfire, AttendingOrganisation, formset=BaseAttendingOrganisationFormSet, extra=0, max_num=11, min_num=1, validate_min=True, exclude=())
-FireBehaviourFormSet        = inlineformset_factory(Bushfire, FireBehaviour, formset=BaseFireBehaviourFormSet, extra=0, max_num=1, min_num=1, validate_min=True, exclude=())
+FireBehaviourFormSet        = inlineformset_factory(Bushfire, FireBehaviour, formset=BaseFireBehaviourFormSet, extra=0, max_num=3, min_num=1, validate_min=True, exclude=())
 LegalFormSet                = inlineformset_factory(Bushfire, Legal, extra=0, max_num=5*12, min_num=1, exclude=())
 PrivateDamageFormSet        = inlineformset_factory(Bushfire, PrivateDamage, extra=0, max_num=12, min_num=1, exclude=())
 PublicDamageFormSet         = inlineformset_factory(Bushfire, PublicDamage, extra=0, min_num=1, exclude=())

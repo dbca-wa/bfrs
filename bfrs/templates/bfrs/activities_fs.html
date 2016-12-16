@@ -1,23 +1,19 @@
-<h3>Tenure and Vegetation Affected</h3>
+<h3>Activities</h3>
 <table class="table table-bordered table-striped table-condensed">
   <tbody>
     <tr>
       <td class="cbas">
-
-        <div id="id_areas_burnt" class="row formset area-burnt-formset">
+        <div id="id_activities" class="row formset activity-formset">
             <table border="0" cellpadding="0" cellspacing="0">
                 <tbody>
-                    <th>Tenure</th>
-                    <th>Fuel Type</th>
-                    <th>Area (ha)</th>
-                    <th>Point of Origin</th>
+                    <th>Activity</th>
+                    <th>Date</th>
                     <th></th>
-                    {% for fs in area_burnt_formset %}
+                    <th></th>
+                    {% for fs in activity_formset %}
                     <tr>
-                    <td>{{ fs.tenure }}</td>
-                    <td>{{ fs.fuel_type }}</td>
-                    <td>{{ fs.area }}</td>
-                    <td>{{ fs.origin }}</td>
+                    <td>{{ fs.activity }}</td>
+                    <td>{{ fs.date }}</td>
                     <td>
                             {% if fs.instance.pk %}{{ fs.DELETE }}{% endif %}
                             {{ fs.id }}
@@ -27,30 +23,29 @@
                                     <font color="red"><li>{{ field.label }}: {{ field.errors|striptags }}</li></font>
                                 {% endif %}
                             {% endfor %}
+
                     </td>
 
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
-            {{ area_burnt_formset.management_form }}
+            {{ activity_formset.management_form }}
         </div>
-
       </td>
     </tr>
+
   </tbody>
 </table>
 
 <script>
-
-    $('.area-burnt-formset tbody tr').formset({
-        prefix: '{{ area_burnt_formset.prefix }}',
-        formCssClass: 'area_burnt_fs',
-        addText: '<i class="icon-plus"></i> add another area burnt',
+    $('.activity-formset tbody tr').formset({
+        prefix: '{{ activity_formset.prefix }}',
+        formCssClass: 'activity_fs',
+        addText: '<i class="icon-plus"></i> add another activity',
         deleteText: '<i class="icon-remove"></i>',
-        deleteCssClass: 'delete-row' + '-' + '{{ area_burnt_formset.prefix  }}',
+        deleteCssClass: 'delete-row' + '-' + '{{ activity_formset.prefix }}',
     });
-
 </script>
 
 

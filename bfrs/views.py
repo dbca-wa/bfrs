@@ -108,7 +108,7 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
                 attending_org_formset,
             )
         else:
-            import ipdb; ipdb.set_trace()
+            #import ipdb; ipdb.set_trace()
             activity_formset        = ActivityFormSet(prefix='activity_fs')
             area_burnt_formset      = AreaBurntFormSet(prefix='area_burnt_fs')
             attending_org_formset   = AttendingOrganisationFormSet(prefix='attending_org_fs')
@@ -129,7 +129,7 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
             attending_org_formset,
             kwargs,
         ):
-        import ipdb; ipdb.set_trace()
+        #import ipdb; ipdb.set_trace()
         context = {
             'form': form,
             'activity_formset': activity_formset,
@@ -144,7 +144,7 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
             area_burnt_formset,
             attending_org_formset,
         ):
-        import ipdb; ipdb.set_trace()
+        #import ipdb; ipdb.set_trace()
         self.object = form.save(commit=False)
         self.object.creator_id = 1 #User.objects.all()[0] #request.user
         self.object.modifier_id = 1 #User.objects.all()[0] #request.user

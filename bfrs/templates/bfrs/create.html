@@ -390,47 +390,8 @@
 </table>
 
 {% include "bfrs/origin.html" %}
-
-<h3>Activities</h3>
-<table class="table table-bordered table-striped table-condensed">
-  <tbody>
-    <tr>
-      <td class="cbas">
-        <div id="id_activities" class="row formset activity-formset">
-            <table border="0" cellpadding="0" cellspacing="0">
-                <tbody>
-                    <th>Activity</th>
-                    <th>Date</th>
-                    <th></th>
-                    <th></th>
-                    {% for fs in activity_formset %}
-                    <tr>
-                    <td>{{ fs.activity }}</td>
-                    <td>{{ fs.date }}</td>
-                    <td>
-                            {% if fs.instance.pk %}{{ fs.DELETE }}{% endif %}
-                            {{ fs.id }}
-
-                            {% for field in fs %} 
-                                {% if field.errors %}
-                                    <font color="red"><li>{{ field.label }}: {{ field.errors|striptags }}</li></font>
-                                {% endif %}
-                            {% endfor %}
-
-                    </td>
-
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {{ activity_formset.management_form }}
-        </div>
-      </td>
-    </tr>
-
-  </tbody>
-</table>
-
+{% include "bfrs/activities_fs.html" %}
+{% include "bfrs/tenure_veg_fs.html" %}
 
 {% comment %}
 {% endcomment %}
@@ -451,6 +412,7 @@
     </div>
   </div>
 
+  {% comment %}
   <div class="panel-default">
     <div class="panel-heading" role="tab" id="pn_initial_detail">
       <h4 class="panel-title">
@@ -465,6 +427,7 @@
       </div>
     </div>
   </div>
+  {% endcomment %}
 
   <div class="panel-default">
     <div class="panel-heading" role="tab" id="pn_forces_attending">
@@ -596,14 +559,6 @@
 */
 
     //$('.activity-formset tbody tr').formset({
-    $('.activity-formset tbody tr').formset({
-        prefix: '{{ activity_formset.prefix }}',
-        formCssClass: 'activity_fs',
-        addText: '<i class="icon-plus"></i> add another activity',
-        deleteText: '<i class="icon-remove"></i>',
-        deleteCssClass: 'delete-row' + '-' + '{{ activity_formset.prefix }}',
-    });
-
 
 // $('[id^=""]').hide() // starts with 
 $('#id_init_authorised_date').datetimepicker({ format: "Y-m-d H:i" }); //ends with
