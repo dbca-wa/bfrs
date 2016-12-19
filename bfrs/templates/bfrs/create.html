@@ -316,8 +316,12 @@
 {% include "bfrs/activities_fs.html" %}
 {% include "bfrs/tenure_veg_fs.html" %}
 
-{% comment %}
-{% endcomment %}
+<div class="accordion-expand-holder">
+    <button type="button" class="open-all"><i class="icon-plus icon-white"></i> Expand All</button>
+    <button type="button" class="close-all" style="display: none;"><i class="icon-minus icon-white"></i> Collapse All</button>
+</div>
+<br>
+
 <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
 
   <div class="panel-default">
@@ -592,7 +596,27 @@ $(function(){
 });
 
 
+// default is to collapse all on page load
 $('.collapse').collapse()
+
+//$('.open-close-all').click(function() {
+//    $('.panel-collapse').collapse('toggle');
+//});
+
+$('.close-all').click(function(){
+  $('.panel-collapse.in').collapse('hide');
+  // toggle the buttons also
+  $(".close-all").hide();
+  $(".open-all").show();
+});
+
+$('.open-all').click(function(){
+  $('.panel-collapse:not(".in")').collapse('show');
+  // toggle the buttons also
+  $(".close-all").show();
+  $(".open-all").hide();
+});
+
 </script>
 
 {% endblock %}

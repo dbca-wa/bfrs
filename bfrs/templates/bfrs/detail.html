@@ -223,6 +223,12 @@
 
     {% include "bfrs/area-burnt_fs.html" %}
 
+<div class="accordion-expand-holder">
+    <button type="button" class="open-all"><i class="icon-plus icon-white"></i> Expand All</button>
+    <button type="button" class="close-all" style="display: none;"><i class="icon-minus icon-white"></i> Collapse All</button>
+</div>
+<br>
+
 <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
 
   <div class="panel-default">
@@ -644,6 +650,22 @@ $('#id_coord_type').on('change', function() {
 
 
 $('.collapse').collapse()
+
+$('.close-all').click(function(){
+  $('.panel-collapse.in').collapse('hide');
+  // toggle the buttons also
+  $(".close-all").hide();
+  $(".open-all").show();
+});
+
+$('.open-all').click(function(){
+  $('.panel-collapse:not(".in")').collapse('show');
+  // toggle the buttons also
+  $(".close-all").show();
+  $(".open-all").hide();
+});
+
+
 </script>
 <script src="{% static 'smart-selects/admin/js/chainedfk.js' %}"></script>
 {% endblock %}
