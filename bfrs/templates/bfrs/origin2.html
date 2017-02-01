@@ -1,0 +1,34 @@
+<h3>Point of Origin</h3>
+<table class="table table-bordered table-striped table-condensed">
+  <tbody>
+    <tr>
+      <td class="cbas">
+
+        <div class="col-sm-2" > 
+            <div id="div_id_grid" class="form-group"> 
+                <label for="id_grid" class="control-label nonRequiredField">Grid</label>
+                <div class="controls ">{% if has_init_authorised and initial %} {{snapshot.grid}} {% else %} {{form.grid}} {% endif %}</div>
+            </div>
+        </div>
+
+        <div class="col-sm-2" > 
+            <div id="div_id_arrival_area" class="form-group"> 
+                <label for="id_arrival_area" class="control-label nonRequiredField">Fire Area at arrival</label>
+                <div class="controls ">{% if has_init_authorised and initial %} {{snapshot.arrival_area}} {% else %} {{form.arrival_area}} {% endif %}</div>
+            </div>
+        </div>
+
+        <div class="col-sm-2" > 
+            <div id="div_id_fire_not_found" class="form-group"> 
+                <label for="id_fire_not_found" class="control-label nonRequiredField">Fire Not Found</label>
+                <div class="controls ">{% if has_init_authorised and initial %} {{snapshot.fire_not_found}} {% else %} {{form.fire_not_found}} {% endif %}</div>
+            </div>
+        </div>
+
+      </td>
+    </tr>
+
+  </tbody>
+</table>
+
+

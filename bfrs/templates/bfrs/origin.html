@@ -7,20 +7,28 @@
         <div class="col-sm-2" > 
             <div id="div_id_coord_type" class="form-group"> 
                 <label for="id_coord_type" class="control-label nonRequiredField">Coordinates Type</label>
-                <div class="controls ">{{form.coord_type}}</div>
+                <div class="controls ">{% if has_init_authorised and initial %} {{snapshot.coord_type}} {% else %} {{form.coord_type}} {% endif %}</div>
+            </div>
+        </div>
+
+        <div class="col-sm-2" > 
+            <div id="div_id_arrival_area" class="form-group"> 
+                <label for="id_arrival_area" class="control-label nonRequiredField">Fire Area at arrival</label>
+                <div class="controls ">{% if has_init_authorised and initial %} {{snapshot.arrival_area}} {% else %} {{form.arrival_area}} {% endif %}</div>
             </div>
         </div>
 
         <div class="col-sm-2" > 
             <div id="div_id_fire_not_found" class="form-group"> 
                 <label for="id_fire_not_found" class="control-label nonRequiredField">Fire Not Found</label>
-                <div class="controls ">{{form.fire_not_found}}</div>
+                <div class="controls ">{% if has_init_authorised and initial %} {{snapshot.fire_not_found}} {% else %} {{form.fire_not_found}} {% endif %}</div>
             </div>
         </div>
 
       </td>
     </tr>
 
+    {% if not snapshot or snapshot.coord_type == "MGA" or snapshot.coord_type == "Lat/Long" or final %}
     <tr>
       <td>
 
@@ -28,42 +36,42 @@
             <div class="col-sm-2" > 
                 <div id="div_lat_decimal" class="form-group"> 
                     <label for="id_lat_decimal" class="control-label requiredField">Lat Decimal*</label>
-                    <div class="controls ">{{form.lat_decimal}}</div>
+                    <div class="controls ">{% if has_init_authorised %} {{snapshot.lat_decimal}} {% else %} {{form.lat_decimal}} {% endif %}</div>
                 </div>
             </div>
 
             <div class="col-sm-2" > 
                 <div id="div_id_lat_degrees" class="form-group"> 
                     <label for="id_lat_degrees" class="control-label requiredField">Lat Degrees*</label>
-                    <div class="controls ">{{form.lat_degrees}}</div>
+                    <div class="controls ">{% if has_init_authorised %} {{snapshot.lat_degrees}} {% else %} {{form.lat_degrees}} {% endif %}</div>
                 </div>
             </div>
 
             <div class="col-sm-2" > 
                 <div id="div_id_lat_minutes" class="form-group"> 
                     <label for="id_lat_minutes" class="control-label requiredField">Lat Minutes*</label>
-                    <div class="controls ">{{form.lat_minutes}}</div>
+                    <div class="controls ">{% if has_init_authorised %} {{snapshot.lat_minutes}} {% else %} {{form.lat_minutes}} {% endif %}</div>
                 </div>
             </div>
 
             <div class="col-sm-2" > 
                 <div id="div_lon_decimal" class="form-group"> 
                     <label for="id_lon_decimal" class="control-label requiredField">Lon Decimal*</label>
-                    <div class="controls ">{{form.lon_decimal}}</div>
+                    <div class="controls ">{% if has_init_authorised %} {{snapshot.lon_decimal}} {% else %} {{form.lon_decimal}} {% endif %}</div>
                 </div>
             </div>
 
             <div class="col-sm-2" > 
                 <div id="div_id_lon_degrees" class="form-group"> 
                     <label for="id_lon_degrees" class="control-label requiredField">Lon Degrees*</label>
-                    <div class="controls ">{{form.lon_degrees}}</div>
+                    <div class="controls ">{% if has_init_authorised %} {{snapshot.lon_degrees}} {% else %} {{form.lon_degrees}} {% endif %}</div>
                 </div>
             </div>
 
             <div class="col-sm-2" > 
                 <div id="div_id_lon_minutes" class="form-group"> 
                     <label for="id_lon_minutes" class="control-label requiredField">Lon Minutes*</label>
-                    <div class="controls ">{{form.lon_minutes}}</div>
+                    <div class="controls ">{% if has_init_authorised %} {{snapshot.lon_minutes}} {% else %} {{form.lon_minutes}} {% endif %}</div>
                 </div>
             </div>
         </div>
@@ -72,50 +80,58 @@
             <div class="col-sm-2" > 
                 <div id="div_mga_zone" class="form-group"> 
                     <label for="id_mga_zone" class="control-label requiredField">MGA Zone*</label>
-                    <div class="controls ">{{form.mga_zone}}</div>
+                    <div class="controls ">{% if has_init_authorised %} {{snapshot.mga_zone}} {% else %} {{form.mga_zone}} {% endif %}</div>
                 </div>
             </div>
 
             <div class="col-sm-2" > 
                 <div id="div_id_mga_easting" class="form-group"> 
                     <label for="id_mga_easting" class="control-label requiredField">MGA Easting*</label>
-                    <div class="controls ">{{form.mga_easting}}</div>
+                    <div class="controls ">{% if has_init_authorised %} {{snapshot.mga_easting}} {% else %} {{form.mga_easting}} {% endif %}</div>
                 </div>
             </div>
 
             <div class="col-sm-2" > 
                 <div id="div_id_mga_northing" class="form-group"> 
                     <label for="id_mga_northing" class="control-label requiredField">MGA Northing*</label>
-                    <div class="controls ">{{form.mga_northing}}</div>
-                </div>
-            </div>
-        </div>
-
-        <div id="id_fd_grid">
-            <div class="col-sm-2" > 
-                <div id="div_fd_letter" class="form-group"> 
-                    <label for="id_fd_letter" class="control-label requiredField">FD Letter*</label>
-                    <div class="controls ">{{form.fd_letter}}</div>
-                </div>
-            </div>
-
-            <div class="col-sm-2" > 
-                <div id="div_id_fd_number" class="form-group"> 
-                    <label for="id_fd_number" class="control-label requiredField">FD Number*</label>
-                    <div class="controls ">{{form.fd_number}}</div>
-                </div>
-            </div>
-
-            <div class="col-sm-2" > 
-                <div id="div_id_fd_tenths" class="form-group"> 
-                    <label for="id_fd_tenths" class="control-label requiredField">FD Tenths*</label>
-                    <div class="controls ">{{form.fd_tenths}}</div>
+                    <div class="controls ">{% if has_init_authorised %} {{snapshot.mga_northing}} {% else %} {{form.mga_northing}} {% endif %}</div>
                 </div>
             </div>
         </div>
 
       </td>
     </tr>
+
+    {% elif not snapshot or snapshot.coord_type == "FD Grid" or final %}
+    <tr>
+      <td>
+
+        <div id="id_fd_grid">
+            <div class="col-sm-2" > 
+                <div id="div_fd_letter" class="form-group"> 
+                    <label for="id_fd_letter" class="control-label requiredField">FD Letter*</label>
+                    <div class="controls ">{% if has_init_authorised %} {{snapshot.fd_letter}} {% else %} {{form.fd_letter}} {% endif %}</div>
+                </div>
+            </div>
+
+            <div class="col-sm-2" > 
+                <div id="div_id_fd_number" class="form-group"> 
+                    <label for="id_fd_number" class="control-label requiredField">FD Number*</label>
+                    <div class="controls ">{% if has_init_authorised %} {{snapshot.fd_number}} {% else %} {{form.fd_number}} {% endif %}</div>
+                </div>
+            </div>
+
+            <div class="col-sm-2" > 
+                <div id="div_id_fd_tenths" class="form-group"> 
+                    <label for="id_fd_tenths" class="control-label requiredField">FD Tenths*</label>
+                    <div class="controls ">{% if has_init_authorised %} {{snapshot.fd_tenths}} {% else %} {{form.fd_tenths}} {% endif %}</div>
+                </div>
+            </div>
+        </div>
+
+      </td>
+    </tr>
+    {% endif %}
 
   </tbody>
 </table>

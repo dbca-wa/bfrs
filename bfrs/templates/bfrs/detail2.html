@@ -186,42 +186,163 @@
 
 <h2>{{form.instance.district}} - {{form.instance.name}}</h2>
 
-    {% include "bfrs/overview.html" %}
-    {% include "bfrs/origin.html" %}
-    {% include "bfrs/fuel_age.html" %}
-
 <table class="table table-bordered table-striped table-condensed">
   <tbody>
+
     <tr>
-      <td>
-
-        <div class="col-sm-4" > 
-            <div id="div_id_rating" class="form-group"> 
-                <label for="id_rating" class="control-label requiredField">Area Priority Rating*</label>
-                <div class="controls ">{{form.rating}}</div>
+      <td class="cbas">
+        <div class="col-sm-2" > 
+            <div id="div_id_region" class="form-group"> 
+                <label for="id_region" class="control-label requiredField">Region*</label>
+                <div class="controls ">{% if has_init_authorised %} {{snapshot.region}} {% else %} {{form.region}} {% endif %}</div>
             </div>
         </div>
 
-        <div class="col-sm-4" > 
-            <div id="div_id_first_attack" class="form-group"> 
-                <label for="id_first_attack" class="control-label requiredField">First Attack Agency*</label>
-                <div class="controls ">{{form.first_attack}}</div>
-            </div>
-        </div>
-        <div class="col-sm-4" >
-            <div id="div_id_other_first_attack" class="form-group"> 
-                <label for="id_other_first_attack" class="control-label requiredField">Other First Attack Agency*</label>
-                <div class="controls ">{{form.other_first_attack}}</div>
+        <div class="col-sm-2" > 
+            <div id="div_id_district" class="form-group"> 
+                <label for="id_district" class="control-label requiredField">District*</label>
+                <div class="controls ">{% if has_init_authorised %} {{snapshot.district}} {% else %} {{form.district}} {% endif %}</div>
             </div>
         </div>
 
+        <div class="col-sm-2" > 
+            <div id="div_id_incident_no" class="form-group"> 
+                <label for="id_incident_no" class="control-label requiredField">Fire Incident No.*</label>
+                <div class="controls ">{% if has_init_authorised %} {{snapshot.incident_no}} {% else %} {{form.incident_no}} {% endif %}</div>
+            </div>
+            </div>
+        </div>
+
+        <div class="col-sm-2" > 
+            <div id="div_id_name" class="form-group"> 
+                <label for="id_name" class="control-label  requiredField">Name*</label>
+                <div class="controls ">{% if has_init_authorised %} {{snapshot.name}} {% else %} {{form.name}} {% endif %}</div>
+            </div>
+        </div>
       </td>
     </tr>
 
   </tbody>
 </table>
 
-    {% include "bfrs/area-burnt_fs.html" %}
+
+<table class="table table-bordered table-striped table-condensed">
+  <tbody>
+    <tr>
+      <td>
+        <div class="col-sm-2" > 
+            <div id="div_id_job_code" class="form-group"> 
+                <label for="id_job_code" class="control-label nonRequiredField">Job Code</label>
+                <div class="controls ">{{form.job_code}}</div>
+            </div>
+        </div>
+
+        <div class="col-sm-2" > 
+            <div id="div_id_field_officer" class="form-group"> 
+                <label for="id_field_officer" class="control-label requiredField">Field Officer*</label>
+                <div class="controls ">{{form.field_officer}}</div>
+            </div>
+        </div>
+
+        <div class="col-sm-2" > 
+            <div id="div_id_init_authorised_by" class="form-group"> 
+                <label for="id_init_authorised_by" class="control-label nonRequiredField">Authorised By</label>
+                <div class="controls ">{{form.authorised_by}}</div>
+            </div>
+        </div>
+
+        <div class="col-sm-2" > 
+            <div id="div_id_init_authorised_date" class="form-group"> 
+                <label for="id_init_authorised_date" class="control-label nonRequiredField">Authorised Date</label>
+                <div class="controls ">{{form.authorised_date}}</div>
+            </div>
+        </div>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <div class="col-sm-2" > 
+            <div id="div_potential_fire_level" class="form-group"> 
+                <label for="id_potential_fire_level" class="control-label  requiredField">Potential Fire Level*</label>
+                <div class="controls ">{{form.potential_fire_level}}</div>
+            </div>
+        </div>
+
+        <div class="col-sm-2" > 
+            <div id="div_id_alert_level" class="form-group"> 
+                <label for="id_alert_level" class="control-label  requiredField">Alert Level*</label>
+                <div class="controls ">{{form.alert_level}}</div>
+            </div>
+        </div>
+
+        <div class="col-sm-2" > 
+            <div id="div_id_media_alert_req" class="form-group"> 
+                <label for="id_media_alert_req" class="control-label  nonRequiredField">Media Alert Required</label>
+                <div class="controls ">{{form.media_alert_req}}</div>
+            </div>
+        </div>
+
+        <div class="col-sm-2" > 
+            <div id="div_id_fire_position" class="form-group"> 
+                <label for="id_fire_position" class="control-label requiredField">Fire Position*</label>
+                <div class="controls ">{{form.fire_position}}</div>
+            </div>
+        </div>
+      </td>
+    </tr>
+
+
+
+    {% comment %}
+    <tr>
+      <td class="cbas">
+        <div class="col-sm-2" >
+            <div id="div_id_assistance_req" class="form-group"> 
+                <label for="id_assistance_req" class="control-label nonRequiredField">Assistance Required</label>
+                <div class="controls ">{{form.assistance_req}}</div>
+            </div>
+        </div>
+        <div class="col-sm-2" >
+            <div id="div_id_communications" class="form-group"> 
+                <label for="id_communications" class="control-label nonRequiredField">Communications</label>
+                <div class="controls ">{{form.communications}}</div>
+            </div>
+        </div>
+        <div class="col-sm-2" >
+            <div id="div_id_other_info" class="form-group"> 
+                <label for="id_other_info" class="control-label nonRequiredField">Other Information</label>
+                <div class="controls ">{{form.other_info}}</div>
+            </div>
+        </div>
+      </td>
+    </tr>
+    {% endcomment %}
+
+    <tr>
+      <td>
+        <div class="col-sm-4" >
+            <div id="div_id_cause" class="form-group"> 
+                <label for="id_cause" class="control-label requiredField">Cause*</label>
+                <div class="controls ">{{form.cause}}</div>
+            </div>
+        </div>
+        <div class="col-sm-4" >
+            <div id="div_id_other_cause" class="form-group"> 
+                <label for="id_other_cause" class="control-label nonRequiredField">Other Cause</label>
+                <div class="controls ">{{form.other_cause}}</div>
+            </div>
+        </div>
+      </td>
+    </tr>
+
+
+  </tbody>
+</table>
+
+{% include "bfrs/origin2.html" %}
+{% include "bfrs/activities_fs.html" %}
+{% include "bfrs/tenure_veg_fs.html" %}
 
 <div class="accordion-expand-holder">
     <button type="button" class="open-all"><i class="icon-plus icon-white"></i> Expand All</button>
@@ -232,31 +353,38 @@
 <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
 
   <div class="panel-default">
-    <div class="panel-heading" role="tab" id="pn_waterbomber">
+    <div class="panel-heading" role="tab" id="pn_other_info">
       <h4 class="panel-title">
-        <a role="button" data-toggle="collapse" data-parent="#accordion" href="#waterbomber" aria-expanded="true" aria-controls="waterbomber">
-          Effects of FRBs/Waterbomber
+        <a role="button" data-toggle="collapse" data-parent="#accordion" href="#other_info" aria-expanded="true" aria-controls="other_info">
+          Add Other Information
         </a>
       </h4>
     </div>
-    <div id="waterbomber" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pn_waterbomber">
-      <div class="panel-body table_fs">
+    <div id="other_info" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pn_other_info">
+      <div class="panel-body">
 
-        <div class="row">
-            <div class="col-sm-5" > 
-                <div id="div_id_frb_effect" class="form-group"> 
-                    <label for="id_frb_effect" class="control-label nonRequiredField">Presence/Effect of FRB</label>
-                    <div class="controls ">{{form.frb_effect}}</div>
+        <tr>
+          <td class="cbas">
+            <div class="col-sm-2" >
+                <div id="div_id_assistance_req" class="form-group"> 
+                    <label for="id_assistance_req" class="control-label nonRequiredField">Assistance Required</label>
+                    <div class="controls ">{{form.assistance_req}}</div>
                 </div>
             </div>
-
-            <div class="col-sm-5" > 
-                <div id="div_waterbomb_effect" class="form-group"> 
-                    <label for="id_waterbomb_effect" class="control-label nonRequiredField">Presence/Effect of WaterBomb</label>
-                    <div class="controls ">{{form.waterbomb_effect}}</div>
+            <div class="col-sm-2" >
+                <div id="div_id_communications" class="form-group"> 
+                    <label for="id_communications" class="control-label nonRequiredField">Communications</label>
+                    <div class="controls ">{{form.communications}}</div>
                 </div>
             </div>
-        </div>
+            <div class="col-sm-2" >
+                <div id="div_id_other_info" class="form-group"> 
+                    <label for="id_other_info" class="control-label nonRequiredField">Other Information</label>
+                    <div class="controls ">{{form.other_info}}</div>
+                </div>
+            </div>
+          </td>
+        </tr>
 
       </div>
     </div>
@@ -323,96 +451,6 @@
   </div>
 
   <div class="panel-default">
-    <div class="panel-heading" role="tab" id="pn_first_response">
-      <h4 class="panel-title">
-        <a role="button" data-toggle="collapse" data-parent="#accordion" href="#first_response" aria-expanded="true" aria-controls="first_response">
-          First DPaW Responses
-        </a>
-      </h4>
-    </div>
-    <div id="first_response" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pn_first_response">
-      <div class="panel-body">
-        {% include "bfrs/first_response_fs.html" %}
-      </div>
-    </div>
-  </div>
-
-  <div class="panel-default">
-    <div class="panel-heading" role="tab" id="pn_ground_forces">
-      <h4 class="panel-title">
-        <a role="button" data-toggle="collapse" data-parent="#accordion" href="#ground_forces" aria-expanded="true" aria-controls="ground_forces">
-          Ground Forces at Fire
-        </a>
-      </h4>
-    </div>
-    <div id="ground_forces" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pn_ground_forces">
-      <div class="panel-body">
-        {% include "bfrs/ground_forces_fs.html" %}
-      </div>
-    </div>
-  </div>
-
-  <div class="panel-default">
-    <div class="panel-heading" role="tab" id="pn_aerial_forces">
-      <h4 class="panel-title">
-        <a role="button" data-toggle="collapse" data-parent="#accordion" href="#aerial_forces" aria-expanded="true" aria-controls="aerial_forces">
-          Aerial Forces at Fire
-        </a>
-      </h4>
-    </div>
-    <div id="aerial_forces" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pn_aerial_forces">
-      <div class="panel-body">
-        {% include "bfrs/aerial_forces_fs.html" %}
-      </div>
-    </div>
-  </div>
-
-  <div class="panel-default">
-    <div class="panel-heading" role="tab" id="pn_forces_attending">
-      <h4 class="panel-title">
-        <a role="button" data-toggle="collapse" data-parent="#accordion" href="#forces_attending" aria-expanded="true" aria-controls="forces_attending">
-          Organisations Attending
-        </a>
-      </h4>
-    </div>
-    <div id="forces_attending" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pn_forces_attending">
-      <div class="panel-body">
-        {% include "bfrs/forces_attending_fs.html" %}
-      </div>
-    </div>
-  </div>
-
-  <div class="panel-default">
-    <div class="panel-heading" role="tab" id="pn_fire_behaviour">
-      <h4 class="panel-title">
-        <a role="button" data-toggle="collapse" data-parent="#accordion" href="#fire_behaviour" aria-expanded="true" aria-controls="fire_behaviour">
-          Fire Behaviour
-        </a>
-      </h4>
-    </div>
-    <div id="fire_behaviour" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pn_fire_behaviour">
-      <div class="panel-body">
-        {% include "bfrs/fire_behaviour_fs.html" %}
-      </div>
-    </div>
-  </div>
-
-  <div class="panel-default">
-    <div class="panel-heading" role="tab" id="pn_comm_protection">
-      <h4 class="panel-title">
-        <a role="button" data-toggle="collapse" data-parent="#accordion" href="#comm_protection" aria-expanded="true" aria-controls="comm_protection">
-          Community Protection/Estimates
-        </a>
-      </h4>
-    </div>
-    <div id="comm_protection" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pn_comm_protection">
-      <div class="panel-body">
-        {% include "bfrs/comm_protection_fs.html" %}
-      </div>
-    </div>
-  </div>
-
-  <div class="panel-default">
     <div class="panel-heading" role="tab" id="pn_private_damage">
       <h4 class="panel-title">
         <a role="button" data-toggle="collapse" data-parent="#accordion" href="#private_damage" aria-expanded="true" aria-controls="private_damage">
@@ -457,15 +495,7 @@
     </div>
   </div>
 
-
-
-
-
-
-
 </div>
-
-
 
 <div class="navbar navbar-fixed-bottom">
   <div class="navbar-inner">

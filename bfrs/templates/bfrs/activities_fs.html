@@ -1,5 +1,28 @@
 <h3>Activities</h3>
 <table class="table table-bordered table-striped table-condensed">
+{% if has_init_authorised and initial %}
+  <tbody>
+    <tr>
+      <td class="cbas">
+        <table class="table_fs" border="0" >
+            <tbody>
+              <th>Activity</th>
+              <th>Date</th>
+              {% for activity in snapshot.activities %}
+                <tr>
+                  <td>{{ activity.name }}</td>
+                  <td>{{ activity.date }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+        </table>
+      </td>
+    </tr>
+
+  </tbody>
+
+{% else %}
+
   <tbody>
     <tr>
       <td class="cbas">
@@ -36,6 +59,8 @@
     </tr>
 
   </tbody>
+{% endif %}
+
 </table>
 
 <script>

@@ -104,7 +104,7 @@ class BushfireForm(forms.ModelForm):
 #                  'fuel','ros', 'flame_height', 'assistance_required', 'fire_contained', 'containment_time',
 #                  'ops_point', 'communications', 'weather', 'field_officer', 'init_authorised_by', 'init_authorised_date',
 #                 )
-        exclude = ('potential_fire_level', 'init_authorised_by', 'init_authorised_date', 'known_possible',)
+        exclude = ('init_authorised_by', 'init_authorised_date')
 
     def clean(self):
         """
@@ -116,7 +116,6 @@ class BushfireForm(forms.ModelForm):
             #'name', 'potential_fire_level', 'init_authorised_by', 'init_authorised_date',
             'name', 'authorised_by', 'authorised_date',
             'job_code',
-            'first_attack',
             'cause',
             'field_officer',
             'arrival_area',
@@ -126,20 +125,20 @@ class BushfireForm(forms.ModelForm):
 
         req_dep_fields = { # required dependent fields
             'first_attack': 'other_first_attack',
-            'hazard_mgt': 'other_hazard_mgt',
+            #'hazard_mgt': 'other_hazard_mgt',
             'initial_control': 'other_initial_ctrl',
             'final_control': 'other_final_ctrl',
             'cause': 'other_cause',
-            'coord_type': {
-                'MGA': ['MGA Zone','MGA Easting','MGA Northing'],
-                }
+#            'coord_type': {
+#                'MGA': ['MGA Zone','MGA Easting','MGA Northing'],
+#                }
         }
 
-        req_coord_fields = {
-            'MGA': ['mga_zone','mga_easting','mga_northing'],
-            'FD Grid': ['fd_letter','fd_number','fd_tenths'],
-            'Lat/Long': ['lat_decimal','lat_degrees','lat_minutes', 'lon_decimal','lon_degrees','lon_minutes'],
-        }
+#        req_coord_fields = {
+#            'MGA': ['mga_zone','mga_easting','mga_northing'],
+#            'FD Grid': ['fd_letter','fd_number','fd_tenths'],
+#            'Lat/Long': ['lat_decimal','lat_degrees','lat_minutes', 'lon_decimal','lon_degrees','lon_minutes'],
+#        }
 
         if self.cleaned_data['authorised_by']:
             # check all required fields
@@ -155,43 +154,80 @@ class BushfireForm(forms.ModelForm):
                         self.add_error(req_dep_fields[field], 'This field is required.')
             #import ipdb; ipdb.set_trace()
 
-            coord_type = [i[1] for i in Bushfire.COORD_TYPE_CHOICES if i[0]==self.cleaned_data['coord_type']]
-            if coord_type:
-                #import ipdb; ipdb.set_trace()
-                for field in req_coord_fields[coord_type[0]]:
-                    if self.cleaned_data.has_key(field) and not self.cleaned_data[field]:
-                        self.add_error(field, 'This field is required.')
+#            coord_type = [i[1] for i in Bushfire.COORD_TYPE_CHOICES if i[0]==self.cleaned_data['coord_type']]
+#            if coord_type:
+#                #import ipdb; ipdb.set_trace()
+#                for field in req_coord_fields[coord_type[0]]:
+#                    if self.cleaned_data.has_key(field) and not self.cleaned_data[field]:
+#                        self.add_error(field, 'This field is required.')
 
             #import ipdb; ipdb.set_trace()
             #if missing_fields:
             #    raise ValidationError('Cannot Authorise, must input required fields: {}'.format(', '.join([i.replace('_', ' ').title() for i in missing_fields])))
 
 
+#class BushfireCreateForm(forms.ModelForm):
+#    class Meta:
+#        model = Bushfire
+#        fields = ('region', 'district', 'incident_no', 'season', 'job_code',
+#                  'name', 'potential_fire_level', 'init_authorised_by', 'init_authorised_date',
+#                  'distance', 'direction', 'place', 'lot_no', 'street', 'town',
+#                  'coord_type', 'fire_not_found',
+#                  'lat_decimal', 'lat_degrees', 'lat_minutes', 'lon_decimal', 'lon_degrees', 'lon_minutes',
+#                  'mga_zone', 'mga_easting', 'mga_northing',
+#                  'fd_letter', 'fd_number', 'fd_tenths',
+##                  'source','cause', 'arson_squad_notified', 'prescription', 'offence_no',
+#                  'fuel','ros', 'flame_height', 'assistance_required', 'fire_contained',
+#                  'containment_time', 'ops_point', 'communications', 'weather', 'field_officer',
+#                  'first_attack', 'other_first_attack',
+#                  'cause', 'known_possible', 'other_cause', 'investigation_req',
+#                 )
+#
+#    def clean(self):
+#        #import ipdb; ipdb.set_trace()
+#        district = self.cleaned_data['district']
+#        incident_no = self.cleaned_data['incident_no']
+#        season = self.cleaned_data['season']
+#        bushfire = Bushfire.objects.filter(district=district, season=season, incident_no=incident_no)
+#        if bushfire:
+#            raise ValidationError('There is already a Bushfire with this District, Season and Incident No. {} - {} - {}'.format(district, season, incident_no))
+#        else:
+#            return self.cleaned_data
+#
+#    fuel = models.CharField(max_length=50, null=True, blank=True)
+#    assistance_req = models.CharField(verbose_name="Assistance Required", max_length=50, null=True, blank=True)
+#    communications = models.CharField(verbose_name='Communication', max_length=50, null=True, blank=True)
+#    other_info = models.CharField(verbose_name='Other Information', max_length=100, null=True, blank=True)
+#    cause = models.ForeignKey('Cause', null=True, blank=True)
+#    other_cause = models.CharField(verbose_name='Other Cause', max_length=50, null=True, blank=True)
+#    tenure = models.ForeignKey('Tenure of Ignition Point', null=True, blank=True)
+
+
 class BushfireCreateForm(forms.ModelForm):
     class Meta:
         model = Bushfire
-        fields = ('region', 'district', 'incident_no', 'season', 'job_code',
-                  'name', 'potential_fire_level', 'init_authorised_by', 'init_authorised_date',
-                  'distance', 'direction', 'place', 'lot_no', 'street', 'town',
-                  'coord_type', 'fire_not_found',
-                  'lat_decimal', 'lat_degrees', 'lat_minutes', 'lon_decimal', 'lon_degrees', 'lon_minutes',
-                  'mga_zone', 'mga_easting', 'mga_northing',
-                  'fd_letter', 'fd_number', 'fd_tenths',
+        fields = ('region', 'district', 'incident_no', 'job_code',
+                  'name', 'potential_fire_level', 'field_officer', 'init_authorised_by', 'init_authorised_date',
+                  'alert_level', 'media_alert_req', 'fire_position',
+                  'grid', 'arrival_area', 'fire_not_found',
+#                  'coord_type', 'arrival_area', 'fire_not_found',
+#                  'lat_decimal', 'lat_degrees', 'lat_minutes', 'lon_decimal', 'lon_degrees', 'lon_minutes',
+#                  'mga_zone', 'mga_easting', 'mga_northing',
+#                  'fd_letter', 'fd_number', 'fd_tenths',
 #                  'source','cause', 'arson_squad_notified', 'prescription', 'offence_no',
-                  'fuel','ros', 'flame_height', 'assistance_required', 'fire_contained',
-                  'containment_time', 'ops_point', 'communications', 'weather', 'field_officer',
-                  'first_attack', 'other_first_attack',
-                  'cause', 'known_possible', 'other_cause', 'investigation_req',
+                  'assistance_req', 'communications', 'other_info',
+                  'cause', 'other_cause',
                  )
 
     def clean(self):
         #import ipdb; ipdb.set_trace()
         district = self.cleaned_data['district']
         incident_no = self.cleaned_data['incident_no']
-        season = self.cleaned_data['season']
-        bushfire = Bushfire.objects.filter(district=district, season=season, incident_no=incident_no)
+        #season = self.cleaned_data['season']
+        #bushfire = Bushfire2.objects.filter(district=district, season=season, incident_no=incident_no)
+        bushfire = Bushfire.objects.filter(district=district, incident_no=incident_no)
         if bushfire:
-            raise ValidationError('There is already a Bushfire with this District, Season and Incident No. {} - {} - {}'.format(district, season, incident_no))
+            raise ValidationError('There is already a Bushfire with this District and Incident No. {} - {} - {}'.format(district, incident_no))
         else:
             return self.cleaned_data
 
@@ -199,18 +235,17 @@ class BushfireCreateForm(forms.ModelForm):
 class BushfireInitUpdateForm(forms.ModelForm):
     class Meta:
         model = Bushfire
-        fields = ('region', 'district', 'incident_no', 'season', 'job_code',
-                  'name', 'potential_fire_level', 'init_authorised_by', 'init_authorised_date',
-                  'distance', 'direction', 'place', 'lot_no', 'street', 'town',
-                  'coord_type', 'fire_not_found',
-                  'lat_decimal', 'lat_degrees', 'lat_minutes', 'lon_decimal', 'lon_degrees', 'lon_minutes',
-                  'mga_zone', 'mga_easting', 'mga_northing',
-                  'fd_letter', 'fd_number', 'fd_tenths',
+        fields = ('region', 'district', 'incident_no', 'job_code',
+                  'name', 'potential_fire_level', 'field_officer', 'init_authorised_by', 'init_authorised_date',
+                  'alert_level', 'media_alert_req', 'fire_position',
+                  'grid', 'arrival_area', 'fire_not_found',
+#                  'coord_type', 'arrival_area', 'fire_not_found',
+#                  'lat_decimal', 'lat_degrees', 'lat_minutes', 'lon_decimal', 'lon_degrees', 'lon_minutes',
+#                  'mga_zone', 'mga_easting', 'mga_northing',
+#                  'fd_letter', 'fd_number', 'fd_tenths',
 #                  'source','cause', 'arson_squad_notified', 'prescription', 'offence_no',
-                  'fuel','ros', 'flame_height', 'assistance_required', 'fire_contained',
-                  'containment_time', 'ops_point', 'communications', 'weather', 'field_officer',
-                  'first_attack', 'other_first_attack',
-                  'cause', 'known_possible', 'other_cause', 'investigation_req',
+                  'assistance_req', 'communications', 'other_info',
+                  'cause', 'other_cause',
                  )
 
     def clean(self):
@@ -221,25 +256,24 @@ class BushfireInitUpdateForm(forms.ModelForm):
         req_fields = [
             #'region', 'district', 'incident_no', 'season', # these are delcared Required in models.py
             'name', 'potential_fire_level', 'init_authorised_by', 'init_authorised_date',
-            'first_attack',
+            #'first_attack',
             'cause',
             'field_officer',
-            'known_possible',
+            #'known_possible',
         ]
 
         req_dep_fields = { # required dependent fields
-            'first_attack': 'other_first_attack',
             'cause': 'other_cause',
-            'coord_type': {
-                'MGA': ['MGA Zone','MGA Easting','MGA Northing'],
-                }
+#            'coord_type': {
+#                'MGA': ['MGA Zone','MGA Easting','MGA Northing'],
+#                }
         }
 
-        req_coord_fields = {
-            'MGA': ['mga_zone','mga_easting','mga_northing'],
-            'FD Grid': ['fd_letter','fd_number','fd_tenths'],
-            'Lat/Long': ['lat_decimal','lat_degrees','lat_minutes', 'lon_decimal','lon_degrees','lon_minutes'],
-        }
+#        req_coord_fields = {
+#            'MGA': ['mga_zone','mga_easting','mga_northing'],
+#            'FD Grid': ['fd_letter','fd_number','fd_tenths'],
+#            'Lat/Long': ['lat_decimal','lat_degrees','lat_minutes', 'lon_decimal','lon_degrees','lon_minutes'],
+#        }
 
         if self.cleaned_data['init_authorised_by']:
             # check all required fields
@@ -253,12 +287,12 @@ class BushfireInitUpdateForm(forms.ModelForm):
                     if not other_field:
                         self.add_error(req_dep_fields[field], 'This field is required.')
 
-            coord_type = [i[1] for i in Bushfire.COORD_TYPE_CHOICES if i[0]==self.cleaned_data['coord_type']]
-            if coord_type:
-                #import ipdb; ipdb.set_trace()
-                for field in req_coord_fields[coord_type[0]]:
-                    if self.cleaned_data.has_key(field) and not self.cleaned_data[field]:
-                        self.add_error(field, 'This field is required.')
+#            coord_type = [i[1] for i in Bushfire.COORD_TYPE_CHOICES if i[0]==self.cleaned_data['coord_type']]
+#            if coord_type:
+#                #import ipdb; ipdb.set_trace()
+#                for field in req_coord_fields[coord_type[0]]:
+#                    if self.cleaned_data.has_key(field) and not self.cleaned_data[field]:
+#                        self.add_error(field, 'This field is required.')
 
             #import ipdb; ipdb.set_trace()
             #if missing_fields:
@@ -331,12 +365,13 @@ class BaseAreaBurntFormSet(BaseInlineFormSet):
             if form.cleaned_data:
                 tenure = form.cleaned_data['tenure'] if form.cleaned_data.has_key('tenure') else None
                 fuel_type = form.cleaned_data['fuel_type'] if form.cleaned_data.has_key('fuel_type') else None
-                area = form.cleaned_data['area'] if form.cleaned_data.has_key('area') else None
+                #area = form.cleaned_data['area'] if form.cleaned_data.has_key('area') else None
                 remove = form.cleaned_data['DELETE'] if form.cleaned_data.has_key('DELETE') else False
 
                 if not remove:
                     # Check that no two records have the same (tenure and fuel_type) combination
-                    if tenure and fuel_type and area:
+                    #if tenure and fuel_type and area:
+                    if tenure and fuel_type:
                         if set([(tenure.name, fuel_type.name)]).issubset(tenures):
                             duplicates = True
                         tenures.append((tenure.name, fuel_type.name))

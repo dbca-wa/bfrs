@@ -839,21 +839,21 @@
     "pk": 2,
     "model": "bfrs.activitytype",
     "fields": {
-        "name": "DISPATCH - DEC"
+        "name": "DISPATCH - P&W"
     }
 },
 {
     "pk": 3,
     "model": "bfrs.activitytype",
     "fields": {
-        "name": "DISPATCH - WATERBOMBER"
+        "name": "DISPATCH - AERIAL"
     }
 },
 {
     "pk": 4,
     "model": "bfrs.activitytype",
     "fields": {
-        "name": "ARRIVAL AT FIRE - DEC"
+        "name": "ARRIVAL AT FIRE - P&W"
     }
 },
 {

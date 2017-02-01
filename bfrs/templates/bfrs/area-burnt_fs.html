@@ -8,15 +8,19 @@
                 <tbody>
                     <th>Tenure</th>
                     <th>Fuel Type</th>
+                    <!--
                     <th>Area (ha)</th>
                     <th>Point of Origin</th>
+                    -->
                     <th></th>
                     {% for form in area_burnt_formset.forms %}
                     <tr>
                     <td>{{ form.tenure }}</td>
                     <td>{{ form.fuel_type }}</td>
+                    {% comment %}
                     <td>{{ form.area }}</td>
                     <td>{{ form.origin }}</td>
+                    {% endcomment %}
 
                     <td>
                             {% if form.instance.pk %}{{ form.DELETE }}{% endif %}

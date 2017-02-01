@@ -1,4 +1,5 @@
-from django.db import models
+#from django.db import models
+from django.contrib.gis.db import models
 from datetime import datetime, timedelta
 from django.utils import timezone
 #from pbs.prescription.models import (Prescription, Region, District)
@@ -11,23 +12,28 @@ from bfrs.base import Audit
 from django.core.exceptions import (ValidationError)
 
 import sys
-
-FIRE_LEVEL_CHOICES = (
-    (1, 1),
-    (2, 2),
-    (3, 3),
-)
+import json
 
 AUTH_TYPE_CHOICES = (
     (1, 'Initial'),
     (2, 'Final'),
 )
 
-#class Audit(models.Model):
-#    creator = models.ForeignKey(User, related_name='creator')
-#    modifier = models.ForeignKey(User, related_name='modifier')
-#    created = models.DateTimeField(default=timezone.now, editable=False)
-#    modified = models.DateTimeField(auto_now=True, editable=False)
+
+class Profile(models.Model):
+    DEFAULT_GROUP = "Users"
+
+    user = models.OneToOneField(User, related_name='profile')
+    region = models.ForeignKey('Region', blank=True, null=True)
+    district = ChainedForeignKey('District',
+        chained_field="region", chained_model_field="region",
+        show_all=False, auto_choose=True, blank=True, null=True)
+
+    def __str__(self):
+        return 'Profile of user: {} - {} - {}'.format(self.user.username, self.region, self.district)
+
+    class Meta:
+        default_permissions = ('add', 'change', 'view')
 
 
 @python_2_unicode_compatible
@@ -68,45 +74,322 @@ class District(models.Model):
         return self.name
 
 
-class Profile(models.Model):
-    DEFAULT_GROUP = "Users"
+#class Bushfire(Audit):
+#    # OriginFDGRID
+#    COORD_TYPE_MGAZONE = 1
+#    COORD_TYPE_LATLONG = 2
+#    COORD_TYPE_FDGRID = 3
+#    COORD_TYPE_CHOICES = (
+#        (COORD_TYPE_MGAZONE, 'MGA'),
+#        (COORD_TYPE_LATLONG, 'Lat/Long'),
+#        (COORD_TYPE_FDGRID, 'FD Grid'),
+#    )
+#
+#    CAUSE_CHOICES = (
+#        (1, 'Known'),
+#        (2, 'Possible'),
+#    )
+#
+#    FIRE_LEVEL_CHOICES = (
+#        (1, 1),
+#        (2, 2),
+#        (3, 3),
+#    )
+#
+#    region = models.ForeignKey(Region)
+##    district = models.ForeignKey(District)
+#    district = ChainedForeignKey(
+#        District, chained_field="region", chained_model_field="region",
+#        show_all=False, auto_choose=True)
+#
+#    name = models.CharField(max_length=100, verbose_name="Fire Name")
+#    incident_no = models.CharField(verbose_name="Fire Incident No.", max_length=10)
+#    season = models.CharField(max_length=9)
+#    dfes_incident_no = models.CharField(verbose_name="DFES Incident No.", max_length=10, null=True, blank=True)
+#    job_code = models.CharField(verbose_name="Job Code", max_length=10, null=True, blank=True)
+#    potential_fire_level = models.PositiveSmallIntegerField(choices=FIRE_LEVEL_CHOICES, null=True, blank=True)
+#    field_officer = models.ForeignKey(User, verbose_name="Field Officer", null=True, blank=True, related_name='init_field_officer')
+#    init_authorised_by = models.ForeignKey(User, verbose_name="Authorised By", blank=True, null=True, related_name='init_auth_by')
+#    init_authorised_date = models.DateTimeField(verbose_name='Authorised Date', default=timezone.now, null=True, blank=True)
+#
+#    # Cause
+#    cause = models.ForeignKey('Cause', null=True, blank=True)
+#    known_possible = models.PositiveSmallIntegerField(choices=CAUSE_CHOICES, verbose_name="Known/Possible", null=True, blank=True)
+#    other_cause = models.CharField(verbose_name='Other Cause', max_length=50, null=True, blank=True)
+#    investigation_req = models.BooleanField(verbose_name="Invest'n Required", default=False)
+#
+#    # First Attack Agency (Part only)
+#    first_attack = models.ForeignKey('Agency', verbose_name="First Attack Agency", null=True, blank=True, related_name='first_attack')
+#    other_first_attack = models.CharField(verbose_name="Other First Attack Agency", max_length=50, null=True, blank=True)
+#
+#    # Point of Origin
+#    coord_type = models.PositiveSmallIntegerField(choices=COORD_TYPE_CHOICES, verbose_name="Coordinate Type", null=True, blank=True)
+#    fire_not_found = models.BooleanField(default=False)
+#    # TODO number of dp
+#    lat_decimal = models.DecimalField(verbose_name="Latitude (Decimal)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
+#    lat_degrees = models.DecimalField(verbose_name="Latitude (Degrees)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
+#    lat_minutes = models.DecimalField(verbose_name="Latitude (Minutes)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
+#    lon_decimal = models.DecimalField(verbose_name="Longitude (Decimal)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
+#    lon_degrees = models.DecimalField(verbose_name="Longitude (Degrees)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
+#    lon_minutes = models.DecimalField(verbose_name="Longitude (Minutes)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
+#
+#    mga_zone = models.DecimalField(verbose_name="MGA Zone", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
+#    mga_easting = models.DecimalField(verbose_name="MGA Easting", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
+#    mga_northing = models.DecimalField(verbose_name="MGA Northing", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
+#
+#    fd_letter = models.CharField(verbose_name="FD Letter", max_length=2, null=True, blank=True)
+#    fd_number = models.PositiveSmallIntegerField(verbose_name="FD Number", null=True, blank=True)
+#    fd_tenths = models.CharField(verbose_name="FD Tenths", max_length=2, null=True, blank=True)
+#
+#    # Activities - Formset
+#    # Tenure and Vegetation Affected - Formset
+#
+#    # Location
+#    distance = models.DecimalField(verbose_name="Distance (km)", max_digits=6, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
+#    direction = models.ForeignKey('Direction', verbose_name="Direction", null=True, blank=True)
+#    place = models.CharField(max_length=25, null=True, blank=True)
+#    lot_no = models.CharField(verbose_name="Lot Number", max_length=10, null=True, blank=True)
+#    street = models.CharField(max_length=25, null=True, blank=True)
+#    town = models.CharField(max_length=25, null=True, blank=True)
+#
+#    # Forces in Attendance - Formset
+#
+#    # Operation Details
+#    fuel = models.CharField(max_length=50, null=True, blank=True)
+#    ros = models.CharField(verbose_name="Rate of Spread", max_length=50, null=True, blank=True)
+#    flame_height = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], null=True, blank=True)
+#    assistance_required = models.CharField(max_length=50, null=True, blank=True)
+#    fire_contained = models.BooleanField(default=False)
+#    containment_time = models.CharField(verbose_name="ET to Contain", max_length=50, null=True, blank=True)
+#    ops_point = models.CharField(verbose_name="OPS Point (grid ref)", max_length=50, null=True, blank=True)
+#    communications = models.CharField(verbose_name='Communication', max_length=50, null=True, blank=True)
+#    weather = models.CharField(max_length=50, null=True, blank=True)
+#
+#    initial_snapshot = models.TextField(null=True, blank=True)
+#
+#    # FINAL Report Fields
+#    authorised_by = models.ForeignKey(User, verbose_name="Authorised By", blank=True, null=True)
+#    authorised_date = models.DateTimeField(verbose_name='Authorised Date', default=timezone.now, null=True, blank=True)
+#
+#    # Reporter
+#    source = models.ForeignKey('Source', verbose_name="Reported By", null=True, blank=True)
+#    arson_squad_notified = models.BooleanField(verbose_name="Arson Squad Notified", default=False)
+#    #prescription = models.ForeignKey(Prescription, verbose_name="ePFP (if cause is Escape)", related_name='prescribed_burn', null=True, blank=True)
+#    prescription = models.ForeignKey('Prescription', verbose_name="Pres Burn ID", null=True, blank=True)
+#    offence_no = models.CharField(verbose_name="Offence No.", max_length=10, null=True, blank=True)
+#
+#
+#    # Effect
+#    frb_effect = models.ForeignKey('FrbEffect', verbose_name='Presence/Effect of FRB', null=True, blank=True)
+#    fire_stopped = models.PositiveSmallIntegerField(verbose_name="Fuel Age - Fire Stopped (Yr)", null=True, blank=True)
+#    waterbomb_effect = models.ForeignKey('WaterBombEffect', verbose_name='Presence/Effect of WaterBomb', null=True, blank=True)
+#    last_burnt = models.PositiveSmallIntegerField(verbose_name="Fuel Age - Area Last Burnt (Yr)", null=True, blank=True)
+#    arrival_area = models.DecimalField(verbose_name="Fire Area at Arrival (ha)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
+#    fire_level = models.PositiveSmallIntegerField(verbose_name='Final Fire Level', choices=FIRE_LEVEL_CHOICES, null=True, blank=True)
+#    rating = models.ForeignKey('PriorityRating', verbose_name="Area Priority Rating", null=True, blank=True)
+#
+#    # First Attack
+#    hazard_mgt = models.ForeignKey('Agency', verbose_name="Hazard Management Agency", null=True, blank=True, related_name='hazard_mgt')
+#    other_hazard_mgt = models.CharField(verbose_name="Other Hazard Mgt Agency", max_length=50, null=True, blank=True)
+#    initial_control = models.ForeignKey('Agency', verbose_name="Initial Controlling Agency", null=True, blank=True, related_name='initial_control')
+#    other_initial_ctrl = models.CharField(verbose_name="Other Initial Control Agency", max_length=50, null=True, blank=True)
+#    final_control = models.ForeignKey('Agency', verbose_name="Final Controlling Agency", null=True, blank=True, related_name='final_control')
+#    other_final_ctrl = models.CharField(verbose_name="Other Final Control Agency", max_length=50, null=True, blank=True)
+#    #other_agency = models.CharField(verbose_name="Other Agency", max_length=50, null=True, blank=True)
+#
+#
+#
+##    def save(self, *args, **kwargs):
+##        '''Overide save() to cleanse text input fields.
+##        '''
+##        self.name = unidecode(unicode(self.name))
+##        if self.description:
+##            self.description = unidecode(unicode(self.description))
+##        super(Bushfire, self).save()
+#
+#    @property
+#    def has_init_authorised(self):
+#        return True if self.init_authorised_by and self.init_authorised_date else False
+#
+#    @property
+#    def snapshot(self):
+#        return json.loads(self.initial_snapshot) if self.has_init_authorised else None
+#
+#    def user_unicode_patch(self):
+#        """ overwrite the User model's __unicode__() method """
+#        if self.first_name or self.last_name:
+#            return '%s %s' % (self.first_name, self.last_name)
+#        return self.username
+#    User.__unicode__ = user_unicode_patch
+#
+#    class Meta:
+#        unique_together = ('district', 'incident_no', 'season')
+#        default_permissions = ('add', 'change', 'delete', 'view')
+#
+#    def __str__(self):
+#        return ', '.join([self.name, self.district.name, self.season, self.incident_no])
 
-    user = models.OneToOneField(User, related_name='profile')
-    region = models.ForeignKey(Region, blank=True, null=True)
-    district = ChainedForeignKey(District,
-        chained_field="region", chained_model_field="region",
-        show_all=False, auto_choose=True, blank=True, null=True)
 
-    def __str__(self):
-        return 'Profile of user: {} - {} - {}'.format(self.user.username, self.region, self.district)
+class Bushfire(Audit):
+    # OriginFDGRID
+    COORD_TYPE_MGAZONE = 1
+    COORD_TYPE_LATLONG = 2
+    COORD_TYPE_FDGRID = 3
+    COORD_TYPE_CHOICES = (
+        (COORD_TYPE_MGAZONE, 'MGA'),
+        (COORD_TYPE_LATLONG, 'Lat/Long'),
+        (COORD_TYPE_FDGRID, 'FD Grid'),
+    )
 
-    class Meta:
-        default_permissions = ('add', 'change', 'view')
+    CAUSE_CHOICES = (
+        (1, 'Known'),
+        (2, 'Possible'),
+    )
 
+    PW_RESOURCE_CHOICES = (
+        (1, 'No'),
+        (2, 'Yes'),
+        (3, 'Monitored Remotely'),
+    )
 
-class BushfireTest(models.Model):
-    region = models.ForeignKey(Region)
-    district = ChainedForeignKey(
-        District, chained_field="region", chained_model_field="region",
-        show_all=False, auto_choose=True)
+    ALERT_LEVEL_CHOICES = (
+        (1, 'Emergency/Watch'),
+        (2, 'Act/Advice'),
+    )
 
+    FIRE_LEVEL_CHOICES = (
+        (1, 1),
+        (2, 2),
+        (3, 3),
+    )
 
-#class BushfireTest2(Audit):
-class BushfireTest2(models.Model):
+    # Common Fields
     region = models.ForeignKey(Region)
     district = ChainedForeignKey(
         District, chained_field="region", chained_model_field="region",
         show_all=False, auto_choose=True)
 
     name = models.CharField(max_length=100, verbose_name="Fire Name")
-    incident_no = models.CharField(verbose_name="Fire Incident No.", max_length=10)
-    season = models.CharField(max_length=9)
-    dfes_incident_no = models.CharField(verbose_name="DFES Incident No.", max_length=10)
-    job_code = models.CharField(verbose_name="Job Code", max_length=10, null=True, blank=True)
-    potential_fire_level = models.PositiveSmallIntegerField(choices=FIRE_LEVEL_CHOICES)
+    incident_no = models.PositiveIntegerField(verbose_name="Fire Incident No.")
+    dfes_incident_no = models.PositiveIntegerField(verbose_name="DFES Incident No.", null=True, blank=True)
+    job_code = models.PositiveIntegerField(verbose_name="job Code", null=True, blank=True)
 
-    init_authorised_by = models.ForeignKey(User, verbose_name="Authorised By", blank=True, null=True)
+
+    # Initial Fire Report
+    potential_fire_level = models.PositiveSmallIntegerField(choices=FIRE_LEVEL_CHOICES, null=True, blank=True)
+    alert_level = models.PositiveSmallIntegerField(verbose_name="Alert Level", choices=ALERT_LEVEL_CHOICES, null=True, blank=True)
+    media_alert_req = models.BooleanField(verbose_name="Media Alert Required", default=False)
+    fire_position = models.CharField(verbose_name="Position of Fire", max_length=100, null=True, blank=True)
+
+    # Point of Origin
+    origin_point = models.PointField(null=True, blank=True, editable=False, help_text='Optional.')
+    fire_boundary = models.MultiPolygonField(srid=4326, null=True, blank=True, editable=False, help_text='Optional.')
+    grid = models.CharField(verbose_name="Lat/Long, MGA, FD Grid", max_length=100, null=True, blank=True)
+    arrival_area = models.DecimalField(verbose_name="Fire Area at Arrival (ha)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
+    fire_not_found = models.BooleanField(default=False)
+
+#    coord_type = models.PositiveSmallIntegerField(choices=COORD_TYPE_CHOICES, verbose_name="Coordinate Type", null=True, blank=True)
+#    # TODO number of dp
+#    lat_decimal = models.DecimalField(verbose_name="Latitude (Decimal)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
+#    lat_degrees = models.DecimalField(verbose_name="Latitude (Degrees)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
+#    lat_minutes = models.DecimalField(verbose_name="Latitude (Minutes)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
+#    lon_decimal = models.DecimalField(verbose_name="Longitude (Decimal)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
+#    lon_degrees = models.DecimalField(verbose_name="Longitude (Degrees)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
+#    lon_minutes = models.DecimalField(verbose_name="Longitude (Minutes)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
+#
+#    mga_zone = models.DecimalField(verbose_name="MGA Zone", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
+#    mga_easting = models.DecimalField(verbose_name="MGA Easting", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
+#    mga_northing = models.DecimalField(verbose_name="MGA Northing", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
+#
+#    fd_letter = models.CharField(verbose_name="FD Letter", max_length=2, null=True, blank=True)
+#    fd_number = models.PositiveSmallIntegerField(verbose_name="FD Number", null=True, blank=True)
+#    fd_tenths = models.CharField(verbose_name="FD Tenths", max_length=2, null=True, blank=True)
+
+    # FireBehaviour FS here
+    #tenure = models.ForeignKey('Tenure', null=True, blank=True)
+    #fuel = models.CharField(max_length=50, null=True, blank=True)
+    assistance_req = models.CharField(verbose_name="Assistance Required", max_length=50, null=True, blank=True)
+    communications = models.CharField(verbose_name='Communication', max_length=50, null=True, blank=True)
+    other_info = models.CharField(verbose_name='Other Information', max_length=100, null=True, blank=True)
+    cause = models.ForeignKey('Cause', null=True, blank=True)
+    other_cause = models.CharField(verbose_name='Other Cause', max_length=50, null=True, blank=True)
+
+    # TODO sperate days and hrs to control?
+    #time_to_control = models.DateTimeField(verbose_name='Time to Control', null=True, blank=True)
+
+    field_officer = models.ForeignKey(User, verbose_name="Field Officer", null=True, blank=True, related_name='init_field_officer2')
+    init_authorised_by = models.ForeignKey(User, verbose_name="Authorised By", blank=True, null=True, related_name='init_auth_by2')
     init_authorised_date = models.DateTimeField(verbose_name='Authorised Date', default=timezone.now, null=True, blank=True)
+
+    # we serialise/snapshot the initial report when authorised
+    initial_snapshot = models.TextField(null=True, blank=True)
+
+    # below are in Activities FS
+#    fire_detected_date = models.DateTimeField(verbose_name='Date Fire Detected', default=timezone.now, null=True, blank=True)
+#    pw_resources_desp = models.PositiveSmallIntegerField(verbose_name="P&W Resources Despatched", choices=PW_RESOURCE_CHOICES, null=True, blank=True)
+#    pw_resources_desp_date = models.DateTimeField(verbose_name='Date P&W Resources Despatched', default=timezone.now, null=True, blank=True)
+#    aerial_support_desp = models.BooleanField(verbose_name="Aerial Support Despatched", default=False)
+#    aerial_support_desp_date = models.DateTimeField(verbose_name='Date Aerial Support Despatched', default=timezone.now, null=True, blank=True)
+#    time_to_control = models.DateTimeField(verbose_name='Time to Control', null=True, blank=True)
+#    fire_contained_date = models.DateTimeField(verbose_name='Date Fire Contained', null=True, blank=True)
+#    fire_controlled_date = models.DateTimeField(verbose_name='Date Fire Controlled', null=True, blank=True)
+#    fire_safe_date = models.DateTimeField(verbose_name='Date Fire Safe', null=True, blank=True)
+
+    # FINAL Fire Report Fields
+
+    first_attack = models.ForeignKey('Agency', verbose_name="First Attack Agency", null=True, blank=True, related_name='first_attack2')
+    other_first_attack = models.CharField(verbose_name="Other First Attack Agency", max_length=50, null=True, blank=True)
+    initial_control = models.ForeignKey('Agency', verbose_name="Initial Controlling Agency", null=True, blank=True, related_name='initial_control2')
+    other_initial_ctrl = models.CharField(verbose_name="Other Initial Control Agency", max_length=50, null=True, blank=True)
+    final_control = models.ForeignKey('Agency', verbose_name="Final Controlling Agency", null=True, blank=True, related_name='final_control2')
+    other_final_ctrl = models.CharField(verbose_name="Other Final Control Agency", max_length=50, null=True, blank=True)
+
+    max_fire_level = models.PositiveSmallIntegerField(choices=FIRE_LEVEL_CHOICES, null=True, blank=True)
+    arson_squad_notified = models.BooleanField(verbose_name="Arson Squad Notified", default=False)
+    offence_no = models.CharField(verbose_name="Police Offence No.", max_length=10, null=True, blank=True)
+    final_area = models.DecimalField(verbose_name="Final Fire Area (ha)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
+    # Private Damage FS here
+    # Public Damage FS here
+    # Comments FS here
+
+    authorised_by = models.ForeignKey(User, verbose_name="Authorised By", blank=True, null=True)
+    authorised_date = models.DateTimeField(verbose_name='Authorised Date', default=timezone.now, null=True, blank=True)
+
+#    def save(self, *args, **kwargs):
+#        '''Overide save() to cleanse text input fields.
+#        '''
+#        self.name = unidecode(unicode(self.name))
+#        if self.description:
+#            self.description = unidecode(unicode(self.description))
+#        super(Bushfire, self).save()
+
+    @property
+    def has_init_authorised(self):
+        return True if self.init_authorised_by and self.init_authorised_date else False
+
+    @property
+    def final_authorised(self):
+        return True if self.authorised_by and self.authorised_date else False
+
+    @property
+    def snapshot(self):
+        return json.loads(self.initial_snapshot) if self.has_init_authorised else None
+
+    def user_unicode_patch(self):
+        """ overwrite the User model's __unicode__() method """
+        if self.first_name or self.last_name:
+            return '%s %s' % (self.first_name, self.last_name)
+        return self.username
+    User.__unicode__ = user_unicode_patch
+
+    class Meta:
+        #unique_together = ('district', 'incident_no', 'season')
+        unique_together = ('district', 'incident_no')
+        default_permissions = ('add', 'change', 'delete', 'view')
+
+    def __str__(self):
+        return ', '.join([self.name, self.district.name, self.incident_no])
+
 
 
 @python_2_unicode_compatible
@@ -131,132 +414,6 @@ class FuelType(models.Model):
 
     def __str__(self):
         return self.name
-
-
-class Bushfire(Audit):
-    # OriginFDGRID
-    COORD_TYPE_MGAZONE = 1
-    COORD_TYPE_LATLONG = 2
-    COORD_TYPE_FDGRID = 3
-    COORD_TYPE_CHOICES = (
-        (COORD_TYPE_MGAZONE, 'MGA'),
-        (COORD_TYPE_LATLONG, 'Lat/Long'),
-        (COORD_TYPE_FDGRID, 'FD Grid'),
-    )
-
-    CAUSE_CHOICES = (
-        (1, 'Known'),
-        (2, 'Possible'),
-    )
-
-    region = models.ForeignKey(Region)
-#    district = models.ForeignKey(District)
-    district = ChainedForeignKey(
-        District, chained_field="region", chained_model_field="region",
-        show_all=False, auto_choose=True)
-
-    name = models.CharField(max_length=100, verbose_name="Fire Name")
-    incident_no = models.CharField(verbose_name="Fire Incident No.", max_length=10)
-    season = models.CharField(max_length=9)
-    dfes_incident_no = models.CharField(verbose_name="DFES Incident No.", max_length=10, null=True, blank=True)
-    job_code = models.CharField(verbose_name="Job Code", max_length=10, null=True, blank=True)
-    potential_fire_level = models.PositiveSmallIntegerField(choices=FIRE_LEVEL_CHOICES, null=True, blank=True)
-
-    authorised_by = models.ForeignKey(User, verbose_name="Authorised By", blank=True, null=True)
-    authorised_date = models.DateTimeField(verbose_name='Authorised Date', default=timezone.now, null=True, blank=True)
-
-
-    coord_type = models.PositiveSmallIntegerField(choices=COORD_TYPE_CHOICES, verbose_name="Coordinate Type", null=True, blank=True)
-    fire_not_found = models.BooleanField(default=False)
-    # TODO number of dp
-    lat_decimal = models.DecimalField(verbose_name="Latitude (Decimal)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
-    lat_degrees = models.DecimalField(verbose_name="Latitude (Degrees)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
-    lat_minutes = models.DecimalField(verbose_name="Latitude (Minutes)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
-    lon_decimal = models.DecimalField(verbose_name="Longitude (Decimal)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
-    lon_degrees = models.DecimalField(verbose_name="Longitude (Degrees)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
-    lon_minutes = models.DecimalField(verbose_name="Longitude (Minutes)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
-
-    mga_zone = models.DecimalField(verbose_name="MGA Zone", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
-    mga_easting = models.DecimalField(verbose_name="MGA Easting", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
-    mga_northing = models.DecimalField(verbose_name="MGA Northing", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
-
-    fd_letter = models.CharField(verbose_name="FD Letter", max_length=2, null=True, blank=True)
-    fd_number = models.PositiveSmallIntegerField(verbose_name="FD Number", null=True, blank=True)
-    fd_tenths = models.CharField(verbose_name="FD Tenths", max_length=2, null=True, blank=True)
-
-    # Location
-    distance = models.DecimalField(verbose_name="Distance (km)", max_digits=6, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
-    direction = models.ForeignKey('Direction', verbose_name="Direction", null=True, blank=True)
-    place = models.CharField(max_length=25, null=True, blank=True)
-    lot_no = models.CharField(verbose_name="Lot Number", max_length=10, null=True, blank=True)
-    street = models.CharField(max_length=25, null=True, blank=True)
-    town = models.CharField(max_length=25, null=True, blank=True)
-
-    # Reporter
-    source = models.ForeignKey('Source', verbose_name="Reported By", null=True, blank=True)
-    cause = models.ForeignKey('Cause', null=True, blank=True)
-    arson_squad_notified = models.BooleanField(verbose_name="Arson Squad Notified", default=False)
-    #prescription = models.ForeignKey(Prescription, verbose_name="ePFP (if cause is Escape)", related_name='prescribed_burn', null=True, blank=True)
-    prescription = models.ForeignKey('Prescription', verbose_name="Pres Burn ID", null=True, blank=True)
-    offence_no = models.CharField(verbose_name="Offence No.", max_length=10, null=True, blank=True)
-
-    # Initial
-    fuel = models.CharField(max_length=50, null=True, blank=True)
-    ros = models.CharField(verbose_name="Rate of Spread", max_length=50, null=True, blank=True)
-    flame_height = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], null=True, blank=True)
-    assistance_required = models.CharField(max_length=50, null=True, blank=True)
-    fire_contained = models.BooleanField(default=False)
-    containment_time = models.CharField(verbose_name="ET to Contain", max_length=50, null=True, blank=True)
-    ops_point = models.CharField(verbose_name="OPS Point (grid ref)", max_length=50, null=True, blank=True)
-    communications = models.CharField(verbose_name='Communication', max_length=50, null=True, blank=True)
-    weather = models.CharField(max_length=50, null=True, blank=True)
-    field_officer = models.ForeignKey(User, verbose_name="Field Officer", null=True, blank=True, related_name='init_field_officer')
-    init_authorised_by = models.ForeignKey(User, verbose_name="Authorised By", blank=True, null=True, related_name='init_auth_by')
-    init_authorised_date = models.DateTimeField(verbose_name='Authorised Date', default=timezone.now, null=True, blank=True)
-
-    # Effect
-    frb_effect = models.ForeignKey('FrbEffect', verbose_name='Presence/Effect of FRB', null=True, blank=True)
-    fire_stopped = models.PositiveSmallIntegerField(verbose_name="Fuel Age - Fire Stopped (Yr)", null=True, blank=True)
-    waterbomb_effect = models.ForeignKey('WaterBombEffect', verbose_name='Presence/Effect of WaterBomb', null=True, blank=True)
-    last_burnt = models.PositiveSmallIntegerField(verbose_name="Fuel Age - Area Last Burnt (Yr)", null=True, blank=True)
-    arrival_area = models.DecimalField(verbose_name="Fire Area at Arrival (ha)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
-    fire_level = models.PositiveSmallIntegerField(verbose_name='Final Fire Level', choices=FIRE_LEVEL_CHOICES, null=True, blank=True)
-    rating = models.ForeignKey('PriorityRating', verbose_name="Area Priority Rating", null=True, blank=True)
-
-    # First Attack
-    first_attack = models.ForeignKey('Agency', verbose_name="First Attack Agency", null=True, blank=True, related_name='first_attack')
-    other_first_attack = models.CharField(verbose_name="Other First Attack Agency", max_length=50, null=True, blank=True)
-    hazard_mgt = models.ForeignKey('Agency', verbose_name="Hazard Management Agency", null=True, blank=True, related_name='hazard_mgt')
-    other_hazard_mgt = models.CharField(verbose_name="Other Hazard Mgt Agency", max_length=50, null=True, blank=True)
-    initial_control = models.ForeignKey('Agency', verbose_name="Initial Controlling Agency", null=True, blank=True, related_name='initial_control')
-    other_initial_ctrl = models.CharField(verbose_name="Other Initial Control Agency", max_length=50, null=True, blank=True)
-    final_control = models.ForeignKey('Agency', verbose_name="Final Controlling Agency", null=True, blank=True, related_name='final_control')
-    other_final_ctrl = models.CharField(verbose_name="Other Final Control Agency", max_length=50, null=True, blank=True)
-    #other_agency = models.CharField(verbose_name="Other Agency", max_length=50, null=True, blank=True)
-
-    # Initial Misc
-    #cause = models.ForeignKey(Cause)
-    known_possible = models.PositiveSmallIntegerField(choices=CAUSE_CHOICES, verbose_name="Known/Possible", null=True, blank=True)
-    other_cause = models.CharField(verbose_name='Other Cause', max_length=50, null=True, blank=True)
-    investigation_req = models.BooleanField(verbose_name="Invest'n Required", default=False)
-
-    @property
-    def has_init_authorised(self):
-        return True if self.init_authorised_by and self.init_authorised_date else False
-
-    def user_unicode_patch(self):
-        """ overwrite the User model's __unicode__() method """
-        if self.first_name or self.last_name:
-            return '%s %s' % (self.first_name, self.last_name)
-        return self.username
-    User.__unicode__ = user_unicode_patch
-
-    class Meta:
-        unique_together = ('district', 'incident_no', 'season')
-        default_permissions = ('add', 'change', 'delete', 'view')
-
-    def __str__(self):
-        return ', '.join([self.name, self.district.name, self.season, self.incident_no])
 
 
 @python_2_unicode_compatible
@@ -456,17 +613,26 @@ Area Burnt/Forces
 class AreaBurnt(models.Model):
     tenure = models.ForeignKey(Tenure, related_name='tenures')
     fuel_type = models.ForeignKey(FuelType, related_name='fuel_types') # vegetation_type was renamed to fuel_type in PBS
-    area = models.DecimalField(verbose_name="Area (ha)", max_digits=12, decimal_places=2, validators=[MinValueValidator(0)])
-    origin = models.BooleanField(verbose_name="Point of Origin", default=False)
+    #area = models.DecimalField(verbose_name="Area (ha)", max_digits=12, decimal_places=2, validators=[MinValueValidator(0)])
+    #origin = models.BooleanField(verbose_name="Point of Origin", default=False)
     bushfire = models.ForeignKey(Bushfire, related_name='areas_burnt')
 
 #    def clean(self):
 #        if self.bushfire.areas_burnt.all().count() == 0:
 #            raise ValidationError("You must enter one Area Burnt record")
 
+    def to_json(self):
+        return json.dumps(self.to_dict)
+
+    def to_dict(self):
+        #return dict(tenure=self.tenure.name, fuel_type=self.fuel_type.name, area=round(self.area,2), origin=self.origin)
+        return dict(tenure=self.tenure.name, fuel_type=self.fuel_type.name)
+
     def __str__(self):
-        return 'Tenure: {}, Fuel Type: {}, Area: {}, Origin: {}'.format(
-            self.tenure.name, self.fuel_type.name, self.area, self.origin)
+        #return 'Tenure: {}, Fuel Type: {}, Area: {}, Origin: {}'.format(
+        #    self.tenure.name, self.fuel_type.name, self.area, self.origin)
+        return 'Tenure: {}, Fuel Type: {}'.format(
+            self.tenure.name, self.fuel_type.name)
 
     class Meta:
         unique_together = ('bushfire', 'tenure', 'fuel_type',)
@@ -707,13 +873,18 @@ class Activity(models.Model):
     date = models.DateTimeField(default=timezone.now)
     bushfire = models.ForeignKey(Bushfire, related_name='activities')
 
-    class Meta:
-        ordering = ['activity']
+
+    def to_json(self):
+        return json.dumps(self.to_dict)
+
+    def to_dict(self):
+        return dict(name=self.activity.name, date=self.date.strftime('%Y-%m-%d %H:%M:%S'))
 
     def __str__(self):
         return self.activity.name
 
     class Meta:
+#        ordering = ['activity']
         unique_together = ('bushfire', 'activity',)
         default_permissions = ('add', 'change', 'delete', 'view')
 
@@ -748,6 +919,38 @@ class Activity(models.Model):
 #
 #    def __str__(self):
 #        return self.offence_no
+
+
+class BushfireTest(models.Model):
+    region = models.ForeignKey(Region)
+    district = ChainedForeignKey(
+        District, chained_field="region", chained_model_field="region",
+        show_all=False, auto_choose=True)
+
+
+#class BushfireTest2(Audit):
+class BushfireTest2(models.Model):
+
+    FIRE_LEVEL_CHOICES = (
+        (1, 1),
+        (2, 2),
+        (3, 3),
+    )
+
+    region = models.ForeignKey(Region)
+    district = ChainedForeignKey(
+        District, chained_field="region", chained_model_field="region",
+        show_all=False, auto_choose=True)
+
+    name = models.CharField(max_length=100, verbose_name="Fire Name")
+    incident_no = models.CharField(verbose_name="Fire Incident No.", max_length=10)
+    season = models.CharField(max_length=9)
+    dfes_incident_no = models.CharField(verbose_name="DFES Incident No.", max_length=10)
+    job_code = models.CharField(verbose_name="Job Code", max_length=10, null=True, blank=True)
+    potential_fire_level = models.PositiveSmallIntegerField(choices=FIRE_LEVEL_CHOICES)
+
+    init_authorised_by = models.ForeignKey(User, verbose_name="Authorised By", blank=True, null=True)
+    init_authorised_date = models.DateTimeField(verbose_name='Authorised Date', default=timezone.now, null=True, blank=True)
 
 
 

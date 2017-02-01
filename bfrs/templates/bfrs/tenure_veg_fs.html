@@ -1,5 +1,36 @@
 <h3>Tenure and Vegetation Affected</h3>
 <table class="table table-bordered table-striped table-condensed">
+{% if has_init_authorised and initial %}
+
+  <tbody>
+    <tr>
+      <td class="cbas">
+        <table class="table_fs" border="0" >
+            <tbody>
+              <th>Tenure</th>
+              <th>Fuel Type</th>
+              <!--
+              <th>Area (ha)</th>
+              <th>Point of Origin</th>
+              -->
+              {% for area in snapshot.areas_burnt %}
+                <tr>
+                  <td>{{ area.tenure }}</td>
+                  <td>{{ area.fuel_type }}</td>
+                  {% comment %}
+                  <td>{{ area.area }}</td>
+                  <td>{{ area.origin }}</td>
+                  {% endcomment %}
+                </tr>
+              {% endfor %}
+            </tbody>
+        </table>
+      </td>
+    </tr>
+  </tbody>
+
+{% else %}
+
   <tbody>
     <tr>
       <td class="cbas">
@@ -9,15 +40,19 @@
                 <tbody>
                     <th>Tenure</th>
                     <th>Fuel Type</th>
+                    <!--
                     <th>Area (ha)</th>
                     <th>Point of Origin</th>
+                    -->
                     <th></th>
                     {% for fs in area_burnt_formset %}
                     <tr>
                     <td>{{ fs.tenure }}</td>
                     <td>{{ fs.fuel_type }}</td>
+                  {% comment %}
                     <td>{{ fs.area }}</td>
                     <td>{{ fs.origin }}</td>
+                  {% endcomment %}
                     <td>
                             {% if fs.instance.pk %}{{ fs.DELETE }}{% endif %}
                             {{ fs.id }}
@@ -39,6 +74,7 @@
       </td>
     </tr>
   </tbody>
+{% endif %}
 </table>
 
 <script>
