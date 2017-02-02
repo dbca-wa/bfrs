@@ -24,6 +24,7 @@ from bfrs.utils import (breadcrumbs_li, calc_coords, save_initial_snapshot,
 from django.db import IntegrityError, transaction
 from django.contrib import messages
 from django.forms import ValidationError
+from datetime import datetime
 
 
 class ProfileView(LoginRequiredMixin, generic.FormView):
@@ -253,7 +254,11 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
         if not self.object.creator:
             self.object.creator_id = 1 #User.objects.all()[0] #request.user
         self.object.modifier_id = 1 #User.objects.all()[0] #request.user
-        calc_coords(self.object)
+        #calc_coords(self.object)
+
+        if self.request.POST.has_key('init_authorise'):
+            self.object.init_authorised_by = self.request.user
+            self.object.init_authorised_date = datetime.now()
 
         if self.object.has_init_authorised:
             save_initial_snapshot(self.object)
@@ -535,9 +540,9 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
         form_class = self.get_form_class()
         form = self.get_form(form_class)
         activity_formset = ActivityFormSet(self.request.POST, prefix='activity_fs')
-        area_burnt_formset      = AreaBurntFormSet(self.request.POST, prefix='area_burnt_fs')
+        area_burnt_formset = AreaBurntFormSet(self.request.POST, prefix='area_burnt_fs')
 
-        if form.is_valid() and activity_formset.is_valid():
+        if form.is_valid() and activity_formset.is_valid() and area_burnt_formset.is_valid():
             #self.object = self.get_object()
             return self.form_valid(request,
                 form,
@@ -546,8 +551,8 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
             )
         else:
             #import ipdb; ipdb.set_trace()
-            activity_formset = ActivityFormSet(prefix='activity_fs')
-            area_burnt_formset      = AreaBurntFormSet(prefix='area_burnt_fs')
+            #activity_formset = ActivityFormSet(prefix='activity_fs')
+            #area_burnt_formset = AreaBurntFormSet(prefix='area_burnt_fs')
 
             #self.object = self.get_object()
             return self.form_invalid(
@@ -563,7 +568,6 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
             area_burnt_formset,
             kwargs,
         ):
-        #import ipdb; ipdb.set_trace()
         context = {
             'form': form,
             'activity_formset': activity_formset,
@@ -580,14 +584,20 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
         self.object = form.save(commit=False)
         self.object.creator_id = 1 #User.objects.all()[0] #request.user
         self.object.modifier_id = 1 #User.objects.all()[0] #request.user
-        calc_coords(self.object)
+        #calc_coords(self.object)
+
+        self.object.save()
+        activities_updated = update_activity_fs(self.object, activity_formset)
+        areas_burnt_updated = update_areas_burnt_fs(self.object, area_burnt_formset)
+
+        if self.request.POST.has_key('init_authorise'):
+            self.object.init_authorised_by = self.request.user
+            self.object.init_authorised_date = datetime.now()
 
         if self.object.has_init_authorised:
             save_initial_snapshot(self.object)
 
         self.object.save()
-        activities_updated = update_activity_fs(self.object, activity_formset)
-        areas_burnt_updated = update_areas_burnt_fs(self.object, area_burnt_formset)
 
         redirect_referrer =  HttpResponseRedirect(request.META.get('HTTP_REFERER'))
         if not activities_updated:

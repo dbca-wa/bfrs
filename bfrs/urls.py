@@ -6,9 +6,8 @@ from bfrs import views
 urlpatterns = [
     #url(r'^$', views.BushfireView.as_view(), name='index'),
     url(r'create/$', views.BushfireCreateView.as_view(), name='bushfire_create'),
-    url(r'create2/$', views.BushfireCreateView.as_view(), name='bushfire2_create'),
     url(r'initial/(?P<pk>\d+)/$', views.BushfireInitUpdateView.as_view(), name='bushfire_initial'),
-    url(r'initial2/(?P<pk>\d+)/$', views.BushfireInitUpdateView.as_view(), name='bushfire2_initial'),
+#    url(r'initial/authorise/(?P<pk>\d+)/$', views.BushfireInitAuthoriseView.as_view(), name='bushfire_init_authorise'),
     url(r'final/(?P<pk>\d+)/$', views.BushfireUpdateView.as_view(), name='bushfire_final'),
 
     #url(r'create2/$', views.BushfireCreateTest2View.as_view(), name='bushfire_create2'),

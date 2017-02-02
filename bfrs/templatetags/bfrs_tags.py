@@ -32,11 +32,22 @@ def has_init_authorised(context, bushfire_id):
     return obj.has_init_authorised
 
 @register.filter
+def date_fmt(dt):
+    """
+    Usage::
+
+        {% if object.authorised_date|date_fmt %}
+        ...
+        {% endif %}
+    """
+    return dt.strftime('%Y-%m-%d %H:%M:%S')
+
+@register.filter
 def can_readonly(user):
     """
     Usage::
 
-        {% if user|can_readonly %}
+        {% if request.user|can_readonly %}
         ...
         {% endif %}
     """

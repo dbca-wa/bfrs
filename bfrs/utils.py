@@ -33,13 +33,13 @@ def save_initial_snapshot(obj):
 
         potential_fire_level = obj.get_potential_fire_level_display() if obj.potential_fire_level else '',
         alert_level = obj.get_alert_level_display() if obj.alert_level else '',
-        media_alert_req = 'Yes' if obj.media_alert_req else 'No',
+        media_alert_req = obj.media_alert_req,
         fire_position = obj.fire_position if obj.fire_position else '',
 
         # Point of Origin
         grid = obj.grid,
         arrival_area = float(obj.arrival_area) if obj.arrival_area else '',
-        fire_not_found = 'True' if obj.fire_not_found else 'False',
+        fire_not_found = obj.fire_not_found,
 #        coord_type = obj.get_coord_type_display(), # if obj.coord_type else '',
 #        lat_decimal = float(obj.lat_decimal) if obj.lat_decimal else '',
 #        lat_degrees = float(obj.lat_degrees) if obj.lat_degrees else '',
@@ -63,7 +63,7 @@ def save_initial_snapshot(obj):
         areas_burnt = [(i.to_dict()) for i in obj.areas_burnt.all()],
 
         # Operation Details
-        assistance_req = 'Yes' if obj.assistance_req else 'No',
+        assistance_req = obj.assistance_req,
         communications = obj.communications if obj.communications else '',
         other_info = obj.other_info if obj.other_info else '',
         cause = obj.cause.name,
@@ -73,6 +73,7 @@ def save_initial_snapshot(obj):
 
     )
     obj.initial_snapshot = json.dumps(initial_snapshot)
+    obj.save()
 
 
 #def save_initial_snapshot(obj):

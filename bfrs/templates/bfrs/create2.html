@@ -143,157 +143,86 @@
 {{snapshot.job_code}}
 
 <h1>Bushfire Detail</h1>
+{% comment %}
+<a id="id_init_authorise" href="{% url 'bushfire:bushfire_init_authorise' object.id %}" class="btn"><i class="icon-button">Mark as Authorised</i></a>
+{% endcomment %}
 <form action="" method="post">{% csrf_token %}
 
 <table class="table table-bordered table-striped table-condensed">
-  <tbody>
+    <tbody>
+        <tr>
+            <th class="cbas">Region *</th>
+            <td class="cbas">{% if has_init_authorised %} {{snapshot.region}} {% else %} {{form.region}} {% endif %}</td>
 
-    <tr>
-      <td class="cbas">
-        <div class="col-sm-2" > 
-            <div id="div_id_region" class="form-group"> 
-                <label for="id_region" class="control-label requiredField">Region*</label>
-                <div class="controls ">{% if has_init_authorised %} {{snapshot.region}} {% else %} {{form.region}} {% endif %}</div>
-            </div>
-        </div>
+            <th class="cbas">District *</th>
+            <td class="cbas">{% if has_init_authorised %} {{snapshot.district}} {% else %} {{form.district}} {% endif %}</td>
+        </tr>
 
-        <div class="col-sm-2" > 
-            <div id="div_id_district" class="form-group"> 
-                <label for="id_district" class="control-label requiredField">District*</label>
-                <div class="controls ">{% if has_init_authorised %} {{snapshot.district}} {% else %} {{form.district}} {% endif %}</div>
-            </div>
-        </div>
+        <tr>
+            <th class="cbas">Fire Number *</th>
+            <td class="cbas">{% if has_init_authorised %} {{snapshot.incident_no}} {% else %} {{form.incident_no}} {% endif %}</td>
 
-        <div class="col-sm-2" > 
-            <div id="div_id_incident_no" class="form-group"> 
-                <label for="id_incident_no" class="control-label requiredField">Fire Incident No.*</label>
-                <div class="controls ">{% if has_init_authorised %} {{snapshot.incident_no}} {% else %} {{form.incident_no}} {% endif %}</div>
-            </div>
-            </div>
-        </div>
+            <th class="cbas">Job Code</th>
+            <td class="cbas">{% if has_init_authorised %} {{snapshot.job_code}} {% else %} {{form.job_code}} {% endif %}</td>
+        </tr>
 
-        <div class="col-sm-2" > 
-            <div id="div_id_job_code" class="form-group"> 
-                <label for="id_job_code" class="control-label nonRequiredField">Job Code</label>
-                <div class="controls ">{% if has_init_authorised %} {{snapshot.job_code}} {% else %} {{form.job_code}} {% endif %}</div>
-            </div>
-        </div>
 
-        <div class="col-sm-2" > 
-            <div id="div_id_name" class="form-group"> 
-                <label for="id_name" class="control-label  requiredField">Name*</label>
-                <div class="controls ">{% if has_init_authorised %} {{snapshot.name}} {% else %} {{form.name}} {% endif %}</div>
-            </div>
-        </div>
-      </td>
-    </tr>
+        <tr>
+            <th class="cbas">Name *</th>
+            <td colspan="4" class="cbas">{% if has_init_authorised %} {{snapshot.name}} {% else %} {{form.name}} {% endif %}</td>
+        </tr>
 
+        <tr>
+            <th class="cbas">Fire Position *</th>
+            <td colspan="4"class="cbas">{% if has_init_authorised %} {{snapshot.fire_position}} {% else %} {{form.fire_position}} {% endif %}</td>
+        </tr>
+
+        <tr>
+            <th class="cbas">Field Officer *</th>
+            <td class="cbas">{% if has_init_authorised %} {{snapshot.field_officer}} {% else %} {{form.field_officer}} {% endif %}</td>
+
+            <th class="cbas">Duty Officer</th>
+            <td class="cbas">{% if has_init_authorised %} {{snapshot.duty_officer}} {% else %} {{form.duty_officer}} {% endif %}</td>
+        </tr>
+
+        {% if has_init_authorised %} 
+        <tr>
+            <th class="cbas">Authorised By *</th>
+            <td class="cbas">{{object.init_authorised_by}}</td>
+
+            <th class="cbas">Authorised Date *</th>
+            <td class="cbas">{{object.init_authorised_date|date_fmt}}</td>
+        </tr>
+        {% endif %}
   </tbody>
 </table>
 
-
 <table class="table table-bordered table-striped table-condensed">
-  <tbody>
-    <tr>
-      <td>
-        <div class="col-sm-2" > 
-            <div id="div_id_field_officer" class="form-group"> 
-                <label for="id_field_officer" class="control-label requiredField">Field Officer*</label>
-                <div class="controls ">{% if has_init_authorised %} {{snapshot.field_officer}} {% else %} {{form.field_officer}} {% endif %}</div>
-            </div>
-        </div>
+    <tbody>
+        <tr>
+            <th class="cbas">Potential Fire Level *</th>
+            <td class="cbas">{% if has_init_authorised %} {{snapshot.potential_fire_level}} {% else %} {{form.potential_fire_level}} {% endif %}</td>
 
-        <div class="col-sm-2" > 
-            <div id="div_id_init_authorised_by" class="form-group"> 
-                <label for="id_init_authorised_by" class="control-label nonRequiredField">Authorised By</label>
-                <div class="controls ">{% if has_init_authorised %} {{snapshot.init_authorised_by}} {% else %} {{form.init_authorised_by}} {% endif %}</div>
-            </div>
-        </div>
+            <th class="cbas">Alert Level *</th>
+            <td class="cbas">{% if has_init_authorised %} {{snapshot.alert_level}} {% else %} {{form.alert_level}} {% endif %}</td>
 
-        <div class="col-sm-2" > 
-            <div id="div_id_init_authorised_date" class="form-group"> 
-                <label for="id_init_authorised_date" class="control-label nonRequiredField">Authorised Date</label>
-                <div class="controls ">{% if has_init_authorised %} {{snapshot.init_authorised_date}} {% else %} {{form.init_authorised_date}} {% endif %}</div>
-            </div>
-        </div>
-      </td>
-    </tr>
+            <th class="cbas">Media Alert Required</th>
+            <td class="cbas">
+              {% if has_init_authorised %}
+                {% if snapshot.media_alert_req %}<div class="text-center"><i class="icon-ok text-success"></i></div>{% else %}<div class="text-center"><i class="icon-remove text-danger"></i></div>{% endif %}
+              {% else %}
+                {{form.media_alert_req}}
+              {% endif %}
+            </td>
+        </tr>
 
-    <tr>
-      <td>
-        <div class="col-sm-2" > 
-            <div id="div_potential_fire_level" class="form-group"> 
-                <label for="id_potential_fire_level" class="control-label  requiredField">Potential Fire Level*</label>
-                <div class="controls ">{% if has_init_authorised %} {{snapshot.potential_fire_level}} {% else %} {{form.potential_fire_level}} {% endif %}</div>
-            </div>
-        </div>
+        <tr>
+            <th class="cbas">Cause *</th>
+            <td colspan="3" class="cbas">{% if has_init_authorised %} {{snapshot.cause}} {% else %} {{form.cause}} {% endif %}</td>
 
-        <div class="col-sm-2" > 
-            <div id="div_id_alert_level" class="form-group"> 
-                <label for="id_alert_level" class="control-label  requiredField">Alert Level*</label>
-                <div class="controls ">{% if has_init_authorised %} {{snapshot.alert_level}} {% else %} {{form.alert_level}} {% endif %}</div>
-            </div>
-        </div>
-
-        <div class="col-sm-2" > 
-            <div id="div_id_media_alert_req" class="form-group"> 
-                <label for="id_media_alert_req" class="control-label  nonRequiredField">Media Alert Required</label>
-                <div class="controls ">{% if has_init_authorised %} {{snapshot.media_alert_req}} {% else %} {{form.media_alert_req}} {% endif %}</div>
-            </div>
-        </div>
-
-        <div class="col-sm-2" > 
-            <div id="div_id_fire_position" class="form-group"> 
-                <label for="id_fire_position" class="control-label requiredField">Fire Position*</label>
-                <div class="controls ">{% if has_init_authorised %} {{snapshot.fire_position}} {% else %} {{form.fire_position}} {% endif %}</div>
-            </div>
-        </div>
-      </td>
-    </tr>
-
-
-
-    {% comment %}
-    <tr>
-      <td class="cbas">
-        <div class="col-sm-2" >
-            <div id="div_id_assistance_req" class="form-group"> 
-                <label for="id_assistance_req" class="control-label nonRequiredField">Assistance Required</label>
-                <div class="controls ">{% if has_init_authorised %} {{snapshot.assistance_req}} {% else %} {{form.assistance_req}} {% endif %}</div>
-            </div>
-        </div>
-        <div class="col-sm-2" >
-            <div id="div_id_communications" class="form-group"> 
-                <label for="id_communications" class="control-label nonRequiredField">Communications</label>
-                <div class="controls ">{% if has_init_authorised %} {{snapshot.communications}} {% else %} {{form.communications}} {% endif %}</div>
-            </div>
-        </div>
-        <div class="col-sm-2" >
-            <div id="div_id_other_info" class="form-group"> 
-                <label for="id_other_info" class="control-label nonRequiredField">Other Information</label>
-                <div class="controls ">{% if has_init_authorised %} {{snapshot.other_info}} {% else %} {{form.other_info}} {% endif %}</div>
-            </div>
-        </div>
-      </td>
-    </tr>
-    {% endcomment %}
-
-    <tr>
-      <td>
-        <div class="col-sm-4" >
-            <div id="div_id_cause" class="form-group"> 
-                <label for="id_cause" class="control-label requiredField">Cause*</label>
-                <div class="controls ">{% if has_init_authorised %} {{snapshot.cause}} {% else %} {{form.cause}} {% endif %}</div>
-            </div>
-        </div>
-        <div class="col-sm-4" >
-            <div id="div_id_other_cause" class="form-group"> 
-                <label for="id_other_cause" class="control-label nonRequiredField">Other Cause</label>
-                <div class="controls ">{% if has_init_authorised %} {{snapshot.other_cause}} {% else %} {{form.other_cause}} {% endif %}</div>
-            </div>
-        </div>
-      </td>
-    </tr>
+            <th class="cbas">Other Cause *</th>
+            <td colspan="3" class="cbas">{% if has_init_authorised %} {{snapshot.other_cause}} {% else %} {{form.other_cause}} {% endif %}</td>
+        </tr>
 
 
   </tbody>
@@ -327,7 +256,14 @@
             <div class="col-sm-2" >
                 <div id="div_id_assistance_req" class="form-group"> 
                     <label for="id_assistance_req" class="control-label nonRequiredField">Assistance Required</label>
-                    <div class="controls ">{% if has_init_authorised %} {{snapshot.assistance_req}} {% else %} {{form.assistance_req}} {% endif %}</div>
+
+                    <div class="controls ">
+                      {% if has_init_authorised %}
+                        {% if snapshot.assistance_req %}<div class="text-left"><i class="icon-ok text-success"></i></div>{% else %}<div class="text-left"><i class="icon-remove text-danger"></i></div>{% endif %}
+                      {% else %}
+                        {{form.assistance_req}}
+                      {% endif %}
+                    </div>
                 </div>
             </div>
             <div class="col-sm-2" >
@@ -420,6 +356,13 @@
       {% else %}
         <input type="submit" value="Save" class="btn btn-primary btn-success" name="_save" {% if has_init_authorised %}title="Initial Report cannot be edited" disabled{% endif %} />
       {% endif %}
+
+      {% if object.has_init_authorised %} 
+        <input type="submit" value="Authorise" class="btn btn-primary btn-success" name="init_authorise" title="Authorised by {{object.init_authorised_by}} on {{object.init_authorised_date|date_fmt}}" disabled/>
+      {% else %}
+        <input type="submit" value="Authorise" class="btn btn-primary btn-success" name="init_authorise" {% if object.can_authorise %}title="Initial Report cannot be Authorised. Some required fields are missing." disabled{% endif %} />
+      {% endif %}
+
         <a href="javascript: history.go(-1)" class="btn btn-danger">Cancel</a>
       </p>
     </div>

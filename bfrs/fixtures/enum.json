@@ -1,7 +1,7 @@
 [
 {
     "pk": 1,
-    "model": "bushfire.source",
+    "model": "bfrs.source",
     "fields": {
         "name": "SPOTTER"
 
@@ -9,42 +9,42 @@
 },
 {
     "pk": 2,
-    "model": "bushfire.source",
+    "model": "bfrs.source",
     "fields": {
         "name": "TOWER"
     }
 },
 {
     "pk": 3,
-    "model": "bushfire.source",
+    "model": "bfrs.source",
     "fields": {
         "name": "DEC STAFF"
     }
 },
 {
     "pk": 4,
-    "model": "bushfire.source",
+    "model": "bfrs.source",
     "fields": {
         "name": "MEMBER OF PUBLIC"
     }
 },
 {
     "pk": 5,
-    "model": "bushfire.source",
+    "model": "bfrs.source",
     "fields": {
         "name": "BRIGADE/SHIRE"
     }
 },
 {
     "pk": 6,
-    "model": "bushfire.source",
+    "model": "bfrs.source",
     "fields": {
         "name": "MEMBER OF OTHER GOVERNMENT DEPT"
     }
 },
 {
     "pk": 7,
-    "model": "bushfire.source",
+    "model": "bfrs.source",
     "fields": {
         "name": "REMOTE SENSING"
     }
@@ -52,7 +52,7 @@
 
 {
     "pk": 1,
-    "model": "bushfire.cause",
+    "model": "bfrs.cause",
     "fields": {
         "name": "DELIBERATE"
 
@@ -60,56 +60,56 @@
 },
 {
     "pk": 2,
-    "model": "bushfire.cause",
+    "model": "bfrs.cause",
     "fields": {
         "name": "ESCAPE FROM DEC PRESCRIBED BURN"
     }
 },
 {
     "pk": 3,
-    "model": "bushfire.cause",
+    "model": "bfrs.cause",
     "fields": {
         "name": "ESCAPE FROM OTHER BURNING OFF"
     }
 },
 {
     "pk": 4,
-    "model": "bushfire.cause",
+    "model": "bfrs.cause",
     "fields": {
         "name": "ACCIDENTAL BY TIMBER INDUSTRY"
     }
 },
 {
     "pk": 5,
-    "model": "bushfire.cause",
+    "model": "bfrs.cause",
     "fields": {
         "name": "ACCIDENTAL BY OTHER INDUSTRY"
     }
 },
 {
     "pk": 6,
-    "model": "bushfire.cause",
+    "model": "bfrs.cause",
     "fields": {
         "name": "ACCIDENTAL BY RECREATIONAL FOREST USERS"
     }
 },
 {
     "pk": 7,
-    "model": "bushfire.cause",
+    "model": "bfrs.cause",
     "fields": {
         "name": "LIGHTNING"
     }
 },
 {
     "pk": 8,
-    "model": "bushfire.cause",
+    "model": "bfrs.cause",
     "fields": {
         "name": "UNKNOWN"
     }
 },
 {
     "pk": 9,
-    "model": "bushfire.cause",
+    "model": "bfrs.cause",
     "fields": {
         "name": "OTHER"
     }
@@ -117,7 +117,7 @@
 
 {
     "pk": 1,
-    "model": "bushfire.direction",
+    "model": "bfrs.direction",
     "fields": {
         "name": "EAST",
         "code": "E"
@@ -125,7 +125,7 @@
 },
 {
     "pk": 2,
-    "model": "bushfire.direction",
+    "model": "bfrs.direction",
     "fields": {
         "name": "EAST NORTH EAST",
         "code": "ENE"
@@ -133,7 +133,7 @@
 },
 {
     "pk": 3,
-    "model": "bushfire.direction",
+    "model": "bfrs.direction",
     "fields": {
         "name": "EAST SOUTH EAST",
         "code": "ESE"
@@ -141,7 +141,7 @@
 },
 {
     "pk": 4,
-    "model": "bushfire.direction",
+    "model": "bfrs.direction",
     "fields": {
         "name": "NORTH",
         "code": "N"
@@ -149,7 +149,7 @@
 },
 {
     "pk": 5,
-    "model": "bushfire.direction",
+    "model": "bfrs.direction",
     "fields": {
         "name": "NORTH EAST",
         "code": "NE"
@@ -157,7 +157,7 @@
 },
 {
     "pk": 6,
-    "model": "bushfire.direction",
+    "model": "bfrs.direction",
     "fields": {
         "name": "NORTH NORTH EAST",
         "code": "NNE"
@@ -165,7 +165,7 @@
 },
 {
     "pk": 7,
-    "model": "bushfire.direction",
+    "model": "bfrs.direction",
     "fields": {
         "name": "NORTH NORTH WEST",
         "code": "NNW"
@@ -173,7 +173,7 @@
 },
 {
     "pk": 8,
-    "model": "bushfire.direction",
+    "model": "bfrs.direction",
     "fields": {
         "name": "NORTH WEST",
         "code": "NW"
@@ -181,7 +181,7 @@
 },
 {
     "pk": 9,
-    "model": "bushfire.direction",
+    "model": "bfrs.direction",
     "fields": {
         "name": "SOUTH",
         "code": "S"
@@ -189,7 +189,7 @@
 },
 {
     "pk": 10,
-    "model": "bushfire.direction",
+    "model": "bfrs.direction",
     "fields": {
         "name": "SOUTH EAST",
         "code": "SE"
@@ -197,7 +197,7 @@
 },
 {
     "pk": 11,
-    "model": "bushfire.direction",
+    "model": "bfrs.direction",
     "fields": {
         "name": "SOUTH SOUTH EAST",
         "code": "SSE"
@@ -205,7 +205,7 @@
 },
 {
     "pk": 12,
-    "model": "bushfire.direction",
+    "model": "bfrs.direction",
     "fields": {
         "name": "SOUTH SOUTH WEST",
         "code": "SSW"
@@ -213,7 +213,7 @@
 },
 {
     "pk": 13,
-    "model": "bushfire.direction",
+    "model": "bfrs.direction",
     "fields": {
         "name": "SOUTH WEST",
         "code": "SW"
@@ -221,7 +221,7 @@
 },
 {
     "pk": 14,
-    "model": "bushfire.direction",
+    "model": "bfrs.direction",
     "fields": {
         "name": "WEST",
         "code": "W"
@@ -229,7 +229,7 @@
 },
 {
     "pk": 15,
-    "model": "bushfire.direction",
+    "model": "bfrs.direction",
     "fields": {
         "name": "WEST NORTH WEST",
         "code": "WNW"
@@ -237,7 +237,7 @@
 },
 {
     "pk": 16,
-    "model": "bushfire.direction",
+    "model": "bfrs.direction",
     "fields": {
         "name": "WEST SOUTH WEST",
         "code": "WSW"
@@ -246,35 +246,35 @@
 
 {
     "pk": 1,
-    "model": "bushfire.frbeffect",
+    "model": "bfrs.frbeffect",
     "fields": {
         "name": "NO FRB IN A POSITION TO ASSIST FIRE CONTROL"
     }
 },
 {
     "pk": 2,
-    "model": "bushfire.frbeffect",
+    "model": "bfrs.frbeffect",
     "fields": {
         "name": "FRB NOT CRITICAL TO CONTROL EFFORT"
     }
 },
 {
     "pk": 3,
-    "model": "bushfire.frbeffect",
+    "model": "bfrs.frbeffect",
     "fields": {
         "name": "FRB CRITICAL TO CONTROL EFFORT"
     }
 },
 {
     "pk": 4,
-    "model": "bushfire.frbeffect",
+    "model": "bfrs.frbeffect",
     "fields": {
         "name": "FRB UNABLE TO ASSIST CONTROL EFFORT"
     }
 },
 {
     "pk": 5,
-    "model": "bushfire.frbeffect",
+    "model": "bfrs.frbeffect",
     "fields": {
         "name": "OTHER LOW FUEL AREA CRITICAL TO CONTROL EFFORT"
     }
@@ -282,28 +282,28 @@
 
 {
     "pk": 1,
-    "model": "bushfire.waterbombeffect",
+    "model": "bfrs.waterbombeffect",
     "fields": {
         "name": "BOMBER CRITICAL TO CONTROL EFFORT"
     }
 },
 {
     "pk": 2,
-    "model": "bushfire.waterbombeffect",
+    "model": "bfrs.waterbombeffect",
     "fields": {
         "name": "BOMBER NOT CRITICAL TO CONTROL EFFORT"
     }
 },
 {
     "pk": 3,
-    "model": "bushfire.waterbombeffect",
+    "model": "bfrs.waterbombeffect",
     "fields": {
         "name": "BOMBER UNABLE TO ASSIST CONTROL EFFORT"
     }
 },
 {
     "pk": 4,
-    "model": "bushfire.waterbombeffect",
+    "model": "bfrs.waterbombeffect",
     "fields": {
         "name": "BOMBER NOT LOCATED IN THIS AREA"
     }
@@ -311,21 +311,21 @@
 
 {
     "pk": 1,
-    "model": "bushfire.priorityrating",
+    "model": "bfrs.priorityrating",
     "fields": {
         "name": "RATING 1 (WTA VALUES GROUP 1,2,3)"
     }
 },
 {
     "pk": 2,
-    "model": "bushfire.priorityrating",
+    "model": "bfrs.priorityrating",
     "fields": {
         "name": "RATING 2 (WTA VALUES GROUP 4,5,6 + BUFFERS IN 7)"
     }
 },
 {
     "pk": 3,
-    "model": "bushfire.priorityrating",
+    "model": "bfrs.priorityrating",
     "fields": {
         "name": "RATING 3 (WTA VALUES GROUP 7 WITHOUT BUFFERS)"
     }
@@ -333,15 +333,15 @@
 
 {
     "pk": 1,
-    "model": "bushfire.agency",
+    "model": "bfrs.agency",
     "fields": {
-        "name": "DEPARTMENT OF ENVIRONMENT AND CONSERVATION",
+        "name": "DEPT OF ENVIRONMENT AND CONSERVATION",
         "code": "DEC"
     }
 },
 {
     "pk": 2,
-    "model": "bushfire.agency",
+    "model": "bfrs.agency",
     "fields": {
         "name": "LGA BUSH FIRE BRIGADE",
         "code": "LGA BFB"
@@ -349,7 +349,7 @@
 },
 {
     "pk": 3,
-    "model": "bushfire.agency",
+    "model": "bfrs.agency",
     "fields": {
         "name": "FESA FIRE SERVICES (FIRE BRIGADES ACT)",
         "code": "FESA FB"
@@ -357,7 +357,7 @@
 },
 {
     "pk": 4,
-    "model": "bushfire.agency",
+    "model": "bfrs.agency",
     "fields": {
         "name": "POLICE",
         "code": "POLICE"
@@ -365,7 +365,7 @@
 },
 {
     "pk": 5,
-    "model": "bushfire.agency",
+    "model": "bfrs.agency",
     "fields": {
         "name": "FESA SES",
         "code": "SES"
@@ -373,7 +373,7 @@
 },
 {
     "pk": 6,
-    "model": "bushfire.agency",
+    "model": "bfrs.agency",
     "fields": {
         "name": "FESA FIRE SERVICES (BUSH BRIGADES ACT)",
         "code": "FESA BB"
@@ -381,7 +381,7 @@
 },
 {
     "pk": 7,
-    "model": "bushfire.agency",
+    "model": "bfrs.agency",
     "fields": {
         "name": "OTHER",
         "code": "OTHER"
@@ -390,91 +390,91 @@
 
 {
     "pk": 1,
-    "model": "bushfire.responsetype",
+    "model": "bfrs.responsetype",
     "fields": {
         "name": "GROUND ATTACK, HAND TOOLS"
     }
 },
 {
     "pk": 2,
-    "model": "bushfire.responsetype",
+    "model": "bfrs.responsetype",
     "fields": {
         "name": "GROUND ATTACK, TANKER"
     }
 },
 {
     "pk": 3,
-    "model": "bushfire.responsetype",
+    "model": "bfrs.responsetype",
     "fields": {
         "name": "GROUND ATTACK, MACHINE"
     }
 },
 {
     "pk": 4,
-    "model": "bushfire.responsetype",
+    "model": "bfrs.responsetype",
     "fields": {
         "name": "GROUND ATTACK, PUMP AND HOSE"
     }
 },
 {
     "pk": 5,
-    "model": "bushfire.responsetype",
+    "model": "bfrs.responsetype",
     "fields": {
         "name": "AIR ATTACK, FIREBOMBING"
     }
 },
 {
     "pk": 6,
-    "model": "bushfire.responsetype",
+    "model": "bfrs.responsetype",
     "fields": {
         "name": "AIR ATTACK, RAPPELLING"
     }
 },
 {
     "pk": 7,
-    "model": "bushfire.responsetype",
+    "model": "bfrs.responsetype",
     "fields": {
         "name": "AIR ATTACK, AIR DELIVERY OF CREW TO GROUND"
     }
 },
 {
     "pk": 8,
-    "model": "bushfire.responsetype",
+    "model": "bfrs.responsetype",
     "fields": {
         "name": "BACK BURNING, BURNING OUT"
     }
 },
 {
     "pk": 9,
-    "model": "bushfire.responsetype",
+    "model": "bfrs.responsetype",
     "fields": {
         "name": "NO ACTION, OTHER AGENCY IN CONTROL"
     }
 },
 {
     "pk": 10,
-    "model": "bushfire.responsetype",
+    "model": "bfrs.responsetype",
     "fields": {
         "name": "NO ACTION, FIRE NOT THREATENING VALUES"
     }
 },
 {
     "pk": 11,
-    "model": "bushfire.responsetype",
+    "model": "bfrs.responsetype",
     "fields": {
         "name": "NO ACTION, INSUFFICIENT RESOURCES"
     }
 },
 {
     "pk": 12,
-    "model": "bushfire.responsetype",
+    "model": "bfrs.responsetype",
     "fields": {
         "name": "TAKE OVER CONTROL FROM INITIAL AGENCY"
     }
 },
 {
     "pk": 13,
-    "model": "bushfire.responsetype",
+    "model": "bfrs.responsetype",
     "fields": {
         "name": "MONITOR VIA REMOTE SENSING"
     }
@@ -482,77 +482,77 @@
 
 {
     "pk": 1,
-    "model": "bushfire.organisation",
+    "model": "bfrs.organisation",
     "fields": {
-        "name": "LOCAL GOVERNMENT BUSHFIRE BRIGADE"
+        "name": "LOCAL GOVERNMENT bfrs.BRIGADE"
     }
 },
 {
     "pk": 2,
-    "model": "bushfire.organisation",
+    "model": "bfrs.organisation",
     "fields": {
         "name": "FESA FIRE SERVICE"
     }
 },
 {
     "pk": 3,
-    "model": "bushfire.organisation",
+    "model": "bfrs.organisation",
     "fields": {
         "name": "FESA STATE EMERGENCY SERVICE"
     }
 },
 {
     "pk": 4,
-    "model": "bushfire.organisation",
+    "model": "bfrs.organisation",
     "fields": {
         "name": "POLICE"
     }
 },
 {
     "pk": 5,
-    "model": "bushfire.organisation",
+    "model": "bfrs.organisation",
     "fields": {
         "name": "ARMED FORCES"
     }
 },
 {
     "pk": 6,
-    "model": "bushfire.organisation",
+    "model": "bfrs.organisation",
     "fields": {
         "name": "AMBULANCE"
     }
 },
 {
     "pk": 7,
-    "model": "bushfire.organisation",
+    "model": "bfrs.organisation",
     "fields": {
         "name": "LOCAL AUTHORITY"
     }
 },
 {
     "pk": 8,
-    "model": "bushfire.organisation",
+    "model": "bfrs.organisation",
     "fields": {
         "name": "OTHER GOVERNMENT"
     }
 },
 {
     "pk": 9,
-    "model": "bushfire.organisation",
+    "model": "bfrs.organisation",
     "fields": {
         "name": "FOREST INDUSTRY"
     }
 },
 {
     "pk": 10,
-    "model": "bushfire.organisation",
+    "model": "bfrs.organisation",
     "fields": {
         "name": "OTHER INDUSTRY"
     }
 },
 {
     "pk": 11,
-    "model": "bushfire.organisation",
+    "model": "bfrs.organisation",
     "fields": {
         "name": "PRIVATE"
     }
@@ -560,42 +560,42 @@
 
 {
     "pk": 1,
-    "model": "bushfire.investigationtype",
+    "model": "bfrs.investigationtype",
     "fields": {
         "name": "NONE"
     }
 },
 {
     "pk": 2,
-    "model": "bushfire.investigationtype",
+    "model": "bfrs.investigationtype",
     "fields": {
         "name": "STAGE 1 (COMPETENT FIELD OFFICER)"
     }
 },
 {
     "pk": 3,
-    "model": "bushfire.organisation",
+    "model": "bfrs.organisation",
     "fields": {
         "name": "STAGE 2 (FIRE CAUSE INVESTIGATOR)"
     }
 },
 {
     "pk": 4,
-    "model": "bushfire.investigationtype",
+    "model": "bfrs.investigationtype",
     "fields": {
         "name": "STAGE 3 (FIRE INVESTIGATION TEAM)"
     }
 },
 {
     "pk": 5,
-    "model": "bushfire.investigationtype",
+    "model": "bfrs.investigationtype",
     "fields": {
         "name": "ARSON SQUAD INVESTIGATION"
     }
 },
 {
     "pk": 6,
-    "model": "bushfire.investigationtype",
+    "model": "bfrs.investigationtype",
     "fields": {
         "name": "OTHER"
     }
@@ -603,70 +603,70 @@
 
 {
     "pk": 1,
-    "model": "bushfire.legalresulttype",
+    "model": "bfrs.legalresulttype",
     "fields": {
         "name": "NO FURTHER ACTION"
     }
 },
 {
     "pk": 2,
-    "model": "bushfire.legalresulttype",
+    "model": "bfrs.legalresulttype",
     "fields": {
         "name": "REQUEST TO REIMBURSE COSTS"
     }
 },
 {
     "pk": 3,
-    "model": "bushfire.legalresulttype",
+    "model": "bfrs.legalresulttype",
     "fields": {
         "name": "WARNING LETTER SENT"
     }
 },
 {
     "pk": 4,
-    "model": "bushfire.legalresulttype",
+    "model": "bfrs.legalresulttype",
     "fields": {
         "name": "WARNING LETTER SENT AND REQUEST TO REIMBURSE COSTS"
     }
 },
 {
     "pk": 5,
-    "model": "bushfire.legalresulttype",
+    "model": "bfrs.legalresulttype",
     "fields": {
         "name": "CONVICTION OBTAINED"
     }
 },
 {
     "pk": 6,
-    "model": "bushfire.legalresulttype",
+    "model": "bfrs.legalresulttype",
     "fields": {
         "name": "CONVICTION AND FINE IMPOSED"
     }
 },
 {
     "pk": 7,
-    "model": "bushfire.legalresulttype",
+    "model": "bfrs.legalresulttype",
     "fields": {
         "name": "CONVICTION AND COSTS AWARDED"
     }
 },
 {
     "pk": 8,
-    "model": "bushfire.legalresulttype",
+    "model": "bfrs.legalresulttype",
     "fields": {
         "name": "CONVICTION AND FINE/COSTS AWARDED"
     }
 },
 {
     "pk": 9,
-    "model": "bushfire.legalresulttype",
+    "model": "bfrs.legalresulttype",
     "fields": {
         "name": "PROSECUTION DISMISSED"
     }
 },
 {
     "pk": 10,
-    "model": "bushfire.legalresulttype",
+    "model": "bfrs.legalresulttype",
     "fields": {
         "name": "LEGAL ACTION INCOMPLETE"
     }
@@ -674,70 +674,70 @@
 
 {
     "pk": 1,
-    "model": "bushfire.publicdamagetype",
+    "model": "bfrs.publicdamagetype",
     "fields": {
         "name": "CONSERVATION FOREST - CROWN SCORCH"
     }
 },
 {
     "pk": 2,
-    "model": "bushfire.publicdamagetype",
+    "model": "bfrs.publicdamagetype",
     "fields": {
         "name": "CONSERVATION FOREST - CROWN DEFOLIATION"
     }
 },
 {
     "pk": 3,
-    "model": "bushfire.publicdamagetype",
+    "model": "bfrs.publicdamagetype",
     "fields": {
         "name": "CONSERVATION FOREST - REGENERATION KILLED"
     }
 },
 {
     "pk": 4,
-    "model": "bushfire.publicdamagetype",
+    "model": "bfrs.publicdamagetype",
     "fields": {
         "name": "CONSERVATION FOREST - REGENERATION SCORCHED"
     }
 },
 {
     "pk": 5,
-    "model": "bushfire.publicdamagetype",
+    "model": "bfrs.publicdamagetype",
     "fields": {
         "name": "PRODUCTION FOREST - CROWN SCORCH"
     }
 },
 {
     "pk": 6,
-    "model": "bushfire.publicdamagetype",
+    "model": "bfrs.publicdamagetype",
     "fields": {
         "name": "PRODUCTION FOREST - CROWN DEFOLIATION"
     }
 },
 {
     "pk": 7,
-    "model": "bushfire.publicdamagetype",
+    "model": "bfrs.publicdamagetype",
     "fields": {
         "name": "PRODUCTION FOREST - REGENERATION KILLED"
     }
 },
 {
     "pk": 8,
-    "model": "bushfire.publicdamagetype",
+    "model": "bfrs.publicdamagetype",
     "fields": {
         "name": "PRODUCTION FOREST - REGENERATION SCORCHED"
     }
 },
 {
     "pk": 9,
-    "model": "bushfire.publicdamagetype",
+    "model": "bfrs.publicdamagetype",
     "fields": {
         "name": "FIRE SENSITIVE DRF BURNT"
     }
 },
 {
     "pk": 10,
-    "model": "bushfire.publicdamagetype",
+    "model": "bfrs.publicdamagetype",
     "fields": {
         "name": "FIRE SENSITIVE ECOSYSTEM BURNT"
     }
@@ -745,84 +745,84 @@
 
 {
     "pk": 1,
-    "model": "bushfire.privatedamagetype",
+    "model": "bfrs.privatedamagetype",
     "fields": {
         "name": "CATTLE"
     }
 },
 {
     "pk": 2,
-    "model": "bushfire.privatedamagetype",
+    "model": "bfrs.privatedamagetype",
     "fields": {
         "name": "DEATH DEC"
     }
 },
 {
     "pk": 3,
-    "model": "bushfire.privatedamagetype",
+    "model": "bfrs.privatedamagetype",
     "fields": {
         "name": "DEATH OTHER"
     }
 },
 {
     "pk": 4,
-    "model": "bushfire.privatedamagetype",
+    "model": "bfrs.privatedamagetype",
     "fields": {
         "name": "FENCING"
     }
 },
 {
     "pk": 5,
-    "model": "bushfire.privatedamagetype",
+    "model": "bfrs.privatedamagetype",
     "fields": {
         "name": "FODDER (TONNE)"
     }
 },
 {
     "pk": 6,
-    "model": "bushfire.privatedamagetype",
+    "model": "bfrs.privatedamagetype",
     "fields": {
         "name": "HOUSES"
     }
 },
 {
     "pk": 7,
-    "model": "bushfire.privatedamagetype",
+    "model": "bfrs.privatedamagetype",
     "fields": {
         "name": "INJURY DEC"
     }
 },
 {
     "pk": 8,
-    "model": "bushfire.privatedamagetype",
+    "model": "bfrs.privatedamagetype",
     "fields": {
         "name": "INJURY OTHER"
     }
 },
 {
     "pk": 9,
-    "model": "bushfire.privatedamagetype",
+    "model": "bfrs.privatedamagetype",
     "fields": {
         "name": "OTHER BUILDINGS"
     }
 },
 {
     "pk": 10,
-    "model": "bushfire.privatedamagetype",
+    "model": "bfrs.privatedamagetype",
     "fields": {
         "name": "OTHER STOCK"
     }
 },
 {
     "pk": 11,
-    "model": "bushfire.privatedamagetype",
+    "model": "bfrs.privatedamagetype",
     "fields": {
         "name": "SHEEP"
     }
 },
 {
     "pk": 12,
-    "model": "bushfire.privatedamagetype",
+    "model": "bfrs.privatedamagetype",
     "fields": {
         "name": "VEHICLES"
     }
@@ -830,55 +830,60 @@
 
 {
     "pk": 1,
-    "model": "bushfire.activitytype",
+    "model": "bfrs.activitytype",
     "fields": {
-        "name": "FIRE DETECTED"
+        "name": "FIRE DETECTED*"
     }
 },
 {
     "pk": 2,
-    "model": "bushfire.activitytype",
+    "model": "bfrs.activitytype",
     "fields": {
-        "name": "DISPATCH - DEC"
+        "name": "DISPATCH - P&W"
     }
 },
 {
     "pk": 3,
-    "model": "bushfire.activitytype",
+    "model": "bfrs.activitytype",
     "fields": {
-        "name": "DISPATCH - WATERBOMBER"
+        "name": "DISPATCH - AERIAL"
     }
 },
 {
     "pk": 4,
-    "model": "bushfire.activitytype",
+    "model": "bfrs.activitytype",
     "fields": {
-        "name": "ARRIVAL AT FIRE - DEC"
+        "name": "ARRIVAL AT FIRE - P&W"
     }
 },
 {
     "pk": 5,
-    "model": "bushfire.activitytype",
+    "model": "bfrs.activitytype",
     "fields": {
-        "name": "FIRE REPORT COMPILED"
+        "name": "FIRE CONTAINED"
     }
 },
-
 {
-    "pk": 1,
-    "model": "bushfire.authorisation",
+    "pk": 6,
+    "model": "bfrs.activitytype",
     "fields": {
-        "creator": ["jawaidm"],
-        "modifier": ["jawaidm"],
-        "created": "2016-05-17",
-        "modified": "2016-05-17",
-        "date": "2016-05-18 17:59:59",
-        "name": 1,
-        "auth_type": 2,
-        "bushfire": 1
+        "name": "FIRE CONTROLLED"
+    }
+},
+{
+    "pk": 7,
+    "model": "bfrs.activitytype",
+    "fields": {
+        "name": "FIRE SAFE"
+    }
+},
+{
+    "pk": 8,
+    "model": "bfrs.activitytype",
+    "fields": {
+        "name": "FIRE REPORT COMPILED*"
     }
 }
-
 
 
 

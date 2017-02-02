@@ -270,8 +270,8 @@ class Bushfire(Audit):
         show_all=False, auto_choose=True)
 
     name = models.CharField(max_length=100, verbose_name="Fire Name")
-    incident_no = models.PositiveIntegerField(verbose_name="Fire Incident No.")
-    dfes_incident_no = models.PositiveIntegerField(verbose_name="DFES Incident No.", null=True, blank=True)
+    incident_no = models.PositiveIntegerField(verbose_name="Fire Number")
+    dfes_incident_no = models.PositiveIntegerField(verbose_name="DFES Fire Number", null=True, blank=True)
     job_code = models.PositiveIntegerField(verbose_name="job Code", null=True, blank=True)
 
 
@@ -308,7 +308,7 @@ class Bushfire(Audit):
     # FireBehaviour FS here
     #tenure = models.ForeignKey('Tenure', null=True, blank=True)
     #fuel = models.CharField(max_length=50, null=True, blank=True)
-    assistance_req = models.CharField(verbose_name="Assistance Required", max_length=50, null=True, blank=True)
+    assistance_req = models.BooleanField(default=False)
     communications = models.CharField(verbose_name='Communication', max_length=50, null=True, blank=True)
     other_info = models.CharField(verbose_name='Other Information', max_length=100, null=True, blank=True)
     cause = models.ForeignKey('Cause', null=True, blank=True)
@@ -317,9 +317,10 @@ class Bushfire(Audit):
     # TODO sperate days and hrs to control?
     #time_to_control = models.DateTimeField(verbose_name='Time to Control', null=True, blank=True)
 
-    field_officer = models.ForeignKey(User, verbose_name="Field Officer", null=True, blank=True, related_name='init_field_officer2')
-    init_authorised_by = models.ForeignKey(User, verbose_name="Authorised By", blank=True, null=True, related_name='init_auth_by2')
-    init_authorised_date = models.DateTimeField(verbose_name='Authorised Date', default=timezone.now, null=True, blank=True)
+    field_officer = models.ForeignKey(User, verbose_name="Field Officer", null=True, blank=True, related_name='init_field_officer')
+    duty_officer = models.ForeignKey(User, verbose_name="Duty Officer", null=True, blank=True, related_name='init_duty_officer')
+    init_authorised_by = models.ForeignKey(User, verbose_name="Authorised By", blank=True, null=True, related_name='init_auth_by')
+    init_authorised_date = models.DateTimeField(verbose_name='Authorised Date', null=True, blank=True)
 
     # we serialise/snapshot the initial report when authorised
     initial_snapshot = models.TextField(null=True, blank=True)
@@ -337,11 +338,11 @@ class Bushfire(Audit):
 
     # FINAL Fire Report Fields
 
-    first_attack = models.ForeignKey('Agency', verbose_name="First Attack Agency", null=True, blank=True, related_name='first_attack2')
+    first_attack = models.ForeignKey('Agency', verbose_name="First Attack Agency", null=True, blank=True, related_name='first_attack')
     other_first_attack = models.CharField(verbose_name="Other First Attack Agency", max_length=50, null=True, blank=True)
-    initial_control = models.ForeignKey('Agency', verbose_name="Initial Controlling Agency", null=True, blank=True, related_name='initial_control2')
+    initial_control = models.ForeignKey('Agency', verbose_name="Initial Controlling Agency", null=True, blank=True, related_name='initial_control')
     other_initial_ctrl = models.CharField(verbose_name="Other Initial Control Agency", max_length=50, null=True, blank=True)
-    final_control = models.ForeignKey('Agency', verbose_name="Final Controlling Agency", null=True, blank=True, related_name='final_control2')
+    final_control = models.ForeignKey('Agency', verbose_name="Final Controlling Agency", null=True, blank=True, related_name='final_control')
     other_final_ctrl = models.CharField(verbose_name="Other Final Control Agency", max_length=50, null=True, blank=True)
 
     max_fire_level = models.PositiveSmallIntegerField(choices=FIRE_LEVEL_CHOICES, null=True, blank=True)
@@ -354,6 +355,8 @@ class Bushfire(Audit):
 
     authorised_by = models.ForeignKey(User, verbose_name="Authorised By", blank=True, null=True)
     authorised_date = models.DateTimeField(verbose_name='Authorised Date', default=timezone.now, null=True, blank=True)
+
+    sss_id = models.CharField(verbose_name="Spatial Support System ID", max_length=64, null=True, blank=True)
 
 #    def save(self, *args, **kwargs):
 #        '''Overide save() to cleanse text input fields.
