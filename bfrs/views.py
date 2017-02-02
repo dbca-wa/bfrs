@@ -342,8 +342,10 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         comment_formset         = CommentFormSet(self.request.POST, prefix='comment_fs')
 
         #import ipdb; ipdb.set_trace()
-        if form.is_valid() and activity_formset.is_valid() and area_burnt_formset.is_valid() and attending_org_formset.is_valid() and \
-            fire_behaviour_formset.is_valid():
+        #if form.is_valid() and activity_formset.is_valid() and area_burnt_formset.is_valid() and attending_org_formset.is_valid() and \
+        #    fire_behaviour_formset.is_valid():
+        if form.is_valid() and activity_formset.is_valid() and area_burnt_formset.is_valid() and private_damage_formset.is_valid() and \
+            public_damage_formset.is_valid():# and comment_formset.form_valid():
             return self.form_valid(request,
                 form,
                 activity_formset,
@@ -418,20 +420,19 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
             private_damage_formset,
             public_damage_formset,
             comment_formset):
-        #import ipdb; ipdb.set_trace()
 
         self.object = form.save(commit=False)
         self.object.modifier_id = 1 #User.objects.all()[0] #request.user
         self.object.save()
 
         activities_updated = update_activity_fs(self.object, activity_formset)
-        responses_updated = update_response_fs(self.object, response_formset)
+        #responses_updated = update_response_fs(self.object, response_formset)
         areas_burnt_updated = update_areas_burnt_fs(self.object, area_burnt_formset)
-        groundforces_updated = update_groundforces_fs(self.object, groundforces_formset)
-        aerialforces_updated = update_aerialforces_fs(self.object, aerialforces_formset)
-        attending_org_updated = update_attending_org_fs(self.object, attending_org_formset)
-        fire_behaviour_updated = update_fire_behaviour_fs(self.object, fire_behaviour_formset)
-        legal_updated = update_legal_fs(self.object, legal_formset)
+        #groundforces_updated = update_groundforces_fs(self.object, groundforces_formset)
+        #aerialforces_updated = update_aerialforces_fs(self.object, aerialforces_formset)
+        #attending_org_updated = update_attending_org_fs(self.object, attending_org_formset)
+        #fire_behaviour_updated = update_fire_behaviour_fs(self.object, fire_behaviour_formset)
+        #legal_updated = update_legal_fs(self.object, legal_formset)
         private_damage_updated = update_private_damage_fs(self.object, private_damage_formset)
         public_damage_updated = update_public_damage_fs(self.object, public_damage_formset)
         comment_updated = update_comment_fs(self.object, request, comment_formset)
@@ -441,33 +442,33 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
             messages.error(request, 'There was an error saving Activities.')
             return redirect_referrer
 
-        elif not responses_updated:
-            messages.error(request, 'There was an error saving Responses.')
-            return redirect_referrer
+#        elif not responses_updated:
+#            messages.error(request, 'There was an error saving Responses.')
+#            return redirect_referrer
 
         elif not areas_burnt_updated:
             messages.error(request, 'There was an error saving Areas Burnt.')
             return redirect_referrer
 
-        elif not groundforces_updated:
-            messages.error(request, 'There was an error saving Ground Forces.')
-            return redirect_referrer
-
-        elif not aerialforces_updated:
-            messages.error(request, 'There was an error saving Aerial Forces.')
-            return redirect_referrer
-
-        elif not attending_org_updated:
-            messages.error(request, 'There was an error saving Attending Organisation.')
-            return redirect_referrer
-
-        elif not fire_behaviour_updated:
-            messages.error(request, 'There was an error saving Fire Behaviour.')
-            return redirect_referrer
-
-        elif not legal_updated:
-            messages.error(request, 'There was an error saving Legal.')
-            return redirect_referrer
+#        elif not groundforces_updated:
+#            messages.error(request, 'There was an error saving Ground Forces.')
+#            return redirect_referrer
+#
+#        elif not aerialforces_updated:
+#            messages.error(request, 'There was an error saving Aerial Forces.')
+#            return redirect_referrer
+#
+#        elif not attending_org_updated:
+#            messages.error(request, 'There was an error saving Attending Organisation.')
+#            return redirect_referrer
+#
+#        elif not fire_behaviour_updated:
+#            messages.error(request, 'There was an error saving Fire Behaviour.')
+#            return redirect_referrer
+#
+#        elif not legal_updated:
+#            messages.error(request, 'There was an error saving Legal.')
+#            return redirect_referrer
 
         elif not private_damage_updated:
             messages.error(request, 'There was an error saving Private Damage.')
@@ -516,7 +517,6 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
                         'public_damage_formset': public_damage_formset,
                         'comment_formset': comment_formset,
                         'has_init_authorised': self.object.has_init_authorised,
-                        'snapshot': self.object.snapshot,
                         'final': True,
             })
         return context

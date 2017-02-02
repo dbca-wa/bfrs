@@ -104,7 +104,7 @@ class BushfireForm(forms.ModelForm):
 #                  'fuel','ros', 'flame_height', 'assistance_required', 'fire_contained', 'containment_time',
 #                  'ops_point', 'communications', 'weather', 'field_officer', 'init_authorised_by', 'init_authorised_date',
 #                 )
-        exclude = ('init_authorised_by', 'init_authorised_date')
+        exclude = ('initial_snapshot', 'init_authorised_by', 'init_authorised_date')
 
     def clean(self):
         """
@@ -207,7 +207,7 @@ class BushfireCreateForm(forms.ModelForm):
     class Meta:
         model = Bushfire
         fields = ('region', 'district', 'incident_no', 'job_code',
-                  'name', 'potential_fire_level', 'field_officer', 'init_authorised_by', 'init_authorised_date',
+                  'name', 'potential_fire_level', 'field_officer', 'duty_officer', 'init_authorised_by', 'init_authorised_date',
                   'alert_level', 'media_alert_req', 'fire_position',
                   'grid', 'arrival_area', 'fire_not_found',
 #                  'coord_type', 'arrival_area', 'fire_not_found',
@@ -236,7 +236,7 @@ class BushfireInitUpdateForm(forms.ModelForm):
     class Meta:
         model = Bushfire
         fields = ('region', 'district', 'incident_no', 'job_code',
-                  'name', 'potential_fire_level', 'field_officer', 'init_authorised_by', 'init_authorised_date',
+                  'name', 'potential_fire_level', 'field_officer', 'duty_officer', 'init_authorised_by', 'init_authorised_date',
                   'alert_level', 'media_alert_req', 'fire_position',
                   'grid', 'arrival_area', 'fire_not_found',
 #                  'coord_type', 'arrival_area', 'fire_not_found',

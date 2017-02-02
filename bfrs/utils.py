@@ -28,6 +28,7 @@ def save_initial_snapshot(obj):
         incident_no = obj.incident_no if obj.incident_no else '',
         job_code = obj.job_code if obj.job_code else '',
         field_officer = obj.field_officer.get_full_name() if obj.field_officer else '',
+        duty_officer = obj.duty_officer.get_full_name() if obj.duty_officer else '',
         init_authorised_by = obj.init_authorised_by.get_full_name() if obj.init_authorised_by else '',
         init_authorised_date = obj.init_authorised_date.strftime('%Y-%m-%d %H:%M:%S') if obj.init_authorised_date else '',
 

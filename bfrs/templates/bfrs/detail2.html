@@ -1,6 +1,7 @@
 {% extends "admin/base_site.html" %}
 {% load i18n %}
 {% load static from staticfiles %}
+{% load bfrs_tags %}
 
 {% block breadcrumbs %}
 <ul class="breadcrumb">
@@ -187,158 +188,78 @@
 <h2>{{form.instance.district}} - {{form.instance.name}}</h2>
 
 <table class="table table-bordered table-striped table-condensed">
-  <tbody>
+    <tbody>
+        <tr>
+            <th class="cbas">Region *</th>
+            <td class="cbas">{{form.region}}</td>
 
-    <tr>
-      <td class="cbas">
-        <div class="col-sm-2" > 
-            <div id="div_id_region" class="form-group"> 
-                <label for="id_region" class="control-label requiredField">Region*</label>
-                <div class="controls ">{% if has_init_authorised %} {{snapshot.region}} {% else %} {{form.region}} {% endif %}</div>
-            </div>
-        </div>
+            <th class="cbas">District *</th>
+            <td class="cbas">{{form.district}}</td>
+        </tr>
 
-        <div class="col-sm-2" > 
-            <div id="div_id_district" class="form-group"> 
-                <label for="id_district" class="control-label requiredField">District*</label>
-                <div class="controls ">{% if has_init_authorised %} {{snapshot.district}} {% else %} {{form.district}} {% endif %}</div>
-            </div>
-        </div>
+        <tr>
+            <th class="cbas">Fire Number *</th>
+            <td class="cbas">{{form.incident_no}}</td>
 
-        <div class="col-sm-2" > 
-            <div id="div_id_incident_no" class="form-group"> 
-                <label for="id_incident_no" class="control-label requiredField">Fire Incident No.*</label>
-                <div class="controls ">{% if has_init_authorised %} {{snapshot.incident_no}} {% else %} {{form.incident_no}} {% endif %}</div>
-            </div>
-            </div>
-        </div>
+            <th class="cbas">Job Code</th>
+            <td class="cbas">{{form.job_code}}</td>
+        </tr>
 
-        <div class="col-sm-2" > 
-            <div id="div_id_name" class="form-group"> 
-                <label for="id_name" class="control-label  requiredField">Name*</label>
-                <div class="controls ">{% if has_init_authorised %} {{snapshot.name}} {% else %} {{form.name}} {% endif %}</div>
-            </div>
-        </div>
-      </td>
-    </tr>
 
+        <tr>
+            <th class="cbas">Name *</th>
+            <td colspan="4" class="cbas">{{form.name}}</td>
+        </tr>
+
+        <tr>
+            <th class="cbas">Fire Position *</th>
+            <td colspan="4" class="cbas">{{form.fire_position}}</td>
+        </tr>
+
+        <tr>
+            <th class="cbas">Field Officer *</th>
+            <td class="cbas">{{form.field_officer}}</td>
+
+            <th class="cbas">Duty Officer</th>
+            <td class="cbas">{{form.duty_officer}}</td>
+        </tr>
+
+        {% if final_authorised %} 
+        <tr>
+            <th class="cbas">Authorised By *</th>
+            <td class="cbas">{{form.authorised_by}}</td>
+
+            <th class="cbas">Authorised Date *</th>
+            <td class="cbas">{{form.authorised_date|date_fmt}}</td>
+        </tr>
+        {% endif %}
   </tbody>
 </table>
-
 
 <table class="table table-bordered table-striped table-condensed">
-  <tbody>
-    <tr>
-      <td>
-        <div class="col-sm-2" > 
-            <div id="div_id_job_code" class="form-group"> 
-                <label for="id_job_code" class="control-label nonRequiredField">Job Code</label>
-                <div class="controls ">{{form.job_code}}</div>
-            </div>
-        </div>
+    <tbody>
+        <tr>
+            <th class="cbas">Potential Fire Level *</th>
+            <td class="cbas">{{form.fire_level}}</td>
 
-        <div class="col-sm-2" > 
-            <div id="div_id_field_officer" class="form-group"> 
-                <label for="id_field_officer" class="control-label requiredField">Field Officer*</label>
-                <div class="controls ">{{form.field_officer}}</div>
-            </div>
-        </div>
+            <th class="cbas">Alert Level *</th>
+            <td class="cbas">{{form.alert_level}}</td>
 
-        <div class="col-sm-2" > 
-            <div id="div_id_init_authorised_by" class="form-group"> 
-                <label for="id_init_authorised_by" class="control-label nonRequiredField">Authorised By</label>
-                <div class="controls ">{{form.authorised_by}}</div>
-            </div>
-        </div>
+            <th class="cbas">Media Alert Required</th>
+            <td class="cbas">{{form.media_alert_req}}</td>
+        </tr>
 
-        <div class="col-sm-2" > 
-            <div id="div_id_init_authorised_date" class="form-group"> 
-                <label for="id_init_authorised_date" class="control-label nonRequiredField">Authorised Date</label>
-                <div class="controls ">{{form.authorised_date}}</div>
-            </div>
-        </div>
-      </td>
-    </tr>
+        <tr>
+            <th class="cbas">Cause *</th>
+            <td class="cbas">{{form.cause}}</td>
 
-    <tr>
-      <td>
-        <div class="col-sm-2" > 
-            <div id="div_potential_fire_level" class="form-group"> 
-                <label for="id_potential_fire_level" class="control-label  requiredField">Potential Fire Level*</label>
-                <div class="controls ">{{form.potential_fire_level}}</div>
-            </div>
-        </div>
-
-        <div class="col-sm-2" > 
-            <div id="div_id_alert_level" class="form-group"> 
-                <label for="id_alert_level" class="control-label  requiredField">Alert Level*</label>
-                <div class="controls ">{{form.alert_level}}</div>
-            </div>
-        </div>
-
-        <div class="col-sm-2" > 
-            <div id="div_id_media_alert_req" class="form-group"> 
-                <label for="id_media_alert_req" class="control-label  nonRequiredField">Media Alert Required</label>
-                <div class="controls ">{{form.media_alert_req}}</div>
-            </div>
-        </div>
-
-        <div class="col-sm-2" > 
-            <div id="div_id_fire_position" class="form-group"> 
-                <label for="id_fire_position" class="control-label requiredField">Fire Position*</label>
-                <div class="controls ">{{form.fire_position}}</div>
-            </div>
-        </div>
-      </td>
-    </tr>
-
-
-
-    {% comment %}
-    <tr>
-      <td class="cbas">
-        <div class="col-sm-2" >
-            <div id="div_id_assistance_req" class="form-group"> 
-                <label for="id_assistance_req" class="control-label nonRequiredField">Assistance Required</label>
-                <div class="controls ">{{form.assistance_req}}</div>
-            </div>
-        </div>
-        <div class="col-sm-2" >
-            <div id="div_id_communications" class="form-group"> 
-                <label for="id_communications" class="control-label nonRequiredField">Communications</label>
-                <div class="controls ">{{form.communications}}</div>
-            </div>
-        </div>
-        <div class="col-sm-2" >
-            <div id="div_id_other_info" class="form-group"> 
-                <label for="id_other_info" class="control-label nonRequiredField">Other Information</label>
-                <div class="controls ">{{form.other_info}}</div>
-            </div>
-        </div>
-      </td>
-    </tr>
-    {% endcomment %}
-
-    <tr>
-      <td>
-        <div class="col-sm-4" >
-            <div id="div_id_cause" class="form-group"> 
-                <label for="id_cause" class="control-label requiredField">Cause*</label>
-                <div class="controls ">{{form.cause}}</div>
-            </div>
-        </div>
-        <div class="col-sm-4" >
-            <div id="div_id_other_cause" class="form-group"> 
-                <label for="id_other_cause" class="control-label nonRequiredField">Other Cause</label>
-                <div class="controls ">{{form.other_cause}}</div>
-            </div>
-        </div>
-      </td>
-    </tr>
-
-
+            <th class="cbas">Other Cause *</th>
+            <td colspan="4" class="cbas">{{form.other_cause}}</td>
+        </tr>
   </tbody>
 </table>
+
+
 
 {% include "bfrs/origin2.html" %}
 {% include "bfrs/activities_fs.html" %}
