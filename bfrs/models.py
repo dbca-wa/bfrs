@@ -241,10 +241,16 @@ class Bushfire(Audit):
         (COORD_TYPE_FDGRID, 'FD Grid'),
     )
 
-    CAUSE_CHOICES = (
-        (1, 'Known'),
-        (2, 'Possible'),
+    REPORT_STATUS_CHOICES = (
+        (1, 'Initial'),
+        (2, 'Final'), # Initial Authorised == Final Draft
+        (3, 'Final Authorised'),
     )
+
+#    CAUSE_CHOICES = (
+#        (1, 'Known'),
+#        (2, 'Possible'),
+#    )
 
     PW_RESOURCE_CHOICES = (
         (1, 'No'),
@@ -356,6 +362,7 @@ class Bushfire(Audit):
     authorised_by = models.ForeignKey(User, verbose_name="Authorised By", blank=True, null=True)
     authorised_date = models.DateTimeField(verbose_name='Authorised Date', default=timezone.now, null=True, blank=True)
 
+    report_status = models.PositiveSmallIntegerField(choices=REPORT_STATUS_CHOICES, editable=False, default=1)
     sss_id = models.CharField(verbose_name="Spatial Support System ID", max_length=64, null=True, blank=True)
 
 #    def save(self, *args, **kwargs):

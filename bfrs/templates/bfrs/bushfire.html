@@ -6,7 +6,7 @@
 
 <div>
     <div style="float: left;">
-        <h1>Bushfire</h1>
+        <h1>Bushfire Overview</h1>
     </div>
     <br>
     <div style="float: right;">
@@ -28,11 +28,34 @@
 <p>user.groups 2: {% if request.user|can_readonly %} True jm 2 {% endif %}</p>
 {% endcomment %}
 
+<br>
+
+<form action="" method="get">
+    {{ filter.form.as_p }}
+    <input type="submit" value="Update" />
+</form>
+
+
+{% comment %}
+<form action="" method="get">
+  <div class="fieldWrapper">
+    <label for="{{ filter.form.report_status.id_for_label  }}">Report Status 2</label>
+    {{ filter.form.report_status }}
+  </div>
+  <input type="submit" value="Update" />
+</form>
+{% endcomment %}
+
 {% if object_list %}
 <table id="table" class="tablesorter table table-striped table-bordered table-hover table-condensed">
   <thead>
     <td><input type="checkbox" name ="check_all" onClick=toggle(this) /></td>
-    <th>Bushfire ID</th>
+    <th>Report Status</th>
+    <th>Fire Level</th>
+    <th>Fire Not Found</th>
+    <th>Media Alert</th>
+    <th>Assistance</th>
+    <th>Alert Level</th>
     <th>Initial</th>
     <th>Final</th>
 
@@ -42,7 +65,12 @@
       {% has_init_authorised bushfire.id as init_authorised %}
       <tr>
         <td><input type="checkbox" name="chkbox" value={{ bushfire.id }}  /></td>
-        <td>{{ bushfire.id }}</td>
+        <td>{{ bushfire.get_report_status_display }}</td>
+        <td>{{ bushfire.potential_fire_level }}</td>
+        <td>{% if bushfire.fire_not_found %}<div class="text-left"><i class="icon-ok text-success"></i></div>{% else %}<div class="text-left"><i class="icon-remove text-danger"></i></div>{% endif %}</td>
+        <td>{% if bushfire.media_alert_req %}<div class="text-left"><i class="icon-ok text-success"></i></div>{% else %}<div class="text-left"><i class="icon-remove text-danger"></i></div>{% endif %}</td>
+        <td>{% if bushfire.assistance_req %}<div class="text-left"><i class="icon-ok text-success"></i></div>{% else %}<div class="text-left"><i class="icon-remove text-danger"></i></div>{% endif %}</td>
+        <td>{{ bushfire.get_alert_level_display }}</td>
         <td><a href="{% url 'bushfire:bushfire_initial' bushfire.id %}">{{ bushfire.name }}</td>
 
          {% if init_authorised %}

@@ -8,7 +8,8 @@ from django.forms.formsets import formset_factory
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 from bfrs.models import (Profile, Bushfire, Activity, Response, AreaBurnt, GroundForces, AerialForces,
-        AttendingOrganisation, FireBehaviour, Legal, PrivateDamage, PublicDamage, Comment
+        AttendingOrganisation, FireBehaviour, Legal, PrivateDamage, PublicDamage, Comment,
+        Region, District, ActivityType
     )
 from bfrs.forms import (ProfileForm, BushfireForm, BushfireCreateForm, BushfireInitUpdateForm,
         ActivityFormSet, ResponseFormSet, AreaBurntFormSet,
@@ -25,6 +26,85 @@ from django.db import IntegrityError, transaction
 from django.contrib import messages
 from django.forms import ValidationError
 from datetime import datetime
+
+import django_filters
+#from  django_filters import FilterSet
+from django_filters import views as filter_views
+
+
+class BushfireFilter(django_filters.FilterSet):
+
+    INVESTIGATION_CHOICES = [
+        ['Investigation Required', 'Investigation Required'],
+        ['Investigation Not Required', 'Investigation Not Required'],
+    ]
+
+    BOOLEAN_CHOICES = (
+        ('1','Yes'),
+        ('0','No'),
+    )
+
+    REGION_CHOICES = []
+    for region in Region.objects.distinct('name'):
+        REGION_CHOICES.append([region.name, region.name])
+
+    DISTRICT_CHOICES = []
+    for district in District.objects.distinct('name'):
+        DISTRICT_CHOICES.append([district.name, district.name])
+
+    ACTIVITY_CHOICES = []
+    for activity in ActivityType.objects.distinct('name'):
+        ACTIVITY_CHOICES.append([activity.id, activity.name])
+
+	report_status = django_filters.ChoiceFilter(choices=Bushfire.REPORT_STATUS_CHOICES, label='Report Status')
+	potential_fire_level = django_filters.ChoiceFilter(choices=Bushfire.FIRE_LEVEL_CHOICES, label='Fire Level')
+#	investigation_req = django_filters.ChoiceFilter(choices=INVESTIGATION_CHOICES, label='Investigation Required')
+	fire_not_found = django_filters.ChoiceFilter(choices=BOOLEAN_CHOICES, label='Fire Not Found')
+	media_alert_req = django_filters.ChoiceFilter(choices=BOOLEAN_CHOICES, label='Media Alert Req')
+	assistance_req = django_filters.ChoiceFilter(choices=BOOLEAN_CHOICES, label='Assistance Req')
+	alert_level = django_filters.ChoiceFilter(choices=Bushfire.ALERT_LEVEL_CHOICES, label='Alert Level')
+	activities__activity_id = django_filters.ChoiceFilter(choices=ACTIVITY_CHOICES, label='Activities')
+    authorised_date = django_filters.DateRangeFilter(label='Authorised Date Range')
+
+#    permutation__scenario__name = django_filters.ChoiceFilter(choices=SCENARIO_CHOICES, label='Scenario')
+#    permutation__index = django_filters.ChoiceFilter(choices=PERMUTATION_CHOICES, label='Permutation')
+#    market__name = django_filters.ChoiceFilter(choices=MARKET_CHOICES, label='Market')
+#    instrument__name = django_filters.ChoiceFilter(choices=INSTRUMENT_CHOICES, label='Instrument')
+#    side = django_filters.ChoiceFilter(choices=SIDE_CHOICES, label='Buy/Sell')
+#    open_date = django_filters.DateRangeFilter(label='Date Range')
+
+    class Meta:
+        model = Bushfire
+        #fields = ['permutation__scenario__name', 'permutation__index', 'market__name', 'instrument__name', 'side', 'open_date']
+        fields = [
+			'report_status',
+			'potential_fire_level',
+			'fire_not_found',
+			'media_alert_req',
+			'assistance_req',
+			'alert_level',
+			'activities__activity_id',
+			'authorised_date',
+		]
+        #label = ['a']
+        order_by = (
+            ('report_status', 'Report Status'),
+            ('potential_fire_level', 'Fire Level'),
+            ('fire_not_found', 'Fire not Found'),
+            ('media_alert_req', 'Media Alert Req'),
+            ('assistance_req', 'Assistance Req'),
+            ('alert_level', 'Alert Level'),
+            ('activities__activity_id', 'Activities'),
+            ('authorised_date', 'Authorised Date Range'),
+        )
+
+    def __init__(self, *args, **kwargs):
+        super(BushfireFilter, self).__init__(*args, **kwargs)
+
+        # allows dynamic update of the filter set, on page refresh
+        #self.filters['permutation__scenario__name'].extra['choices'] = self.SCENARIO_CHOICES
+        #self.filters['permutation__index'].extra['choices'] = self.PERMUTATION_CHOICES
+
 
 
 class ProfileView(LoginRequiredMixin, generic.FormView):
@@ -55,8 +135,10 @@ class ProfileView(LoginRequiredMixin, generic.FormView):
         return TemplateResponse(request, self.template_name)
 
 
-class BushfireView(LoginRequiredMixin, generic.ListView):
-    model = Bushfire
+class BushfireView(LoginRequiredMixin, filter_views.FilterView):
+#class BushfireView(LoginRequiredMixin, generic.ListView):
+    #model = Bushfire
+    filterset_class = BushfireFilter
     template_name = 'bfrs/bushfire.html'
 
 #    def get_queryset(self):

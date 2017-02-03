@@ -23,7 +23,7 @@
                 <label for="id_fire_not_found" class="control-label nonRequiredField">Fire Not Found</label>
 
                 <div class="controls ">
-                  {% if has_init_authorised %}
+                  {% if has_init_authorised and initial %}
                     {% if snapshot.fire_not_found %}<div class="text-left"><i class="icon-ok text-success"></i></div>{% else %}<div class="text-left"><i class="icon-remove text-danger"></i></div>{% endif %}
                   {% else %}
                     {{form.fire_not_found}}
