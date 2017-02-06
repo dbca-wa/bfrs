@@ -10,6 +10,7 @@
     </div>
     <br>
     <div style="float: right;">
+
       {% if request.user|can_readonly and not request.user.is_superuser %}
         <a href="{% url 'bushfire:bushfire_create' %}"><button disabled style="color:Grey;" title="You do not have 'Create' permissions"><i class="icon-plus icon-white"></i> Add Bushfire</button></a>
       {% else %}
@@ -30,21 +31,7 @@
 
 <br>
 
-<form action="" method="get">
-    {{ filter.form.as_p }}
-    <input type="submit" value="Update" />
-</form>
-
-
-{% comment %}
-<form action="" method="get">
-  <div class="fieldWrapper">
-    <label for="{{ filter.form.report_status.id_for_label  }}">Report Status 2</label>
-    {{ filter.form.report_status }}
-  </div>
-  <input type="submit" value="Update" />
-</form>
-{% endcomment %}
+{% include "bfrs/bushfire_filter.html" %}
 
 {% if object_list %}
 <table id="table" class="tablesorter table table-striped table-bordered table-hover table-condensed">

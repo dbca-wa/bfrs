@@ -63,6 +63,7 @@ class BushfireFilter(django_filters.FilterSet):
 	media_alert_req = django_filters.ChoiceFilter(choices=BOOLEAN_CHOICES, label='Media Alert Req')
 	assistance_req = django_filters.ChoiceFilter(choices=BOOLEAN_CHOICES, label='Assistance Req')
 	alert_level = django_filters.ChoiceFilter(choices=Bushfire.ALERT_LEVEL_CHOICES, label='Alert Level')
+	#activities__activity_id = django_filters.MultipleChoiceFilter(choices=ACTIVITY_CHOICES, label='Activities')
 	activities__activity_id = django_filters.ChoiceFilter(choices=ACTIVITY_CHOICES, label='Activities')
     authorised_date = django_filters.DateRangeFilter(label='Authorised Date Range')
 
