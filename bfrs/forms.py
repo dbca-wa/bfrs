@@ -91,6 +91,26 @@ class ProfileForm(HelperModelForm):
         exclude = ('user',)
 
 
+class BushfireFilterForm(forms.ModelForm):
+    """
+    Used to pass region and district to the filter template (in bushfire template)
+    django-filter module does not allow filter chaining
+
+    So passing a both form and filter to the context in the BushfireView, and still allowing the BushfireFilter to filter using the
+    region and district passed from this form (i.e. region and filter are also declared in the BushfireFilter class)
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(BushfireFilterForm, self).__init__(*args, **kwargs)
+
+        self.fields['region'].required = False
+        self.fields['district'].required = False
+
+    class Meta:
+        fields = ('region', 'district')
+        model = Bushfire
+
+
 class BushfireForm(forms.ModelForm):
     class Meta:
         model = Bushfire

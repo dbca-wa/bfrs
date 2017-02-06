@@ -23,6 +23,42 @@
         <form action="" method="get">
         <table class="table table-bordered table-striped table-condensed">
           <body>
+
+            <tr>
+              <td class="cbas">
+
+                <div class="col-sm-2" >
+                  <div id="div_id_region" class="form-group"> 
+                    <label class="nowrap" for="{{ filter.form.region.id_for_label  }}">Region</label>
+                    <div class="controls ">{{ form.region }}</div>
+                  </div>
+                </div>
+
+                <div class="col-sm-2" >
+                  <div id="div_id_district" class="form-group"> 
+                    <label class="nowrap" for="{{ filter.form.district.id_for_label  }}">District</label>
+                    <div class="controls ">{{ form.district }}</div>
+                  </div>
+                </div>
+
+                <div class="col-sm-2" >
+                  <div id="div_id_authorised_date" class="form-group"> 
+                    <label class="nowrap" for="{{ filter.form.authorised_date.id_for_label  }}">Authorised Date</label>
+                    <div class="controls ">{{ filter.form.authorised_date }}</div>
+                  </div>
+                </div>
+
+                <div class="col-sm-4" >
+                  <div id="div_id_activities" class="form-group"> 
+                    <label class="nowrap" for="{{ filter.form.activities__activity_id.id_for_label  }}">Activities</label>
+                    <div class="controls ">{{ filter.form.activities__activity_id }}</div>
+                  </div>
+                </div>
+
+              </td>
+            </tr>
+
+
             <tr>
               <td class="cbas">
                 <div class="col-sm-2" > 
@@ -64,26 +100,6 @@
                   <div id="div_id_alert_level" class="form-group"> 
                     <label class="nowrap" for="{{ filter.form.alert_level.id_for_label  }}">Alert Level</label>
                     <div class="controls ">{{ filter.form.alert_level }}</div>
-                  </div>
-                </div>
-
-              </td>
-            </tr>
-
-            <tr>
-              <td class="cbas">
-
-                <div class="col-sm-4" >
-                  <div id="div_id_activities" class="form-group"> 
-                    <label class="nowrap" for="{{ filter.form.activities__activity_id.id_for_label  }}">Activities</label>
-                    <div class="controls ">{{ filter.form.activities__activity_id }}</div>
-                  </div>
-                </div>
-
-                <div class="col-sm-2" >
-                  <div id="div_id_authorised_date" class="form-group"> 
-                    <label class="nowrap" for="{{ filter.form.authorised_date.id_for_label  }}">Authorised Date</label>
-                    <div class="controls ">{{ filter.form.authorised_date }}</div>
                   </div>
                 </div>
 
