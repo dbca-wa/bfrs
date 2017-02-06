@@ -130,18 +130,22 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
 #class BushfireView(LoginRequiredMixin, generic.ListView):
     #model = Bushfire
     filterset_class = BushfireFilter
-    form_class = BushfireFilterForm
     template_name = 'bfrs/bushfire.html'
 
     def get_context_data(self, **kwargs):
         context = super(BushfireView, self).get_context_data(**kwargs)
-        #import ipdb; ipdb.set_trace()
 
+        #import ipdb; ipdb.set_trace()
         # initial parameter prevents the form from resetting, if the region and district filters had a value set previously
-        form = BushfireFilterForm(initial={'region': self.request.GET['region'], 'district': self.request.GET['district']})
+        initial = {}
+        if self.request.GET.has_key('region'):
+            initial.update({'region': self.request.GET['region']})
+
+        if self.request.GET.has_key('district'):
+            initial.update({'district': self.request.GET['district']})
 
         # update context with form - filter is already in the context
-        context['form'] = form
+        context['form'] = BushfireFilterForm(initial=initial)
         return context
 
 
