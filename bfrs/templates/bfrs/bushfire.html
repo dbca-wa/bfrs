@@ -50,7 +50,7 @@
   <tbody>
     {% for bushfire in object_list %}
       {% has_init_authorised bushfire.id as init_authorised %}
-      <tr>
+      <tr class="row-vm" data-toggle="myCollapse" data-target="#{{bushfire.id}}">
         <td><input type="checkbox" name="chkbox" value={{ bushfire.id }}  /></td>
         <td>{{ bushfire.get_report_status_display }}</td>
         <td>{{ bushfire.potential_fire_level }}</td>
@@ -71,6 +71,28 @@
         <td><a href="{% url 'bushfire:bushfire' bushfire.id %}">{{ bushfire.name }}</td>
         {% endcomment %}
       </tr>
+
+      <tr class="myCollapse row-details expand-child" id="{{bushfire.id}}">
+        <td colspan="9">
+          <table class="table table-bordered table-striped table-condensed">
+            <tbody>
+              <tr>
+                <th>Bushfire ID</th>
+                <td>{{ bushfire.id }}</td>
+                <th colspan="1">Bushfire name</th>
+                <td>{{ bushfire.name }}</td>
+              </tr>
+              <tr>
+                <th colspan="1">Field Officer</th>
+                <td>{{ bushfire.field_officer }}</td>
+                <th colspan="1">Duty Officer</th>
+                <td>{{ bushfire.duty_officer }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </td>
+      </tr>
+
     {% endfor %}
   </tbody>
 </table>
@@ -79,4 +101,19 @@
     <p>No Bushfires are available.</p>
 {% endif %}
 
+<script>
+
+     $("[data-toggle=myCollapse]").click(function( ev ) {
+       ev.preventDefault();
+       var target;
+       if (this.hasAttribute('data-target')) {
+     target = $(this.getAttribute('data-target'));
+       } else {
+     target = $(this.getAttribute('href'));
+       };
+       target.toggleClass("in");
+     });
+
+     $("#table td a").on('click', function (e) { e.stopPropagation(); })
+</script>
 {% endblock %}
