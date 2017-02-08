@@ -19,6 +19,9 @@ AUTH_TYPE_CHOICES = (
     (2, 'Final'),
 )
 
+def current_finyear():
+	return datetime.now().year if datetime.now().month>7 else datetime.now().year-1
+
 
 class Profile(models.Model):
     DEFAULT_GROUP = "Users"
@@ -277,7 +280,7 @@ class Bushfire(Audit):
 
     name = models.CharField(max_length=100, verbose_name="Fire Name")
     incident_no = models.PositiveIntegerField(verbose_name="Fire Number")
-    year = models.PositiveIntegerField(verbose_name="Year")
+    year = models.PositiveIntegerField(verbose_name="Year", default=current_finyear(), validators=[MinValueValidator(current_finyear())])
     dfes_incident_no = models.PositiveIntegerField(verbose_name="DFES Fire Number", null=True, blank=True)
     job_code = models.PositiveIntegerField(verbose_name="job Code", null=True, blank=True)
 

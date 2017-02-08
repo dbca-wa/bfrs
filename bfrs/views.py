@@ -46,6 +46,8 @@ class BushfireFilter(django_filters.FilterSet):
         ('0','No'),
     )
 
+    YEAR_CHOICES = [[i['year'], i['year']] for i in Bushfire.objects.all().values('year').distinct()]
+
     REGION_CHOICES = []
     for region in Region.objects.distinct('name'):
         REGION_CHOICES.append([region.id, region.name])
@@ -60,6 +62,7 @@ class BushfireFilter(django_filters.FilterSet):
 
 	region = django_filters.ChoiceFilter(choices=REGION_CHOICES, label='Region')
 	district = django_filters.ChoiceFilter(choices=DISTRICT_CHOICES, label='District')
+	year = django_filters.ChoiceFilter(choices=YEAR_CHOICES, label='Year')
 	report_status = django_filters.ChoiceFilter(choices=Bushfire.REPORT_STATUS_CHOICES, label='Report Status')
 	potential_fire_level = django_filters.ChoiceFilter(choices=Bushfire.FIRE_LEVEL_CHOICES, label='Fire Level')
 	fire_not_found = django_filters.ChoiceFilter(choices=BOOLEAN_CHOICES, label='Fire Not Found')
@@ -75,6 +78,7 @@ class BushfireFilter(django_filters.FilterSet):
         fields = [
 			'region_id',
 			'district_id',
+			'year',
 			'report_status',
 			'potential_fire_level',
 			'fire_not_found',
@@ -84,10 +88,10 @@ class BushfireFilter(django_filters.FilterSet):
 			'activities__activity_id',
 			'authorised_date',
 		]
-        #label = ['a']
         order_by = (
             ('region_id', 'Region'),
             ('district_id', 'District'),
+            ('year', 'Year'),
             ('report_status', 'Report Status'),
             ('potential_fire_level', 'Fire Level'),
             ('fire_not_found', 'Fire not Found'),
@@ -98,6 +102,12 @@ class BushfireFilter(django_filters.FilterSet):
             ('authorised_date', 'Authorised Date Range'),
         )
 
+
+    def __init__(self, *args, **kwargs):
+        super(BushfireFilter, self).__init__(*args, **kwargs)
+
+        # allows dynamic update of the filter set, on page refresh
+        self.filters['year'].extra['choices'] = [[i['year'], i['year']] for i in Bushfire.objects.all().values('year').distinct()]
 
 class ProfileView(LoginRequiredMixin, generic.FormView):
     model = Profile

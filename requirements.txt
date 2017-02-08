@@ -15,7 +15,7 @@ python-dateutil
 python-magic==0.4.10
 Unidecode==0.4.18
 django-reversion==2.0.7
-django-smart-selects==1.2.6
+django-smart-selects==1.2.9
 django-crispy-forms==1.6.1
 unicodecsv==0.14.1
 
