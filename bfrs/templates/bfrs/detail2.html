@@ -8,7 +8,7 @@
   <li><a href="{% url 'main' %}">{% trans 'Bushfire Overview' %}</a></li>
   {% comment %}<li><a href="{% url 'bushfire:bushfire_final' object.id %}">{% trans 'Final' %}</a></li> {% endcomment %}
   <li>{% trans 'Final' %}</li>
-  <li>{{ object.name}}</li>
+  <li>{{ object.unique_id}}</li>
 </ul>
 {% endblock %}
 
@@ -208,7 +208,10 @@
 
         <tr>
             <th class="cbas">Name *</th>
-            <td colspan="4" class="cbas">{{form.name}}</td>
+            <td colspan="1" class="cbas">{{form.name}}</td>
+
+            <th class="cbas">Year *</th>
+            <td class="cbas">{{form.year}}</td>
         </tr>
 
         <tr>

@@ -227,7 +227,7 @@ class BushfireCreateForm(forms.ModelForm):
     class Meta:
         model = Bushfire
         fields = ('region', 'district', 'incident_no', 'job_code',
-                  'name', 'potential_fire_level', 'field_officer', 'duty_officer', 'init_authorised_by', 'init_authorised_date',
+                  'name', 'year', 'potential_fire_level', 'field_officer', 'duty_officer', 'init_authorised_by', 'init_authorised_date',
                   'alert_level', 'media_alert_req', 'fire_position',
                   'grid', 'arrival_area', 'fire_not_found',
 #                  'coord_type', 'arrival_area', 'fire_not_found',
@@ -256,7 +256,7 @@ class BushfireInitUpdateForm(forms.ModelForm):
     class Meta:
         model = Bushfire
         fields = ('region', 'district', 'incident_no', 'job_code',
-                  'name', 'potential_fire_level', 'field_officer', 'duty_officer', 'init_authorised_by', 'init_authorised_date',
+                  'name', 'year', 'potential_fire_level', 'field_officer', 'duty_officer', 'init_authorised_by', 'init_authorised_date',
                   'alert_level', 'media_alert_req', 'fire_position',
                   'grid', 'arrival_area', 'fire_not_found',
 #                  'coord_type', 'arrival_area', 'fire_not_found',

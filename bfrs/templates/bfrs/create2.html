@@ -11,7 +11,7 @@
   {% else %}
     {% comment %}<li><a href="{% url 'bushfire:bushfire2_initial' object.id %}">{% trans 'Initial' %}</a></li>{% endcomment %}
     <li>{% trans 'Initial' %}</li>
-    <li>{{ object.name}}</li>
+    <li>{{ object.unique_id}}</li>
   {% endif %}
 </ul>
 {% endblock %}
@@ -169,7 +169,10 @@
 
         <tr>
             <th class="cbas">Name *</th>
-            <td colspan="4" class="cbas">{% if has_init_authorised %} {{snapshot.name}} {% else %} {{form.name}} {% endif %}</td>
+            <td colspan="cw23" class="cbas">{% if has_init_authorised %} {{snapshot.name}} {% else %} {{form.name}} {% endif %}</td>
+
+            <th class="cbas">Year</th>
+            <td class="cbas">{% if has_init_authorised %} {{snapshot.year}} {% else %} {{form.year}} {% endif %}</td>
         </tr>
 
         <tr>

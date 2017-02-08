@@ -277,6 +277,7 @@ class Bushfire(Audit):
 
     name = models.CharField(max_length=100, verbose_name="Fire Name")
     incident_no = models.PositiveIntegerField(verbose_name="Fire Number")
+    year = models.PositiveIntegerField(verbose_name="Year")
     dfes_incident_no = models.PositiveIntegerField(verbose_name="DFES Fire Number", null=True, blank=True)
     job_code = models.PositiveIntegerField(verbose_name="job Code", null=True, blank=True)
 
@@ -394,11 +395,14 @@ class Bushfire(Audit):
 
     class Meta:
         #unique_together = ('district', 'incident_no', 'season')
-        unique_together = ('district', 'incident_no')
+        unique_together = ('year', 'district', 'incident_no')
         default_permissions = ('add', 'change', 'delete', 'view')
 
+    def unique_id(self):
+        return ''.join(['BF', self.district.code, str(self.year), str(self.incident_no)])
+
     def __str__(self):
-        return ', '.join([self.name, self.district.name, self.incident_no])
+        return ', '.join([self.name, self.district.name, self.year, self.incident_no])
 
 
 

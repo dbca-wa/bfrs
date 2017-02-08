@@ -295,12 +295,7 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         return reverse("home")
 
     def post(self, request, *args, **kwargs):
-        import ipdb; ipdb.set_trace()
-
-        self.object = self.get_object()
-        if kwargs.has_key('export_to_csv'):
-            import ipdb; ipdb.set_trace()
-            export_to_csv(request, self.object)
+        #import ipdb; ipdb.set_trace()
 
         form_class = self.get_form_class()
         form = self.get_form(form_class)
