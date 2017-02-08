@@ -22,6 +22,7 @@ from bfrs.utils import (breadcrumbs_li, calc_coords, save_initial_snapshot,
         update_groundforces_fs, update_aerialforces_fs, update_fire_behaviour_fs,
         update_legal_fs, update_private_damage_fs, update_public_damage_fs, update_response_fs,
         update_comment_fs,
+		export_final_csv,
     )
 from django.db import IntegrityError, transaction
 from django.contrib import messages
@@ -132,10 +133,22 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
     filterset_class = BushfireFilter
     template_name = 'bfrs/bushfire.html'
 
+    def get(self, request, *args, **kwargs):
+        response = super(BushfireView, self).get(request, *args, **kwargs)
+
+        if self.request.GET.has_key('export_to_csv'):
+            report = self.request.GET.get('export_to_csv')
+            if report == 'final':
+				#import ipdb; ipdb.set_trace()
+				qs = self.get_filterset(self.filterset_class).qs
+				return export_final_csv(self.request, qs)
+
+        return response
+
     def get_context_data(self, **kwargs):
         context = super(BushfireView, self).get_context_data(**kwargs)
-
         #import ipdb; ipdb.set_trace()
+
         # initial parameter prevents the form from resetting, if the region and district filters had a value set previously
         initial = {}
         if self.request.GET.has_key('region'):
@@ -146,122 +159,9 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
 
         # update context with form - filter is already in the context
         context['form'] = BushfireFilterForm(initial=initial)
+        #context['bushfire_id_list'] = [i.id for i in self.object_list]
+        #import ipdb; ipdb.set_trace()
         return context
-
-
-#class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
-#    model = Bushfire
-#    form_class = BushfireCreateForm
-#    template_name = 'bfrs/create.html'
-#
-#    def get_success_url(self):
-#        #return reverse("bushfire:index")
-#        return reverse("home")
-#
-#    def get_initial(self):
-#        profile, created = Profile.objects.get_or_create(user=self.request.user)
-#        return { 'region': profile.region, 'district': profile.district }
-#
-#    def post(self, request, *args, **kwargs):
-#        #self.object = self.get_object()
-#        form_class = self.get_form_class()
-#        form = self.get_form(form_class)
-#        activity_formset        = ActivityFormSet(self.request.POST, prefix='activity_fs')
-#        area_burnt_formset      = AreaBurntFormSet(self.request.POST, prefix='area_burnt_fs')
-#        attending_org_formset   = AttendingOrganisationFormSet(self.request.POST, prefix='attending_org_fs')
-#
-#        if form.is_valid() and activity_formset.is_valid():
-#            #self.object = self.get_object()
-#            return self.form_valid(request,
-#                form,
-#                activity_formset,
-#                area_burnt_formset,
-#                attending_org_formset,
-#            )
-#        else:
-#            #import ipdb; ipdb.set_trace()
-#            activity_formset        = ActivityFormSet(prefix='activity_fs')
-#            area_burnt_formset      = AreaBurntFormSet(prefix='area_burnt_fs')
-#            attending_org_formset   = AttendingOrganisationFormSet(prefix='attending_org_fs')
-#
-#            #self.object = self.get_object()
-#            return self.form_invalid(
-#                form,
-#                activity_formset,
-#                area_burnt_formset,
-#                attending_org_formset,
-#                kwargs,
-#            )
-#
-#    def form_invalid(self,
-#            form,
-#            activity_formset,
-#            area_burnt_formset,
-#            attending_org_formset,
-#            kwargs,
-#        ):
-#        #import ipdb; ipdb.set_trace()
-#        context = {
-#            'form': form,
-#            'activity_formset': activity_formset,
-#            'area_burnt_formset': area_burnt_formset,
-#            'attending_org_formset': attending_org_formset,
-#        }
-#        return self.render_to_response(context=context)
-#
-#    def form_valid(self, request,
-#            form,
-#            activity_formset,
-#            area_burnt_formset,
-#            attending_org_formset,
-#        ):
-#        #import ipdb; ipdb.set_trace()
-#        self.object = form.save(commit=False)
-#        self.object.creator_id = 1 #User.objects.all()[0] #request.user
-#        self.object.modifier_id = 1 #User.objects.all()[0] #request.user
-#        calc_coords(self.object)
-#
-#        if self.object.has_init_authorised:
-#            save_initial_snapshot(self.object)
-#
-#        self.object.save()
-#        activities_updated = update_activity_fs(self.object, activity_formset)
-#        areas_burnt_updated = update_areas_burnt_fs(self.object, area_burnt_formset)
-#        attending_org_updated = update_attending_org_fs(self.object, attending_org_formset)
-#
-#        redirect_referrer =  HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-#        if not activities_updated:
-#            messages.error(request, 'There was an error saving Activities.')
-#            return redirect_referrer
-#
-#        elif not areas_burnt_updated:
-#            messages.error(request, 'There was an error saving Areas Burnt.')
-#            return redirect_referrer
-#
-#        elif not attending_org_updated:
-#            messages.error(request, 'There was an error saving Attending Organisation.')
-#            return redirect_referrer
-#
-#        return HttpResponseRedirect(self.get_success_url())
-#
-#    def get_context_data(self, **kwargs):
-#        try:
-#            context = super(BushfireCreateView, self).get_context_data(**kwargs)
-#        except:
-#            context = {}
-#
-#        form_class = self.get_form_class()
-#        form = self.get_form(form_class)
-#        activity_formset        = ActivityFormSet(instance=self.object, prefix='activity_fs') # self.object posts the initial data
-#        area_burnt_formset      = AreaBurntFormSet(instance=self.object, prefix='area_burnt_fs')
-#        attending_org_formset   = AttendingOrganisationFormSet(instance=self.object, prefix='attending_org_fs')
-#        context.update({'form': form,
-#                        'activity_formset': activity_formset,
-#                        'area_burnt_formset': area_burnt_formset,
-#                        'attending_org_formset': attending_org_formset,
-#                        'create': True,
-#            })
-#        return context
 
 
 class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
@@ -395,8 +295,13 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         return reverse("home")
 
     def post(self, request, *args, **kwargs):
-        #import ipdb; ipdb.set_trace()
+        import ipdb; ipdb.set_trace()
+
         self.object = self.get_object()
+        if kwargs.has_key('export_to_csv'):
+            import ipdb; ipdb.set_trace()
+            export_to_csv(request, self.object)
+
         form_class = self.get_form_class()
         form = self.get_form(form_class)
         activity_formset        = ActivityFormSet(self.request.POST, prefix='activity_fs')

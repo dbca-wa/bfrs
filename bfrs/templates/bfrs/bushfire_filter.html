@@ -10,9 +10,10 @@
             <body>
                 <div class="cbas" >
                     <div id="div_id_filter" class="form-group"> 
-                        <form action="" method="get">
+                        <!--<form action="" method="get">-->
+                        <form class="filter-form">
                             {{ filter.form.as_p }}
-                            <input type="submit" value="Update" />
+                            <input type="submit" value="Submit" />
                         </form>
                     </div>
                 </div>
@@ -20,7 +21,7 @@
           </table>
           {% endcomment %}
 
-        <form action="" method="get">
+        <!--<form action="" method="get">-->
         <table class="table table-bordered table-striped table-condensed">
           <body>
 
@@ -108,7 +109,9 @@
 
           </body>
         </table>
-        <input type="submit" value="Update" />
+        <!--</form>-->
+        <!--<input type="submit" value="Update" />-->
+        <a href="javascript: bushfire_filter();"><button><i class="icon-refresh icon-white"></i> Update</button></a>
 
       </div>
     </div>
@@ -116,4 +119,6 @@
 
 </div>
 
+<script>
 
+</script>

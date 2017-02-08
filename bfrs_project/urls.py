@@ -37,7 +37,7 @@ urlpatterns = [
     url('^', include('django.contrib.auth.urls')),
 
     url(r'^$', home_view_selection_view, name='home'),
-    url(r'^main/', login_required(views.BushfireView.as_view()), name='main'),
+    url(r'^main/$', login_required(views.BushfireView.as_view()), name='main'),
     url(r'^admin/$', admin_view_selection_view),
     #url(r'^$', views.BushfireView.as_view(), name='home'),
     url(r'^bfrs/', include('bfrs.urls', namespace='bushfire')),

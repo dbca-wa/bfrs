@@ -2,7 +2,12 @@ from bfrs.models import (Bushfire, Activity, AreaBurnt, AttendingOrganisation, G
         AerialForces, FireBehaviour, Legal, PrivateDamage, PublicDamage, Response, Comment
     )
 from django.db import IntegrityError, transaction
+from django.http import HttpResponse
 import json
+
+import unicodecsv
+from django.utils.encoding import smart_str
+
 
 def breadcrumbs_li(links):
     """Returns HTML: an unordered list of URLs (no surrounding <ul> tags).
@@ -409,5 +414,98 @@ def update_comment_fs(bushfire, request, comment_formset):
         return 0
 
     return 1
+
+def export_final_csv(request, queryset):
+    #import csv
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename=mymodel.csv'
+    writer = unicodecsv.writer(response, quoting=unicodecsv.QUOTE_ALL)
+
+    writer.writerow([
+        "ID",
+		"Region",
+		"District",
+		"Name",
+		"Incident No",
+		"DFES Incident Nno",
+		"Job Ccode",
+		"Potential Fire Level",
+		"Alert Level",
+		"Media Alert Req",
+		"Fire Position",
+		#"Origin Point",
+		#"Fire Boundary",
+		"Grid",
+		"Arrival Area",
+		"Fire Not Found",
+		"Assistance Req",
+		"Communications",
+		"Other Info",
+		"Cause",
+		"Other Cause",
+		"Field Officer",
+		"Duty Officer",
+		"Init Authorised By",
+		"Init Authorised Date",
+		#"Initial Snapshot",
+		"First Attack",
+		"Other First Attack",
+		"Initial Control",
+		"Other Initial Ctrl",
+		"Final Control",
+		"Other Final Ctrl",
+		"Max Fire Level",
+		"Arson Squad Notified",
+		"Offence No",
+		"Final Area",
+		"Authorised By",
+		"Authorised Date",
+		"Report Status",
+
+    ])
+    for obj in queryset:
+        writer.writerow([
+            smart_str(obj.id),
+			smart_str(obj.region.name),
+			smart_str(obj.district.name),
+			smart_str(obj.name),
+			smart_str(obj.incident_no),
+			smart_str(obj.dfes_incident_no),
+			smart_str(obj.job_code),
+			smart_str(obj.get_potential_fire_level_display()),
+			smart_str(obj.get_alert_level_display()),
+			smart_str(obj.media_alert_req),
+			smart_str(obj.fire_position),
+			#smart_str(obj.origin_point),
+			#smart_str(obj.fire_boundary),
+			smart_str(obj.grid),
+			smart_str(obj.arrival_area),
+			smart_str(obj.fire_not_found),
+			smart_str(obj.assistance_req),
+			smart_str(obj.communications),
+			smart_str(obj.other_info),
+			smart_str(obj.cause),
+			smart_str(obj.other_cause),
+			smart_str(obj.field_officer.get_full_name() if obj.field_officer else None ),
+			smart_str(obj.duty_officer.get_full_name() if obj.duty_officer else None ),
+			smart_str(obj.init_authorised_by.get_full_name() if obj.init_authorised_by else None ),
+			smart_str(obj.init_authorised_date.strftime('%Y-%m-%d %H:%M:%S') if obj.init_authorised_date else None),
+			#smart_str(obj.initial_snapshot),
+			smart_str(obj.first_attack),
+			smart_str(obj.other_first_attack),
+			smart_str(obj.initial_control),
+			smart_str(obj.other_initial_ctrl),
+			smart_str(obj.final_control),
+			smart_str(obj.other_final_ctrl),
+			smart_str(obj.max_fire_level),
+			smart_str(obj.arson_squad_notified),
+			smart_str(obj.offence_no),
+			smart_str(obj.final_area),
+			smart_str(obj.authorised_by.get_full_name() if obj.authorised_by else None ),
+			smart_str(obj.authorised_date.strftime('%Y-%m-%d %H:%M:%S') if obj.authorised_date else None ),
+			smart_str(obj.get_report_status_display()),
+        ])
+    return response
+export_final_csv.short_description = u"Export CSV (Final)"
 
 

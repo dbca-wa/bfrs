@@ -31,6 +31,20 @@
 
 <br>
 
+<div class="dropdown btn btn-medium" style="float: right">
+  <a id="dropdown_btn" data-target="#" href="#" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+    </i>Create Report
+    <span class="caret"></span>
+  </a>
+
+  <ul class="dropdown-menu" aria-labelledby="dropdown-btn">
+    <li><a href="javascript: bushfire_filter('export_to_csv=final');">Export CSV (Final)</a></li>
+      {% comment %}
+    <li><a value="export_to_csv" href="{% url 'main' %}?export_to_csv=final">Export to CSV (Final)</a></li>
+      {% endcomment %}
+  </ul>
+</div>
+
 {% include "bfrs/bushfire_filter.html" %}
 
 {% if object_list %}
@@ -83,6 +97,13 @@
                 <td>{{ bushfire.name }}</td>
               </tr>
               <tr>
+                <th>Region</th>
+                <td>{{ bushfire.region.name }}</td>
+                <th colspan="1">District</th>
+                <td>{{ bushfire.district.name }}</td>
+              </tr>
+
+              <tr>
                 <th colspan="1">Field Officer</th>
                 <td>{{ bushfire.field_officer }}</td>
                 <th colspan="1">Duty Officer</th>
@@ -115,6 +136,43 @@
     });
 
     $("#table td a").on('click', function (e) { e.stopPropagation(); })
+
+$(function(){
+
+    bushfire_filter = function(params) {
+        /*
+        Function to append filter fields to the URL, only those that are selected. Default <form action="#"> adds all fields to the url, even if empty
+        */
+
+        filter_list = [
+			'region','district', 'authorised_date', 'activities__activity_id', 
+			'report_status', 'potential_fire_level', 'fire_not_found', 
+			'media_alert_req', 'assistance_req', 'alert_level'
+		];
+
+        var count = 0;
+        var url = "{% url 'main' %}";
+        for (var i = 0; i < filter_list.length; i++) {
+          var field_value = $("#id_" + filter_list[i]).val()
+          if (field_value) {
+            //alert("VAL: " + field_value);
+            var postfix = (count==0 ? "?" : "&");
+            url += postfix + filter_list[i] + "=" + $("#id_" + filter_list[i]).val();
+            count++;
+          }
+        }
+
+		if (params) {
+            var postfix = (count==0 ? "?" : "&");
+			url += postfix + params
+		}
+        //alert("URL: " + url);
+
+        location.href = url
+    };
+
+});
+
 
 /*
     $("#id_region").click(function() {
