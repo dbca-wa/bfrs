@@ -1,4 +1,5 @@
 {% load admin_static %}
+{% load bfrs_tags %}
 <html lang="{{ LANGUAGE_CODE|default:"en-us" }}" {% if LANGUAGE_BIDI %}dir="rtl"{% endif %}>
 <head>
 <title>{% block title %}{% endblock %}</title>
@@ -57,7 +58,6 @@
 
 {% block body %}
 <body class="{% if is_popup %}popup {% endif %}{% block bodyclass %}{% endblock %}">
-{% if not is_popup %}
 
 {% comment %}
 <div class="navbar navbar-inverse navbar-fixed-top">
@@ -142,12 +142,45 @@
 
           </div>
         </div>
+
+        {% block topsearch %}
+        <div class="span4 topsearch hidden-phone text-right">
+           <div class="hidden-phone">
+             <form action="{% url 'main' %}" method="get" class="inline">
+               <div class="search input">
+                 <input name="q" id="mod-search-searchword" maxlength="25" class="input-large" type="text" size="25" placeholder="Search Bushfire ID or name..." />
+               </div>
+             </form>
+           </div>
+        </div>
+        {% endblock topsearch %}
+
+
       </div>
     </div>
   </div>
-</div>
-{% endif %}
 
+  <div class="navbar" id="mainnav">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="btn btn-navbar" data-toggle="collapse" data-target="#second-nav">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </a>
+          <div id="second-nav" class="nav-collapse navbar-responsive-collapse">
+            <ul class="nav" style="list-style-type: none; font-weight: bold;">
+              <li style="display: inline-block;"><a href="{% url 'main' %}"><i class="icon-fire"></i> Bushfire Overview</a></li>
+			  <li style="display: inline-block;"><a href="{% url 'bushfire:bushfire_create' %}"><i class="icon-plus"></i> Create Bushfire</a></li>
+			  {% comment %}
+			  {% if not request.user|can_readonly and not request.user.is_superuser %}<li style="display: inline-block;"><a href="{% url 'bushfire:bushfire_create' %}"><i class="icon-plus"></i> Create Bushfire</a></li>{% endif %}
+			  {% endcomment %}
+            </ul>
+          </div>
+        </div>
+      </div>
+  </div>
+
+</div>
 
 {% comment %}
 {% endcomment %}

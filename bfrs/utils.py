@@ -1,5 +1,6 @@
 from bfrs.models import (Bushfire, Activity, AreaBurnt, AttendingOrganisation, GroundForces,
-        AerialForces, FireBehaviour, Legal, PrivateDamage, PublicDamage, Response, Comment
+        AerialForces, FireBehaviour, Legal, PrivateDamage, PublicDamage, Response, Comment,
+        ActivityType,
     )
 from django.db import IntegrityError, transaction
 from django.http import HttpResponse
@@ -7,6 +8,7 @@ import json
 
 import unicodecsv
 from django.utils.encoding import smart_str
+from datetime import datetime
 
 
 def breadcrumbs_li(links):
@@ -418,8 +420,9 @@ def update_comment_fs(bushfire, request, comment_formset):
 
 def export_final_csv(request, queryset):
     #import csv
+    filename = 'export_final-' + datetime.now().strftime('%Y-%m-%dT%H%M%S') + '.csv'
     response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename=mymodel.csv'
+    response['Content-Disposition'] = 'attachment; filename=' + filename
     writer = unicodecsv.writer(response, quoting=unicodecsv.QUOTE_ALL)
 
     writer.writerow([
@@ -463,11 +466,12 @@ def export_final_csv(request, queryset):
 		"Authorised By",
 		"Authorised Date",
 		"Report Status",
-
-    ])
+    ] +
+		[i for i in activity_names()]
+	)
     for obj in queryset:
-        writer.writerow([
-            smart_str(obj.id),
+		writer.writerow([
+			smart_str(obj.id),
 			smart_str(obj.region.name),
 			smart_str(obj.district.name),
 			smart_str(obj.name),
@@ -507,8 +511,27 @@ def export_final_csv(request, queryset):
 			smart_str(obj.authorised_by.get_full_name() if obj.authorised_by else None ),
 			smart_str(obj.authorised_date.strftime('%Y-%m-%d %H:%M:%S') if obj.authorised_date else None ),
 			smart_str(obj.get_report_status_display()),
-        ])
+        ] +
+			[i[1] for i in activity_map(obj)]
+	)
     return response
 export_final_csv.short_description = u"Export CSV (Final)"
 
+def activity_names():
+	return [i['name'] for i in ActivityType.objects.all().order_by('id').values()]
+
+#def activity_bools(obj):
+#	bools = []
+#	[bools.append([name, True if len(obj.activities.all().filter(activity__name__contains=name))>0 else False]) for name in activity_names()]
+#	return [smart_str(activity[1]) for activity in bools]
+
+def activity_map(obj):
+	bools = []
+	for activity_name in activity_names():
+		if len(obj.activities.all().filter(activity__name__contains=activity_name)) > 0:
+			dt = obj.activities.get(activity__name__contains=activity_name).date.strftime('%Y-%m-%d %H:%M:%S')
+			bools.append([activity_name, smart_str(dt)])
+		else:
+			bools.append([activity_name, smart_str(None)])
+	return bools
 

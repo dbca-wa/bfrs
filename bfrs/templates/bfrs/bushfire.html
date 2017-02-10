@@ -9,14 +9,16 @@
         <h1>Bushfire Overview</h1>
     </div>
     <br>
-    <div style="float: right;">
 
+{% comment %}
+    <div style="float: right;">
       {% if request.user|can_readonly and not request.user.is_superuser %}
         <a href="{% url 'bushfire:bushfire_create' %}"><button disabled style="color:Grey;" title="You do not have 'Create' permissions"><i class="icon-plus icon-white"></i> Add Bushfire</button></a>
       {% else %}
         <a href="{% url 'bushfire:bushfire_create' %}"><button><i class="icon-plus icon-white"></i> Add Bushfire</button></a>
       {% endif %}
     </div>
+{% endcomment %}
 </div>
 
 <br>
@@ -32,16 +34,13 @@
 <br>
 
 <div class="dropdown btn btn-medium" style="float: right">
-  <a id="dropdown_btn" data-target="#" href="#" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-    </i>Create Report
+  <button id="dropdown_btn" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+    <a href="#">Create Report</a>
     <span class="caret"></span>
-  </a>
+  </button>
 
-  <ul class="dropdown-menu" aria-labelledby="dropdown-btn">
+  <ul class="dropdown-menu" aria-labelledby="dropdown_btn">
     <li><a href="javascript: bushfire_filter('export_to_csv=final');">Export CSV (Final)</a></li>
-      {% comment %}
-    <li><a value="export_to_csv" href="{% url 'main' %}?export_to_csv=final">Export to CSV (Final)</a></li>
-      {% endcomment %}
   </ul>
 </div>
 
@@ -91,10 +90,10 @@
           <table class="table table-bordered table-striped table-condensed">
             <tbody>
               <tr>
-                <th>Bushfire ID</th>
-                <td>{{ bushfire.id }}</td>
-                <th colspan="1">Bushfire name</th>
-                <td>{{ bushfire.name }}</td>
+                <th>Fire Number</th>
+                <td>{{ bushfire.incident_no }}</td>
+                <th colspan="1">Year</th>
+                <td>{{ bushfire.year }}</td>
               </tr>
               <tr>
                 <th>Region</th>
@@ -102,7 +101,10 @@
                 <th colspan="1">District</th>
                 <td>{{ bushfire.district.name }}</td>
               </tr>
-
+              <tr>
+                <th>Bushfire name</th>
+                <td colspan="3" >{{ bushfire.name }}</td>
+              </tr>
               <tr>
                 <th colspan="1">Field Officer</th>
                 <td>{{ bushfire.field_officer }}</td>
@@ -144,8 +146,9 @@ $(function(){
         Function to append filter fields to the URL, only those that are selected. Default <form action="#"> adds all fields to the url, even if empty
         */
 
+        profile_field_list = ['region', 'district']
         filter_list = [
-			'region','district', 'authorised_date', 'activities__activity_id', 'year',
+			'region', 'district', 'authorised_date', 'activities__activity_id', 'year',
 			'report_status', 'potential_fire_level', 'fire_not_found', 
 			'media_alert_req', 'assistance_req', 'alert_level'
 		];
@@ -159,9 +162,15 @@ $(function(){
             var postfix = (count==0 ? "?" : "&");
             url += postfix + filter_list[i] + "=" + $("#id_" + filter_list[i]).val();
             count++;
-          }
+		  /* Check if string filter_list[i] exists in profile_field_list. This will add the field without a value, allowing Bushfire View to deal an 'All' selection (to distinguish from profile) */
+		  } else if (new RegExp(profile_field_list.join('|')).test(filter_list[i])) {
+            var postfix = (count==0 ? "?" : "&");
+            url += postfix + filter_list[i] + "=";
+            count++;
+		  }
         }
 
+		/* Append the additional parameters such as "export_to_csv=final&stuff=ABC" */
 		if (params) {
             var postfix = (count==0 ? "?" : "&");
 			url += postfix + params

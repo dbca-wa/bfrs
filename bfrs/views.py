@@ -107,7 +107,7 @@ class BushfireFilter(django_filters.FilterSet):
         super(BushfireFilter, self).__init__(*args, **kwargs)
 
         # allows dynamic update of the filter set, on page refresh
-        self.filters['year'].extra['choices'] = [[i['year'], i['year']] for i in Bushfire.objects.all().values('year').distinct()]
+        self.filters['year'].extra['choices'] = [[None, '---------']] + [[i['year'], i['year']] for i in Bushfire.objects.all().values('year').distinct()]
 
 class ProfileView(LoginRequiredMixin, generic.FormView):
     model = Profile
@@ -143,6 +143,10 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
     filterset_class = BushfireFilter
     template_name = 'bfrs/bushfire.html'
 
+    def get_initial(self):
+        profile, created = Profile.objects.get_or_create(user=self.request.user)
+        return { 'region': profile.region, 'district': profile.district }
+
     def get(self, request, *args, **kwargs):
         response = super(BushfireView, self).get(request, *args, **kwargs)
 
@@ -161,16 +165,23 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
 
         # initial parameter prevents the form from resetting, if the region and district filters had a value set previously
         initial = {}
+        profile = self.get_initial() # Additional profile Filters must also be added to the JS in bushfire.html- profile_field_list
         if self.request.GET.has_key('region'):
             initial.update({'region': self.request.GET['region']})
+        elif profile['region']:
+            initial.update({'region': profile['region'].id})
+            self.object_list = self.object_list.filter(region=profile['region'])
 
         if self.request.GET.has_key('district'):
             initial.update({'district': self.request.GET['district']})
+        elif profile['district']:
+            initial.update({'district': profile['district'].id})
+            self.object_list = self.object_list.filter(district=profile['district'])
+
 
         # update context with form - filter is already in the context
         context['form'] = BushfireFilterForm(initial=initial)
-        #context['bushfire_id_list'] = [i.id for i in self.object_list]
-        #import ipdb; ipdb.set_trace()
+        context['object_list'] = self.object_list # passed by default, but we are (possibly) updating, if profile exists!
         return context
 
 
