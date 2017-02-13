@@ -36,16 +36,6 @@ from django_filters import views as filter_views
 
 class BushfireFilter(django_filters.FilterSet):
 
-    INVESTIGATION_CHOICES = [
-        ['Investigation Required', 'Investigation Required'],
-        ['Investigation Not Required', 'Investigation Not Required'],
-    ]
-
-    BOOLEAN_CHOICES = (
-        ('1','Yes'),
-        ('0','No'),
-    )
-
     YEAR_CHOICES = [[i['year'], i['year']] for i in Bushfire.objects.all().values('year').distinct()]
 
     REGION_CHOICES = []
@@ -56,22 +46,11 @@ class BushfireFilter(django_filters.FilterSet):
     for district in District.objects.distinct('name'):
         DISTRICT_CHOICES.append([district.id, district.name])
 
-    ACTIVITY_CHOICES = []
-    for activity in ActivityType.objects.distinct('name'):
-        ACTIVITY_CHOICES.append([activity.id, activity.name])
-
 	region = django_filters.ChoiceFilter(choices=REGION_CHOICES, label='Region')
 	district = django_filters.ChoiceFilter(choices=DISTRICT_CHOICES, label='District')
 	year = django_filters.ChoiceFilter(choices=YEAR_CHOICES, label='Year')
 	report_status = django_filters.ChoiceFilter(choices=Bushfire.REPORT_STATUS_CHOICES, label='Report Status')
-	potential_fire_level = django_filters.ChoiceFilter(choices=Bushfire.FIRE_LEVEL_CHOICES, label='Fire Level')
-	fire_not_found = django_filters.ChoiceFilter(choices=BOOLEAN_CHOICES, label='Fire Not Found')
-	media_alert_req = django_filters.ChoiceFilter(choices=BOOLEAN_CHOICES, label='Media Alert Req')
-	assistance_req = django_filters.ChoiceFilter(choices=BOOLEAN_CHOICES, label='Assistance Req')
-	alert_level = django_filters.ChoiceFilter(choices=Bushfire.ALERT_LEVEL_CHOICES, label='Alert Level')
-	#activities__activity_id = django_filters.MultipleChoiceFilter(choices=ACTIVITY_CHOICES, label='Activities')
-	activities__activity_id = django_filters.ChoiceFilter(choices=ACTIVITY_CHOICES, label='Activities')
-    authorised_date = django_filters.DateRangeFilter(label='Authorised Date Range')
+	potential_fire_level = django_filters.ChoiceFilter(choices=Bushfire.FIRE_LEVEL_CHOICES, label='Probable Fire Level')
 
     class Meta:
         model = Bushfire
@@ -81,25 +60,13 @@ class BushfireFilter(django_filters.FilterSet):
 			'year',
 			'report_status',
 			'potential_fire_level',
-			'fire_not_found',
-			'media_alert_req',
-			'assistance_req',
-			'alert_level',
-			'activities__activity_id',
-			'authorised_date',
 		]
         order_by = (
             ('region_id', 'Region'),
             ('district_id', 'District'),
             ('year', 'Year'),
             ('report_status', 'Report Status'),
-            ('potential_fire_level', 'Fire Level'),
-            ('fire_not_found', 'Fire not Found'),
-            ('media_alert_req', 'Media Alert Req'),
-            ('assistance_req', 'Assistance Req'),
-            ('alert_level', 'Alert Level'),
-            ('activities__activity_id', 'Activities'),
-            ('authorised_date', 'Authorised Date Range'),
+            ('potential_fire_level', 'Probable Fire Level'),
         )
 
 
