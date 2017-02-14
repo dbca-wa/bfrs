@@ -1,6 +1,6 @@
 from django import forms
 from bfrs.models import (Bushfire, Activity, Response, AreaBurnt, GroundForces, AerialForces,
-        AttendingOrganisation, FireBehaviour, Legal, PrivateDamage, PublicDamage, Comment,
+        AttendingOrganisation, FireBehaviour, Legal, PrivateDamage, PublicDamage, InjuryFatality, Damage, Comment,
         Region, District, Profile
     )
 from datetime import datetime, timedelta
@@ -112,6 +112,8 @@ class BushfireFilterForm(forms.ModelForm):
 
 
 class BushfireForm(forms.ModelForm):
+    days = forms.IntegerField(label='Days', required=False)
+    hours = forms.IntegerField(label='Hours', required=False)
     class Meta:
         model = Bushfire
 #        fields = ('region', 'district', 'incident_no', 'season', 'job_code',
@@ -124,7 +126,8 @@ class BushfireForm(forms.ModelForm):
 #                  'fuel','ros', 'flame_height', 'assistance_required', 'fire_contained', 'containment_time',
 #                  'ops_point', 'communications', 'weather', 'field_officer', 'init_authorised_by', 'init_authorised_date',
 #                 )
-        exclude = ('initial_snapshot', 'init_authorised_by', 'init_authorised_date')
+        exclude = ('initial_snapshot', 'init_authorised_by', 'init_authorised_date',
+				   'potential_fire_level')
 
     def clean(self):
         """
@@ -145,9 +148,8 @@ class BushfireForm(forms.ModelForm):
 
         req_dep_fields = { # required dependent fields
             'first_attack': 'other_first_attack',
-            #'hazard_mgt': 'other_hazard_mgt',
-            'initial_control': 'other_initial_ctrl',
-            'final_control': 'other_final_ctrl',
+            'initial_control': 'other_initial_control',
+            'final_control': 'other_final_control',
             'cause': 'other_cause',
 #            'coord_type': {
 #                'MGA': ['MGA Zone','MGA Easting','MGA Northing'],
@@ -226,16 +228,17 @@ class BushfireForm(forms.ModelForm):
 class BushfireCreateForm(forms.ModelForm):
     class Meta:
         model = Bushfire
-        fields = ('region', 'district', 'incident_no', 'job_code',
+        fields = ('region', 'district', 'incident_no', 'job_code', 'dfes_incident_no',
                   'name', 'year', 'potential_fire_level', 'field_officer', 'duty_officer', 'init_authorised_by', 'init_authorised_date',
-                  'alert_level', 'media_alert_req', 'fire_position',
+                  'media_alert_req', 'fire_position',
                   'grid', 'arrival_area', 'fire_not_found',
+                  'fire_detected_date', 'dispatch_pw_date', 'dispatch_aerial_date', 'fuel_type',
 #                  'coord_type', 'arrival_area', 'fire_not_found',
 #                  'lat_decimal', 'lat_degrees', 'lat_minutes', 'lon_decimal', 'lon_degrees', 'lon_minutes',
 #                  'mga_zone', 'mga_easting', 'mga_northing',
 #                  'fd_letter', 'fd_number', 'fd_tenths',
 #                  'source','cause', 'arson_squad_notified', 'prescription', 'offence_no',
-                  'assistance_req', 'communications', 'other_info',
+                  'assistance_req', 'assistance_details', 'communications', 'other_info',
                   'cause', 'other_cause',
                  )
 
@@ -255,16 +258,17 @@ class BushfireCreateForm(forms.ModelForm):
 class BushfireInitUpdateForm(forms.ModelForm):
     class Meta:
         model = Bushfire
-        fields = ('region', 'district', 'incident_no', 'job_code',
+        fields = ('region', 'district', 'incident_no', 'job_code', 'dfes_incident_no',
                   'name', 'year', 'potential_fire_level', 'field_officer', 'duty_officer', 'init_authorised_by', 'init_authorised_date',
-                  'alert_level', 'media_alert_req', 'fire_position',
+                  'media_alert_req', 'fire_position',
                   'grid', 'arrival_area', 'fire_not_found',
+                  'fire_detected_date', 'dispatch_pw_date', 'dispatch_aerial_date', 'fuel_type',
 #                  'coord_type', 'arrival_area', 'fire_not_found',
 #                  'lat_decimal', 'lat_degrees', 'lat_minutes', 'lon_decimal', 'lon_degrees', 'lon_minutes',
 #                  'mga_zone', 'mga_easting', 'mga_northing',
 #                  'fd_letter', 'fd_number', 'fd_tenths',
 #                  'source','cause', 'arson_squad_notified', 'prescription', 'offence_no',
-                  'assistance_req', 'communications', 'other_info',
+                  'assistance_req', 'assistance_details', 'communications', 'other_info',
                   'cause', 'other_cause',
                  )
 
@@ -479,6 +483,8 @@ FireBehaviourFormSet        = inlineformset_factory(Bushfire, FireBehaviour, for
 LegalFormSet                = inlineformset_factory(Bushfire, Legal, extra=0, max_num=5*12, min_num=1, exclude=())
 PrivateDamageFormSet        = inlineformset_factory(Bushfire, PrivateDamage, extra=0, max_num=12, min_num=1, exclude=())
 PublicDamageFormSet         = inlineformset_factory(Bushfire, PublicDamage, extra=0, min_num=1, exclude=())
+InjuryFormSet               = inlineformset_factory(Bushfire, InjuryFatality, extra=0, max_num=7, min_num=1, exclude=())
+DamageFormSet               = inlineformset_factory(Bushfire, Damage, extra=0, max_num=5, min_num=1, exclude=())
 CommentFormSet              = inlineformset_factory(Bushfire, Comment, extra=0, min_num=1, exclude=())
 
 

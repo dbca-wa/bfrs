@@ -197,12 +197,16 @@
             <td class="cbas">{{form.district}}</td>
         </tr>
 
+
         <tr>
             <th class="cbas">Fire Number *</th>
             <td class="cbas">{{form.incident_no}}</td>
 
             <th class="cbas">Job Code</th>
             <td class="cbas">{{form.job_code}}</td>
+
+            <th class="cbas">DFES Fire number</th>
+            <td class="cbas">{{form.dfes_incident_no}}</td>
         </tr>
 
 
@@ -210,7 +214,7 @@
             <th class="cbas">Name *</th>
             <td colspan="1" class="cbas">{{form.name}}</td>
 
-            <th class="cbas">Year *</th>
+            <th class="cbas">Financial Year *</th>
             <td class="cbas">{{form.year}}</td>
         </tr>
 
@@ -242,14 +246,14 @@
 <table class="table table-bordered table-striped table-condensed">
     <tbody>
         <tr>
-            <th class="cbas">Potential Fire Level *</th>
-            <td class="cbas">{{form.potential_fire_level}}</td>
-
-            <th class="cbas">Alert Level *</th>
-            <td class="cbas">{{form.alert_level}}</td>
+            <th class="cbas">Maximum Fire Level *</th>
+            <td class="cbas">{{form.max_fire_level}}</td>
 
             <th class="cbas">Media Alert Required</th>
-            <td class="cbas">{{form.media_alert_req}}</td>
+            <td class="cbas">{{form.media_alert_req}} Call PICA on ....</td>
+
+            <th class="cbas">Investigation Required</th>
+            <td class="cbas">{{form.investigation_req}}</td>
         </tr>
 
         <tr>
@@ -259,13 +263,75 @@
             <th class="cbas">Other Cause *</th>
             <td colspan="4" class="cbas">{{form.other_cause}}</td>
         </tr>
+
+        <tr>
+            <th class="cbas">Fire Detected</th>
+            <td class="cbas">{{form.fire_detected_date}}</td>
+
+            <th class="cbas">Dispatch - P&W</th>
+            <td class="cbas">{{form.dispatch_pw_date}}</td>
+
+            <th class="cbas">Dispatch - Aerial</th>
+            <td class="cbas">{{form.dispatch_aerial_date}}</td>
+        </tr>
+
+        <tr>
+            <th class="cbas">Fire Contained</th>
+            <td class="cbas">{{form.fire_contained_date}}</td>
+
+            <th class="cbas">Fire Controlled</th>
+            <td class="cbas">{{form.fire_controlled_date}}</td>
+
+            <th class="cbas">Fire Safe</th>
+            <td class="cbas">{{form.fire_safe_date}}</td>
+        </tr>
+
+        <tr>
+            <th class="cbas">Estimated Time to Control</th>
+			<td colspan="5" class="cbas">
+				<span>{{form.days}} Days {{form.hours}} Hours</span>
+			</td>
+        </tr>
+
+
+
+  </tbody>
+</table>
+
+<table class="table table-bordered table-striped table-condensed">
+    <tbody>
+        <tr>
+            <th class="cbas">Initial Attack Agency *</th>
+            <td class="cbas">{{form.first_attack}}</td>
+
+            <th class="cbas">Other Initial Attack Agency *</th>
+            <td class="cbas">{{form.other_first_attack}}</td>
+        </tr>
+
+        <tr>
+            <th class="cbas">Initial Controlling Agency *</th>
+            <td class="cbas">{{form.initial_control}}</td>
+
+            <th class="cbas">Other Initial Controlling Agency *</th>
+            <td class="cbas">{{form.other_initial_control}}</td>
+        </tr>
+
+        <tr>
+            <th class="cbas">Final Controlling Agency *</th>
+            <td class="cbas">{{form.final_control}}</td>
+
+            <th class="cbas">Other Final Controlling Agency *</th>
+            <td class="cbas">{{form.other_final_control}}</td>
+        </tr>
+
+
+
   </tbody>
 </table>
 
 
 
 {% include "bfrs/origin2.html" %}
-{% include "bfrs/activities_fs.html" %}
 {% include "bfrs/tenure_veg_fs.html" %}
 
 <div class="accordion-expand-holder">
@@ -289,86 +355,33 @@
 
         <tr>
           <td class="cbas">
-            <div class="col-sm-2" >
-                <div id="div_id_assistance_req" class="form-group"> 
-                    <label for="id_assistance_req" class="control-label nonRequiredField">Assistance Required</label>
-                    <div class="controls ">{{form.assistance_req}}</div>
-                </div>
-            </div>
-            <div class="col-sm-2" >
+            <div class="col-sm-3" >
                 <div id="div_id_communications" class="form-group"> 
                     <label for="id_communications" class="control-label nonRequiredField">Communications</label>
                     <div class="controls ">{{form.communications}}</div>
                 </div>
             </div>
-            <div class="col-sm-2" >
+            <div class="col-sm-3" >
                 <div id="div_id_other_info" class="form-group"> 
                     <label for="id_other_info" class="control-label nonRequiredField">Other Information</label>
                     <div class="controls ">{{form.other_info}}</div>
                 </div>
             </div>
+			<div class="col-sm-3" >
+                <div id="div_id_assistance_req" class="form-group"> 
+                    <label for="id_assistance_req" class="control-label nonRequiredField">Assistance Required</label>
+                    <div class="controls ">{{form.assistance_req}}</div>
+                </div>
+            </div>
+            <div class="col-sm-3" >
+                <div id="div_id_assistance_details" class="form-group"> 
+                    <label for="id_assistance_details" class="control-label nonRequiredField">Assistance Details</label>
+                    <div class="controls ">{{form.assistance_details}}</div>
+                </div>
+            </div>
+
           </td>
         </tr>
-
-      </div>
-    </div>
-  </div>
-
-  <div class="panel-default">
-    <div class="panel-heading" role="tab" id="pn_attack_agency">
-      <h4 class="panel-title">
-        <a role="button" data-toggle="collapse" data-parent="#accordion" href="#attack_agency" aria-expanded="true" aria-controls="attack_agency">
-          Other Attack Agencies
-        </a>
-      </h4>
-    </div>
-    <div id="attack_agency" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pn_attack_agency">
-      <div class="panel-body table_fs">
-
-        <div class="row">
-            <div class="col-sm-4" > 
-                <div id="div_hazard_mgt" class="form-group"> 
-                    <label for="id_hazard_mgt" class="control-label nonRequiredField">Hazard Management Agency</label>
-                    <div class="controls ">{{form.hazard_mgt}}</div>
-                </div>
-            </div>
-            <div class="col-sm-4" >
-                <div id="div_id_other_hazard_mgt" class="form-group"> 
-                    <label for="id_other_hazard_mgt" class="control-label requiredField">Other Hazard Management Agency*</label>
-                    <div class="controls ">{{form.other_hazard_mgt}}</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col-sm-4" > 
-                <div id="div_id_initial_control" class="form-group"> 
-                    <label for="id_initial_control" class="control-label nonRequiredField">Initial controlling Agency</label>
-                    <div class="controls ">{{form.initial_control}}</div>
-                </div>
-            </div>
-            <div class="col-sm-4" >
-                <div id="div_id_other_initial_control" class="form-group"> 
-                    <label for="id_other_initial_control" class="control-label requiredField">Other Initial Control Agency*</label>
-                    <div class="controls ">{{form.other_initial_ctrl}}</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col-sm-4" > 
-                <div id="div_id_final_control" class="form-group"> 
-                    <label for="id_final_control" class="control-label nonRequiredField">Final Controlling Agency</label>
-                    <div class="controls ">{{form.final_control}}</div>
-                </div>
-            </div>
-            <div class="col-sm-4" >
-                <div id="div_id_other_final_control" class="form-group"> 
-                    <label for="id_other_final_control" class="control-label requiredField">Other Final Control Agency*</label>
-                    <div class="controls ">{{form.other_final_ctrl}}</div>
-                </div>
-            </div>
-        </div>
 
       </div>
     </div>
@@ -378,13 +391,13 @@
     <div class="panel-heading" role="tab" id="pn_private_damage">
       <h4 class="panel-title">
         <a role="button" data-toggle="collapse" data-parent="#accordion" href="#private_damage" aria-expanded="true" aria-controls="private_damage">
-          Private Damage and Personal Injury
+          Injuries and Fatalities
         </a>
       </h4>
     </div>
     <div id="private_damage" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pn_private_damage">
       <div class="panel-body">
-        {% include "bfrs/private_damage_fs.html" %}
+        {% include "bfrs/injuries_fs.html" %}
       </div>
     </div>
   </div>
@@ -393,13 +406,13 @@
     <div class="panel-heading" role="tab" id="pn_public_damage">
       <h4 class="panel-title">
         <a role="button" data-toggle="collapse" data-parent="#accordion" href="#public_damage" aria-expanded="true" aria-controls="public_damage">
-          Public Land Damage
+          Damage
         </a>
       </h4>
     </div>
     <div id="public_damage" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pn_public_damage">
       <div class="panel-body">
-        {% include "bfrs/public_damage_fs.html" %}
+        {% include "bfrs/damage_fs.html" %}
       </div>
     </div>
   </div>

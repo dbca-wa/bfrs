@@ -9,7 +9,6 @@
   {% if create %}
     <li>{% trans 'Create' %}</li>
   {% else %}
-    {% comment %}<li><a href="{% url 'bushfire:bushfire2_initial' object.id %}">{% trans 'Initial' %}</a></li>{% endcomment %}
     <li>{% trans 'Initial' %}</li>
     <li>{{ object.unique_id}}</li>
   {% endif %}
@@ -51,52 +50,6 @@
   <!-- http://xdsoft.net/jqplugins/datetimepicker/ -->
   <script src="{% static 'js/jquery.datetimepicker.full.min.js' %}"></script>
 
-  <script>
-    $(function(){
-        if ($('#id_fire_not_found').is(':checked')) {
-            $('#id_latlong').hide();
-            $('#id_mga').hide();
-            $('#id_fd_grid').hide();
-            $('#id_coord_type').prop('selectedIndex', 0);
-        } else {
-            var coord_type = $('#id_coord_type :selected').text();
-            if (coord_type.indexOf('---') > -1) {
-                $('#id_latlong').hide();
-                $('#id_mga').hide();
-                $('#id_fd_grid').hide();
-                $('#id_fire_not_found').prop('checked', true);
-                $('#id_coord_type').prop('selectedIndex', 0);
-            } else if (coord_type=='Lat/Long') {
-                $('#id_latlong').show();
-                $('#id_fd_grid').hide();
-                $('#id_fire_not_found').prop('checked', false);
-
-                // calc MGA
-                $('#id_mga').show();
-                $('#id_mga').find('input, textarea, button, select').prop('disabled',true);
-                $('#id_latlong').find('input, textarea, button, select').prop('disabled',false);
-
-            } else if (coord_type=='MGA') {
-                $('#id_mga').show();
-                $('#id_fd_grid').hide();
-                $('#id_fire_not_found').prop('checked', false);
-
-                // calc Lat/Long
-                $('#id_latlong').show();
-                $('#id_latlong').find('input, textarea, button, select').prop('disabled',true);
-                $('#id_mga').find('input, textarea, button, select').prop('disabled',false);
-
-            } else if (coord_type=='FD Grid') {
-                $('#id_fd_grid').show();
-                $('#id_latlong').hide();
-                $('#id_mga').hide();
-                $('#id_fire_not_found').prop('checked', false);
-            }
-        }
-
-    });
-  </script>
-
   {% endblock %}
 
 
@@ -122,26 +75,6 @@
     </div>
 {% endif %}
 
-{% if activity_formset.total_error_count > 0 %}
-    <p>Activity Errors: {{ activity_formset.total_error_count }}</p>
-    <div class="alert alert-error">
-        <button type="button" class="close" data-dismiss="alert">×</button>
-        {% for fs in activity_formset %} 
-            {% for field in fs %} 
-                {% if field.errors %}
-                <font color="red"><li>{{ field.label }}: {{ field.errors|striptags }}</li></font>
-                {% endif %}
-            {% endfor %}
-            {% if fs.non_field_errors %}
-                {{ fs.non_field_errors  }}
-            {% endif %}
-        {% endfor %}
-
-    </div>
-{% endif %}
-
-{{snapshot.job_code}}
-
 <h1>Bushfire Detail</h1>
 {% comment %}
 <a id="id_init_authorise" href="{% url 'bushfire:bushfire_init_authorise' object.id %}" class="btn"><i class="icon-button">Mark as Authorised</i></a>
@@ -164,6 +97,9 @@
 
             <th class="cbas">Job Code</th>
             <td class="cbas">{% if has_init_authorised %} {{snapshot.job_code}} {% else %} {{form.job_code}} {% endif %}</td>
+
+            <th class="cbas">DFES Fire Number</th>
+            <td class="cbas">{% if has_init_authorised %} {{snapshot.dfes_incident_no}} {% else %} {{form.dfes_incident_no}} {% endif %}</td>
         </tr>
 
 
@@ -171,7 +107,7 @@
             <th class="cbas">Name *</th>
             <td colspan="cw23" class="cbas">{% if has_init_authorised %} {{snapshot.name}} {% else %} {{form.name}} {% endif %}</td>
 
-            <th class="cbas">Year</th>
+            <th class="cbas">Financial Year *</th>
             <td class="cbas">{% if has_init_authorised %} {{snapshot.year}} {% else %} {{form.year}} {% endif %}</td>
         </tr>
 
@@ -203,20 +139,18 @@
 <table class="table table-bordered table-striped table-condensed">
     <tbody>
         <tr>
-            <th class="cbas">Potential Fire Level *</th>
+            <th class="cbas">Probable Fire Level *</th>
             <td class="cbas">{% if has_init_authorised %} {{snapshot.potential_fire_level}} {% else %} {{form.potential_fire_level}} {% endif %}</td>
-
-            <th class="cbas">Alert Level *</th>
-            <td class="cbas">{% if has_init_authorised %} {{snapshot.alert_level}} {% else %} {{form.alert_level}} {% endif %}</td>
 
             <th class="cbas">Media Alert Required</th>
             <td class="cbas">
               {% if has_init_authorised %}
-                {% if snapshot.media_alert_req %}<div class="text-center"><i class="icon-ok text-success"></i></div>{% else %}<div class="text-center"><i class="icon-remove text-danger"></i></div>{% endif %}
+			  {% if snapshot.media_alert_req %}<div class="text-center"><i class="icon-ok text-success"></i></div>{% else %}<div class="text-center"><i class="icon-remove text-danger"></i></div>{% endif %}<p>Call PICA on ....</p>
               {% else %}
-                {{form.media_alert_req}}
+			  {{form.media_alert_req}} Call PICA on ....
               {% endif %}
             </td>
+
         </tr>
 
         <tr>
@@ -227,12 +161,23 @@
             <td colspan="3" class="cbas">{% if has_init_authorised %} {{snapshot.other_cause}} {% else %} {{form.other_cause}} {% endif %}</td>
         </tr>
 
+        <tr>
+            <th class="cbas">Fire Detected</th>
+            <td class="cbas">{% if has_init_authorised %} {{snapshot.fire_detected_date}} {% else %} {{form.fire_detected_date}} {% endif %}</td>
+
+            <th class="cbas">Dispatch - P&W</th>
+            <td class="cbas">{% if has_init_authorised %} {{snapshot.dispatch_pw_date}} {% else %} {{form.dispatch_pw_date}} {% endif %}</td>
+
+            <th class="cbas">Dispatch - Aerial</th>
+            <td class="cbas">{% if has_init_authorised %} {{snapshot.dispatch_aerial_date}} {% else %} {{form.dispatch_aerial_date}} {% endif %}</td>
+        </tr>
 
   </tbody>
 </table>
 
+
+
 {% include "bfrs/origin2.html" %}
-{% include "bfrs/activities_fs.html" %}
 {% include "bfrs/tenure_veg_fs.html" %}
 
 <div class="accordion-expand-holder">
@@ -256,7 +201,20 @@
 
         <tr>
           <td class="cbas">
-            <div class="col-sm-2" >
+            <div class="col-sm-3" >
+                <div id="div_id_communications" class="form-group"> 
+                    <label for="id_communications" class="control-label nonRequiredField">Communications</label>
+                    <div class="controls ">{% if has_init_authorised %} {{snapshot.communications}} {% else %} {{form.communications}} {% endif %}</div>
+                </div>
+            </div>
+            <div class="col-sm-3" >
+                <div id="div_id_other_info" class="form-group"> 
+                    <label for="id_other_info" class="control-label nonRequiredField">Other Information</label>
+                    <div class="controls ">{% if has_init_authorised %} {{snapshot.other_info}} {% else %} {{form.other_info}} {% endif %}</div>
+                </div>
+            </div>
+
+            <div class="col-sm-3" >
                 <div id="div_id_assistance_req" class="form-group"> 
                     <label for="id_assistance_req" class="control-label nonRequiredField">Assistance Required</label>
 
@@ -269,18 +227,13 @@
                     </div>
                 </div>
             </div>
-            <div class="col-sm-2" >
-                <div id="div_id_communications" class="form-group"> 
-                    <label for="id_communications" class="control-label nonRequiredField">Communications</label>
-                    <div class="controls ">{% if has_init_authorised %} {{snapshot.communications}} {% else %} {{form.communications}} {% endif %}</div>
+            <div class="col-sm-3" >
+                <div id="div_id_assistance_details" class="form-group"> 
+                    <label for="id_assistance_details" class="control-label nonRequiredField">Assistance Details</label>
+                    <div class="controls ">{% if has_init_authorised %} {{snapshot.assistance_details}} {% else %} {{form.assistance_details}} {% endif %}</div>
                 </div>
             </div>
-            <div class="col-sm-2" >
-                <div id="div_id_other_info" class="form-group"> 
-                    <label for="id_other_info" class="control-label nonRequiredField">Other Information</label>
-                    <div class="controls ">{% if has_init_authorised %} {{snapshot.other_info}} {% else %} {{form.other_info}} {% endif %}</div>
-                </div>
-            </div>
+
           </td>
         </tr>
 
@@ -439,108 +392,9 @@
     });
 
 
-/*
-    function convert_origin() {
-        if ($('#id_mga_zone').val() != '' && $('#id_mga_easting').val() != '' && $('#id_mga_northing').val() != '') {
-            $('#id_lat_decimal').val($('#id_mga_zone').val()/2.0);
-        }
-
-        if ($('#id_lat_decimal').val() != '' && $('#id_lat_degrees').val() != '' && $('#id_lat_minutes').val() != '' && $('#id_lon_decimal').val() != '' && $('#id_lon_degrees').val() != '' && $('#id_lon_minutes').val() != '') {
-            $('#id_mga_zone').val($('#id_lat_decimal').val()*2.0);
-        }
-
-    };
-*/
-
-    //$('.activity-formset tbody tr').formset({
-
 // $('[id^=""]').hide() // starts with 
 $('#id_init_authorised_date').datetimepicker({ format: "Y-m-d H:i" }); //ends with
 $('[id$="-date"]').datetimepicker({ format: "Y-m-d H:i" }); //ends with
-
-$('#id_fire_not_found').click(function() {
-    if ($(this).is(':checked')) {
-        $('#id_latlong').hide();
-        $('#id_mga').hide();
-        $('#id_fd_grid').hide();
-        $('#id_coord_type').prop('selectedIndex', 0);
-    } else {
-        var coord_type = $('#id_coord_type :selected').text();
-        //console.log('Co Ord Type' + coord_type);
-        if (coord_type.indexOf('---') > -1) {
-            $('#id_latlong').hide();
-            $('#id_mga').hide();
-            $('#id_fd_grid').hide();
-            $('#id_fire_not_found').prop('checked', true);
-            $('#id_coord_type').prop('selectedIndex', 0);
-        } else if (coord_type=='Lat/Long') {
-            $('#id_latlong').show();
-            $('#id_fd_grid').hide();
-            $('#id_fire_not_found').prop('checked', false);
-
-            // calc MGA
-            $('#id_mga').show();
-            $('#id_mga').prop("readonly", true);
-        } else if (coord_type=='MGA') {
-            $('#id_mga').show();
-            $('#id_latlong').hide();
-            $('#id_fd_grid').hide();
-            $('#id_fire_not_found').prop('checked', false);
-
-            // calc Lat/Long
-            $('#id_latlong').show();
-            $('#id_latlong').prop("readonly", true);
-        } else if (coord_type=='FD Grid') {
-            $('#id_fd_grid').show();
-            $('#id_latlong').hide();
-            $('#id_mga').hide();
-            $('#id_fire_not_found').prop('checked', false);
-        }
-    }
-});
-
-$('#id_coord_type').on('change', function() {
-    var coord_type = $('#id_coord_type :selected').text();
-    //console.log(' *** Co Ord Type' + coord_type);
-    if (coord_type.indexOf('---') > -1) {
-        $('#id_latlong').hide();
-        $('#id_mga').hide();
-        $('#id_fd_grid').hide();
-        $('#id_fire_not_found').prop('checked', true);
-        $('#id_coord_type').prop('selectedIndex', 0);
-    } else if (coord_type=='Lat/Long') {
-        $('#id_latlong').show();
-        $('#id_mga').hide();
-        $('#id_fd_grid').hide();
-        $('#id_fire_not_found').prop('checked', false);
-
-        // calc MGA
-        $('#id_mga').show();
-        $('#id_mga').find('input, textarea, button, select').prop('disabled',true);
-        $('#id_latlong').find('input, textarea, button, select').prop('disabled',false);
-
-        //$('#id_mga_zone').val(111);
-        //convert_origin();
-    } else if (coord_type=='MGA') {
-        $('#id_mga').show();
-        $('#id_latlong').hide();
-        $('#id_fd_grid').hide();
-        $('#id_fire_not_found').prop('checked', false);
-
-        // calc Lat/Long
-        $('#id_latlong').show();
-        $('#id_latlong').find('input, textarea, button, select').prop('disabled',true);
-        $('#id_mga').find('input, textarea, button, select').prop('disabled',false);
-
-        //$('#id_lat_decimal').val(222);
-        //convert_origin();
-    } else if (coord_type=='FD Grid') {
-        $('#id_fd_grid').show();
-        $('#id_latlong').hide();
-        $('#id_mga').hide();
-        $('#id_fire_not_found').prop('checked', false);
-    }
-});
 
 $(function(){
     var coord_type = $('#id_first_attack :selected').text();

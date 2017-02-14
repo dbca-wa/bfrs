@@ -1,4 +1,4 @@
-<h3>Tenure and Vegetation Affected</h3>
+<h3>Tenure Affected</h3>
 <table class="table table-bordered table-striped table-condensed">
 {% if has_init_authorised and initial %}
 
@@ -8,16 +8,16 @@
         <table class="table_fs" border="0" >
             <tbody>
               <th>Tenure</th>
-              <th>Fuel Type</th>
               <!--
+              <th>Fuel Type</th>
               <th>Area (ha)</th>
               <th>Point of Origin</th>
               -->
               {% for area in snapshot.areas_burnt %}
                 <tr>
                   <td>{{ area.tenure }}</td>
-                  <td>{{ area.fuel_type }}</td>
                   {% comment %}
+                  <td>{{ area.fuel_type }}</td>
                   <td>{{ area.area }}</td>
                   <td>{{ area.origin }}</td>
                   {% endcomment %}
@@ -39,8 +39,8 @@
             <table class="table_fs" border="0">
                 <tbody>
                     <th>Tenure</th>
-                    <th>Fuel Type</th>
                     <!--
+                    <th>Fuel Type</th>
                     <th>Area (ha)</th>
                     <th>Point of Origin</th>
                     -->
@@ -48,8 +48,8 @@
                     {% for fs in area_burnt_formset %}
                     <tr>
                     <td>{{ fs.tenure }}</td>
-                    <td>{{ fs.fuel_type }}</td>
                   {% comment %}
+                    <td>{{ fs.fuel_type }}</td>
                     <td>{{ fs.area }}</td>
                     <td>{{ fs.origin }}</td>
                   {% endcomment %}
@@ -82,7 +82,7 @@
     $('.area-burnt-formset tbody tr').formset({
         prefix: '{{ area_burnt_formset.prefix }}',
         formCssClass: 'area_burnt_fs',
-        addText: '<i class="icon-plus"></i> add another area burnt',
+        addText: '<i class="icon-plus"></i> add another tenure',
         deleteText: '<i class="icon-remove"></i>',
         deleteCssClass: 'delete-row' + '-' + '{{ area_burnt_formset.prefix  }}',
     });

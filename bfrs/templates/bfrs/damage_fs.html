@@ -1,14 +1,12 @@
-<div id="id_public_damage" class="row formset public-damage-formset">
+<div id="id_damage" class="row formset damage-formset">
     <table class="table_fs" border="0">
         <tbody>
             <th>Damage Type</th>
-            <th>Fuel Type</th>
             <th>Area (ha)</th>
             <th></th>
-            {% for form in public_damage_formset %}
+            {% for form in damage_formset %}
             <tr>
                <td>{{ form.damage_type }}</td>
-               <td>{{ form.fuel_type }}</td>
                <td>{{ form.area }}</td>
 
                <td>
@@ -19,17 +17,17 @@
             {% endfor %}
         </tbody>
     </table>
-    {{ public_damage_formset.management_form }}
+    {{ damage_formset.management_form }}
 </div>
 
 
 <script>
-    $('.public-damage-formset tbody tr').formset({
-        prefix: '{{ public_damage_formset.prefix }}',
-        formCssClass: 'public_damage_fs',
-        addText: '<i class="icon-plus"></i> add another public damage',
+    $('.damage-formset tbody tr').formset({
+        prefix: '{{ damage_formset.prefix }}',
+        formCssClass: 'damage_fs',
+        addText: '<i class="icon-plus"></i> add another damage',
         deleteText: '<i class="icon-remove"></i>',
-        deleteCssClass: 'delete-row' + '-' + '{{ public_damage_formset.prefix  }}',
+        deleteCssClass: 'delete-row' + '-' + '{{ damage_formset.prefix  }}',
     });
 
 </script>

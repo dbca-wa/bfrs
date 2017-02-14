@@ -745,88 +745,91 @@
 
 {
     "pk": 1,
-    "model": "bfrs.privatedamagetype",
+    "model": "bfrs.injurytype",
     "fields": {
         "name": "CATTLE"
     }
 },
 {
     "pk": 2,
-    "model": "bfrs.privatedamagetype",
+    "model": "bfrs.injurytype",
     "fields": {
-        "name": "DEATH DEC"
+        "name": "DEATH P&W"
     }
 },
 {
     "pk": 3,
-    "model": "bfrs.privatedamagetype",
+    "model": "bfrs.injurytype",
     "fields": {
         "name": "DEATH OTHER"
     }
 },
 {
     "pk": 4,
-    "model": "bfrs.privatedamagetype",
+    "model": "bfrs.injurytype",
     "fields": {
-        "name": "FENCING"
+        "name": "INJURY P&W"
     }
 },
 {
     "pk": 5,
-    "model": "bfrs.privatedamagetype",
-    "fields": {
-        "name": "FODDER (TONNE)"
-    }
-},
-{
-    "pk": 6,
-    "model": "bfrs.privatedamagetype",
-    "fields": {
-        "name": "HOUSES"
-    }
-},
-{
-    "pk": 7,
-    "model": "bfrs.privatedamagetype",
-    "fields": {
-        "name": "INJURY DEC"
-    }
-},
-{
-    "pk": 8,
-    "model": "bfrs.privatedamagetype",
+    "model": "bfrs.injurytype",
     "fields": {
         "name": "INJURY OTHER"
     }
 },
 {
-    "pk": 9,
-    "model": "bfrs.privatedamagetype",
-    "fields": {
-        "name": "OTHER BUILDINGS"
-    }
-},
-{
-    "pk": 10,
-    "model": "bfrs.privatedamagetype",
+    "pk": 6,
+    "model": "bfrs.injurytype",
     "fields": {
         "name": "OTHER STOCK"
     }
 },
 {
-    "pk": 11,
-    "model": "bfrs.privatedamagetype",
+    "pk": 7,
+    "model": "bfrs.injurytype",
     "fields": {
         "name": "SHEEP"
     }
 },
+
+
 {
-    "pk": 12,
-    "model": "bfrs.privatedamagetype",
+    "pk": 1,
+    "model": "bfrs.damagetype",
+    "fields": {
+        "name": "FENCING"
+    }
+},
+{
+    "pk": 2,
+    "model": "bfrs.damagetype",
+    "fields": {
+        "name": "FODDER (TONNE)"
+    }
+},
+{
+    "pk": 3,
+    "model": "bfrs.damagetype",
+    "fields": {
+        "name": "HOUSES"
+    }
+},
+{
+    "pk": 4,
+    "model": "bfrs.damagetype",
+    "fields": {
+        "name": "OTHER BUILDINGS"
+    }
+},
+{
+    "pk": 5,
+    "model": "bfrs.damagetype",
     "fields": {
         "name": "VEHICLES"
     }
 },
+
 
 {
     "pk": 1,

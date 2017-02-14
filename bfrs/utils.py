@@ -41,7 +41,6 @@ def save_initial_snapshot(obj):
         init_authorised_date = obj.init_authorised_date.strftime('%Y-%m-%d %H:%M:%S') if obj.init_authorised_date else '',
 
         potential_fire_level = obj.get_potential_fire_level_display() if obj.potential_fire_level else '',
-        alert_level = obj.get_alert_level_display() if obj.alert_level else '',
         media_alert_req = obj.media_alert_req,
         fire_position = obj.fire_position if obj.fire_position else '',
 
@@ -69,7 +68,7 @@ def save_initial_snapshot(obj):
         activities = [(i.to_dict()) for i in obj.activities.all()],
 
         # Tenure and Vegetation Affected - Formset
-        areas_burnt = [(i.to_dict()) for i in obj.areas_burnt.all()],
+        tenures_burnt = [(i.to_dict()) for i in obj.tenures_burnt.all()],
 
         # Operation Details
         assistance_req = obj.assistance_req,
@@ -197,15 +196,17 @@ def update_areas_burnt_fs(bushfire, area_burnt_formset):
     for form in area_burnt_formset:
         if form.is_valid():
             tenure = form.cleaned_data.get('tenure')
-            fuel_type = form.cleaned_data.get('fuel_type')
+            #fuel_type = form.cleaned_data.get('fuel_type')
             #area = form.cleaned_data.get('area')
             #origin = form.cleaned_data.get('origin')
             remove = form.cleaned_data.get('DELETE')
 
             #if not remove and (tenure and fuel_type and area):
-            if not remove and (tenure and fuel_type):
+            #if not remove and (tenure and fuel_type):
+            if not remove and tenure:
                 #new_fs_object.append(AreaBurnt(bushfire=bushfire, tenure=tenure, fuel_type=fuel_type, area=area, origin=origin))
-                new_fs_object.append(AreaBurnt(bushfire=bushfire, tenure=tenure, fuel_type=fuel_type))
+                #new_fs_object.append(AreaBurnt(bushfire=bushfire, tenure=tenure, fuel_type=fuel_type))
+                new_fs_object.append(AreaBurnt(bushfire=bushfire, tenure=tenure))
 
     try:
         with transaction.atomic():
@@ -435,7 +436,6 @@ def export_final_csv(request, queryset):
 		"DFES Incident Nno",
 		"Job Ccode",
 		"Potential Fire Level",
-		"Alert Level",
 		"Media Alert Req",
 		"Fire Position",
 		#"Origin Point",
@@ -466,8 +466,8 @@ def export_final_csv(request, queryset):
 		"Authorised By",
 		"Authorised Date",
 		"Report Status",
-    ] +
-		[i for i in activity_names()]
+    ] #+
+#		[i for i in activity_names()]
 	)
     for obj in queryset:
 		writer.writerow([
@@ -480,7 +480,6 @@ def export_final_csv(request, queryset):
 			smart_str(obj.dfes_incident_no),
 			smart_str(obj.job_code),
 			smart_str(obj.get_potential_fire_level_display()),
-			smart_str(obj.get_alert_level_display()),
 			smart_str(obj.media_alert_req),
 			smart_str(obj.fire_position),
 			#smart_str(obj.origin_point),
@@ -511,8 +510,8 @@ def export_final_csv(request, queryset):
 			smart_str(obj.authorised_by.get_full_name() if obj.authorised_by else None ),
 			smart_str(obj.authorised_date.strftime('%Y-%m-%d %H:%M:%S') if obj.authorised_date else None ),
 			smart_str(obj.get_report_status_display()),
-        ] +
-			[i[1] for i in activity_map(obj)]
+        ] #+
+#			[i[1] for i in activity_map(obj)]
 	)
     return response
 export_final_csv.short_description = u"Export CSV (Final)"
