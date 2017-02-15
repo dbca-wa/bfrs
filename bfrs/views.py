@@ -9,7 +9,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 
 from bfrs.models import (Profile, Bushfire, Activity, Response, AreaBurnt, GroundForces, AerialForces,
         AttendingOrganisation, FireBehaviour, Legal, PrivateDamage, PublicDamage, Comment,
-        Region, District, ActivityType
+        Region, District, ActivityType, Cause
     )
 from bfrs.forms import (ProfileForm, BushfireForm, BushfireCreateForm, BushfireInitUpdateForm,
         ActivityFormSet, ResponseFormSet, AreaBurntFormSet,
@@ -20,7 +20,7 @@ from bfrs.forms import (ProfileForm, BushfireForm, BushfireCreateForm, BushfireI
 from bfrs.utils import (breadcrumbs_li, calc_coords, save_initial_snapshot,
         update_activity_fs, update_areas_burnt_fs, update_attending_org_fs,
         update_groundforces_fs, update_aerialforces_fs, update_fire_behaviour_fs,
-        update_legal_fs, update_private_damage_fs, update_public_damage_fs, update_response_fs,
+        update_legal_fs, update_injury_fs, update_damage_fs, update_response_fs,
         update_comment_fs,
 		export_final_csv,
     )
@@ -28,6 +28,7 @@ from django.db import IntegrityError, transaction
 from django.contrib import messages
 from django.forms import ValidationError
 from datetime import datetime
+from django.utils.dateparse import parse_duration
 
 import django_filters
 #from  django_filters import FilterSet
@@ -46,11 +47,16 @@ class BushfireFilter(django_filters.FilterSet):
     for district in District.objects.distinct('name'):
         DISTRICT_CHOICES.append([district.id, district.name])
 
+    CAUSE_CHOICES = []
+    for cause in Cause.objects.distinct('name'):
+        CAUSE_CHOICES.append([cause.id, cause.name])
+
     region = django_filters.ChoiceFilter(choices=REGION_CHOICES, label='Region')
     district = django_filters.ChoiceFilter(choices=DISTRICT_CHOICES, label='District')
     year = django_filters.ChoiceFilter(choices=YEAR_CHOICES, label='Year')
+    cause = django_filters.ChoiceFilter(choices=CAUSE_CHOICES, label='Cause')
     report_status = django_filters.ChoiceFilter(choices=Bushfire.REPORT_STATUS_CHOICES, label='Report Status')
-    potential_fire_level = django_filters.ChoiceFilter(choices=Bushfire.FIRE_LEVEL_CHOICES, label='Probable Fire Level')
+    #potential_fire_level = django_filters.ChoiceFilter(choices=Bushfire.FIRE_LEVEL_CHOICES, label='Probable Fire Level')
 
     class Meta:
         model = Bushfire
@@ -59,14 +65,16 @@ class BushfireFilter(django_filters.FilterSet):
 			'district_id',
 			'year',
 			'report_status',
-			'potential_fire_level',
+			'cause',
+			#'potential_fire_level',
 		]
         order_by = (
             ('region_id', 'Region'),
             ('district_id', 'District'),
             ('year', 'Year'),
             ('report_status', 'Report Status'),
-            ('potential_fire_level', 'Probable Fire Level'),
+            ('cause', 'Cause'),
+            #('potential_fire_level', 'Probable Fire Level'),
         )
 
 
@@ -120,9 +128,8 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
         if self.request.GET.has_key('export_to_csv'):
             report = self.request.GET.get('export_to_csv')
             if report == 'final':
-				#import ipdb; ipdb.set_trace()
-				qs = self.get_filterset(self.filterset_class).qs
-				return export_final_csv(self.request, qs)
+                qs = self.get_filterset(self.filterset_class).qs
+                return export_final_csv(self.request, qs)
 
         return response
 
@@ -145,7 +152,6 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
             initial.update({'district': profile['district'].id})
             self.object_list = self.object_list.filter(district=profile['district'])
 
-
         # update context with form - filter is already in the context
         context['form'] = BushfireFilterForm(initial=initial)
         context['object_list'] = self.object_list # passed by default, but we are (possibly) updating, if profile exists!
@@ -156,58 +162,42 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
     model = Bushfire
     form_class = BushfireInitUpdateForm
     template_name = 'bfrs/create2.html'
-    #template_name = 'bfrs/initial.html'
 
     def get_success_url(self):
-        #return reverse("bushfire:index")
         return reverse("home")
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object() # needed for update
         form_class = self.get_form_class()
         form = self.get_form(form_class)
-        #activity_formset        = ActivityFormSet(self.request.POST, prefix='activity_fs')
         area_burnt_formset      = AreaBurntFormSet(self.request.POST, prefix='area_burnt_fs')
-        #attending_org_formset   = AttendingOrganisationFormSet(self.request.POST, prefix='attending_org_fs')
 
-        #if form.is_valid() and activity_formset.is_valid() and area_burnt_formset.is_valid() and attending_org_formset.is_valid():
-        #if form.is_valid() and activity_formset.is_valid() and area_burnt_formset.is_valid():
         if form.is_valid() and area_burnt_formset.is_valid():
             return self.form_valid(request,
                 form,
-                #activity_formset,
                 area_burnt_formset,
-                #attending_org_formset,
             )
         else:
             return self.form_invalid(
                 form,
-                #activity_formset,
                 area_burnt_formset,
-                #attending_org_formset,
                 kwargs,
             )
 
     def form_invalid(self,
             form,
-            #activity_formset,
             area_burnt_formset,
-            #attending_org_formset,
             kwargs,
         ):
         context = {
             'form': form,
-            #'activity_formset': activity_formset,
             'area_burnt_formset': area_burnt_formset,
-            #'attending_org_formset': attending_org_formset,
         }
         return self.render_to_response(context=context)
 
     def form_valid(self, request,
             form,
-            #activity_formset,
             area_burnt_formset,
-            #attending_org_formset,
         ):
         self.object = form.save(commit=False)
         if not self.object.creator:
@@ -224,22 +214,13 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
 
         self.object.save()
 
-        #activities_updated = update_activity_fs(self.object, activity_formset)
         areas_burnt_updated = update_areas_burnt_fs(self.object, area_burnt_formset)
-        #attending_org_updated = update_attending_org_fs(self.object, attending_org_formset)
 
         redirect_referrer =  HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-        #if not activities_updated:
-        #    messages.error(request, 'There was an error saving Activities.')
-        #    return redirect_referrer
 
         if not areas_burnt_updated:
             messages.error(request, 'There was an error saving Areas Burnt.')
             return redirect_referrer
-
-        #elif not attending_org_updated:
-        #    messages.error(request, 'There was an error saving Attending Organisation.')
-        #    return redirect_referrer
 
         return HttpResponseRedirect(self.get_success_url())
 
@@ -253,13 +234,9 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
         bushfire = Bushfire.objects.get(id=self.kwargs['pk'])
         form_class = self.get_form_class()
         form = self.get_form(form_class)
-        #activity_formset        = ActivityFormSet(instance=self.object, prefix='activity_fs') # self.object posts the initial data
         area_burnt_formset      = AreaBurntFormSet(instance=self.object, prefix='area_burnt_fs')
-        #attending_org_formset   = AttendingOrganisationFormSet(instance=self.object, prefix='attending_org_fs')
         context.update({'form': form,
-                        #'activity_formset': activity_formset,
                         'area_burnt_formset': area_burnt_formset,
-                        #'attending_org_formset': attending_org_formset,
                         'has_init_authorised': bushfire.has_init_authorised,
                         'snapshot': bushfire.snapshot,
                         'initial': True,
@@ -271,54 +248,31 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
     model = Bushfire
     form_class = BushfireForm
     template_name = 'bfrs/detail2.html'
-    success_url = 'success'
 
-#    def get_form_kwargs(self):
-#        # pass "user" keyword argument with the current user to your form
-#        kwargs = super(BushfireCreateView2, self).get_form_kwargs()
-#        kwargs['user'] = self.request.user
-#        return kwargs
+    def get_initial(self):
+        if self.object.time_to_control:
+            return { 'days': self.object.time_to_control.days, 'hours': self.object.time_to_control.seconds/3600 }
 
     def get_success_url(self):
-        #return reverse("bushfire:index")
         return reverse("home")
 
     def post(self, request, *args, **kwargs):
         #import ipdb; ipdb.set_trace()
 
+        self.object = self.get_object() # needed for update
         form_class = self.get_form_class()
         form = self.get_form(form_class)
-        #activity_formset        = ActivityFormSet(self.request.POST, prefix='activity_fs')
-        #response_formset        = ResponseFormSet(self.request.POST, prefix='response_fs')
         area_burnt_formset      = AreaBurntFormSet(self.request.POST, prefix='area_burnt_fs')
-        #groundforces_formset    = GroundForcesFormSet(self.request.POST, prefix='groundforces_fs')
-        #aerialforces_formset    = AerialForcesFormSet(self.request.POST, prefix='aerialforces_fs')
-        #attending_org_formset   = AttendingOrganisationFormSet(self.request.POST, prefix='attending_org_fs')
         fire_behaviour_formset  = FireBehaviourFormSet(self.request.POST, prefix='fire_behaviour_fs')
-        #legal_formset           = LegalFormSet(self.request.POST, prefix='legal_fs')
-        #private_damage_formset  = PrivateDamageFormSet(self.request.POST, prefix='private_damage_fs')
-        #public_damage_formset   = PublicDamageFormSet(self.request.POST, prefix='public_damage_fs')
         injury_formset          = InjuryFormSet(self.request.POST, prefix='injury_fs')
         damage_formset          = DamageFormSet(self.request.POST, prefix='damage_fs')
         comment_formset         = CommentFormSet(self.request.POST, prefix='comment_fs')
 
-        #import ipdb; ipdb.set_trace()
-        #if form.is_valid() and activity_formset.is_valid() and area_burnt_formset.is_valid() and attending_org_formset.is_valid() and \
-        #    fire_behaviour_formset.is_valid():
         if form.is_valid() and area_burnt_formset.is_valid():
-            #and injury_formset.is_valid() and damage_formset.is_valid():
             return self.form_valid(request,
                 form,
-                #activity_formset,
-                #response_formset,
                 area_burnt_formset,
-                #groundforces_formset,
-                #aerialforces_formset,
-                #attending_org_formset,
                 fire_behaviour_formset,
-                #legal_formset,
-                #private_damage_formset,
-                #public_damage_formset,
                 injury_formset,
                 damage_formset,
                 comment_formset
@@ -326,16 +280,8 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         else:
             return self.form_invalid(request,
                 form,
-                #activity_formset,
-                #response_formset,
                 area_burnt_formset,
-                #groundforces_formset,
-                #aerialforces_formset,
-                #attending_org_formset,
                 fire_behaviour_formset,
-                #legal_formset,
-                #private_damage_formset,
-                #public_damage_formset,
                 injury_formset,
                 damage_formset,
                 comment_formset
@@ -343,32 +289,16 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
 
     def form_invalid(self, request,
             form,
-            #activity_formset,
-            #response_formset,
             area_burnt_formset,
-            #groundforces_formset,
-            #aerialforces_formset,
-            #attending_org_formset,
             fire_behaviour_formset,
-            #legal_formset,
-            #private_damage_formset,
-            #public_damage_formset,
             injury_formset,
             damage_formset,
             comment_formset):
 
         context = {
             'form': form,
-            #'activity_formset': activity_formset,
-            #'response_formset': response_formset,
             'area_burnt_formset': area_burnt_formset,
-            #'groundforces_formset': groundforces_formset,
-            #'aerialforces_formset': aerialforces_formset,
-            #'attending_org_formset': attending_org_formset,
             'fire_behaviour_formset': fire_behaviour_formset,
-            #'legal_formset': legal_formset,
-            #'private_damage_formset': private_damage_formset,
-            #'public_damage_formset': public_damage_formset,
             'injury_formset': injury_formset,
             'damage_formset': damage_formset,
             'comment_formset': comment_formset,
@@ -378,72 +308,36 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
 
     def form_valid(self, request,
             form,
-            #activity_formset,
-            #response_formset,
             area_burnt_formset,
-            #groundforces_formset,
-            #aerialforces_formset,
-            #attending_org_formset,
             fire_behaviour_formset,
-            #legal_formset,
-            #private_damage_formset,
-            #public_damage_formset,
             injury_formset,
             damage_formset,
             comment_formset):
 
 
+        #import ipdb; ipdb.set_trace()
         self.object = form.save(commit=False)
-        #self.object.modifier = request.user #1 #User.objects.all()[0] #request.user
-        import ipdb; ipdb.set_trace()
+        self.object.modifier = request.user #1 #User.objects.all()[0] #request.user
+        days = form.cleaned_data['days'] if form.cleaned_data['days'] else 0
+        hours = form.cleaned_data['hours'] if form.cleaned_data['hours'] else 0
+        self.object.time_to_control = parse_duration('{} {}:00:00'.format(days, hours)) # 3 02:00:00
         self.object.save()
 
-        #activities_updated = update_activity_fs(self.object, activity_formset)
-        #responses_updated = update_response_fs(self.object, response_formset)
         areas_burnt_updated = update_areas_burnt_fs(self.object, area_burnt_formset)
-        #groundforces_updated = update_groundforces_fs(self.object, groundforces_formset)
-        #aerialforces_updated = update_aerialforces_fs(self.object, aerialforces_formset)
-        #attending_org_updated = update_attending_org_fs(self.object, attending_org_formset)
         fire_behaviour_updated = update_fire_behaviour_fs(self.object, fire_behaviour_formset)
-        #legal_updated = update_legal_fs(self.object, legal_formset)
-        #private_damage_updated = update_private_damage_fs(self.object, private_damage_formset)
-        #public_damage_updated = update_public_damage_fs(self.object, public_damage_formset)
         injury_updated = update_injury_fs(self.object, injury_formset)
         damage_updated = update_damage_fs(self.object, damage_formset)
         comment_updated = update_comment_fs(self.object, request, comment_formset)
 
         redirect_referrer =  HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-#        if not activities_updated:
-#            messages.error(request, 'There was an error saving Activities.')
-#            return redirect_referrer
-
-#        elif not responses_updated:
-#            messages.error(request, 'There was an error saving Responses.')
-#            return redirect_referrer
 
         if not areas_burnt_updated:
             messages.error(request, 'There was an error saving Areas Burnt.')
             return redirect_referrer
 
-#        elif not groundforces_updated:
-#            messages.error(request, 'There was an error saving Ground Forces.')
-#            return redirect_referrer
-#
-#        elif not aerialforces_updated:
-#            messages.error(request, 'There was an error saving Aerial Forces.')
-#            return redirect_referrer
-#
-#        elif not attending_org_updated:
-#            messages.error(request, 'There was an error saving Attending Organisation.')
-#            return redirect_referrer
-#
         elif not fire_behaviour_updated:
             messages.error(request, 'There was an error saving Fire Behaviour.')
             return redirect_referrer
-#
-#        elif not legal_updated:
-#            messages.error(request, 'There was an error saving Legal.')
-#            return redirect_referrer
 
         elif not injury_updated:
             messages.error(request, 'There was an error saving Injury.')
@@ -466,32 +360,14 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         form_class = self.get_form_class()
         form = self.get_form(form_class)
         #import ipdb; ipdb.set_trace()
-        #activity_formset        = ActivityFormSet(instance=self.object, prefix='activity_fs') # self.object posts the initial data
-        #activity_formset        = ActivityFormSet(initial=self.object, prefix='activity_fs') # self.object posts the initial data
-        #response_formset        = ResponseFormSet(instance=self.object, prefix='response_fs')
         area_burnt_formset      = AreaBurntFormSet(instance=self.object, prefix='area_burnt_fs')
-        #groundforces_formset    = GroundForcesFormSet(instance=self.object, prefix='groundforces_fs')
-        #aerialforces_formset    = AerialForcesFormSet(instance=self.object, prefix='aerialforces_fs')
-        #attending_org_formset   = AttendingOrganisationFormSet(instance=self.object, prefix='attending_org_fs')
         fire_behaviour_formset  = FireBehaviourFormSet(instance=self.object, prefix='fire_behaviour_fs')
-        #legal_formset           = LegalFormSet(instance=self.object, prefix='legal_fs')
-        #private_damage_formset  = PrivateDamageFormSet(instance=self.object, prefix='private_damage_fs')
-        #public_damage_formset   = PublicDamageFormSet(instance=self.object, prefix='public_damage_fs')
         injury_formset  = InjuryFormSet(instance=self.object, prefix='injury_fs')
         damage_formset   = DamageFormSet(instance=self.object, prefix='damage_fs')
         comment_formset         = CommentFormSet(instance=self.object, prefix='comment_fs')
-        #import ipdb; ipdb.set_trace()
         context.update({'form': form,
-                        #'activity_formset': activity_formset,
-                        #'response_formset': response_formset,
                         'area_burnt_formset': area_burnt_formset,
-                        #'groundforces_formset': groundforces_formset,
-                        #'aerialforces_formset': aerialforces_formset,
-                        #'attending_org_formset': attending_org_formset,
                         'fire_behaviour_formset': fire_behaviour_formset,
-                        #'legal_formset': legal_formset,
-                        #'private_damage_formset': private_damage_formset,
-                        #'public_damage_formset': public_damage_formset,
                         'injury_formset': injury_formset,
                         'damage_formset': damage_formset,
                         'comment_formset': comment_formset,
@@ -507,7 +383,6 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
     template_name = 'bfrs/create2.html'
 
     def get_success_url(self):
-        #return reverse("bushfire:index")
         return reverse("home")
 
     def get_initial(self):
@@ -518,56 +393,41 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
         #self.object = self.get_object()
         form_class = self.get_form_class()
         form = self.get_form(form_class)
-        #activity_formset = ActivityFormSet(self.request.POST, prefix='activity_fs')
         area_burnt_formset = AreaBurntFormSet(self.request.POST, prefix='area_burnt_fs')
 
         if form.is_valid() and area_burnt_formset.is_valid():
-        #if form.is_valid() and activity_formset.is_valid() and area_burnt_formset.is_valid():
-            #self.object = self.get_object()
             return self.form_valid(request,
                 form,
-                #activity_formset,
                 area_burnt_formset,
             )
         else:
-            #import ipdb; ipdb.set_trace()
-            #activity_formset = ActivityFormSet(prefix='activity_fs')
-            #area_burnt_formset = AreaBurntFormSet(prefix='area_burnt_fs')
-
-            #self.object = self.get_object()
             return self.form_invalid(
                 form,
-                #activity_formset,
                 area_burnt_formset,
                 kwargs,
             )
 
     def form_invalid(self,
             form,
-            #activity_formset,
             area_burnt_formset,
             kwargs,
         ):
         context = {
             'form': form,
-            #'activity_formset': activity_formset,
             'area_burnt_formset': area_burnt_formset,
         }
         return self.render_to_response(context=context)
 
     def form_valid(self, request,
             form,
-            #activity_formset,
             area_burnt_formset,
         ):
-        #import ipdb; ipdb.set_trace()
         self.object = form.save(commit=False)
         self.object.creator_id = 1 #User.objects.all()[0] #request.user
         self.object.modifier_id = 1 #User.objects.all()[0] #request.user
         #calc_coords(self.object)
 
         self.object.save()
-        #activities_updated = update_activity_fs(self.object, activity_formset)
         areas_burnt_updated = update_areas_burnt_fs(self.object, area_burnt_formset)
 
         if self.request.POST.has_key('init_authorise'):
@@ -580,9 +440,6 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
         self.object.save()
 
         redirect_referrer =  HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-#        if not activities_updated:
-#            messages.error(request, 'There was an error saving Activities.')
-#            return redirect_referrer
 
         if not areas_burnt_updated:
             messages.error(request, 'There was an error saving Areas Burnt.')
@@ -598,10 +455,8 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
 
         form_class = self.get_form_class()
         form = self.get_form(form_class)
-        #activity_formset        = ActivityFormSet(instance=self.object, prefix='activity_fs') # self.object posts the initial data
         area_burnt_formset      = AreaBurntFormSet(instance=self.object, prefix='area_burnt_fs')
         context.update({'form': form,
-                        #'activity_formset': activity_formset,
                         'area_burnt_formset': area_burnt_formset,
                         'create': True,
             })

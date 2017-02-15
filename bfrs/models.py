@@ -494,6 +494,10 @@ class AreaBurnt(models.Model):
     def to_json(self):
         return json.dumps(self.to_dict)
 
+    def to_dict(self):
+        #return dict(tenure=self.tenure.name, fuel_type=self.fuel_type.name, area=round(self.area,2), origin=self.origin)
+        return dict(tenure=self.tenure.name)
+
     def __str__(self):
         return 'Tenure: {}'.format(
             self.tenure.name)

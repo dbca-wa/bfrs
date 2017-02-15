@@ -28,53 +28,6 @@
   <!-- http://xdsoft.net/jqplugins/datetimepicker/ -->
   <script src="{% static 'js/jquery.datetimepicker.full.min.js' %}"></script>
 
-  <script>
-    $(function(){
-        if ($('#id_fire_not_found').is(':checked')) {
-            $('#id_latlong').hide();
-            $('#id_mga').hide();
-            $('#id_fd_grid').hide();
-            $('#id_coord_type').prop('selectedIndex', 0);
-        } else {
-            var coord_type = $('#id_coord_type :selected').text();
-            if (coord_type.indexOf('---') > -1) {
-                $('#id_latlong').hide();
-                $('#id_mga').hide();
-                $('#id_fd_grid').hide();
-                $('#id_fire_not_found').prop('checked', true);
-                $('#id_coord_type').prop('selectedIndex', 0);
-            } else if (coord_type=='Lat/Long') {
-                $('#id_latlong').show();
-                $('#id_fd_grid').hide();
-                $('#id_fire_not_found').prop('checked', false);
-
-                // calc MGA
-                $('#id_mga').show();
-                $('#id_mga').find('input, textarea, button, select').prop('disabled',true);
-                $('#id_latlong').find('input, textarea, button, select').prop('disabled',false);
-
-            } else if (coord_type=='MGA') {
-                $('#id_mga').show();
-                $('#id_fd_grid').hide();
-                $('#id_fire_not_found').prop('checked', false);
-
-                // calc Lat/Long
-                $('#id_latlong').show();
-                $('#id_latlong').find('input, textarea, button, select').prop('disabled',true);
-                $('#id_mga').find('input, textarea, button, select').prop('disabled',false);
-
-            } else if (coord_type=='FD Grid') {
-                $('#id_fd_grid').show();
-                $('#id_latlong').hide();
-                $('#id_mga').hide();
-                $('#id_fire_not_found').prop('checked', false);
-            }
-        }
-
-    });
-
-  </script>
-
   {% endblock %}
 
 
@@ -113,46 +66,11 @@
     </div>
 {% endif %}
 
-{% if activity_formset.total_error_count > 0 %}
-    <p>Activity Errors: {{ activity_formset.total_error_count }}</p>
-    <div class="alert alert-error">
-        <button type="button" class="close" data-dismiss="alert">×</button>
-        {% for fs in activity_formset %} 
-            {% for field in fs %} 
-                {% if field.errors %}
-                <font color="red"><li>{{ field.label }}: {{ field.errors|striptags }}</li></font>
-                {% endif %}
-            {% endfor %}
-            {% if fs.non_field_errors %}
-                {{ fs.non_field_errors  }}
-            {% endif %}
-        {% endfor %}
-
-    </div>
-{% endif %}
-
 {% if area_burnt_formset.total_error_count > 0 %}
     <p>Area Burnt Errors: {{ area_burnt_formset.total_error_count }}</p>
     <div class="alert alert-error">
         <button type="button" class="close" data-dismiss="alert">×</button>
         {% for fs in area_burnt_formset %} 
-            {% for field in fs %} 
-                {% if field.errors %}
-                <font color="red"><li>{{ field.label }}: {{ field.errors|striptags }}</li></font>
-                {% endif %}
-            {% endfor %}
-            {% if fs.non_field_errors %}
-                {{ fs.non_field_errors  }}
-            {% endif %}
-        {% endfor %}
-    </div>
-{% endif %}
-
-{% if attending_org_formset.total_error_count > 0 %}
-    <p>Attending Organisation Errors: {{ attending_org_formset.total_error_count }}</p>
-    <div class="alert alert-error">
-        <button type="button" class="close" data-dismiss="alert">×</button>
-        {% for fs in attending_org_formset %} 
             {% for field in fs %} 
                 {% if field.errors %}
                 <font color="red"><li>{{ field.label }}: {{ field.errors|striptags }}</li></font>
@@ -388,6 +306,22 @@
   </div>
 
   <div class="panel-default">
+    <div class="panel-heading" role="tab" id="pn_fire_behaviour">
+      <h4 class="panel-title">
+        <a role="button" data-toggle="collapse" data-parent="#accordion" href="#fire_behaviour" aria-expanded="true" aria-controls="fire_behaviour">
+          Fire Behaviour
+        </a>
+      </h4>
+    </div>
+    <div id="fire_behaviour" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pn_fire_behaviour">
+      <div class="panel-body">
+        {% include "bfrs/fire_behaviour_fs.html" %}
+      </div>
+    </div>
+  </div>
+
+
+  <div class="panel-default">
     <div class="panel-heading" role="tab" id="pn_private_damage">
       <h4 class="panel-title">
         <a role="button" data-toggle="collapse" data-parent="#accordion" href="#private_damage" aria-expanded="true" aria-controls="private_damage">
@@ -457,90 +391,6 @@
 // $('[id^=""]').hide() // starts with 
 $('[id$="-date"]').datetimepicker({ format: "Y-m-d H:i" }); //ends with
 
-$('#id_fire_not_found').click(function() {
-    if ($(this).is(':checked')) {
-        $('#id_latlong').hide();
-        $('#id_mga').hide();
-        $('#id_fd_grid').hide();
-        $('#id_coord_type').prop('selectedIndex', 0);
-    } else {
-        var coord_type = $('#id_coord_type :selected').text();
-        //console.log('Co Ord Type' + coord_type);
-        if (coord_type.indexOf('---') > -1) {
-            $('#id_latlong').hide();
-            $('#id_mga').hide();
-            $('#id_fd_grid').hide();
-            $('#id_fire_not_found').prop('checked', true);
-            $('#id_coord_type').prop('selectedIndex', 0);
-        } else if (coord_type=='Lat/Long') {
-            $('#id_latlong').show();
-            $('#id_fd_grid').hide();
-            $('#id_fire_not_found').prop('checked', false);
-
-            // calc MGA
-            $('#id_mga').show();
-            $('#id_mga').prop("readonly", true);
-        } else if (coord_type=='MGA') {
-            $('#id_mga').show();
-            $('#id_latlong').hide();
-            $('#id_fd_grid').hide();
-            $('#id_fire_not_found').prop('checked', false);
-
-            // calc Lat/Long
-            $('#id_latlong').show();
-            $('#id_latlong').prop("readonly", true);
-        } else if (coord_type=='FD Grid') {
-            $('#id_fd_grid').show();
-            $('#id_latlong').hide();
-            $('#id_mga').hide();
-            $('#id_fire_not_found').prop('checked', false);
-        }
-    }
-});
-
-$('#id_coord_type').on('change', function() {
-    var coord_type = $('#id_coord_type :selected').text();
-    //console.log(' *** Co Ord Type' + coord_type);
-    if (coord_type.indexOf('---') > -1) {
-        $('#id_latlong').hide();
-        $('#id_mga').hide();
-        $('#id_fd_grid').hide();
-        $('#id_fire_not_found').prop('checked', true);
-        $('#id_coord_type').prop('selectedIndex', 0);
-    } else if (coord_type=='Lat/Long') {
-        $('#id_latlong').show();
-        $('#id_mga').hide();
-        $('#id_fd_grid').hide();
-        $('#id_fire_not_found').prop('checked', false);
-
-        // calc MGA
-        $('#id_mga').show();
-        $('#id_mga').find('input, textarea, button, select').prop('disabled',true);
-        $('#id_latlong').find('input, textarea, button, select').prop('disabled',false);
-
-        //$('#id_mga_zone').val(111);
-        //convert_origin();
-    } else if (coord_type=='MGA') {
-        $('#id_mga').show();
-        $('#id_latlong').hide();
-        $('#id_fd_grid').hide();
-        $('#id_fire_not_found').prop('checked', false);
-
-        // calc Lat/Long
-        $('#id_latlong').show();
-        $('#id_latlong').find('input, textarea, button, select').prop('disabled',true);
-        $('#id_mga').find('input, textarea, button, select').prop('disabled',false);
-
-        //$('#id_lat_decimal').val(222);
-        //convert_origin();
-    } else if (coord_type=='FD Grid') {
-        $('#id_fd_grid').show();
-        $('#id_latlong').hide();
-        $('#id_mga').hide();
-        $('#id_fire_not_found').prop('checked', false);
-    }
-});
-
     $(function(){
         var coord_type = $('#id_first_attack :selected').text();
         // This first part is needed for first page load
@@ -561,23 +411,6 @@ $('#id_coord_type').on('change', function() {
         });
     });
 
-    $(function(){
-        var coord_type = $('#id_hazard_mgt :selected').text();
-        if (coord_type.indexOf('OTHER') > -1) {
-            $('#div_id_other_hazard_mgt').show();
-        } else {
-            $('#div_id_other_hazard_mgt').hide();
-        }
-
-        $('#id_hazard_mgt').on('change', function() {
-            var coord_type = $('#id_hazard_mgt :selected').text();
-            if (coord_type.indexOf('OTHER') > -1) {
-                $('#div_id_other_hazard_mgt').show();
-            } else {
-                $('#div_id_other_hazard_mgt').hide();
-            }
-        });
-    });
 
     $(function(){
         var coord_type = $('#id_initial_control :selected').text();

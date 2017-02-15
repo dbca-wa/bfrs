@@ -1,5 +1,5 @@
 from bfrs.models import (Bushfire, Activity, AreaBurnt, AttendingOrganisation, GroundForces,
-        AerialForces, FireBehaviour, Legal, PrivateDamage, PublicDamage, Response, Comment,
+        AerialForces, FireBehaviour, Legal, InjuryFatality, Damage, Response, Comment,
         ActivityType,
     )
 from django.db import IntegrityError, transaction
@@ -337,42 +337,41 @@ def update_legal_fs(bushfire, legal_formset):
 
     return 1
 
-def update_private_damage_fs(bushfire, private_damage_formset):
+def update_injury_fs(bushfire, injury_formset):
     new_fs_object = []
-    for form in private_damage_formset:
+    for form in injury_formset:
         if form.is_valid():
-            damage_type = form.cleaned_data.get('damage_type')
+            injury_type = form.cleaned_data.get('injury_type')
             number = form.cleaned_data.get('number')
             remove = form.cleaned_data.get('DELETE')
 
-            if not remove and (damage_type and number):
-                new_fs_object.append(PrivateDamage(bushfire=bushfire, damage_type=damage_type, number=number))
+            if not remove and (injury_type and number):
+                new_fs_object.append(InjuryFatality(bushfire=bushfire, injury_type=injury_type, number=number))
 
     try:
         with transaction.atomic():
-            PrivateDamage.objects.filter(bushfire=bushfire).delete()
-            PrivateDamage.objects.bulk_create(new_fs_object)
+            InjuryFatality.objects.filter(bushfire=bushfire).delete()
+            InjuryFatality.objects.bulk_create(new_fs_object)
     except IntegrityError:
         return 0
 
     return 1
 
-def update_public_damage_fs(bushfire, public_damage_formset):
+def update_damage_fs(bushfire, damage_formset):
     new_fs_object = []
-    for form in public_damage_formset:
+    for form in damage_formset:
         if form.is_valid():
             damage_type = form.cleaned_data.get('damage_type')
-            fuel_type = form.cleaned_data.get('fuel_type')
             area = form.cleaned_data.get('area')
             remove = form.cleaned_data.get('DELETE')
 
-            if not remove and (damage_type and fuel_type and area):
-                new_fs_object.append(PublicDamage(bushfire=bushfire, damage_type=damage_type, fuel_type=fuel_type, area=area))
+            if not remove and (damage_type and area):
+                new_fs_object.append(Damage(bushfire=bushfire, damage_type=damage_type, area=area))
 
     try:
         with transaction.atomic():
-            PublicDamage.objects.filter(bushfire=bushfire).delete()
-            PublicDamage.objects.bulk_create(new_fs_object)
+            Damage.objects.filter(bushfire=bushfire).delete()
+            Damage.objects.bulk_create(new_fs_object)
     except IntegrityError:
         return 0
 
@@ -433,10 +432,12 @@ def export_final_csv(request, queryset):
 		"Name",
 		"Year",
 		"Incident No",
-		"DFES Incident Nno",
-		"Job Ccode",
+		"DFES Incident No",
+		"Job Code",
 		"Potential Fire Level",
+		"Maximum Fire Level",
 		"Media Alert Req",
+		"Investigation Req",
 		"Fire Position",
 		#"Origin Point",
 		#"Fire Boundary",
@@ -452,17 +453,29 @@ def export_final_csv(request, queryset):
 		"Duty Officer",
 		"Init Authorised By",
 		"Init Authorised Date",
+		"Authorised By",
+		"Authorised Date",
+		"Reviewed By",
+		"Reviewed Date",
+		"Dispatch P&W",
+		"Dispatch Aerial",
+		"Fire Detected",
+		"Fire Controlled",
+		"Fire Contained",
+		"Fire Safe",
+		"Fuel Type",
 		#"Initial Snapshot",
 		"First Attack",
 		"Other First Attack",
 		"Initial Control",
-		"Other Initial Ctrl",
+		"Other Initial Control",
 		"Final Control",
-		"Other Final Ctrl",
+		"Other Final Control",
 		"Max Fire Level",
 		"Arson Squad Notified",
 		"Offence No",
 		"Final Area",
+		"Estimated Time to Control",
 		"Authorised By",
 		"Authorised Date",
 		"Report Status",
@@ -480,7 +493,9 @@ def export_final_csv(request, queryset):
 			smart_str(obj.dfes_incident_no),
 			smart_str(obj.job_code),
 			smart_str(obj.get_potential_fire_level_display()),
+			smart_str(obj.get_max_fire_level_display()),
 			smart_str(obj.media_alert_req),
+			smart_str(obj.investigation_req),
 			smart_str(obj.fire_position),
 			#smart_str(obj.origin_point),
 			#smart_str(obj.fire_boundary),
@@ -496,17 +511,29 @@ def export_final_csv(request, queryset):
 			smart_str(obj.duty_officer.get_full_name() if obj.duty_officer else None ),
 			smart_str(obj.init_authorised_by.get_full_name() if obj.init_authorised_by else None ),
 			smart_str(obj.init_authorised_date.strftime('%Y-%m-%d %H:%M:%S') if obj.init_authorised_date else None),
+			smart_str(obj.authorised_by.get_full_name() if obj.authorised_by else None ),
+			smart_str(obj.authorised_date.strftime('%Y-%m-%d %H:%M:%S') if obj.authorised_date else None),
+			smart_str(obj.reviewed_by.get_full_name() if obj.reviewed_by else None ),
+			smart_str(obj.reviewed_date.strftime('%Y-%m-%d %H:%M:%S') if obj.reviewed_date else None),
+			smart_str(obj.dispatch_pw_date.strftime('%Y-%m-%d %H:%M:%S') if obj.dispatch_pw_date else None),
+			smart_str(obj.dispatch_aerial_date.strftime('%Y-%m-%d %H:%M:%S') if obj.dispatch_aerial_date else None),
+			smart_str(obj.fire_detected_date.strftime('%Y-%m-%d %H:%M:%S') if obj.fire_detected_date else None),
+			smart_str(obj.fire_controlled_date.strftime('%Y-%m-%d %H:%M:%S') if obj.fire_controlled_date else None),
+			smart_str(obj.fire_contained_date.strftime('%Y-%m-%d %H:%M:%S') if obj.fire_contained_date else None),
+			smart_str(obj.fire_safe_date.strftime('%Y-%m-%d %H:%M:%S') if obj.fire_safe_date else None),
+			smart_str(obj.fuel_type),
 			#smart_str(obj.initial_snapshot),
 			smart_str(obj.first_attack),
 			smart_str(obj.other_first_attack),
 			smart_str(obj.initial_control),
-			smart_str(obj.other_initial_ctrl),
+			smart_str(obj.other_initial_control),
 			smart_str(obj.final_control),
-			smart_str(obj.other_final_ctrl),
+			smart_str(obj.other_final_control),
 			smart_str(obj.max_fire_level),
 			smart_str(obj.arson_squad_notified),
 			smart_str(obj.offence_no),
 			smart_str(obj.final_area),
+			smart_str(obj.time_to_control),
 			smart_str(obj.authorised_by.get_full_name() if obj.authorised_by else None ),
 			smart_str(obj.authorised_date.strftime('%Y-%m-%d %H:%M:%S') if obj.authorised_date else None ),
 			smart_str(obj.get_report_status_display()),

@@ -116,18 +116,13 @@ class BushfireForm(forms.ModelForm):
     hours = forms.IntegerField(label='Hours', required=False)
     class Meta:
         model = Bushfire
-#        fields = ('region', 'district', 'incident_no', 'season', 'job_code',
-#                  'name', 'dfes_incident_no', 'potential_fire_level', 'authorised_by', 'authorised_date',
-#                  'distance', 'direction', 'place', 'lot_no', 'street', 'town',
-#                  'coord_type', 'fire_not_found', 'lat_decimal', 'lat_degrees', 'lat_minutes',
-#                  'lon_decimal', 'lon_degrees', 'lon_minutes', 'mga_zone', 'mga_easting', 'mga_northing',
-#                  'fd_letter', 'fd_number', 'fd_tenths',
-#                  'source','cause', 'arson_squad_notified', 'prescription', 'offence_no',
-#                  'fuel','ros', 'flame_height', 'assistance_required', 'fire_contained', 'containment_time',
-#                  'ops_point', 'communications', 'weather', 'field_officer', 'init_authorised_by', 'init_authorised_date',
-#                 )
         exclude = ('initial_snapshot', 'init_authorised_by', 'init_authorised_date',
 				   'potential_fire_level')
+
+#    def save(self, commit=True, *args, **kwargs):
+#        m = super(BushfireForm, self).save(commit=False, *args, **kwargs)
+#        import ipdb; ipdb.set_trace()
+
 
     def clean(self):
         """
@@ -372,36 +367,35 @@ class BaseActivityFormSet(BaseInlineFormSet):
 #        exclude = ()
 
 
-class BaseAreaBurntFormSet(BaseInlineFormSet):
-    def clean(self):
-        """
-        Adds validation to check:
-            1. no duplicate (tenure, fuel_type) combination
-        """
-        if any(self.errors):
-            return
-
-        duplicates = False
-        tenures = []
-
-        #import ipdb; ipdb.set_trace()
-        for form in self.forms:
-            if form.cleaned_data:
-                tenure = form.cleaned_data['tenure'] if form.cleaned_data.has_key('tenure') else None
-                fuel_type = form.cleaned_data['fuel_type'] if form.cleaned_data.has_key('fuel_type') else None
-                #area = form.cleaned_data['area'] if form.cleaned_data.has_key('area') else None
-                remove = form.cleaned_data['DELETE'] if form.cleaned_data.has_key('DELETE') else False
-
-                if not remove:
-                    # Check that no two records have the same (tenure and fuel_type) combination
-                    #if tenure and fuel_type and area:
-                    if tenure and fuel_type:
-                        if set([(tenure.name, fuel_type.name)]).issubset(tenures):
-                            duplicates = True
-                        tenures.append((tenure.name, fuel_type.name))
-
-                    if duplicates:
-                        form.add_error('tenure', 'Duplicate (Tenure - Fuel Type): must be unique')
+#class BaseAreaBurntFormSet(BaseInlineFormSet):
+#    def clean(self):
+#        """
+#        Adds validation to check:
+#            1. no duplicate (tenure, fuel_type) combination
+#        """
+#        if any(self.errors):
+#            return
+#
+#        duplicates = False
+#        tenures = []
+#
+#        #import ipdb; ipdb.set_trace()
+#        for form in self.forms:
+#            if form.cleaned_data:
+#                tenure = form.cleaned_data['tenure'] if form.cleaned_data.has_key('tenure') else None
+#                #area = form.cleaned_data['area'] if form.cleaned_data.has_key('area') else None
+#                remove = form.cleaned_data['DELETE'] if form.cleaned_data.has_key('DELETE') else False
+#
+#                if not remove:
+#                    # Check that no two records have the same (tenure and fuel_type) combination
+#                    #if tenure and fuel_type and area:
+#					if tenure:
+#                        if set([(tenure.name, fuel_type.name)]).issubset(tenures):
+#                            duplicates = True
+#                        tenures.append((tenure.name, fuel_type.name))
+#
+#                    if duplicates:
+#                        form.add_error('tenure', 'Duplicate (Tenure - Fuel Type): must be unique')
 
 
 class BaseAttendingOrganisationFormSet(BaseInlineFormSet):
@@ -475,7 +469,8 @@ class BaseFireBehaviourFormSet(BaseInlineFormSet):
 
 ActivityFormSet             = inlineformset_factory(Bushfire, Activity, formset=BaseActivityFormSet, extra=0, max_num=7, min_num=2, can_delete=True, validate_min=True, exclude=())
 ResponseFormSet             = inlineformset_factory(Bushfire, Response, extra=0, max_num=13, min_num=1, exclude=())
-AreaBurntFormSet            = inlineformset_factory(Bushfire, AreaBurnt, formset=BaseAreaBurntFormSet, extra=0, min_num=1, validate_min=True, exclude=())
+#AreaBurntFormSet            = inlineformset_factory(Bushfire, AreaBurnt, formset=BaseAreaBurntFormSet, extra=0, min_num=1, validate_min=True, exclude=())
+AreaBurntFormSet            = inlineformset_factory(Bushfire, AreaBurnt, extra=0, min_num=1, validate_min=True, exclude=())
 GroundForcesFormSet         = inlineformset_factory(Bushfire, GroundForces, extra=0, max_num=3, min_num=1, exclude=())
 AerialForcesFormSet         = inlineformset_factory(Bushfire, AerialForces, extra=0, max_num=2, min_num=1, exclude=())
 AttendingOrganisationFormSet= inlineformset_factory(Bushfire, AttendingOrganisation, formset=BaseAttendingOrganisationFormSet, extra=0, max_num=11, min_num=1, validate_min=True, exclude=())
