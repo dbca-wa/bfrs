@@ -9,6 +9,7 @@ import json
 import unicodecsv
 from django.utils.encoding import smart_str
 from datetime import datetime
+from django.core import serializers
 
 
 def breadcrumbs_li(links):
@@ -26,131 +27,21 @@ def breadcrumbs_li(links):
     crumbs += li_str_last.format(links[-1][1])
     return crumbs
 
-def save_initial_snapshot(obj):
-    initial_snapshot = dict(
-        bushfire_id = obj.id,
-        region = obj.region.name,
-        district = obj.district.name,
-        name = obj.name,
-        year = obj.year,
-        incident_no = obj.incident_no if obj.incident_no else '',
-        job_code = obj.job_code if obj.job_code else '',
-        field_officer = obj.field_officer.get_full_name() if obj.field_officer else '',
-        duty_officer = obj.duty_officer.get_full_name() if obj.duty_officer else '',
-        init_authorised_by = obj.init_authorised_by.get_full_name() if obj.init_authorised_by else '',
-        init_authorised_date = obj.init_authorised_date.strftime('%Y-%m-%d %H:%M:%S') if obj.init_authorised_date else '',
+def serialize_bushfire(auth_type, obj):
+	"Serializes a Bushfire object"
+	if auth_type == 'initial':
+		obj.initial_snapshot = serializers.serialize('json', [obj])
+	if auth_type == 'final':
+		obj.final_snapshot = serializers.serialize('json', [obj])
+	obj.save()
 
-        potential_fire_level = obj.get_potential_fire_level_display() if obj.potential_fire_level else '',
-        media_alert_req = obj.media_alert_req,
-        fire_position = obj.fire_position if obj.fire_position else '',
+def deserialize_bushfire(auth_type, obj):
+	"Returns a deserialized Bushfire object"
+	if auth_type == 'initial':
+		return serializers.deserialize("json", obj.initial_snapshot).next().object
+	if auth_type == 'final':
+		return serializers.deserialize("json", obj.final_snapshot).next().object
 
-        # Point of Origin
-        grid = obj.grid,
-        arrival_area = float(obj.arrival_area) if obj.arrival_area else '',
-        fire_not_found = obj.fire_not_found,
-#        coord_type = obj.get_coord_type_display(), # if obj.coord_type else '',
-#        lat_decimal = float(obj.lat_decimal) if obj.lat_decimal else '',
-#        lat_degrees = float(obj.lat_degrees) if obj.lat_degrees else '',
-#        lat_minutes = float(obj.lat_minutes) if obj.lat_minutes else '',
-#        lon_decimal = float(obj.lon_decimal) if obj.lon_decimal else '',
-#        lon_degrees = float(obj.lon_degrees) if obj.lon_degrees else '',
-#        lon_minutes = float(obj.lon_minutes) if obj.lon_minutes else '',
-#
-#        mga_zone = float(obj.mga_zone) if obj.mga_zone else '',
-#        mga_easting = float(obj.mga_easting) if obj.mga_easting else '',
-#        mga_northing = float(obj.mga_northing) if obj.mga_northing else '',
-#
-#        fd_letter = float(obj.fd_letter) if obj.fd_letter else '',
-#        fd_number = float(obj.fd_number) if obj.fd_number else '',
-#        fd_tenths = float(obj.fd_tenths) if obj.fd_tenths else '',
-
-        # Activities - Formset
-        activities = [(i.to_dict()) for i in obj.activities.all()],
-
-        # Tenure and Vegetation Affected - Formset
-        tenures_burnt = [(i.to_dict()) for i in obj.tenures_burnt.all()],
-
-        # Operation Details
-        assistance_req = obj.assistance_req,
-        communications = obj.communications if obj.communications else '',
-        other_info = obj.other_info if obj.other_info else '',
-        cause = obj.cause.name,
-        other_cause = obj.other_cause if obj.other_cause else '',
-        #tenure = obj.tenure if obj.tenure else '',
-        #fuel = obj.fuel if obj.fuel else '',
-
-    )
-    obj.initial_snapshot = json.dumps(initial_snapshot)
-    obj.save()
-
-
-#def save_initial_snapshot(obj):
-#    initial_snapshot = dict(
-#        bushfire_id = obj.id,
-#        region = obj.region.name,
-#        district = obj.district.name,
-#        name = obj.name,
-#        incident_no = obj.incident_no if obj.incident_no else '',
-#        season = obj.season if obj.season else '',
-#        job_code = obj.job_code if obj.job_code else '',
-#        potential_fire_level = obj.potential_fire_level if obj.potential_fire_level else '',
-#        field_officer = obj.field_officer.get_full_name() if obj.field_officer else '',
-#        init_authorised_by = obj.init_authorised_by.get_full_name() if obj.init_authorised_by else '',
-#        init_authorised_date = obj.init_authorised_date.strftime('%Y-%m-%d %H:%M:%S') if obj.init_authorised_date else '',
-#        cause = obj.cause.name,
-#        known_possible = Bushfire.CAUSE_CHOICES[0][1] if obj.known_possible==Bushfire.CAUSE_CHOICES[0][0] else Bushfire.CAUSE_CHOICES[1][1],
-#        other_cause = obj.other_cause if obj.other_cause else '',
-#        investigation_req = 'Yes' if obj.investigation_req else 'No',
-#        first_attack = obj.first_attack.name,
-#        other_first_attack = obj.other_first_attack if obj.other_first_attack else '',
-#
-#        # Point of Origin
-#        coord_type = obj.coord_type if obj.coord_type else '',
-#        fire_not_found = 'Not Found' if obj.fire_not_found else '',
-#        lat_decimal = float(obj.lat_decimal) if obj.lat_decimal else '',
-#        lat_degrees = float(obj.lat_degrees) if obj.lat_degrees else '',
-#        lat_minutes = float(obj.lat_minutes) if obj.lat_minutes else '',
-#        lon_decimal = float(obj.lon_decimal) if obj.lon_decimal else '',
-#        lon_degrees = float(obj.lon_degrees) if obj.lon_degrees else '',
-#        lon_minutes = float(obj.lon_minutes) if obj.lon_minutes else '',
-#
-#        mga_zone = float(obj.mga_zone) if obj.mga_zone else '',
-#        mga_easting = float(obj.mga_easting) if obj.mga_easting else '',
-#        mga_northing = float(obj.mga_northing) if obj.mga_northing else '',
-#
-#        fd_letter = float(obj.fd_letter) if obj.fd_letter else '',
-#        fd_number = float(obj.fd_number) if obj.fd_number else '',
-#        fd_tenths = float(obj.fd_tenths) if obj.fd_tenths else '',
-#
-#        # Activities - Formset
-#        activities = [(i.to_dict()) for i in obj.activities.all()],
-#
-#        # Tenure and Vegetation Affected - Formset
-#        areas_burnt = [(i.to_dict()) for i in obj.areas_burnt.all()],
-#
-#        # Location
-#        distance = float(obj.distance) if obj.distance else '',
-#        direction = obj.direction if obj.direction else '',
-#        place = obj.place if obj.place else '',
-#        lot_no = obj.lot_no if obj.lot_no else '',
-#        street = obj.street if obj.street else '',
-#        town = obj.town if obj.town else '',
-#
-#        # Forces in Attendance - Formset
-#
-#        # Operation Details
-#        fuel = obj.fuel if obj.fuel else '',
-#        ros = obj.ros if obj.ros else '',
-#        flame_height = obj.flame_height if obj.flame_height else '',
-#        assistance_required = 'Yes' if obj.assistance_required else 'No',
-#        fire_contained = 'Yes' if obj.fire_contained else 'No',
-#        containment_time = obj.containment_time if obj.containment_time else '',
-#        ops_point = obj.ops_point if obj.ops_point else '',
-#        communications = obj.communications if obj.communications else '',
-#        weather = obj.weather if obj.weather else ''
-#
-#    )
-#    obj.initial_snapshot = json.dumps(initial_snapshot)
 
 def calc_coords(obj):
     coord_type = obj.coord_type
@@ -167,6 +58,7 @@ def calc_coords(obj):
         obj.mga_zone = float(obj.lat_decimal) * 2.0
         obj.mga_easting = float(obj.lat_decimal) * 2.0
         obj.mga_northing = float(obj.lat_decimal) * 2.0
+
 
 # init methods
 def update_activity_fs(bushfire, activity_formset):

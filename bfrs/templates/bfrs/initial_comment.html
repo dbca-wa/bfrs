@@ -5,35 +5,35 @@
     <div class="col-sm-2" > 
         <div id="div_id_fuel" class="form-group"> 
             <label for="id_fuel" class="control-label nonRequiredField">Fuel</label>
-            <div class="controls ">{% if has_init_authorised %} {{snapshot.fuel}} {% else %} {{form.fuel}} {% endif %}</div>
+            <div class="controls ">{% if is_init_authorised %} {{snapshot.fuel}} {% else %} {{form.fuel}} {% endif %}</div>
         </div>
     </div>
 
     <div class="col-sm-2" > 
         <div id="div_id_ros" class="form-group"> 
             <label for="id_ros" class="control-label nonRequiredField">ROS</label>
-            <div class="controls ">{% if has_init_authorised %} {{snapshot.ros}} {% else %} {{form.ros}} {% endif %}</div>
+            <div class="controls ">{% if is_init_authorised %} {{snapshot.ros}} {% else %} {{form.ros}} {% endif %}</div>
         </div>
     </div>
 
     <div class="col-sm-2" > 
         <div id="div_flame_height" class="form-group"> 
             <label for="id_flame_height" class="control-label nonRequiredField">Flame Height</label>
-            <div class="controls ">{% if has_init_authorised %} {{snapshot.flame_height}} {% else %} {{form.flame_height}} {% endif %}</div>
+            <div class="controls ">{% if is_init_authorised %} {{snapshot.flame_height}} {% else %} {{form.flame_height}} {% endif %}</div>
         </div>
     </div>
 
     <div class="col-sm-2" > 
         <div id="div_id_assist_req" class="form-group"> 
             <label for="id_assist_req" class="control-label nonRequiredField">Assistance Required</label>
-            <div class="controls ">{% if has_init_authorised %} {{snapshot.assistance_required}} {% else %} {{form.assistance_required}} {% endif %}</div>
+            <div class="controls ">{% if is_init_authorised %} {{snapshot.assistance_required}} {% else %} {{form.assistance_required}} {% endif %}</div>
         </div>
     </div>
 
     <div class="col-sm-2" > 
         <div id="div_id_fire_contained" class="form-group"> 
             <label for="id_fire_contained" class="control-label nonRequiredField">Fire Contained</label>
-            <div class="controls ">{% if has_init_authorised %} {{snapshot.fire_contained}} {% else %} {{form.fire_contained}} {% endif %}</div>
+            <div class="controls ">{% if is_init_authorised %} {{snapshot.fire_contained}} {% else %} {{form.fire_contained}} {% endif %}</div>
         </div>
     </div>
 </div>
@@ -42,28 +42,28 @@
     <div class="col-sm-2" > 
         <div id="div_id_containment_time" class="form-group"> 
             <label for="id_containment_time" class="control-label nonRequiredField">Containment Time</label>
-            <div class="controls ">{% if has_init_authorised %} {{snapshot.containment_time}} {% else %} {{form.containment_time}} {% endif %}</div>
+            <div class="controls ">{% if is_init_authorised %} {{snapshot.containment_time}} {% else %} {{form.containment_time}} {% endif %}</div>
         </div>
     </div>
 
     <div class="col-sm-2" > 
         <div id="div_id_ops_point" class="form-group"> 
             <label for="id_ops_point" class="control-label nonRequiredField">OPS Point (grid ref)</label>
-            <div class="controls ">{% if has_init_authorised %} {{snapshot.ops_point}} {% else %} {{form.ops_point}} {% endif %}</div>
+            <div class="controls ">{% if is_init_authorised %} {{snapshot.ops_point}} {% else %} {{form.ops_point}} {% endif %}</div>
         </div>
     </div>
 
     <div class="col-sm-2" > 
         <div id="div_communications" class="form-group"> 
             <label for="id_communications" class="control-label nonRequiredField">Communication</label>
-            <div class="controls ">{% if has_init_authorised %} {{snapshot.communications}} {% else %} {{form.communications}} {% endif %}</div>
+            <div class="controls ">{% if is_init_authorised %} {{snapshot.communications}} {% else %} {{form.communications}} {% endif %}</div>
         </div>
     </div>
 
     <div class="col-sm-2" > 
         <div id="div_id_weather" class="form-group"> 
             <label for="id_weather" class="control-label nonRequiredField">Weather</label>
-            <div class="controls ">{% if has_init_authorised %} {{snapshot.weather}} {% else %} {{form.weather}} {% endif %}</div>
+            <div class="controls ">{% if is_init_authorised %} {{snapshot.weather}} {% else %} {{form.weather}} {% endif %}</div>
         </div>
     </div>
 

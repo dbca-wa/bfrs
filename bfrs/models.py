@@ -89,22 +89,19 @@ class Bushfire(Audit):
         (COORD_TYPE_FDGRID, 'FD Grid'),
     )
 
+    STATUS_INITIAL            = 1
+    STATUS_INITIAL_AUTHORISED = 2
+    STATUS_FINAL_DRAFT        = 3 # allows for CREATE of FINAL DRAFT REPORT
+    STATUS_FINAL_AUTHORISED   = 4
+    STATUS_REVIEW_DRAFT       = 5 # allows for CREATE of REVIEW DRAFT REPORT
+    STATUS_REVIEWED           = 6
     REPORT_STATUS_CHOICES = (
-        (1, 'Initial'),
-        (2, 'Final'), # Initial Authorised == Final Draft
-        (3, 'Final Authorised'),
-        (4, 'Final Reviewed'),
-    )
-
-#    CAUSE_CHOICES = (
-#        (1, 'Known'),
-#        (2, 'Possible'),
-#    )
-
-    PW_RESOURCE_CHOICES = (
-        (1, 'No'),
-        (2, 'Yes'),
-        (3, 'Monitored Remotely'),
+        (STATUS_INITIAL, 'Initial'),
+        (STATUS_INITIAL_AUTHORISED, 'Initial Authorised'),
+        (STATUS_FINAL_DRAFT, 'Final Draft'),
+        (STATUS_FINAL_AUTHORISED, 'Final Authorised'),
+        (STATUS_REVIEW_DRAFT, 'Review Draft'),
+        (STATUS_REVIEWED, 'Reviewed'),
     )
 
     FIRE_LEVEL_CHOICES = (
@@ -161,22 +158,11 @@ class Bushfire(Audit):
     dispatch_aerial_date = models.DateTimeField(verbose_name='Dispatch - Aerial', null=True, blank=True)
     fire_detected_date = models.DateTimeField(verbose_name='Fire Detected', null=True, blank=True)
     fuel_type = models.CharField(verbose_name='Fuel Type', max_length=64, null=True, blank=True)
-    # we serialise/snapshot the initial report when authorised
+    # we serialise/snapshot the initial and final reports when authorised
     initial_snapshot = models.TextField(null=True, blank=True)
-
-    # below are in Activities FS
-#    fire_detected_date = models.DateTimeField(verbose_name='Date Fire Detected', default=timezone.now, null=True, blank=True)
-#    pw_resources_desp = models.PositiveSmallIntegerField(verbose_name="P&W Resources Despatched", choices=PW_RESOURCE_CHOICES, null=True, blank=True)
-#    pw_resources_desp_date = models.DateTimeField(verbose_name='Date P&W Resources Despatched', default=timezone.now, null=True, blank=True)
-#    aerial_support_desp = models.BooleanField(verbose_name="Aerial Support Despatched", default=False)
-#    aerial_support_desp_date = models.DateTimeField(verbose_name='Date Aerial Support Despatched', default=timezone.now, null=True, blank=True)
-#    time_to_control = models.DateTimeField(verbose_name='Time to Control', null=True, blank=True)
-#    fire_contained_date = models.DateTimeField(verbose_name='Date Fire Contained', null=True, blank=True)
-#    fire_controlled_date = models.DateTimeField(verbose_name='Date Fire Controlled', null=True, blank=True)
-#    fire_safe_date = models.DateTimeField(verbose_name='Date Fire Safe', null=True, blank=True)
+    final_snapshot = models.TextField(null=True, blank=True)
 
     # FINAL Fire Report Fields
-
     fire_contained_date = models.DateTimeField(verbose_name='Fire Contained', null=True, blank=True)
     fire_controlled_date = models.DateTimeField(verbose_name='Fire Controlled', null=True, blank=True)
     fire_safe_date = models.DateTimeField(verbose_name='Fire Safe', null=True, blank=True)
@@ -216,16 +202,25 @@ class Bushfire(Audit):
 #        super(Bushfire, self).save()
 
     @property
-    def has_init_authorised(self):
-        return True if self.init_authorised_by and self.init_authorised_date else False
+    def is_init_authorised(self):
+        return self.report_status == Bushfire.STATUS_INITIAL_AUTHORISED
 
     @property
-    def final_authorised(self):
-        return True if self.authorised_by and self.authorised_date else False
+    def is_final_authorised(self):
+        return self.report_status == Bushfire.STATUS_FINAL_AUTHORISED
 
     @property
-    def snapshot(self):
-        return json.loads(self.initial_snapshot) if self.has_init_authorised else None
+    def is_reviewed(self):
+        return self.report_status == Bushfire.STATUS_REVIEWED
+
+    @property
+    def can_create_final(self):
+        return self.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED
+
+    @property
+    def can_create_review(self):
+        return self.report_status >= Bushfire.STATUS_FINAL_AUTHORISED
+
 
     def user_unicode_patch(self):
         """ overwrite the User model's __unicode__() method """

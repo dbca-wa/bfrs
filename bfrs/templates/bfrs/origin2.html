@@ -7,21 +7,21 @@
         <div class="col-sm-2" > 
             <div id="div_id_grid" class="form-group"> 
                 <label for="id_grid" class="control-label nonRequiredField">Grid</label>
-                <div class="controls ">{% if has_init_authorised and initial %} {{snapshot.grid}} {% else %} {{form.grid}} {% endif %}</div>
+                <div class="controls ">{% if is_init_authorised and initial %} {{snapshot.grid}} {% else %} {{form.grid}} {% endif %}</div>
             </div>
         </div>
 
         <div class="col-sm-2" > 
             <div id="div_id_arrival_area" class="form-group"> 
                 <label for="id_arrival_area" class="control-label nonRequiredField">Fire Area at arrival</label>
-                <div class="controls ">{% if has_init_authorised and initial %} {{snapshot.arrival_area}} {% else %} {{form.arrival_area}} {% endif %}</div>
+                <div class="controls ">{% if is_init_authorised and initial %} {{snapshot.arrival_area}} {% else %} {{form.arrival_area}} {% endif %}</div>
             </div>
         </div>
 
         <div class="col-sm-2" > 
             <div id="div_id_fuel_type" class="form-group"> 
                 <label for="id_fuel_type" class="control-label nonRequiredField">Fuel Type</label>
-                <div class="controls ">{% if has_init_authorised and initial %} {{snapshot.fuel_type}} {% else %} {{form.fuel_type}} {% endif %}</div>
+                <div class="controls ">{% if is_init_authorised and initial %} {{snapshot.fuel_type}} {% else %} {{form.fuel_type}} {% endif %}</div>
             </div>
         </div>
 
@@ -42,7 +42,7 @@
                 <label for="id_fire_not_found" class="control-label nonRequiredField">Fire Not Found</label>
 
                 <div class="controls ">
-                  {% if has_init_authorised and initial %}
+                  {% if is_init_authorised and initial %}
                     {% if snapshot.fire_not_found %}<div class="text-left"><i class="icon-ok text-success"></i></div>{% else %}<div class="text-left"><i class="icon-remove text-danger"></i></div>{% endif %}
                   {% else %}
                     {{form.fire_not_found}}

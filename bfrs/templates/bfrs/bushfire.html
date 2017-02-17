@@ -51,32 +51,47 @@
   <thead>
     <td><input type="checkbox" name ="check_all" onClick=toggle(this) /></td>
     <th>Report Status</th>
-    <th>Fire Level</th>
-    <th>Fire Not Found</th>
-    <th>Media Alert</th>
-    <th>Assistance</th>
-    <th>Alert Level</th>
+    <th>District</th>
+    <th>Year</th>
+    <th>Cause</th>
     <th>Initial</th>
     <th>Final</th>
+    <th>Review</th>
 
   </thead>
   <tbody>
     {% for bushfire in object_list %}
-      {% has_init_authorised bushfire.id as init_authorised %}
       <tr class="row-vm" data-toggle="myCollapse" data-target="#{{bushfire.id}}">
         <td><input type="checkbox" name="chkbox" value={{ bushfire.id }}  /></td>
         <td>{{ bushfire.get_report_status_display }}</td>
-        <td>{{ bushfire.potential_fire_level }}</td>
-        <td>{% if bushfire.fire_not_found %}<div class="text-left"><i class="icon-ok text-success"></i></div>{% else %}<div class="text-left"><i class="icon-remove text-danger"></i></div>{% endif %}</td>
-        <td>{% if bushfire.media_alert_req %}<div class="text-left"><i class="icon-ok text-success"></i></div>{% else %}<div class="text-left"><i class="icon-remove text-danger"></i></div>{% endif %}</td>
-        <td>{% if bushfire.assistance_req %}<div class="text-left"><i class="icon-ok text-success"></i></div>{% else %}<div class="text-left"><i class="icon-remove text-danger"></i></div>{% endif %}</td>
-        <td>{{ bushfire.get_alert_level_display }}</td>
+        <td>{{ bushfire.district.name }}</td>
+        <td>{{ bushfire.year }}</td>
+        <td>{{ bushfire.cause.name }}</td>
         <td><a href="{% url 'bushfire:bushfire_initial' bushfire.id %}">{{ bushfire.name }}</td>
 
-         {% if init_authorised %}
+         {% if bushfire.can_create_final %}
             <td><a href="{% url 'bushfire:bushfire_final' bushfire.id %}">{{ bushfire.name }}</td>
          {% else %}
             <td title="The initial report has not yet been authorised">{{ bushfire.name }}</td>
+         {% endif %}
+
+         {% if bushfire.can_create_review %}
+            <td><a href="{% url 'bushfire:bushfire_final' bushfire.id %}">{{ bushfire.name }}</td>
+         {% else %}
+            <td title="The final report has not yet been authorised">{{ bushfire.name }}</td>
+         {% endif %}
+
+
+         {% if bushfire.report_status == bushfire.STATUS_INITIAL %}
+		   <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&authorise=initial_auth');" title="Authorise initial"><button>Authorise Initial</button></td>
+         {% elif bushfire.report_status == bushfire.STATUS_INITIAL_AUTHORISED %}
+		   <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&authorise=final_create');" title="Create final report"><button>Create Final</button></td>
+         {% elif bushfire.report_status == bushfire.STATUS_FINAL_DRAFT %}
+           <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&authorise=final_auth');" title="Authorise final report"><button>Authorise Final</button></td>
+         {% elif bushfire.report_status == bushfire.STATUS_FINAL_AUTHORISED %}
+           <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&authorise=review_create');" title="Create review report"><button>Create Review</button></td>
+         {% elif bushfire.report_status == bushfire.STATUS_REVIEW_DRAFT %}
+           <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&authorise=reviewed');" title="Mark Final report as Reviewed"><button>Mark as Reviewed</button></td>
          {% endif %}
 
         {% comment %}
@@ -146,7 +161,7 @@ $(function(){
         Function to append filter fields to the URL, only those that are selected. Default <form action="#"> adds all fields to the url, even if empty
         */
 
-        profile_field_list = ['region', 'district']
+        profile_field_list = ['region', 'district'];
         filter_list = [
 			'region', 'district', 'year', 'report_status', 'cause'
 		];
@@ -154,7 +169,7 @@ $(function(){
         var count = 0;
         var url = "{% url 'main' %}";
         for (var i = 0; i < filter_list.length; i++) {
-          var field_value = $("#id_" + filter_list[i]).val()
+          var field_value = $("#id_" + filter_list[i]).val();
           if (field_value) {
             //alert("VAL: " + field_value);
             var postfix = (count==0 ? "?" : "&");

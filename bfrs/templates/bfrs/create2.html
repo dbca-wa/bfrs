@@ -85,46 +85,46 @@
     <tbody>
         <tr>
             <th class="cbas">Region *</th>
-            <td class="cbas">{% if has_init_authorised %} {{snapshot.region}} {% else %} {{form.region}} {% endif %}</td>
+            <td class="cbas">{% if is_init_authorised %} {{snapshot.region}} {% else %} {{form.region}} {% endif %}</td>
 
             <th class="cbas">District *</th>
-            <td class="cbas">{% if has_init_authorised %} {{snapshot.district}} {% else %} {{form.district}} {% endif %}</td>
+            <td class="cbas">{% if is_init_authorised %} {{snapshot.district}} {% else %} {{form.district}} {% endif %}</td>
         </tr>
 
         <tr>
             <th class="cbas">Fire Number *</th>
-            <td class="cbas">{% if has_init_authorised %} {{snapshot.incident_no}} {% else %} {{form.incident_no}} {% endif %}</td>
+            <td class="cbas">{% if is_init_authorised %} {{snapshot.incident_no}} {% else %} {{form.incident_no}} {% endif %}</td>
 
             <th class="cbas">Job Code</th>
-            <td class="cbas">{% if has_init_authorised %} {{snapshot.job_code}} {% else %} {{form.job_code}} {% endif %}</td>
+            <td class="cbas">{% if is_init_authorised %} {{snapshot.job_code}} {% else %} {{form.job_code}} {% endif %}</td>
 
             <th class="cbas">DFES Fire Number</th>
-            <td class="cbas">{% if has_init_authorised %} {{snapshot.dfes_incident_no}} {% else %} {{form.dfes_incident_no}} {% endif %}</td>
+            <td class="cbas">{% if is_init_authorised %} {{snapshot.dfes_incident_no}} {% else %} {{form.dfes_incident_no}} {% endif %}</td>
         </tr>
 
 
         <tr>
             <th class="cbas">Name *</th>
-            <td colspan="cw23" class="cbas">{% if has_init_authorised %} {{snapshot.name}} {% else %} {{form.name}} {% endif %}</td>
+            <td colspan="cw23" class="cbas">{% if is_init_authorised %} {{snapshot.name}} {% else %} {{form.name}} {% endif %}</td>
 
             <th class="cbas">Financial Year *</th>
-            <td class="cbas">{% if has_init_authorised %} {{snapshot.year}} {% else %} {{form.year}} {% endif %}</td>
+            <td class="cbas">{% if is_init_authorised %} {{snapshot.year}} {% else %} {{form.year}} {% endif %}</td>
         </tr>
 
         <tr>
             <th class="cbas">Fire Position *</th>
-            <td colspan="4"class="cbas">{% if has_init_authorised %} {{snapshot.fire_position}} {% else %} {{form.fire_position}} {% endif %}</td>
+            <td colspan="4"class="cbas">{% if is_init_authorised %} {{snapshot.fire_position}} {% else %} {{form.fire_position}} {% endif %}</td>
         </tr>
 
         <tr>
             <th class="cbas">Field Officer *</th>
-            <td class="cbas">{% if has_init_authorised %} {{snapshot.field_officer}} {% else %} {{form.field_officer}} {% endif %}</td>
+            <td class="cbas">{% if is_init_authorised %} {{snapshot.field_officer}} {% else %} {{form.field_officer}} {% endif %}</td>
 
             <th class="cbas">Duty Officer</th>
-            <td class="cbas">{% if has_init_authorised %} {{snapshot.duty_officer}} {% else %} {{form.duty_officer}} {% endif %}</td>
+            <td class="cbas">{% if is_init_authorised %} {{snapshot.duty_officer}} {% else %} {{form.duty_officer}} {% endif %}</td>
         </tr>
 
-        {% if has_init_authorised %} 
+        {% if is_init_authorised %} 
         <tr>
             <th class="cbas">Authorised By *</th>
             <td class="cbas">{{object.init_authorised_by}}</td>
@@ -140,11 +140,11 @@
     <tbody>
         <tr>
             <th class="cbas">Probable Fire Level *</th>
-            <td class="cbas">{% if has_init_authorised %} {{snapshot.potential_fire_level}} {% else %} {{form.potential_fire_level}} {% endif %}</td>
+            <td class="cbas">{% if is_init_authorised %} {{snapshot.potential_fire_level}} {% else %} {{form.potential_fire_level}} {% endif %}</td>
 
             <th class="cbas">Media Alert Required</th>
             <td class="cbas">
-              {% if has_init_authorised %}
+              {% if is_init_authorised %}
 			  {% if snapshot.media_alert_req %}<div class="text-center"><i class="icon-ok text-success"></i></div>{% else %}<div class="text-center"><i class="icon-remove text-danger"></i></div>{% endif %}<p>Call PICA on ....</p>
               {% else %}
 			  {{form.media_alert_req}} Call PICA on ....
@@ -155,21 +155,21 @@
 
         <tr>
             <th class="cbas">Cause *</th>
-            <td colspan="3" class="cbas">{% if has_init_authorised %} {{snapshot.cause}} {% else %} {{form.cause}} {% endif %}</td>
+            <td colspan="3" class="cbas">{% if is_init_authorised %} {{snapshot.cause}} {% else %} {{form.cause}} {% endif %}</td>
 
             <th class="cbas">Other Cause *</th>
-            <td colspan="3" class="cbas">{% if has_init_authorised %} {{snapshot.other_cause}} {% else %} {{form.other_cause}} {% endif %}</td>
+            <td colspan="3" class="cbas">{% if is_init_authorised %} {{snapshot.other_cause}} {% else %} {{form.other_cause}} {% endif %}</td>
         </tr>
 
         <tr>
             <th class="cbas">Fire Detected</th>
-            <td class="cbas">{% if has_init_authorised %} {{snapshot.fire_detected_date}} {% else %} {{form.fire_detected_date}} {% endif %}</td>
+            <td class="cbas">{% if is_init_authorised %} {{snapshot.fire_detected_date}} {% else %} {{form.fire_detected_date}} {% endif %}</td>
 
             <th class="cbas">Dispatch - P&W</th>
-            <td class="cbas">{% if has_init_authorised %} {{snapshot.dispatch_pw_date}} {% else %} {{form.dispatch_pw_date}} {% endif %}</td>
+            <td class="cbas">{% if is_init_authorised %} {{snapshot.dispatch_pw_date}} {% else %} {{form.dispatch_pw_date}} {% endif %}</td>
 
             <th class="cbas">Dispatch - Aerial</th>
-            <td class="cbas">{% if has_init_authorised %} {{snapshot.dispatch_aerial_date}} {% else %} {{form.dispatch_aerial_date}} {% endif %}</td>
+            <td class="cbas">{% if is_init_authorised %} {{snapshot.dispatch_aerial_date}} {% else %} {{form.dispatch_aerial_date}} {% endif %}</td>
         </tr>
 
   </tbody>
@@ -204,13 +204,13 @@
             <div class="col-sm-3" >
                 <div id="div_id_communications" class="form-group"> 
                     <label for="id_communications" class="control-label nonRequiredField">Communications</label>
-                    <div class="controls ">{% if has_init_authorised %} {{snapshot.communications}} {% else %} {{form.communications}} {% endif %}</div>
+                    <div class="controls ">{% if is_init_authorised %} {{snapshot.communications}} {% else %} {{form.communications}} {% endif %}</div>
                 </div>
             </div>
             <div class="col-sm-3" >
                 <div id="div_id_other_info" class="form-group"> 
                     <label for="id_other_info" class="control-label nonRequiredField">Other Information</label>
-                    <div class="controls ">{% if has_init_authorised %} {{snapshot.other_info}} {% else %} {{form.other_info}} {% endif %}</div>
+                    <div class="controls ">{% if is_init_authorised %} {{snapshot.other_info}} {% else %} {{form.other_info}} {% endif %}</div>
                 </div>
             </div>
 
@@ -219,7 +219,7 @@
                     <label for="id_assistance_req" class="control-label nonRequiredField">Assistance Required</label>
 
                     <div class="controls ">
-                      {% if has_init_authorised %}
+                      {% if is_init_authorised %}
                         {% if snapshot.assistance_req %}<div class="text-left"><i class="icon-ok text-success"></i></div>{% else %}<div class="text-left"><i class="icon-remove text-danger"></i></div>{% endif %}
                       {% else %}
                         {{form.assistance_req}}
@@ -230,7 +230,7 @@
             <div class="col-sm-3" >
                 <div id="div_id_assistance_details" class="form-group"> 
                     <label for="id_assistance_details" class="control-label nonRequiredField">Assistance Details</label>
-                    <div class="controls ">{% if has_init_authorised %} {{snapshot.assistance_details}} {% else %} {{form.assistance_details}} {% endif %}</div>
+                    <div class="controls ">{% if is_init_authorised %} {{snapshot.assistance_details}} {% else %} {{form.assistance_details}} {% endif %}</div>
                 </div>
             </div>
 
@@ -310,10 +310,10 @@
       {% if request.user|can_readonly and not request.user.is_superuser %}
         <input type="submit" value="Save" class="btn btn-primary btn-success" name="_save" title="You do not have 'Update' permissions" disabled />
       {% else %}
-        <input type="submit" value="Save" class="btn btn-primary btn-success" name="_save" {% if has_init_authorised %}title="Initial Report cannot be edited" disabled{% endif %} />
+        <input type="submit" value="Save" class="btn btn-primary btn-success" name="_save" {% if is_init_authorised %}title="Initial Report cannot be edited" disabled{% endif %} />
       {% endif %}
 
-      {% if object.has_init_authorised %} 
+      {% if object.is_init_authorised %} 
         <input type="submit" value="Authorise" class="btn btn-primary btn-success" name="init_authorise" title="Authorised by {{object.init_authorised_by}} on {{object.init_authorised_date|date_fmt}}" disabled/>
       {% else %}
         <input type="submit" value="Authorise" class="btn btn-primary btn-success" name="init_authorise" {% if object.can_authorise %}title="Initial Report cannot be Authorised. Some required fields are missing." disabled{% endif %} />

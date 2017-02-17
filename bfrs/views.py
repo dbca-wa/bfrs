@@ -17,17 +17,18 @@ from bfrs.forms import (ProfileForm, BushfireForm, BushfireCreateForm, BushfireI
         LegalFormSet, PrivateDamageFormSet, PublicDamageFormSet, InjuryFormSet, DamageFormSet, CommentFormSet,
         BushfireFilterForm
     )
-from bfrs.utils import (breadcrumbs_li, calc_coords, save_initial_snapshot,
+from bfrs.utils import (breadcrumbs_li, calc_coords,
         update_activity_fs, update_areas_burnt_fs, update_attending_org_fs,
         update_groundforces_fs, update_aerialforces_fs, update_fire_behaviour_fs,
         update_legal_fs, update_injury_fs, update_damage_fs, update_response_fs,
         update_comment_fs,
-		export_final_csv,
+        export_final_csv, serialize_bushfire, deserialize_bushfire,
     )
 from django.db import IntegrityError, transaction
 from django.contrib import messages
 from django.forms import ValidationError
 from datetime import datetime
+import pytz
 from django.utils.dateparse import parse_duration
 
 import django_filters
@@ -82,7 +83,7 @@ class BushfireFilter(django_filters.FilterSet):
         super(BushfireFilter, self).__init__(*args, **kwargs)
 
         # allows dynamic update of the filter set, on page refresh
-        self.filters['year'].extra['choices'] = [[None, '---------']] + [[i['year'], i['year']] for i in Bushfire.objects.all().values('year').distinct()]
+        self.filters['year'].extra['choices'] = [[None, '---------']] + [[i['year'], i['year']] for i in Bushfire.objects.all().values('year').distinct().order_by('year')]
 
 class ProfileView(LoginRequiredMixin, generic.FormView):
     model = Profile
@@ -130,6 +131,40 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
             if report == 'final':
                 qs = self.get_filterset(self.filterset_class).qs
                 return export_final_csv(self.request, qs)
+
+        if self.request.GET.has_key('authorise'):
+            status_type = self.request.GET.get('authorise')
+            bushfire = Bushfire.objects.get(id=self.request.GET.get('bushfire_id'))
+
+            # Authorise the INITIAL report
+            if status_type == 'initial_auth' and bushfire.report_status==Bushfire.STATUS_INITIAL:
+                bushfire.init_authorised_by = self.request.user
+                bushfire.init_authorised_date = datetime.now(tz=pytz.utc)
+                bushfire.report_status = Bushfire.STATUS_INITIAL_AUTHORISED
+                serialize_bushfire(status_type, bushfire)
+
+            # CREATE the FINAL DRAFT report
+            if status_type == 'final_create' and bushfire.report_status==Bushfire.STATUS_INITIAL_AUTHORISED:
+                bushfire.report_status = Bushfire.STATUS_FINAL_DRAFT
+
+            # Authorise the FINAL report
+            if status_type == 'final_auth' and bushfire.report_status==Bushfire.STATUS_FINAL_DRAFT:
+                bushfire.authorised_by = self.request.user
+                bushfire.authorised_date = datetime.now(tz=pytz.utc)
+                bushfire.report_status = Bushfire.STATUS_FINAL_AUTHORISED
+                serialize_bushfire(status_type, bushfire)
+
+            # CREATE the REVIEWABLE DRAFT report
+            if status_type == 'review_create' and bushfire.report_status==Bushfire.STATUS_FINAL_AUTHORISED:
+                bushfire.report_status = Bushfire.STATUS_REVIEW_DRAFT
+
+            # Authorise the REVIEW DRAFT report
+            if status_type == 'reviewed' and bushfire.report_status==Bushfire.STATUS_REVIEW_DRAFT:
+                bushfire.reviewed_by = self.request.user
+                bushfire.reviewed_date = datetime.now(tz=pytz.utc)
+                bushfire.report_status = Bushfire.STATUS_REVIEWED
+
+            bushfire.save()
 
         return response
 
@@ -205,12 +240,13 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
         self.object.modifier = request.user # 1 #User.objects.all()[0] #request.user
         #calc_coords(self.object)
 
-        if self.request.POST.has_key('init_authorise'):
-            self.object.init_authorised_by = self.request.user
-            self.object.init_authorised_date = datetime.now()
-
-        if self.object.has_init_authorised:
-            save_initial_snapshot(self.object)
+#        if self.request.POST.has_key('init_authorise'):
+#            self.object.init_authorised_by = self.request.user
+#            self.object.init_authorised_date = datetime.now()
+#            self.object.report_status = 2
+#
+#        if self.object.is_init_authorised:
+#            save_initial_snapshot(self.object)
 
         self.object.save()
 
@@ -237,8 +273,8 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
         area_burnt_formset      = AreaBurntFormSet(instance=self.object, prefix='area_burnt_fs')
         context.update({'form': form,
                         'area_burnt_formset': area_burnt_formset,
-                        'has_init_authorised': bushfire.has_init_authorised,
-                        'snapshot': bushfire.snapshot,
+                        'is_init_authorised': bushfire.is_init_authorised,
+                        'snapshot': deserialize_bushfire('initial', bushfire), #bushfire.snapshot,
                         'initial': True,
             })
         return context
@@ -371,8 +407,7 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
                         'injury_formset': injury_formset,
                         'damage_formset': damage_formset,
                         'comment_formset': comment_formset,
-                        'has_init_authorised': self.object.has_init_authorised,
-                        'final': True,
+                        'snapshot': deserialize_bushfire('final', self.object), #bushfire.snapshot,
             })
         return context
 
@@ -430,12 +465,13 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
         self.object.save()
         areas_burnt_updated = update_areas_burnt_fs(self.object, area_burnt_formset)
 
-        if self.request.POST.has_key('init_authorise'):
-            self.object.init_authorised_by = self.request.user
-            self.object.init_authorised_date = datetime.now()
-
-        if self.object.has_init_authorised:
-            save_initial_snapshot(self.object)
+#        if self.request.POST.has_key('init_authorise'):
+#            self.object.init_authorised_by = self.request.user
+#            self.object.init_authorised_date = datetime.now()
+#            self.object.report_status = 2
+#
+#        if self.object.is_init_authorised:
+#            save_initial_snapshot(self.object)
 
         self.object.save()
 

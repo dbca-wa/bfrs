@@ -100,7 +100,6 @@
     </div>
 {% endif %}
 
-
   <form action="" method="post">{% csrf_token %}
 
 <h2>{{form.instance.district}} - {{form.instance.name}}</h2>
@@ -109,53 +108,53 @@
     <tbody>
         <tr>
             <th class="cbas">Region *</th>
-            <td class="cbas">{{form.region}}</td>
+            <td class="cbas">{% if object.is_final_authorised %} {{snapshot.region}} {% else %} {{form.region}} {% endif %}</td>
 
             <th class="cbas">District *</th>
-            <td class="cbas">{{form.district}}</td>
+            <td class="cbas">{% if object.is_final_authorised %} {{snapshot.district}} {% else %} {{form.district}} {% endif %}</td>
         </tr>
 
 
         <tr>
             <th class="cbas">Fire Number *</th>
-            <td class="cbas">{{form.incident_no}}</td>
+            <td class="cbas">{% if object.is_final_authorised %} {{snapshot.incident_no}} {% else %} {{form.incident_no}} {% endif %}</td>
 
             <th class="cbas">Job Code</th>
-            <td class="cbas">{{form.job_code}}</td>
+            <td class="cbas">{% if object.is_final_authorised %} {{snapshot.job_code}} {% else %} {{form.job_code}} {% endif %}</td>
 
             <th class="cbas">DFES Fire number</th>
-            <td class="cbas">{{form.dfes_incident_no}}</td>
+            <td class="cbas">{% if object.is_final_authorised %} {{snapshot.dfes_incident_no}} {% else %} {{form.dfes_incident_no}} {% endif %}</td>
         </tr>
 
 
         <tr>
             <th class="cbas">Name *</th>
-            <td colspan="1" class="cbas">{{form.name}}</td>
+            <td class="cbas">{% if object.is_final_authorised %} {{snapshot.name}} {% else %} {{form.name}} {% endif %}</td>
 
             <th class="cbas">Financial Year *</th>
-            <td class="cbas">{{form.year}}</td>
+            <td class="cbas">{% if object.is_final_authorised %} {{snapshot.year}} {% else %} {{form.year}} {% endif %}</td>
         </tr>
 
         <tr>
             <th class="cbas">Fire Position *</th>
-            <td colspan="4" class="cbas">{{form.fire_position}}</td>
+            <td class="cbas">{% if object.is_final_authorised %} {{snapshot.fire_position}} {% else %} {{form.fire_position}} {% endif %}</td>
         </tr>
 
         <tr>
             <th class="cbas">Field Officer *</th>
-            <td class="cbas">{{form.field_officer}}</td>
+            <td class="cbas">{% if object.is_final_authorised %} {{snapshot.field_officer}} {% else %} {{form.field_officer}} {% endif %}</td>
 
             <th class="cbas">Duty Officer</th>
-            <td class="cbas">{{form.duty_officer}}</td>
+            <td class="cbas">{% if object.is_final_authorised %} {{snapshot.duty_officer}} {% else %} {{form.duty_officer}} {% endif %}</td>
         </tr>
 
-        {% if final_authorised %} 
+        {% if object.is_final_authorised %} 
         <tr>
             <th class="cbas">Authorised By *</th>
-            <td class="cbas">{{form.authorised_by}}</td>
+            <td class="cbas">{% if object.is_final_authorised %} {{snapshot.authorised_by}} {% else %} {{form.authorised_by}} {% endif %}</td>
 
             <th class="cbas">Authorised Date *</th>
-            <td class="cbas">{{form.authorised_date|date_fmt}}</td>
+            <td class="cbas">{% if object.is_final_authorised %} {{snapshot.authorised_date|date_fmt}} {% else %} {{form.authorised_date|date_fmt}} {% endif %}</td>
         </tr>
         {% endif %}
   </tbody>
@@ -165,49 +164,53 @@
     <tbody>
         <tr>
             <th class="cbas">Maximum Fire Level *</th>
-            <td class="cbas">{{form.max_fire_level}}</td>
+            <td class="cbas">{% if object.is_final_authorised %} {{snapshot.max_fire_level}} {% else %} {{form.max_fire_level}} {% endif %}</td>
 
             <th class="cbas">Media Alert Required</th>
-            <td class="cbas">{{form.media_alert_req}} Call PICA on ....</td>
+            <td class="cbas">{% if object.is_final_authorised %} {{snapshot.media_alert_req}} {% else %} {{form.media_alert_req}} {% endif %} Call PICA on ....</td>
 
             <th class="cbas">Investigation Required</th>
-            <td class="cbas">{{form.investigation_req}}</td>
+            <td class="cbas">{% if object.is_final_authorised %} {{snapshot.investigation_req}} {% else %} {{form.investigation_req}} {% endif %}</td>
         </tr>
 
         <tr>
             <th class="cbas">Cause *</th>
-            <td class="cbas">{{form.cause}}</td>
+            <td class="cbas">{% if object.is_final_authorised %} {{snapshot.cause}} {% else %} {{form.cause}} {% endif %}</td>
 
             <th class="cbas">Other Cause *</th>
-            <td colspan="4" class="cbas">{{form.other_cause}}</td>
+            <td class="cbas">{% if object.is_final_authorised %} {{snapshot.other_cause}} {% else %} {{form.other_cause}} {% endif %}</td>
         </tr>
 
         <tr>
             <th class="cbas">Fire Detected</th>
-            <td class="cbas">{{form.fire_detected_date}}</td>
+            <td class="cbas">{% if object.is_final_authorised %} {{snapshot.fire_detected_date}} {% else %} {{form.fire_detected_date}} {% endif %}</td>
 
             <th class="cbas">Dispatch - P&W</th>
-            <td class="cbas">{{form.dispatch_pw_date}}</td>
+            <td class="cbas">{% if object.is_final_authorised %} {{snapshot.dispatch_pw_date}} {% else %} {{form.dispatch_pw_date}} {% endif %}</td>
 
             <th class="cbas">Dispatch - Aerial</th>
-            <td class="cbas">{{form.dispatch_aerial_date}}</td>
+            <td class="cbas">{% if object.is_final_authorised %} {{snapshot.dispatch_aerial_date}} {% else %} {{form.dispatch_aerial_date}} {% endif %}</td>
         </tr>
 
         <tr>
             <th class="cbas">Fire Contained</th>
-            <td class="cbas">{{form.fire_contained_date}}</td>
+            <td class="cbas">{% if object.is_final_authorised %} {{snapshot.fire_contained_date}} {% else %} {{form.fire_contained_date}} {% endif %}</td>
 
             <th class="cbas">Fire Controlled</th>
-            <td class="cbas">{{form.fire_controlled_date}}</td>
+            <td class="cbas">{% if object.is_final_authorised %} {{snapshot.fire_controlled_date}} {% else %} {{form.fire_controlled_date}} {% endif %}</td>
 
             <th class="cbas">Fire Safe</th>
-            <td class="cbas">{{form.fire_safe_date}}</td>
+            <td class="cbas">{% if object.is_final_authorised %} {{snapshot.fire_safe_date}} {% else %} {{form.fire_safe_date}} {% endif %}</td>
         </tr>
 
         <tr>
             <th class="cbas">Estimated Time to Control</th>
 			<td colspan="5" class="cbas">
-				<span>{{form.days}} Days {{form.hours}} Hours</span>
+				{% if object.is_final_authorised %} {{snapshot.fire_safe_date}}
+					<span>{{snapshot.time_to_control}}</span>
+				{% else %}
+					<span>{{form.days}} Days {{form.hours}} Hours</span>
+				{% endif %}
 			</td>
         </tr>
 
@@ -220,26 +223,26 @@
     <tbody>
         <tr>
             <th class="cbas">Initial Attack Agency *</th>
-            <td class="cbas">{{form.first_attack}}</td>
+            <td class="cbas">{% if object.is_final_authorised %} {{snapshot.first_attack}} {% else %} {{form.first_attack}} {% endif %}</td>
 
             <th class="cbas">Other Initial Attack Agency *</th>
-            <td class="cbas">{{form.other_first_attack}}</td>
+            <td class="cbas">{% if object.is_final_authorised %} {{snapshot.other_first_attack}} {% else %} {{form.other_first_attack}} {% endif %}</td>
         </tr>
 
         <tr>
             <th class="cbas">Initial Controlling Agency *</th>
-            <td class="cbas">{{form.initial_control}}</td>
+            <td class="cbas">{% if object.is_final_authorised %} {{snapshot.initial_control}} {% else %} {{form.initial_control}} {% endif %}</td>
 
             <th class="cbas">Other Initial Controlling Agency *</th>
-            <td class="cbas">{{form.other_initial_control}}</td>
+            <td class="cbas">{% if object.is_final_authorised %} {{snapshot.other_initial_control}} {% else %} {{form.other_initial_control}} {% endif %}</td>
         </tr>
 
         <tr>
             <th class="cbas">Final Controlling Agency *</th>
-            <td class="cbas">{{form.final_control}}</td>
+            <td class="cbas">{% if object.is_final_authorised %} {{snapshot.final_control}} {% else %} {{form.final_control}} {% endif %}</td>
 
             <th class="cbas">Other Final Controlling Agency *</th>
-            <td class="cbas">{{form.other_final_control}}</td>
+            <td class="cbas">{% if object.is_final_authorised %} {{snapshot.other_final_control}} {% else %} {{form.other_final_control}} {% endif %}</td>
         </tr>
 
 
