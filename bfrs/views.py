@@ -196,7 +196,7 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
 class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
     model = Bushfire
     form_class = BushfireCreateForm
-    template_name = 'bfrs/create2.html'
+    template_name = 'bfrs/create.html'
 
     def get_success_url(self):
         return reverse("home")
@@ -283,7 +283,7 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
 class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
     model = Bushfire
     form_class = BushfireInitUpdateForm
-    template_name = 'bfrs/create2.html'
+    template_name = 'bfrs/create.html'
 
     def get_success_url(self):
         return reverse("home")
@@ -367,10 +367,10 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
         return context
 
 
-class BushfireUpdateView(LoginRequiredMixin, UpdateView):
+class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
     model = Bushfire
     form_class = BushfireForm
-    template_name = 'bfrs/detail2.html'
+    template_name = 'bfrs/final.html'
 
     def get_initial(self):
         if self.object.time_to_control:
@@ -478,7 +478,7 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
 
 
     def get_context_data(self, **kwargs):
-        context = super(BushfireUpdateView, self).get_context_data(**kwargs)
+        context = super(BushfireFinalUpdateView, self).get_context_data(**kwargs)
 
         form_class = self.get_form_class()
         form = self.get_form(form_class)
@@ -496,6 +496,19 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
                         'comment_formset': comment_formset,
                         'snapshot': deserialize_bushfire('final', self.object), #bushfire.snapshot,
             })
+        return context
+
+class BushfireReviewUpdateView(BushfireFinalUpdateView):
+    model = Bushfire
+    form_class = BushfireForm
+    template_name = 'bfrs/review.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(BushfireReviewUpdateView, self).get_context_data(**kwargs)
+
+#        context.update({
+#            'dummy': True,
+#        })
         return context
 
 

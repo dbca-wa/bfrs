@@ -76,7 +76,7 @@
          {% endif %}
 
          {% if bushfire.report_status >= bushfire.STATUS_REVIEW_DRAFT %}
-            <td><a href="{% url 'bushfire:bushfire_final' bushfire.id %}">{{ bushfire.name }}</td>
+            <td><a href="{% url 'bushfire:bushfire_review' bushfire.id %}">{{ bushfire.name }}</td>
          {% else %}
             <td title="The final report has not yet been authorised">{{ bushfire.name }}</td>
          {% endif %}

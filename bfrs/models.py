@@ -211,7 +211,8 @@ class Bushfire(Audit):
 
     @property
     def is_reviewed(self):
-        return True if self.reviewed_by and self.reviewed_date else False
+        #return True if self.reviewed_by and self.reviewed_date else False
+        return False # no need to lock down Review report
 
     @property
     def can_create_final(self):
