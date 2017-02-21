@@ -11,21 +11,21 @@
             </div>
         </div>
 
+		{% comment %}
         <div class="col-sm-2" > 
             <div id="div_id_arrival_area" class="form-group"> 
-                <label for="id_arrival_area" class="control-label nonRequiredField">Fire Area at arrival</label>
+                <label for="id_arrival_area" class="control-label requiredField">Fire Area at arrival *</label>
                 <div class="controls ">{% if is_init_authorised and initial %} {{snapshot.arrival_area}} {% else %} {{form.arrival_area}} {% endif %}</div>
             </div>
         </div>
 
         <div class="col-sm-2" > 
             <div id="div_id_fuel_type" class="form-group"> 
-                <label for="id_fuel_type" class="control-label nonRequiredField">Fuel Type</label>
+                <label for="id_fuel_type" class="control-label requiredField">Fuel Type *</label>
                 <div class="controls ">{% if is_init_authorised and initial %} {{snapshot.fuel_type}} {% else %} {{form.fuel_type}} {% endif %}</div>
             </div>
         </div>
 
-		{% comment %}
         <div class="col-sm-4" > 
             <div id="div_id_fire_not_found" class="form-group"> 
                 <label for="id_fire_not_found" class="control-label nonRequiredField">Time To Control</label>

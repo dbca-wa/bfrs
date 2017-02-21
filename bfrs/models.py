@@ -119,20 +119,22 @@ class Bushfire(Audit):
     name = models.CharField(max_length=100, verbose_name="Fire Name")
     incident_no = models.PositiveIntegerField(verbose_name="Fire Number")
     year = models.CharField(verbose_name="Financial Year", max_length=9, default=current_finyear())
+
+    potential_fire_level = models.PositiveSmallIntegerField(choices=FIRE_LEVEL_CHOICES)
+    media_alert_req = models.BooleanField(verbose_name="Media Alert Required", default=False)
+    arrival_area = models.DecimalField(verbose_name="Fire Area at Arrival (ha)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)])
+    fuel_type = models.CharField(verbose_name='Fuel Type', max_length=64)
+    cause = models.ForeignKey('Cause')
+    other_cause = models.CharField(verbose_name='Other Cause', max_length=64, null=True, blank=True)
+
     dfes_incident_no = models.PositiveIntegerField(verbose_name="DFES Fire Number", null=True, blank=True)
     job_code = models.PositiveIntegerField(verbose_name="job Code", null=True, blank=True)
-
-
-    # Initial Fire Report
-    potential_fire_level = models.PositiveSmallIntegerField(choices=FIRE_LEVEL_CHOICES, null=True, blank=True)
-    media_alert_req = models.BooleanField(verbose_name="Media Alert Required", default=False)
     fire_position = models.CharField(verbose_name="Position of Fire", max_length=100, null=True, blank=True)
 
     # Point of Origin
     origin_point = models.PointField(null=True, blank=True, editable=False, help_text='Optional.')
     fire_boundary = models.MultiPolygonField(srid=4326, null=True, blank=True, editable=False, help_text='Optional.')
     grid = models.CharField(verbose_name="Lat/Long, MGA, FD Grid", max_length=100, null=True, blank=True)
-    arrival_area = models.DecimalField(verbose_name="Fire Area at Arrival (ha)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
     fire_not_found = models.BooleanField(default=False)
 
 
@@ -143,8 +145,6 @@ class Bushfire(Audit):
     assistance_details = models.CharField(max_length=64, null=True, blank=True)
     communications = models.CharField(verbose_name='Communication', max_length=50, null=True, blank=True)
     other_info = models.CharField(verbose_name='Other Information', max_length=100, null=True, blank=True)
-    cause = models.ForeignKey('Cause', null=True, blank=True)
-    other_cause = models.CharField(verbose_name='Other Cause', max_length=50, null=True, blank=True)
 
     # TODO sperate days and hrs to control?
     #time_to_control = models.DateTimeField(verbose_name='Time to Control', null=True, blank=True)
@@ -157,7 +157,6 @@ class Bushfire(Audit):
     dispatch_pw_date = models.DateTimeField(verbose_name='Dispatch - P&W', null=True, blank=True)
     dispatch_aerial_date = models.DateTimeField(verbose_name='Dispatch - Aerial', null=True, blank=True)
     fire_detected_date = models.DateTimeField(verbose_name='Fire Detected', null=True, blank=True)
-    fuel_type = models.CharField(verbose_name='Fuel Type', max_length=64, null=True, blank=True)
     # we serialise/snapshot the initial and final reports when authorised
     initial_snapshot = models.TextField(null=True, blank=True)
     final_snapshot = models.TextField(null=True, blank=True)

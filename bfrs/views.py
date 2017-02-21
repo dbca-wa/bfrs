@@ -132,6 +132,7 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
                 qs = self.get_filterset(self.filterset_class).qs
                 return export_final_csv(self.request, qs)
 
+        #import ipdb; ipdb.set_trace()
         if self.request.GET.has_key('authorise'):
             status_type = self.request.GET.get('authorise')
             bushfire = Bushfire.objects.get(id=self.request.GET.get('bushfire_id'))
@@ -141,18 +142,19 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
                 bushfire.init_authorised_by = self.request.user
                 bushfire.init_authorised_date = datetime.now(tz=pytz.utc)
                 bushfire.report_status = Bushfire.STATUS_INITIAL_AUTHORISED
-                serialize_bushfire(status_type, bushfire)
+                bushfire.max_fire_level = bushfire.potential_fire_level
+                serialize_bushfire('initial', bushfire)
 
             # CREATE the FINAL DRAFT report
             if status_type == 'final_create' and bushfire.report_status==Bushfire.STATUS_INITIAL_AUTHORISED:
                 bushfire.report_status = Bushfire.STATUS_FINAL_DRAFT
+                serialize_bushfire('final', bushfire)
 
             # Authorise the FINAL report
             if status_type == 'final_auth' and bushfire.report_status==Bushfire.STATUS_FINAL_DRAFT:
                 bushfire.authorised_by = self.request.user
                 bushfire.authorised_date = datetime.now(tz=pytz.utc)
                 bushfire.report_status = Bushfire.STATUS_FINAL_AUTHORISED
-                serialize_bushfire(status_type, bushfire)
 
             # CREATE the REVIEWABLE DRAFT report
             if status_type == 'review_create' and bushfire.report_status==Bushfire.STATUS_FINAL_AUTHORISED:
@@ -239,8 +241,8 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
             area_burnt_formset,
         ):
         self.object = form.save(commit=False)
-        self.object.creator_id = 1 #User.objects.all()[0] #request.user
-        self.object.modifier_id = 1 #User.objects.all()[0] #request.user
+        self.object.creator = request.user #1 #User.objects.all()[0] #request.user
+        self.object.modifier = request.user #1 #User.objects.all()[0] #request.user
         #calc_coords(self.object)
 
         self.object.save()
@@ -361,7 +363,7 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
         context.update({'form': form,
                         'area_burnt_formset': area_burnt_formset,
                         'is_init_authorised': bushfire.is_init_authorised,
-                        'snapshot': deserialize_bushfire('initial', bushfire), #bushfire.snapshot,
+                        'snapshot': deserialize_bushfire('initial', bushfire) if bushfire.initial_snapshot else None,
                         'initial': True,
             })
         return context
@@ -494,7 +496,7 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
                         'injury_formset': injury_formset,
                         'damage_formset': damage_formset,
                         'comment_formset': comment_formset,
-                        'snapshot': deserialize_bushfire('final', self.object), #bushfire.snapshot,
+                        'snapshot': deserialize_bushfire('final', self.object) if self.object.final_snapshot else None, #bushfire.snapshot,
             })
         return context
 
