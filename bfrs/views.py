@@ -193,6 +193,93 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
         return context
 
 
+class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
+    model = Bushfire
+    form_class = BushfireCreateForm
+    template_name = 'bfrs/create2.html'
+
+    def get_success_url(self):
+        return reverse("home")
+
+    def get_initial(self):
+        profile, created = Profile.objects.get_or_create(user=self.request.user)
+        return { 'region': profile.region, 'district': profile.district }
+
+    def post(self, request, *args, **kwargs):
+        #self.object = self.get_object()
+        form_class = self.get_form_class()
+        form = self.get_form(form_class)
+        area_burnt_formset = AreaBurntFormSet(self.request.POST, prefix='area_burnt_fs')
+
+        if form.is_valid() and area_burnt_formset.is_valid():
+            return self.form_valid(request,
+                form,
+                area_burnt_formset,
+            )
+        else:
+            return self.form_invalid(
+                form,
+                area_burnt_formset,
+                kwargs,
+            )
+
+    def form_invalid(self,
+            form,
+            area_burnt_formset,
+            kwargs,
+        ):
+        context = {
+            'form': form,
+            'area_burnt_formset': area_burnt_formset,
+        }
+        return self.render_to_response(context=context)
+
+    def form_valid(self, request,
+            form,
+            area_burnt_formset,
+        ):
+        self.object = form.save(commit=False)
+        self.object.creator_id = 1 #User.objects.all()[0] #request.user
+        self.object.modifier_id = 1 #User.objects.all()[0] #request.user
+        #calc_coords(self.object)
+
+        self.object.save()
+        areas_burnt_updated = update_areas_burnt_fs(self.object, area_burnt_formset)
+
+#        if self.request.POST.has_key('init_authorise'):
+#            self.object.init_authorised_by = self.request.user
+#            self.object.init_authorised_date = datetime.now()
+#            self.object.report_status = 2
+#
+#        if self.object.is_init_authorised:
+#            save_initial_snapshot(self.object)
+
+        self.object.save()
+
+        redirect_referrer =  HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+        if not areas_burnt_updated:
+            messages.error(request, 'There was an error saving Areas Burnt.')
+            return redirect_referrer
+
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_context_data(self, **kwargs):
+        try:
+            context = super(BushfireCreateView, self).get_context_data(**kwargs)
+        except:
+            context = {}
+
+        form_class = self.get_form_class()
+        form = self.get_form(form_class)
+        area_burnt_formset      = AreaBurntFormSet(instance=self.object, prefix='area_burnt_fs')
+        context.update({'form': form,
+                        'area_burnt_formset': area_burnt_formset,
+                        'create': True,
+            })
+        return context
+
+
 class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
     model = Bushfire
     form_class = BushfireInitUpdateForm
@@ -411,92 +498,6 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
             })
         return context
 
-
-class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
-    model = Bushfire
-    form_class = BushfireCreateForm
-    template_name = 'bfrs/create2.html'
-
-    def get_success_url(self):
-        return reverse("home")
-
-    def get_initial(self):
-        profile, created = Profile.objects.get_or_create(user=self.request.user)
-        return { 'region': profile.region, 'district': profile.district }
-
-    def post(self, request, *args, **kwargs):
-        #self.object = self.get_object()
-        form_class = self.get_form_class()
-        form = self.get_form(form_class)
-        area_burnt_formset = AreaBurntFormSet(self.request.POST, prefix='area_burnt_fs')
-
-        if form.is_valid() and area_burnt_formset.is_valid():
-            return self.form_valid(request,
-                form,
-                area_burnt_formset,
-            )
-        else:
-            return self.form_invalid(
-                form,
-                area_burnt_formset,
-                kwargs,
-            )
-
-    def form_invalid(self,
-            form,
-            area_burnt_formset,
-            kwargs,
-        ):
-        context = {
-            'form': form,
-            'area_burnt_formset': area_burnt_formset,
-        }
-        return self.render_to_response(context=context)
-
-    def form_valid(self, request,
-            form,
-            area_burnt_formset,
-        ):
-        self.object = form.save(commit=False)
-        self.object.creator_id = 1 #User.objects.all()[0] #request.user
-        self.object.modifier_id = 1 #User.objects.all()[0] #request.user
-        #calc_coords(self.object)
-
-        self.object.save()
-        areas_burnt_updated = update_areas_burnt_fs(self.object, area_burnt_formset)
-
-#        if self.request.POST.has_key('init_authorise'):
-#            self.object.init_authorised_by = self.request.user
-#            self.object.init_authorised_date = datetime.now()
-#            self.object.report_status = 2
-#
-#        if self.object.is_init_authorised:
-#            save_initial_snapshot(self.object)
-
-        self.object.save()
-
-        redirect_referrer =  HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-
-        if not areas_burnt_updated:
-            messages.error(request, 'There was an error saving Areas Burnt.')
-            return redirect_referrer
-
-        return HttpResponseRedirect(self.get_success_url())
-
-    def get_context_data(self, **kwargs):
-        try:
-            context = super(BushfireCreateView, self).get_context_data(**kwargs)
-        except:
-            context = {}
-
-        form_class = self.get_form_class()
-        form = self.get_form(form_class)
-        area_burnt_formset      = AreaBurntFormSet(instance=self.object, prefix='area_burnt_fs')
-        context.update({'form': form,
-                        'area_burnt_formset': area_burnt_formset,
-                        'create': True,
-            })
-        return context
 
 
 """

@@ -203,15 +203,15 @@ class Bushfire(Audit):
 
     @property
     def is_init_authorised(self):
-        return self.report_status == Bushfire.STATUS_INITIAL_AUTHORISED
+        return True if self.init_authorised_by and self.init_authorised_date else False
 
     @property
     def is_final_authorised(self):
-        return self.report_status == Bushfire.STATUS_FINAL_AUTHORISED
+        return True if self.authorised_by and self.authorised_date else False
 
     @property
     def is_reviewed(self):
-        return self.report_status == Bushfire.STATUS_REVIEWED
+        return True if self.reviewed_by and self.reviewed_date else False
 
     @property
     def can_create_final(self):
@@ -221,7 +221,6 @@ class Bushfire(Audit):
     def can_create_review(self):
         return self.report_status >= Bushfire.STATUS_FINAL_AUTHORISED
 
-
     def user_unicode_patch(self):
         """ overwrite the User model's __unicode__() method """
         if self.first_name or self.last_name:
@@ -230,7 +229,6 @@ class Bushfire(Audit):
     User.__unicode__ = user_unicode_patch
 
     class Meta:
-        #unique_together = ('district', 'incident_no', 'season')
         unique_together = ('year', 'district', 'incident_no')
         default_permissions = ('add', 'change', 'delete', 'view')
 

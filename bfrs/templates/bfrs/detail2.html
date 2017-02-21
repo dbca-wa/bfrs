@@ -108,7 +108,7 @@
     <tbody>
         <tr>
             <th class="cbas">Region *</th>
-            <td class="cbas">{% if object.is_final_authorised %} {{snapshot.region}} {% else %} {{form.region}} {% endif %}</td>
+			<td class="cbas">{% if object.is_reviewed %} {{snapshot.region}} {% elif object.is_final_authorised %} {{snapshot.region}} {% else %} {{form.region}} {% endif %}</td>
 
             <th class="cbas">District *</th>
             <td class="cbas">{% if object.is_final_authorised %} {{snapshot.district}} {% else %} {{form.district}} {% endif %}</td>

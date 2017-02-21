@@ -69,13 +69,13 @@
         <td>{{ bushfire.cause.name }}</td>
         <td><a href="{% url 'bushfire:bushfire_initial' bushfire.id %}">{{ bushfire.name }}</td>
 
-         {% if bushfire.can_create_final %}
+         {% if bushfire.report_status >= bushfire.STATUS_FINAL_DRAFT %}
             <td><a href="{% url 'bushfire:bushfire_final' bushfire.id %}">{{ bushfire.name }}</td>
          {% else %}
             <td title="The initial report has not yet been authorised">{{ bushfire.name }}</td>
          {% endif %}
 
-         {% if bushfire.can_create_review %}
+         {% if bushfire.report_status >= bushfire.STATUS_REVIEW_DRAFT %}
             <td><a href="{% url 'bushfire:bushfire_final' bushfire.id %}">{{ bushfire.name }}</td>
          {% else %}
             <td title="The final report has not yet been authorised">{{ bushfire.name }}</td>
