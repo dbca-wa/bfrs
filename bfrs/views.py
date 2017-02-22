@@ -22,7 +22,8 @@ from bfrs.utils import (breadcrumbs_li, calc_coords,
         update_groundforces_fs, update_aerialforces_fs, update_fire_behaviour_fs,
         update_legal_fs, update_injury_fs, update_damage_fs, update_response_fs,
         update_comment_fs,
-        export_final_csv, serialize_bushfire, deserialize_bushfire,
+        export_final_csv, export_excel,
+        serialize_bushfire, deserialize_bushfire,
     )
 from django.db import IntegrityError, transaction
 from django.contrib import messages
@@ -128,9 +129,15 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
 
         if self.request.GET.has_key('export_to_csv'):
             report = self.request.GET.get('export_to_csv')
-            if report == 'final':
+            if eval(report):
                 qs = self.get_filterset(self.filterset_class).qs
                 return export_final_csv(self.request, qs)
+
+        if self.request.GET.has_key('export_to_excel'):
+            report = self.request.GET.get('export_to_excel')
+            if eval(report):
+                qs = self.get_filterset(self.filterset_class).qs
+                return export_excel(self.request, qs)
 
         #import ipdb; ipdb.set_trace()
         if self.request.GET.has_key('authorise'):
