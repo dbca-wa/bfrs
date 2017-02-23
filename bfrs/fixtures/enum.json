@@ -335,8 +335,8 @@
     "pk": 1,
     "model": "bfrs.agency",
     "fields": {
-        "name": "DEPT OF ENVIRONMENT AND CONSERVATION",
-        "code": "DEC"
+        "name": "DEPT OF PARKS AND WILDLIFE",
+        "code": "PW"
     }
 },
 {
