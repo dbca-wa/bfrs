@@ -71,6 +71,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     #'guardian',
+    'tastypie',
     'smart_selects',
     'django_extensions',
     'debug_toolbar',

@@ -33,8 +33,15 @@ class Profile(models.Model):
         chained_field="region", chained_model_field="region",
         show_all=False, auto_choose=True, blank=True, null=True)
 
+    def to_dict(self):
+        return dict(
+            username=self.user.username,
+            region=self.region.name if self.region else None,
+            district=self.district if self.district else None
+        )
+
     def __str__(self):
-        return 'Profile of user: {} - {} - {}'.format(self.user.username, self.region, self.district)
+		return 'username: {}, region: {}, district: {}'.format(self.user.username, self.region, self.district)
 
     class Meta:
         default_permissions = ('add', 'change', 'view')

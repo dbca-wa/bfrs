@@ -3,6 +3,7 @@ from django.views.generic import TemplateView
 from django.contrib import admin
 import debug_toolbar
 from bfrs import views
+from bfrs.api import v1_api
 
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect
@@ -45,10 +46,11 @@ urlpatterns = [
     url(r'^about/', TemplateView.as_view(template_name='about.html'), name='about'),
     #url(r'profile/(?P<username>[a-zA-Z0-9]+)$', views.profile),
     #url(r'profile/$', views.profile),
+    url(r'^api/', include(v1_api.urls)),
     url(r'profile/$', views.ProfileView.as_view(), name='profile'),
 
     # api
-    #url(r'^api/', include(api_urls, namespace='api')),
+    #url(r'^api/', include(v1_api.urls, namespace='api')),
 
     url(r'^chaining/', include('smart_selects.urls')),
     url(r'^__debug__/', include(debug_toolbar.urls)),
