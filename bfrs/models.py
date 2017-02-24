@@ -31,8 +31,11 @@ class Profile(models.Model):
 
     def to_dict(self):
         return dict(
+            user_id=self.user.id,
             username=self.user.username,
-            region=self.region.name if self.region else None,
+            region_id=self.region.id if self.region else None,
+            region=self.region if self.region else None,
+            district_id=self.district.id if self.district else None,
             district=self.district if self.district else None
         )
 
@@ -57,6 +60,21 @@ class Prescription(models.Model):
 @python_2_unicode_compatible
 class Region(models.Model):
     name = models.CharField(max_length=64, unique=True)
+
+    def to_dict(self):
+        """ Returns a dict of regions with their corresponding districts
+        """
+        qs=District.objects.filter(region_id=self.id)
+        return dict(region=self.name, region_id=self.id, districts=[dict(district=q.name, id=q.id) for q in qs])
+
+#    def to_dict(self):
+#        """ Returns a dict of regions with their corresponding districts
+#        """
+#        l=[]
+#        for r in Region.objects.all():
+#            qs=District.objects.filter(region=r)
+#            l.append( dict(region=r.name, region_id=r.id, districts=[dict(district=q.name, id=q.id) for q in qs]) )
+#        return l
 
     class Meta:
         ordering = ['name']

@@ -4,7 +4,7 @@ from tastypie.authorization import Authorization, ReadOnlyAuthorization
 from tastypie.resources import ModelResource, ALL, ALL_WITH_RELATIONS
 from tastypie.api import Api
 from tastypie import fields
-from bfrs.models import Profile, Bushfire
+from bfrs.models import Profile, Region, District, Bushfire
 from django.contrib.auth.models import User
 
 """
@@ -69,43 +69,46 @@ class APIResource(ModelResource):
         return self.create_response(request, data=list(qs))
 
 
-#class ProfileResource(APIResource):
-#    """ http://localhost:8000/api/v1/profile/?format=json
-#    """
-#
-#    def field_values(self, request, **kwargs):
-#        """
-#        http://localhost:8000/api/v1/profile/fields/user/?format=json
-#        """
-#        # Get a dict of user profiles, together with their region/district
-#        try:
-#            if kwargs['field_name'] != 'user':
-#                return super(ProfileResource, self).field_values(request, **kwargs)
-#
-#            #qs = self._meta.queryset.distinct()
-#            qs = Profile.objects.all().distinct()
-#        except FieldError as e:
-#            return self.create_response(request, data={'error': str(e)}, response_class=HttpBadRequest)
-#        # Prepare return the HttpResponse.
-#        #import ipdb; ipdb.set_trace()
-#        return self.create_response(request, data=([q.to_dict() for q in qs]))
-#
-#
-##    Meta = generate_meta(Profile)
-#    class Meta:
-#        queryset = Profile.objects.all()
-#        authorisation=ReadOnlyAuthorization()
-#        resource_name = 'profile'
-
-
-class UserResource(APIResource):
-    userprofile = fields.ToManyField('ProfileResource', 'profile', full=True, null=False)
-    Meta = generate_meta(User)
-
-
 class ProfileResource(APIResource):
-    user = fields.ToOneField(UserResource,'user')
-    Meta = generate_meta(Profile)
+    class Meta:
+        queryset = Profile.objects.all()
+        resource_name = 'profile'
+        authorization= ReadOnlyAuthorization()
+
+    def prepend_urls(self):
+        return [
+            url(
+                r"^(?P<resource_name>{})/$".format(self._meta.resource_name),
+                self.wrap_view('field_values'), name="api_field_values"),
+        ]
+
+    def field_values(self, request, **kwargs):
+        try:
+            qs = self._meta.queryset.filter(id=request.user.profile.id)
+            data = qs[0].to_dict() if len(qs)>0 else None
+        except FieldError as e:
+            return self.create_response(request, data={'error': str(e)}, response_class=HttpBadRequest)
+        return self.create_response(request, data=data)
+
+class RegionResource(APIResource):
+    class Meta:
+        queryset = Region.objects.all()
+        resource_name = 'region'
+        authorization= ReadOnlyAuthorization()
+
+    def prepend_urls(self):
+        return [
+            url(
+                r"^(?P<resource_name>{})/$".format(self._meta.resource_name),
+                self.wrap_view('field_values'), name="api_field_values"),
+        ]
+
+    def field_values(self, request, **kwargs):
+        try:
+            qs = Region.objects.all().distinct()
+        except FieldError as e:
+            return self.create_response(request, data={'error': str(e)}, response_class=HttpBadRequest)
+        return self.create_response(request, data=([q.to_dict() for q in qs]))
 
 
 class BushfireResource(APIResource):
@@ -118,4 +121,4 @@ class BushfireResource(APIResource):
 v1_api = Api(api_name='v1')
 v1_api.register(BushfireResource())
 v1_api.register(ProfileResource())
-v1_api.register(UserResource())
+v1_api.register(RegionResource())
