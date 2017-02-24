@@ -14,10 +14,6 @@ from django.core.exceptions import (ValidationError)
 import sys
 import json
 
-AUTH_TYPE_CHOICES = (
-    (1, 'Initial'),
-    (2, 'Final'),
-)
 
 def current_finyear():
 	year = datetime.now().year if datetime.now().month>7 else datetime.now().year-1

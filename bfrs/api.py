@@ -69,33 +69,44 @@ class APIResource(ModelResource):
         return self.create_response(request, data=list(qs))
 
 
+#class ProfileResource(APIResource):
+#    """ http://localhost:8000/api/v1/profile/?format=json
+#    """
+#
+#    def field_values(self, request, **kwargs):
+#        """
+#        http://localhost:8000/api/v1/profile/fields/user/?format=json
+#        """
+#        # Get a dict of user profiles, together with their region/district
+#        try:
+#            if kwargs['field_name'] != 'user':
+#                return super(ProfileResource, self).field_values(request, **kwargs)
+#
+#            #qs = self._meta.queryset.distinct()
+#            qs = Profile.objects.all().distinct()
+#        except FieldError as e:
+#            return self.create_response(request, data={'error': str(e)}, response_class=HttpBadRequest)
+#        # Prepare return the HttpResponse.
+#        #import ipdb; ipdb.set_trace()
+#        return self.create_response(request, data=([q.to_dict() for q in qs]))
+#
+#
+##    Meta = generate_meta(Profile)
+#    class Meta:
+#        queryset = Profile.objects.all()
+#        authorisation=ReadOnlyAuthorization()
+#        resource_name = 'profile'
+
+
+class UserResource(APIResource):
+    userprofile = fields.ToManyField('ProfileResource', 'profile', full=True, null=False)
+    Meta = generate_meta(User)
+
+
 class ProfileResource(APIResource):
-    """ http://localhost:8000/api/v1/profile/?format=json
-    """
+    user = fields.ToOneField(UserResource,'user')
+    Meta = generate_meta(Profile)
 
-    def field_values(self, request, **kwargs):
-        """
-        http://localhost:8000/api/v1/profile/fields/user/?format=json
-        """
-        # Get a dict of user profiles, together with their region/district
-        try:
-            if kwargs['field_name'] != 'user':
-                return super(ProfileResource, self).field_values(request, **kwargs)
-
-            #qs = self._meta.queryset.distinct()
-            qs = Profile.objects.all().distinct()
-        except FieldError as e:
-            return self.create_response(request, data={'error': str(e)}, response_class=HttpBadRequest)
-        # Prepare return the HttpResponse.
-        #import ipdb; ipdb.set_trace()
-        return self.create_response(request, data=([q.to_dict() for q in qs]))
-
-
-#    Meta = generate_meta(Profile)
-    class Meta:
-        queryset = Profile.objects.none()
-        authorisation=ReadOnlyAuthorization()
-        resource_name = 'profile'
 
 class BushfireResource(APIResource):
     """ http://localhost:8000/api/v1/bushfire/?format=json
@@ -107,3 +118,4 @@ class BushfireResource(APIResource):
 v1_api = Api(api_name='v1')
 v1_api.register(BushfireResource())
 v1_api.register(ProfileResource())
+v1_api.register(UserResource())
