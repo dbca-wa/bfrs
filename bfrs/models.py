@@ -242,6 +242,11 @@ class Bushfire(Audit):
     def can_create_review(self):
         return self.report_status >= Bushfire.STATUS_FINAL_AUTHORISED
 
+    @property
+    def has_restapi_write_perms(self):
+        # TODO add auth logic
+        return True
+
     def user_unicode_patch(self):
         """ overwrite the User model's __unicode__() method """
         if self.first_name or self.last_name:

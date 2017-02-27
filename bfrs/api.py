@@ -6,6 +6,9 @@ from tastypie.api import Api
 from tastypie import fields
 from bfrs.models import Profile, Region, District, Bushfire
 from django.contrib.auth.models import User
+from django.contrib.gis.geos import Point, Polygon, MultiPolygon, GEOSException
+from tastypie.http import HttpBadRequest
+from tastypie.exceptions import ImmediateHttpResponse
 
 """
 The two helper methods below allow to replace class like:
@@ -113,9 +116,31 @@ class RegionResource(APIResource):
 
 class BushfireResource(APIResource):
     """ http://localhost:8000/api/v1/bushfire/?format=json
+        curl --dump-header - -H "Content-Type: application/json" -X PATCH --data '{"origin_point":[11,-13], "area":12345, "fire_boundary": [[[[115.6528663436689,-31.177579372720448],[116.20507608972612,-31.386375097597803],[116.36167288338414,-31.009993330384674],[115.77374807912422,-30.999004081706918],[115.6528663436689,-31.177579372720448]]]]}' http://localhost:8000/api/v1/bushfire/1/
     """
-    Meta = generate_meta(Bushfire)
+    class Meta:
+        queryset = Bushfire.objects.all()
+        resource_name = 'bushfire'
+        authorization= Authorization()
+        fields = ['id', 'name', 'origin_point', 'fire_boundary', 'final_area']
 
+    def obj_update(self, bundle, request = None, **kwargs):
+        try:
+            if bundle.obj.has_restapi_write_perms:
+                if bundle.data.has_key('area'):
+                    bundle.obj.final_area = float(bundle.data['area'])
+
+                if bundle.data.has_key('origin_point'):
+                    bundle.obj.origin_point = Point(bundle.data['origin_point'])
+
+                if bundle.data.has_key('fire_boundary'):
+                    bundle.obj.fire_boundary = MultiPolygon(Polygon(bundle.data['fire_boundary'][0][0]))
+
+                bundle.obj.save()
+            return bundle
+
+        except Exception as e:
+            raise ImmediateHttpResponse(response=HttpBadRequest(e))
 
 
 v1_api = Api(api_name='v1')
