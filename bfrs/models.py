@@ -119,9 +119,9 @@ class Bushfire(Audit):
     REPORT_STATUS_CHOICES = (
         (STATUS_INITIAL, 'Initial'),
         (STATUS_INITIAL_AUTHORISED, 'Initial Authorised'),
-        (STATUS_FINAL_DRAFT, 'Final Draft'),
+        (STATUS_FINAL_DRAFT, 'Draft Final'),
         (STATUS_FINAL_AUTHORISED, 'Final Authorised'),
-        (STATUS_REVIEW_DRAFT, 'Review Draft'),
+        (STATUS_REVIEW_DRAFT, 'Draft Review'),
         (STATUS_REVIEWED, 'Reviewed'),
     )
 
@@ -198,7 +198,7 @@ class Bushfire(Audit):
     arson_squad_notified = models.BooleanField(verbose_name="Arson Squad Notified", default=False)
     investigation_req = models.BooleanField(verbose_name="Investigation Required", default=False)
     offence_no = models.CharField(verbose_name="Police Offence No.", max_length=10, null=True, blank=True)
-    final_area = models.DecimalField(verbose_name="Final Fire Area (ha)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
+    area = models.DecimalField(verbose_name="Final Fire Area (ha)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
     time_to_control = models.DurationField(verbose_name="Time to Control", null=True, blank=True)
     # Private Damage FS here
     # Public Damage FS here

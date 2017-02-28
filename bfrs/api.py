@@ -1,12 +1,12 @@
 from django.conf.urls import url
 from tastypie.resources import ModelResource, Resource
-from tastypie.authorization import Authorization, ReadOnlyAuthorization
+from tastypie.authorization import Authorization, ReadOnlyAuthorization, DjangoAuthorization
 from tastypie.resources import ModelResource, ALL, ALL_WITH_RELATIONS
 from tastypie.api import Api
 from tastypie import fields
 from bfrs.models import Profile, Region, District, Bushfire
 from django.contrib.auth.models import User
-from django.contrib.gis.geos import Point, Polygon, MultiPolygon, GEOSException
+from django.contrib.gis.geos import Point, GEOSGeometry, Polygon, MultiPolygon, GEOSException
 from tastypie.http import HttpBadRequest
 from tastypie.exceptions import ImmediateHttpResponse
 
@@ -116,31 +116,42 @@ class RegionResource(APIResource):
 
 class BushfireResource(APIResource):
     """ http://localhost:8000/api/v1/bushfire/?format=json
-        curl --dump-header - -H "Content-Type: application/json" -X PATCH --data '{"origin_point":[11,-13], "area":12345, "fire_boundary": [[[[115.6528663436689,-31.177579372720448],[116.20507608972612,-31.386375097597803],[116.36167288338414,-31.009993330384674],[115.77374807912422,-30.999004081706918],[115.6528663436689,-31.177579372720448]]]]}' http://localhost:8000/api/v1/bushfire/1/
+        curl --dump-header - -H "Content-Type: application/json" -X PATCH --data '{"area":12348, "origin_point":"POINT (11 -12.5)", "fire_boundary":"MULTIPOLYGON (((115.6528663436689 -31.17757937272045, 116.2050760897261 -31.3863750975978, 116.3616728833841 -31.00999333038467, 115.7737480791242 -30.99900408170692, 115.6528663436689 -31.17757937272045)))"}' http://localhost:8000/api/v1/bushfire/1/?format=json
+
     """
     class Meta:
         queryset = Bushfire.objects.all()
         resource_name = 'bushfire'
         authorization= Authorization()
-        fields = ['id', 'name', 'origin_point', 'fire_boundary', 'final_area']
+        #allowed_methods = ['get', 'post', 'put', 'delete', 'patch']
+        fields = ['id', 'name', 'origin_point', 'fire_boundary', 'area']
 
-    def obj_update(self, bundle, request = None, **kwargs):
-        try:
-            if bundle.obj.has_restapi_write_perms:
-                if bundle.data.has_key('area'):
-                    bundle.obj.final_area = float(bundle.data['area'])
-
-                if bundle.data.has_key('origin_point'):
-                    bundle.obj.origin_point = Point(bundle.data['origin_point'])
-
-                if bundle.data.has_key('fire_boundary'):
-                    bundle.obj.fire_boundary = MultiPolygon(Polygon(bundle.data['fire_boundary'][0][0]))
-
-                bundle.obj.save()
-            return bundle
-
-        except Exception as e:
-            raise ImmediateHttpResponse(response=HttpBadRequest(e))
+#    def hydrate(self, bundle):
+#        import ipdb; ipdb.set_trace()
+#        request_method=bundle.request.META['REQUEST_METHOD']
+#
+#        if request_method=='PATCH':
+#            try:
+#                if bundle.obj.has_restapi_write_perms:
+#                    if bundle.data.has_key('area'):
+#                        bundle.obj.area = float(bundle.data['area'])
+#
+#                    if bundle.data.has_key('origin_point'):
+#                        #bundle.obj.origin_point = Point(bundle.data['origin_point'])
+#                        bundle.obj.origin_point = GEOSGeometry(bundle.data['origin_point'])
+#
+#                    if bundle.data.has_key('fire_boundary'):
+#                        arr = bundle.data['fire_boundary']
+#                        #bundle.obj.fire_boundary = MultiPolygon(Polygon(arr[0][0]))
+#                        bundle.obj.fire_boundary = GEOSGeometry(bundle.data['fire_boundary'])
+#
+#                    bundle.obj.save()
+#                return bundle
+#
+#            except Exception as e:
+#                raise ImmediateHttpResponse(response=HttpBadRequest(e))
+#
+#        return bundle
 
 
 v1_api = Api(api_name='v1')

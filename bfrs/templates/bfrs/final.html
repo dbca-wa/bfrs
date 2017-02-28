@@ -153,8 +153,8 @@
         </tr>
 
         <tr>
-            <th class="cbas">Fire Area at arrival *</th>
-            <td colspan="2" class="cbas">{% if object.is_final_authorised %} {{snapshot.arrival_area}} {% else %} {{form.arrival_area}} {% endif %}</td>
+            <th class="cbas">Final Fire size (ha) *</th>
+            <td colspan="2" class="cbas">{% if object.is_final_authorised %} {{snapshot.area}} {% else %} {{form.area}} {% endif %}</td>
 
             <th class="cbas">Fuel Type *</th>
             <td colspan="2" class="cbas">{% if object.is_final_authorised %} {{snapshot.fuel_type}} {% else %} {{form.fuel_type}} {% endif %}</td>
