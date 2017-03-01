@@ -116,42 +116,27 @@ class RegionResource(APIResource):
 
 class BushfireResource(APIResource):
     """ http://localhost:8000/api/v1/bushfire/?format=json
-        curl --dump-header - -H "Content-Type: application/json" -X PATCH --data '{"area":12348, "origin_point":"POINT (11 -12.5)", "fire_boundary":"MULTIPOLYGON (((115.6528663436689 -31.17757937272045, 116.2050760897261 -31.3863750975978, 116.3616728833841 -31.00999333038467, 115.7737480791242 -30.99900408170692, 115.6528663436689 -31.17757937272045)))"}' http://localhost:8000/api/v1/bushfire/1/?format=json
-
+        curl --dump-header - -H "Content-Type: application/json" -X PATCH --data '{"origin_point":[11,-12], "area":12347, "fire_boundary": [[[[115.6528663436689,-31.177579372720448],[116.20507608972612,-31.386375097597803],[116.36167288338414,-31.009993330384674],[115.77374807912422,-30.999004081706918],[115.6528663436689,-31.177579372720448]]]]}' http://localhost:8000/api/v1/bushfire/1/?format=json
     """
     class Meta:
         queryset = Bushfire.objects.all()
         resource_name = 'bushfire'
         authorization= Authorization()
-        #allowed_methods = ['get', 'post', 'put', 'delete', 'patch']
         fields = ['id', 'name', 'origin_point', 'fire_boundary', 'area']
 
-#    def hydrate(self, bundle):
-#        import ipdb; ipdb.set_trace()
-#        request_method=bundle.request.META['REQUEST_METHOD']
-#
-#        if request_method=='PATCH':
-#            try:
-#                if bundle.obj.has_restapi_write_perms:
-#                    if bundle.data.has_key('area'):
-#                        bundle.obj.area = float(bundle.data['area'])
-#
-#                    if bundle.data.has_key('origin_point'):
-#                        #bundle.obj.origin_point = Point(bundle.data['origin_point'])
-#                        bundle.obj.origin_point = GEOSGeometry(bundle.data['origin_point'])
-#
-#                    if bundle.data.has_key('fire_boundary'):
-#                        arr = bundle.data['fire_boundary']
-#                        #bundle.obj.fire_boundary = MultiPolygon(Polygon(arr[0][0]))
-#                        bundle.obj.fire_boundary = GEOSGeometry(bundle.data['fire_boundary'])
-#
-#                    bundle.obj.save()
-#                return bundle
-#
-#            except Exception as e:
-#                raise ImmediateHttpResponse(response=HttpBadRequest(e))
-#
-#        return bundle
+    def hydrate_origin_point(self, bundle):
+        """
+        Converts the json string format to the one required by tastypie's full_hydrate() method
+        [11,-12] --> POINT (11 -12)
+        """
+        if isinstance(bundle.data['origin_point'], list):
+            bundle.data['origin_point'] = Point(bundle.data['origin_point']).__str__()
+        return bundle
+
+    def hydrate_fire_boundary(self, bundle):
+        if isinstance(bundle.data['fire_boundary'], list):
+            bundle.data['fire_boundary'] = MultiPolygon(Polygon(bundle.data['fire_boundary'][0][0])).__str__()
+        return bundle
 
 
 v1_api = Api(api_name='v1')
