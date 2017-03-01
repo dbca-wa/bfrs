@@ -122,12 +122,18 @@ class BushfireResource(APIResource):
         queryset = Bushfire.objects.all()
         resource_name = 'bushfire'
         authorization= Authorization()
-        fields = ['id', 'name', 'origin_point', 'fire_boundary', 'area']
+        fields = ['origin_point', 'fire_boundary', 'area']
+
+    def post_detail(self, request, **kwargs):
+        """ Overriding the POST request to PATCH instead
+            POST creates new object, we want to update existing object
+        """
+        return self.patch_detail(request, **kwargs)
 
     def hydrate_origin_point(self, bundle):
         """
         Converts the json string format to the one required by tastypie's full_hydrate() method
-        [11,-12] --> POINT (11 -12)
+        converts the string: [11,-12] --> POINT (11 -12)
         """
         if isinstance(bundle.data['origin_point'], list):
             bundle.data['origin_point'] = Point(bundle.data['origin_point']).__str__()
