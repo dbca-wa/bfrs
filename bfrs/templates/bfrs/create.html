@@ -181,7 +181,8 @@
 
         <tr>
             <th class="cbas" style="font-weight:normal;">Assistance required</th>
-            <td colspan="5" class="cbas">{% if is_init_authorised %} {{snapshot.assistance_req}} {% else %} {{form.assistance_req}} {% endif %}</td>
+            <td colspan="5" class="cbas">{% if is_init_authorised %} {{snapshot.assistance_req}} {% else %} {{form.assistance_req}} {% endif %}
+            <span style="margin:20;">Details {% if is_init_authorised %} {{snapshot.assistance_details}} {% else %} {{form.assistance_details}} {% endif %}</span></td>
         </tr>
 
         <tr>
@@ -218,6 +219,34 @@
 
   </tbody>
 </table>
+
+
+<div style="float: left">
+  <table class="table table-bordered table-striped table-condensed">
+    <tbody>
+        <tr>
+            <th class="cbas">Deliberate</th>
+            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.dispatch_pw}} {% else %} {{form.dispatch_pw}} {% endif %}</td>
+
+            <th class="cbas">Accidental<br>recreation</th>
+            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.dispatch_pw}} {% else %} {{form.dispatch_pw}} {% endif %}</td>
+        </tr>
+    </tbody>
+  </table>
+</div>
+<div style="float: left">
+  <table class="table table-bordered table-striped table-condensed">
+    <tbody>
+        <tr>
+            <th class="cbas">Deliberate</th>
+            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.dispatch_pw}} {% else %} {{form.dispatch_pw}} {% endif %}</td>
+
+            <th class="cbas">Accidental<br>recreation</th>
+            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.dispatch_pw}} {% else %} {{form.dispatch_pw}} {% endif %}</td>
+        </tr>
+    </tbody>
+  </table>
+</div>
 
 <table class="table table-bordered table-striped table-condensed">
   <tbody>
