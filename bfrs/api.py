@@ -125,8 +125,9 @@ class BushfireResource(APIResource):
         fields = ['origin_point', 'fire_boundary', 'area']
 
     def post_detail(self, request, **kwargs):
-        """ Overriding the POST request to PATCH instead
-            POST creates new object, we want to update existing object
+        """ Overriding the POST request to PATCH request instead
+            POST creates new object, whereas we want to update an existing object
+            (Must POST because PATCH currently not implemented in SSO - cookie is not sent with PATCH)
         """
         return self.patch_detail(request, **kwargs)
 

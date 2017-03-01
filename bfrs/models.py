@@ -247,6 +247,11 @@ class Bushfire(Audit):
         # TODO add auth logic
         return True
 
+    @property
+    def origin_coords(self):
+        return 'Lat/Lon {}'.format(self.origin_point.get_coords()) if self.origin_point else None
+
+
     def user_unicode_patch(self):
         """ overwrite the User model's __unicode__() method """
         if self.first_name or self.last_name:

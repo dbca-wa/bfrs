@@ -84,10 +84,6 @@
 <table class="table table-bordered table-striped table-condensed">
     <tbody>
         <tr>
-          <th colspan="6" style="background: black; color: white; text-align: center; font-size: 16px; padding: 12px;" > PARKS AND WILDLIFE FIRE REPORT FORM</th>
-        </tr>
-
-        <tr>
             <th class="cbas">Region *</th>
             <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.region}} {% else %} {{form.region}} {% endif %}</td>
 
@@ -96,106 +92,24 @@
         </tr>
 
         <tr>
-            <th class="cbas">P&W Fire no. *</th>
+            <th class="cbas">Fire Number *</th>
             <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.incident_no}} {% else %} {{form.incident_no}} {% endif %}</td>
-
-            <th class="cbas">Date and time fire detected *</th>
-            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.fire_detected_date}} {% else %} {{form.fire_detected_date}} {% endif %}</td>
-        </tr>
-
-
-        <tr>
-            <th class="cbas">Job code *</th>
-            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.job_code}} {% else %} {{form.job_code}} {% endif %}</td>
-
-            <th class="cbas" style="font-weight:normal;">DFES Incident no.</th>
-            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.dfes_incident_no}} {% else %} {{form.dfes_incident_no}} {% endif %}</td>
-        </tr>
-
-
-        <tr>
-            <th class="cbas">Fire name *</th>
-            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.name}} {% else %} {{form.name}} {% endif %}</td>
 
             <th class="cbas">Financial Year *</th>
             <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.year}} {% else %} {{form.year}} {% endif %}</td>
 
         </tr>
-  </tbody>
-</table>
-
-
-<table class="table table-bordered table-striped table-condensed">
-  <tbody>
-        <tr>
-          <th colspan="6" style="background: black; color: white; text-align: left; font-size: 16px; padding: 12px;" > INITIAL FIRE REPORT</th>
-        </tr>
 
         <tr>
-            <th class="cbas" style="font-weight:normal;">P&W Resource dispatched<br><br>Date and time of dispatch</th>
-            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.dispatch_pw}} {% else %} {{form.dispatch_pw}} {% endif %}<br>
-            {% if is_init_authorised %} {{snapshot.dispatch_pw_date}} {% else %} {{form.dispatch_pw_date}} {% endif %}</td>
+            <th class="cbas">Name *</th>
+            <td colspan="4" class="cbas">{% if is_init_authorised %} {{snapshot.name}} {% else %} {{form.name}} {% endif %}</td>
 
-            <th class="cbas" style="font-weight:normal;">Aerial support dispatched<br><br>Date and time of dispatch</th>
-            <td clospan="2" class="cbas">{% if is_init_authorised %} {{snapshot.dispatch_aerial}} {% else %} {{form.dispatch_aerial}} {% endif %}<br>
-            {% if is_init_authorised %} {{snapshot.dispatch_aerial_date}} {% else %} {{form.dispatch_aerial_date}} {% endif %}</td>
         </tr>
 
         <tr>
             <th class="cbas">Probable Fire Level *</th>
             <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.potential_fire_level}} {% else %} {{form.potential_fire_level}} {% endif %}</td>
 
-            <th class="cbas">Investigation required *</th>
-            <td clospan="2" class="cbas">{% if is_init_authorised %} {{snapshot.dispatch_aerial}} {% else %} {{form.dispatch_aerial}} {% endif %}</td>
-        </tr>
-
-        <tr>
-            <th class="cbas" style="font-weight:normal;">Position of fire<br>(street address, or km from landmark/suburb)</th>
-            <td colspan="5" class="cbas">{% if is_init_authorised %} {{snapshot.fire_position}} {% else %} {{form.fire_position}} {% endif %}</td>
-        </tr>
-
-        <tr>
-            <th class="cbas" style="font-weight:normal;">Point of origin</th>
-            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.origin_coords}} {% else %} {{object.origin_coords}} {% endif %}</td>
-
-            <th class="cbas" style="font-weight:normal;">Area of fire at arrival (ha)</th>
-            <td clospan="2" class="cbas">{% if is_init_authorised %} {{snapshot.area}} {% else %} {{object.area}} {% endif %}<br>
-            {% if is_init_authorised %} {{snapshot.fire_not_found}} {% else %} {{form.fire_not_found}} {% endif %}Fire not found</td>
-        </tr>
-
-        <tr>
-            <th class="cbas">Fuel and fire behaviour *</th>
-            <td colspan="5" class="cbas">{% if is_init_authorised %} {{snapshot.fuel_type}} {% else %} {{form.fuel_type}} {% endif %}</td>
-        </tr>
-
-        <tr>
-            <th class="cbas" style="font-weight:normal;">Estimated Time to Control</th>
-			<td colspan="5" class="cbas">
-				{% if object.is_init_authorised %} {{snapshot.fire_safe_date}}
-					<span>{{snapshot.time_to_control}}</span>
-				{% else %}
-					<span>{{form.days}} Days {{form.hours}} Hours</span>
-				{% endif %}
-			</td>
-        </tr>
-
-        <tr>
-            <th class="cbas" style="font-weight:normal;">Assistance required</th>
-            <td colspan="5" class="cbas">{% if is_init_authorised %} {{snapshot.assistance_req}} {% else %} {{form.assistance_req}} {% endif %}</td>
-        </tr>
-
-        <tr>
-            <th class="cbas" style="font-weight:normal;">Communications</th>
-            <td colspan="5" class="cbas">{% if is_init_authorised %} {{snapshot.communications}} {% else %} {{form.communications}} {% endif %}</td>
-        </tr>
-
-        <tr>
-            <th class="cbas" style="font-weight:normal;">Other information<br>(include Burn ID if cause is escape)</th>
-            <td colspan="5" class="cbas">{% if is_init_authorised %} {{snapshot.other_info}} {% else %} {{form.other_info}} {% endif %}</td>
-        </tr>
-
-
-        <tr>
             <th class="cbas">Media Alert Required</th>
             <td colspan="2" class="cbas">
               {% if is_init_authorised %}
@@ -215,6 +129,14 @@
             <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.other_cause}} {% else %} {{form.other_cause}} {% endif %}</td>
         </tr>
 
+        <tr>
+            <th class="cbas">Fire Area at arrival *</th>
+            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.arrival_area}} {% else %} {{form.arrival_area}} {% endif %}</td>
+
+            <th class="cbas">Fuel Type *</th>
+            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.fuel_type}} {% else %} {{form.fuel_type}} {% endif %}</td>
+        </tr>
+
 
   </tbody>
 </table>
@@ -223,6 +145,16 @@
   <tbody>
 
         <tr>
+            <th class="cbas" style="font-weight:normal;">Job Code</th>
+            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.job_code}} {% else %} {{form.job_code}} {% endif %}</td>
+
+            <th class="cbas" style="font-weight:normal;">DFES Fire Number</th>
+            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.dfes_incident_no}} {% else %} {{form.dfes_incident_no}} {% endif %}</td>
+        </tr>
+
+        <tr>
+            <th class="cbas" style="font-weight:normal;">Dispatch - P&W</th>
+            <td class="cbas">{% if is_init_authorised %} {{snapshot.dispatch_pw_date}} {% else %} {{form.dispatch_pw_date}} {% endif %}</td>
 
             <th class="cbas" style="font-weight:normal;">Field Officer</th>
             <td class="cbas">{% if is_init_authorised %} {{snapshot.field_officer}} {% else %} {{form.field_officer}} {% endif %}</td>
@@ -232,6 +164,13 @@
         </tr>
 
         <tr>
+            <th class="cbas" style="font-weight:normal;">Fire Position</th>
+            <td colspan="5" class="cbas">{% if is_init_authorised %} {{snapshot.fire_position}} {% else %} {{form.fire_position}} {% endif %}</td>
+        </tr>
+
+        <tr>
+            <th class="cbas" style="font-weight:normal;">Fire Detected</th>
+            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.fire_detected_date}} {% else %} {{form.fire_detected_date}} {% endif %}</td>
 
             <th class="cbas" style="font-weight:normal;">Dispatch - Aerial</th>
             <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.dispatch_aerial_date}} {% else %} {{form.dispatch_aerial_date}} {% endif %}</td>
