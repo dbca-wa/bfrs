@@ -150,7 +150,19 @@
         </tr>
 
         <tr>
-            <th class="cbas" style="font-weight:normal;">Position of fire<br>(street address, or km from landmark/suburb)</th>
+            <th class="cbas">Media Alert Required</th>
+            <td colspan="5" class="cbas">
+              {% if is_init_authorised %}
+			  {% if snapshot.media_alert_req %}<div class="text-center"><i class="icon-ok text-success"></i></div>{% else %}<div class="text-center"><i class="icon-remove text-danger"></i></div>{% endif %}<span id="id_pica">Call PICA on ....</span>
+              {% else %}
+			  {{form.media_alert_req}} <span id="id_pica">Call PICA on ....</span>
+              {% endif %}
+            </td>
+
+        </tr>
+
+        <tr>
+            <th width="25%" class="cbas" style="font-weight:normal;">Position of fire<br>(street address, or km from landmark/suburb)</th>
             <td colspan="5" class="cbas">{% if is_init_authorised %} {{snapshot.fire_position}} {% else %} {{form.fire_position}} {% endif %}</td>
         </tr>
 
@@ -195,75 +207,34 @@
             <td colspan="5" class="cbas">{% if is_init_authorised %} {{snapshot.other_info}} {% else %} {{form.other_info}} {% endif %}</td>
         </tr>
 
-
         <tr>
-            <th class="cbas">Media Alert Required</th>
-            <td colspan="2" class="cbas">
-              {% if is_init_authorised %}
-			  {% if snapshot.media_alert_req %}<div class="text-center"><i class="icon-ok text-success"></i></div>{% else %}<div class="text-center"><i class="icon-remove text-danger"></i></div>{% endif %}<p>Call PICA on ....</p>
-              {% else %}
-			  {{form.media_alert_req}} Call PICA on ....
-              {% endif %}
-            </td>
-
-        </tr>
-
-        <tr>
-            <th class="cbas">Cause *</th>
-            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.cause}} {% else %} {{form.cause}} {% endif %}</td>
-
+            <th class="cbas">Fire Cause *</th>
+			<td colspan="2" class="cbas">
+				{% if is_init_authorised %} {{snapshot.cause_state}} {% else %} {{form.cause_state}} {% endif %}<br>
+				{% if is_init_authorised %} {{snapshot.cause}} {% else %} {{form.cause}} {% endif %}
+			</td>
             <th class="cbas">Other Cause *</th>
-            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.other_cause}} {% else %} {{form.other_cause}} {% endif %}</td>
+			<td colspan="1" class="cbas">
+				{% if is_init_authorised %} {{snapshot.other_cause}} {% else %} {{form.other_cause}} {% endif %}
+			</td>
+
         </tr>
 
-
-  </tbody>
-</table>
-
-
-<div style="float: left">
-  <table class="table table-bordered table-striped table-condensed">
-    <tbody>
         <tr>
-            <th class="cbas">Deliberate</th>
-            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.dispatch_pw}} {% else %} {{form.dispatch_pw}} {% endif %}</td>
+            <th class="cbas">Tenure of ignition point*</th>
+            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.tenure}} {% else %} {{form.tenure}} {% endif %}</td>
 
-            <th class="cbas">Accidental<br>recreation</th>
-            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.dispatch_pw}} {% else %} {{form.dispatch_pw}} {% endif %}</td>
+            <th class="cbas">Other Tenure *</th>
+            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.other_tenure}} {% else %} {{form.other_tenure}} {% endif %}</td>
         </tr>
-    </tbody>
-  </table>
-</div>
-<div style="float: left">
-  <table class="table table-bordered table-striped table-condensed">
-    <tbody>
-        <tr>
-            <th class="cbas">Deliberate</th>
-            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.dispatch_pw}} {% else %} {{form.dispatch_pw}} {% endif %}</td>
-
-            <th class="cbas">Accidental<br>recreation</th>
-            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.dispatch_pw}} {% else %} {{form.dispatch_pw}} {% endif %}</td>
-        </tr>
-    </tbody>
-  </table>
-</div>
-
-<table class="table table-bordered table-striped table-condensed">
-  <tbody>
 
         <tr>
 
             <th class="cbas" style="font-weight:normal;">Field Officer</th>
-            <td class="cbas">{% if is_init_authorised %} {{snapshot.field_officer}} {% else %} {{form.field_officer}} {% endif %}</td>
+            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.field_officer}} {% else %} {{form.field_officer}} {% endif %}</td>
 
             <th class="cbas" style="font-weight:normal;">Duty Officer</th>
-            <td class="cbas">{% if is_init_authorised %} {{snapshot.duty_officer}} {% else %} {{form.duty_officer}} {% endif %}</td>
-        </tr>
-
-        <tr>
-
-            <th class="cbas" style="font-weight:normal;">Dispatch - Aerial</th>
-            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.dispatch_aerial_date}} {% else %} {{form.dispatch_aerial_date}} {% endif %}</td>
+            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.duty_officer}} {% else %} {{form.duty_officer}} {% endif %}</td>
         </tr>
 
         {% if is_init_authorised %} 
@@ -275,136 +246,11 @@
             <td colspan="2" class="cbas">{{object.init_authorised_date|date_fmt}}</td>
         </tr>
         {% endif %}
+
   </tbody>
 </table>
 
 
-
-{% include "bfrs/origin2.html" %}
-{% include "bfrs/tenure_veg_fs.html" %}
-
-<div class="accordion-expand-holder">
-    <button type="button" class="open-all"><i class="icon-plus icon-white"></i> Expand All</button>
-    <button type="button" class="close-all" style="display: none;"><i class="icon-minus icon-white"></i> Collapse All</button>
-</div>
-<br>
-
-<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
-
-  <div class="panel-default">
-    <div class="panel-heading" role="tab" id="pn_other_info">
-      <h4 class="panel-title">
-        <a role="button" data-toggle="collapse" data-parent="#accordion" href="#other_info" aria-expanded="true" aria-controls="other_info">
-          Add Other Information
-        </a>
-      </h4>
-    </div>
-    <div id="other_info" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pn_other_info">
-      <div class="panel-body">
-
-        <tr>
-          <td class="cbas">
-            <div class="col-sm-3" >
-                <div id="div_id_communications" class="form-group"> 
-                    <label for="id_communications" class="control-label nonRequiredField">Communications</label>
-                    <div class="controls ">{% if is_init_authorised %} {{snapshot.communications}} {% else %} {{form.communications}} {% endif %}</div>
-                </div>
-            </div>
-            <div class="col-sm-3" >
-                <div id="div_id_other_info" class="form-group"> 
-                    <label for="id_other_info" class="control-label nonRequiredField">Other Information</label>
-                    <div class="controls ">{% if is_init_authorised %} {{snapshot.other_info}} {% else %} {{form.other_info}} {% endif %}</div>
-                </div>
-            </div>
-
-            <div class="col-sm-3" >
-                <div id="div_id_assistance_req" class="form-group"> 
-                    <label for="id_assistance_req" class="control-label nonRequiredField">Assistance Required</label>
-
-                    <div class="controls ">
-                      {% if is_init_authorised %}
-                        {% if snapshot.assistance_req %}<div class="text-left"><i class="icon-ok text-success"></i></div>{% else %}<div class="text-left"><i class="icon-remove text-danger"></i></div>{% endif %}
-                      {% else %}
-                        {{form.assistance_req}}
-                      {% endif %}
-                    </div>
-                </div>
-            </div>
-            <div class="col-sm-3" >
-                <div id="div_id_assistance_details" class="form-group"> 
-                    <label for="id_assistance_details" class="control-label nonRequiredField">Assistance Details</label>
-                    <div class="controls ">{% if is_init_authorised %} {{snapshot.assistance_details}} {% else %} {{form.assistance_details}} {% endif %}</div>
-                </div>
-            </div>
-
-          </td>
-        </tr>
-
-      </div>
-    </div>
-  </div>
-
-</div>
-
-
-{% comment %}
-<div class="accordion-expand-holder">
-    <button type="button" class="open-all"><i class="icon-plus icon-white"></i> Expand All</button>
-    <button type="button" class="close-all" style="display: none;"><i class="icon-minus icon-white"></i> Collapse All</button>
-</div>
-<br>
-
-<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
-
-  <div class="panel-default">
-    <div class="panel-heading" role="tab" id="pn_origin">
-      <h4 class="panel-title">
-        <a role="button" data-toggle="collapse" data-parent="#accordion" href="#origin" aria-expanded="true" aria-controls="origin">
-          Add Location
-        </a>
-      </h4>
-    </div>
-    <div id="origin" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pn_origin">
-      <div class="panel-body">
-        {% include "bfrs/location.html" %}
-      </div>
-    </div>
-  </div>
-
-  <div class="panel-default">
-    <div class="panel-heading" role="tab" id="pn_forces_attending">
-      <h4 class="panel-title">
-          <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#forces_attending" aria-expanded="true" aria-controls="forces_attending">
-          Add Forces in Attendance
-        </a>
-      </h4>
-    </div>
-    <div id="forces_attending" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pn_forces_attending">
-      <div class="panel-body">
-        {% include "bfrs/forces_attending_fs.html" %}
-      </div>
-    </div>
-  </div>
-
-
-  <div class="panel-default">
-    <div class="panel-heading" role="tab" id="pn_initial_comment">
-      <h4 class="panel-title">
-        <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#initial_comment" aria-expanded="true" aria-controls="initial_comment">
-          Add Operation Details
-        </a>
-      </h4>
-    </div>
-    <div id="initial_comment" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pn_initial_comment">
-      <div class="panel-body">
-        {% include "bfrs/initial_comment.html" %}
-      </div>
-    </div>
-  </div>
-
-</div>
-
-{% endcomment %}
 
 <div class="navbar navbar-fixed-bottom">
   <div class="navbar-inner">

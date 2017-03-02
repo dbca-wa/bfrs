@@ -54,7 +54,7 @@
     "pk": 1,
     "model": "bfrs.cause",
     "fields": {
-        "name": "DELIBERATE"
+        "name": "Deliberate"
 
     }
 },
@@ -62,56 +62,49 @@
     "pk": 2,
     "model": "bfrs.cause",
     "fields": {
-        "name": "ESCAPE FROM DEC PRESCRIBED BURN"
+        "name": "Escape P&W burning"
     }
 },
 {
     "pk": 3,
     "model": "bfrs.cause",
     "fields": {
-        "name": "ESCAPE FROM OTHER BURNING OFF"
+        "name": "Escape other burning"
     }
 },
 {
     "pk": 4,
     "model": "bfrs.cause",
     "fields": {
-        "name": "ACCIDENTAL BY TIMBER INDUSTRY"
+        "name": "Accidental industry"
     }
 },
 {
     "pk": 5,
     "model": "bfrs.cause",
     "fields": {
-        "name": "ACCIDENTAL BY OTHER INDUSTRY"
+        "name": "Accidental recreation"
     }
 },
 {
     "pk": 6,
     "model": "bfrs.cause",
     "fields": {
-        "name": "ACCIDENTAL BY RECREATIONAL FOREST USERS"
+        "name": "Lightning"
     }
 },
 {
     "pk": 7,
     "model": "bfrs.cause",
     "fields": {
-        "name": "LIGHTNING"
+        "name": "Unknown"
     }
 },
 {
     "pk": 8,
     "model": "bfrs.cause",
     "fields": {
-        "name": "UNKNOWN"
-    }
-},
-{
-    "pk": 9,
-    "model": "bfrs.cause",
-    "fields": {
-        "name": "OTHER"
+        "name": "Other (specify)"
     }
 },
 

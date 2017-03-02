@@ -269,6 +269,7 @@ class BushfireInitUpdateForm(forms.ModelForm):
     dispatch_aerial = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
     potential_fire_level = forms.ChoiceField(choices=Bushfire.FIRE_LEVEL_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
     investigation_req = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
+    cause_state = forms.ChoiceField(choices=Bushfire.CAUSE_STATE_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
     class Meta:
         model = Bushfire
         fields = ('region', 'district', 'incident_no', 'job_code', 'dfes_incident_no',
@@ -282,7 +283,7 @@ class BushfireInitUpdateForm(forms.ModelForm):
 #                  'fd_letter', 'fd_number', 'fd_tenths',
 #                  'source','cause', 'arson_squad_notified', 'prescription', 'offence_no',
                   'assistance_req', 'assistance_details', 'communications', 'other_info',
-                  'cause', 'other_cause',
+                  'cause', 'cause_state', 'other_cause', 'tenure', 'other_tenure',
                   'days','hours',
                   'dispatch_pw', 'dispatch_aerial',
                  )

@@ -50,7 +50,7 @@ class BushfireFilter(django_filters.FilterSet):
         DISTRICT_CHOICES.append([district.id, district.name])
 
     CAUSE_CHOICES = []
-    for cause in Cause.objects.distinct('name'):
+    for cause in Cause.objects.all():
         CAUSE_CHOICES.append([cause.id, cause.name])
 
     region = django_filters.ChoiceFilter(choices=REGION_CHOICES, label='Region')

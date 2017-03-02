@@ -130,6 +130,10 @@ class Bushfire(Audit):
         (2, 2),
         (3, 3),
     )
+    CAUSE_STATE_CHOICES = (
+        (1, 'Known'),
+        (2, 'Possible'),
+    )
 
     # Common Fields
     region = models.ForeignKey(Region)
@@ -146,7 +150,10 @@ class Bushfire(Audit):
     arrival_area = models.DecimalField(verbose_name="Fire Area at Arrival (ha)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)])
     fuel_type = models.CharField(verbose_name='Fuel Type', max_length=64)
     cause = models.ForeignKey('Cause')
+    cause_state = models.PositiveSmallIntegerField(choices=CAUSE_STATE_CHOICES)
     other_cause = models.CharField(verbose_name='Other Cause', max_length=64, null=True, blank=True)
+    tenure = models.ForeignKey('Tenure')
+    other_tenure = models.CharField(verbose_name='Other Tenure', max_length=64, null=True, blank=True)
 
     dfes_incident_no = models.PositiveIntegerField(verbose_name="DFES Fire Number", null=True, blank=True)
     job_code = models.PositiveIntegerField(verbose_name="job Code", null=True, blank=True)
@@ -276,7 +283,7 @@ class Tenure(models.Model):
     name = models.CharField(max_length=200)
 
     class Meta:
-        ordering = ['name']
+        ordering = ['id']
         default_permissions = ('add', 'change', 'delete', 'view')
 
     def __str__(self):
@@ -312,7 +319,7 @@ class Cause(models.Model):
     name = models.CharField(max_length=50)
 
     class Meta:
-        ordering = ['name']
+        ordering = ['id']
         default_permissions = ('add', 'change', 'delete', 'view')
 
     def __str__(self):

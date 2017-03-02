@@ -292,140 +292,56 @@
     "pk": 1,
     "model": "bfrs.tenure",
     "fields": {
-        "name": "5(1)(g) Reserve"
+        "name": "National Park"
     }
 },
 {
     "pk": 2,
     "model": "bfrs.tenure",
     "fields": {
-        "name": "5(1)(h) Reserve"
+        "name": "Nature Reserve"
     }
 },
 {
     "pk": 3,
     "model": "bfrs.tenure",
     "fields": {
-        "name": "CALM Exec Body"
+        "name": "State Forest"
     }
 },
 {
     "pk": 4,
     "model": "bfrs.tenure",
     "fields": {
-        "name": "CALM Exec Body Freehold"
+        "name": "Unallocated crown land"
     }
 },
 {
     "pk": 5,
     "model": "bfrs.tenure",
     "fields": {
-        "name": "Conservation Park"
+        "name": "Unallocated crown reserve"
     }
 },
 {
     "pk": 6,
     "model": "bfrs.tenure",
     "fields": {
-        "name": "Crown Freehold - Dept Interest"
+        "name": "Miscellaneous reserve"
     }
 },
 {
     "pk": 7,
     "model": "bfrs.tenure",
     "fields": {
-        "name": "Former Leasehold"
+        "name": "Private property"
     }
 },
 {
     "pk": 8,
     "model": "bfrs.tenure",
     "fields": {
-        "name": "Marine Management Area"
-    }
-},
-{
-    "pk": 9,
-    "model": "bfrs.tenure",
-    "fields": {
-        "name": "Marine Nature Reserve"
-    }
-},
-{
-    "pk": 10,
-    "model": "bfrs.tenure",
-    "fields": {
-        "name": "Marine Park"
-    }
-},
-{
-    "pk": 11,
-    "model": "bfrs.tenure",
-    "fields": {
-        "name": "Miscellaneous Reserve"
-    }
-},
-{
-    "pk": 12,
-    "model": "bfrs.tenure",
-    "fields": {
-        "name": "National Park"
-    }
-},
-{
-    "pk": 13,
-    "model": "bfrs.tenure",
-    "fields": {
-        "name": "Nature Reserve"
-    }
-},
-{
-    "pk": 14,
-    "model": "bfrs.tenure",
-    "fields": {
-        "name": "State Forest"
-    }
-},
-{
-    "pk": 15,
-    "model": "bfrs.tenure",
-    "fields": {
-        "name": "Timber Reserve"
-    }
-},
-{
-    "pk": 16,
-    "model": "bfrs.tenure",
-    "fields": {
-        "name": "Unallocated Crown Land"
-    }
-},
-{
-    "pk": 17,
-    "model": "bfrs.tenure",
-    "fields": {
-        "name": "Unmanaged Reserve"
-    }
-},
-{
-    "pk": 18,
-    "model": "bfrs.tenure",
-    "fields": {
-        "name": "Regional Park"
-    }
-},
-{
-    "pk": 19,
-    "model": "bfrs.tenure",
-    "fields": {
-        "name": "Private Property"
-    }
-},
-{
-    "pk": 20,
-    "model": "bfrs.tenure",
-    "fields": {
-        "name": "Other"
+        "name": "Other (specify)"
     }
 },
 {
