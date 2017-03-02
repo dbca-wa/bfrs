@@ -15,6 +15,10 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Fieldset, ButtonHolder, Submit, Div, HTML
 from crispy_forms.bootstrap import TabHolder, Tab
 
+YESNO_CHOICES = (
+    (1, 'Yes'),
+    (2, 'No')
+)
 
 class UserForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
@@ -249,8 +253,22 @@ class BushfireCreateForm(forms.ModelForm):
         else:
             return self.cleaned_data
 
+from django.utils.safestring import mark_safe
+class HorizontalRadioRenderer(forms.RadioSelect.renderer):
+    def render(self):
+        return mark_safe(u'&nbsp;&nbsp;&nbsp;&nbsp;\n'.join([u'%s&nbsp;&nbsp;&nbsp;&nbsp;\n' % w for w in self]))
+
+class VerticalRadioRenderer(forms.RadioSelect.renderer):
+    def render(self):
+        return mark_safe(u'<br />'.join([u'%s<br />' % w for w in self]))
 
 class BushfireInitUpdateForm(forms.ModelForm):
+    days = forms.IntegerField(label='Days', required=False)
+    hours = forms.IntegerField(label='Hours', required=False)
+    dispatch_pw = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
+    dispatch_aerial = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
+    potential_fire_level = forms.ChoiceField(choices=Bushfire.FIRE_LEVEL_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
+    investigation_req = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
     class Meta:
         model = Bushfire
         fields = ('region', 'district', 'incident_no', 'job_code', 'dfes_incident_no',
@@ -265,6 +283,8 @@ class BushfireInitUpdateForm(forms.ModelForm):
 #                  'source','cause', 'arson_squad_notified', 'prescription', 'offence_no',
                   'assistance_req', 'assistance_details', 'communications', 'other_info',
                   'cause', 'other_cause',
+                  'days','hours',
+                  'dispatch_pw', 'dispatch_aerial',
                  )
 
     def clean(self):
