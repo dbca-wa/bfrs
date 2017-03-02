@@ -128,6 +128,8 @@ class BushfireResource(APIResource):
         """ Overriding the POST request to PATCH instead
             POST creates new object, we want to update existing object
         """
+        print kwargs
+        print request.POST
         return self.patch_detail(request, **kwargs)
 
     def hydrate_origin_point(self, bundle):
@@ -141,7 +143,7 @@ class BushfireResource(APIResource):
 
     def hydrate_fire_boundary(self, bundle):
         if isinstance(bundle.data['fire_boundary'], list):
-            bundle.data['fire_boundary'] = MultiPolygon(Polygon(bundle.data['fire_boundary'][0][0])).__str__()
+            bundle.data['fire_boundary'] = MultiPolygon([Polygon(p[0]) for p in bundle.data['fire_boundary']]).__str__()
         return bundle
 
 
