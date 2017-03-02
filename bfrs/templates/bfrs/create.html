@@ -132,13 +132,17 @@
         </tr>
 
         <tr>
-            <th class="cbas" style="font-weight:normal;">P&W Resource dispatched<br><br>Date and time of dispatch</th>
-            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.dispatch_pw}} {% else %} {{form.dispatch_pw}} {% endif %}<br>
-            {% if is_init_authorised %} {{snapshot.dispatch_pw_date}} {% else %} {{form.dispatch_pw_date}} {% endif %}</td>
+			<th class="cbas" style="font-weight:normal;">P&W Resource dispatched<br><br><div class=div_dispatch_pw_date style="display: none;">Date and time of dispatch</div></th>
+            <td colspan="2" class="cbas">
+				{% if is_init_authorised %} {{snapshot.dispatch_pw}} {% else %} {{form.dispatch_pw}} {% endif %}<br>
+				<div class=div_dispatch_pw_date style="display: none;">{% if is_init_authorised %} {{snapshot.dispatch_pw_date}} {% else %} {{form.dispatch_pw_date}} {% endif %}</div>
+			</td>
 
-            <th class="cbas" style="font-weight:normal;">Aerial support dispatched<br><br>Date and time of dispatch</th>
-            <td clospan="2" class="cbas">{% if is_init_authorised %} {{snapshot.dispatch_aerial}} {% else %} {{form.dispatch_aerial}} {% endif %}<br>
-            {% if is_init_authorised %} {{snapshot.dispatch_aerial_date}} {% else %} {{form.dispatch_aerial_date}} {% endif %}</td>
+			<th class="cbas" style="font-weight:normal;">Aerial support dispatched<br><br><div class=div_dispatch_aerial_date style="display: none;">Date and time of dispatch</div></th>
+            <td clospan="2" class="cbas">
+				{% if is_init_authorised %} {{snapshot.dispatch_aerial}} {% else %} {{form.dispatch_aerial}} {% endif %}<br>
+				<div class=div_dispatch_aerial_date style="display: none;">{% if is_init_authorised %} {{snapshot.dispatch_aerial_date}} {% else %} {{form.dispatch_aerial_date}} {% endif %}</div>
+			</td>
         </tr>
 
         <tr>
@@ -153,9 +157,9 @@
             <th class="cbas">Media Alert Required</th>
             <td colspan="5" class="cbas">
               {% if is_init_authorised %}
-			  {% if snapshot.media_alert_req %}<div class="text-center"><i class="icon-ok text-success"></i></div>{% else %}<div class="text-center"><i class="icon-remove text-danger"></i></div>{% endif %}<span id="id_pica">Call PICA on ....</span>
+			  {% if snapshot.media_alert_req %}<div class="text-center"><i class="icon-ok text-success"></i></div>{% else %}<div class="text-center"><i class="icon-remove text-danger"></i></div>{% endif %}<span class="div_pica" style="display: none; margin:20;">Call PICA on ....</span>
               {% else %}
-			  {{form.media_alert_req}} <span id="id_pica">Call PICA on ....</span>
+			  {{form.media_alert_req}} <span class="div_pica" style="display: none; margin:20;">Call PICA on ....</span>
               {% endif %}
             </td>
 
@@ -193,8 +197,10 @@
 
         <tr>
             <th class="cbas" style="font-weight:normal;">Assistance required</th>
-            <td colspan="5" class="cbas">{% if is_init_authorised %} {{snapshot.assistance_req}} {% else %} {{form.assistance_req}} {% endif %}
-            <span style="margin:20;">Details {% if is_init_authorised %} {{snapshot.assistance_details}} {% else %} {{form.assistance_details}} {% endif %}</span></td>
+            <td colspan="5" class="cbas">
+				{% if is_init_authorised %} {{snapshot.assistance_req}} {% else %} {{form.assistance_req}} {% endif %}
+				<span class=div_assist style="visibility: hidden; margin:20;">Details {% if is_init_authorised %} {{snapshot.assistance_details}} {% else %} {{form.assistance_details}} {% endif %}</span>
+			</td>
         </tr>
 
         <tr>
@@ -213,9 +219,11 @@
 				{% if is_init_authorised %} {{snapshot.cause_state}} {% else %} {{form.cause_state}} {% endif %}<br>
 				{% if is_init_authorised %} {{snapshot.cause}} {% else %} {{form.cause}} {% endif %}
 			</td>
-            <th class="cbas">Other Cause *</th>
+			<th class="cbas"><span class="div_cause" style="visibility: hidden;">Other Cause *</span></th>
 			<td colspan="1" class="cbas">
+				<span class="div_cause" style="visibility: hidden;">
 				{% if is_init_authorised %} {{snapshot.other_cause}} {% else %} {{form.other_cause}} {% endif %}
+				</span>
 			</td>
 
         </tr>
@@ -224,13 +232,17 @@
             <th class="cbas">Tenure of ignition point*</th>
             <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.tenure}} {% else %} {{form.tenure}} {% endif %}</td>
 
-            <th class="cbas">Other Tenure *</th>
-            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.other_tenure}} {% else %} {{form.other_tenure}} {% endif %}</td>
+			<th class="cbas"><span class="div_tenure" style="visibility: hidden;">Other Tenure *</span></th>
+            <td colspan="2" class="cbas">
+				<span class="div_tenure" style="visibility: hidden;">
+				{% if is_init_authorised %} {{snapshot.other_tenure}} {% else %} {{form.other_tenure}} {% endif %}
+				</span>
+			</td>
         </tr>
 
         <tr>
 
-            <th class="cbas" style="font-weight:normal;">Field Officer</th>
+            <th id="id_th_field_officer" class="cbas" style="font-weight:normal;">Field Officer</th>
             <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.field_officer}} {% else %} {{form.field_officer}} {% endif %}</td>
 
             <th class="cbas" style="font-weight:normal;">Duty Officer</th>
@@ -347,25 +359,105 @@
 $('#id_init_authorised_date').datetimepicker({ format: "Y-m-d H:i" }); //ends with
 $('[id$="-date"]').datetimepicker({ format: "Y-m-d H:i" }); //ends with
 
-$(function(){
-    var coord_type = $('#id_first_attack :selected').text();
-    // This first part is needed for first page load
-    if (coord_type.indexOf('OTHER') > -1) {
-        $('#div_id_other_first_attack').show();
-    } else {
-        $('#div_id_other_first_attack').hide();
-    }
 
-    $('#id_first_attack').on('change', function() {
-        var coord_type = $('#id_first_attack :selected').text();
-        //console.log('Co Ord Type' + coord_type);
-        if (coord_type.indexOf('OTHER') > -1) {
-            $('#div_id_other_first_attack').show();
-        } else {
-            $('#div_id_other_first_attack').hide();
-        }
-    });
+/* dispatch PW */
+if($('#id_dispatch_pw_0').is(':checked')) { 
+	$('.div_dispatch_pw_date').show(); 
+	$('#id_th_field_officer').css("font-weight", "bold");
+	$("#id_th_field_officer").html("Field Officer *");
+}
+if($('#id_dispatch_pw_1').is(':checked')) { 
+	$('.div_dispatch_pw_date').hide(); 
+	$('#id_th_field_officer').css("font-weight", "normal");
+	$("#id_th_field_officer").html("Field Officer");
+}
+$('#id_dispatch_pw_0').on('change', function() {
+	if($('#id_dispatch_pw_0').is(':checked')) { $('.div_dispatch_pw_date').show(); }
+	$('#id_th_field_officer').css("font-weight", "bold");
+	$("#id_th_field_officer").html("Field Officer *");
 });
+$('#id_dispatch_pw_1').on('change', function() {
+	if($('#id_dispatch_pw_1').is(':checked')) { $('.div_dispatch_pw_date').hide(); }
+	$('#id_th_field_officer').css("font-weight", "normal");
+	$("#id_th_field_officer").html("Field Officer");
+});
+
+/* dispatch Aerial */
+if($('#id_dispatch_aerial_0').is(':checked')) { $('.div_dispatch_aerial_date').show(); }
+if($('#id_dispatch_aerial_1').is(':checked')) { $('.div_dispatch_aerial_date').hide(); }
+$('#id_dispatch_aerial_0').on('change', function() {
+	if($('#id_dispatch_aerial_0').is(':checked')) { $('.div_dispatch_aerial_date').show(); }
+});
+$('#id_dispatch_aerial_1').on('change', function() {
+	if($('#id_dispatch_aerial_1').is(':checked')) { $('.div_dispatch_aerial_date').hide(); }
+});
+
+/* PICA Text */
+if($('#id_media_alert_req').is(':checked')) { 
+	$('.div_pica').show(); 
+} else {
+	$('.div_pica').hide(); 
+}
+$('#id_media_alert_req').on('change', function() {
+	if($('#id_media_alert_req').is(':checked')) {
+		$('.div_pica').show(); 
+	} else {
+		$('.div_pica').hide(); 
+	}
+});
+
+/* Assistance Required */
+if($('#id_assistance_req').is(':checked')) { 
+	$('.div_assist').css('visibility','visible');
+} else {
+	$('.div_assist').css('visibility','hidden');
+}
+$('#id_assistance_req').on('change', function() {
+	if($('#id_assistance_req').is(':checked')) {
+		$('.div_assist').css('visibility','visible');
+	} else {
+		$('.div_assist').css('visibility','hidden');
+	}
+});
+
+/* Fire Cause */
+var cause = $('#id_cause :selected').text();
+//console.log('Cause Type: ' + cause);
+if (cause.indexOf('Other') > -1) {
+	$('.div_cause').css('visibility','visible');
+} else {
+	$('.div_cause').css('visibility','hidden');
+}
+$('#id_cause').on('change', function() {
+	var cause = $('#id_cause :selected').text();
+	//console.log('Cause Type: ' + cause);
+	if (cause.indexOf('Other') > -1) {
+		$('.div_cause').css('visibility','visible');
+	} else {
+		$('.div_cause').css('visibility','hidden');
+	}
+});
+
+/* Tenure */
+var tenure = $('#id_tenure :selected').text();
+if (tenure.indexOf('Other') > -1) {
+	$('.div_tenure').css('visibility','visible');
+} else {
+	$('.div_tenure').css('visibility','hidden');
+}
+$('#id_tenure').on('change', function() {
+	var tenure = $('#id_tenure :selected').text();
+	if (tenure.indexOf('Other') > -1) {
+		$('.div_tenure').css('visibility','visible');
+	} else {
+		$('.div_tenure').css('visibility','hidden');
+	}
+});
+
+
+
+
+
 
 
 // default is to collapse all on page load
