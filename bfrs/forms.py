@@ -17,8 +17,8 @@ from crispy_forms.bootstrap import TabHolder, Tab
 from django.utils.safestring import mark_safe
 
 YESNO_CHOICES = (
-    (1, 'Yes'),
-    (2, 'No')
+    (True, 'Yes'),
+    (False, 'No')
 )
 
 
@@ -213,13 +213,21 @@ class BushfireCreateBaseForm(forms.ModelForm):
         fields = ('region', 'district', 'incident_no', 'job_code', 'dfes_incident_no',
                   'name', 'year', 'potential_fire_level', 'field_officer', 'duty_officer', 'init_authorised_by', 'init_authorised_date',
                   'media_alert_req', 'fire_position',
-                  'grid', 'arrival_area', 'fire_not_found',
+                  'grid', 'area', 'fire_not_found',
                   'fire_detected_date', 'dispatch_pw_date', 'dispatch_aerial_date', 'fuel_type',
                   'assistance_req', 'assistance_details', 'communications', 'other_info',
                   'cause', 'cause_state', 'other_cause', 'tenure', 'other_tenure',
                   'days','hours',
                   'dispatch_pw', 'dispatch_aerial',
+                  'investigation_req',
                  )
+
+    def clean_investigation_req(self):
+        if not self.cleaned_data.has_key('investigation_req'):
+            raise ValidationError('Must specify investigation required')
+
+        investigation_req = eval(self.cleaned_data['investigation_req'])
+        return investigation_req
 
 
 #class BushfireCreateForm(forms.ModelForm):
@@ -250,6 +258,7 @@ class BushfireCreateForm(BushfireCreateBaseForm):
         #import ipdb; ipdb.set_trace()
         district = self.cleaned_data['district']
         incident_no = self.cleaned_data['incident_no']
+        #investigation_req = eval(self.cleaned_data['investigation_req'])
         #season = self.cleaned_data['season']
         #bushfire = Bushfire2.objects.filter(district=district, season=season, incident_no=incident_no)
         bushfire = Bushfire.objects.filter(district=district, incident_no=incident_no)
@@ -257,6 +266,7 @@ class BushfireCreateForm(BushfireCreateBaseForm):
             raise ValidationError('There is already a Bushfire with this District and Incident No. {} - {} - {}'.format(district, incident_no))
         else:
             return self.cleaned_data
+
 
 #class BushfireInitUpdateForm(forms.ModelForm):
 #    days = forms.IntegerField(label='Days', required=False)

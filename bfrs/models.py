@@ -147,7 +147,7 @@ class Bushfire(Audit):
 
     potential_fire_level = models.PositiveSmallIntegerField(choices=FIRE_LEVEL_CHOICES)
     media_alert_req = models.BooleanField(verbose_name="Media Alert Required", default=False)
-    arrival_area = models.DecimalField(verbose_name="Fire Area at Arrival (ha)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)])
+    #arrival_area = models.DecimalField(verbose_name="Fire Area at Arrival (ha)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)])
     fuel_type = models.CharField(verbose_name='Fuel Type', max_length=64)
     cause = models.ForeignKey('Cause')
     cause_state = models.PositiveSmallIntegerField(choices=CAUSE_STATE_CHOICES)

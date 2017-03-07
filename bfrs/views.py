@@ -6,6 +6,8 @@ from django.views.generic.edit import CreateView, UpdateView, FormView
 #from django.views.generic import CreateView
 from django.forms.formsets import formset_factory
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 
 from bfrs.models import (Profile, Bushfire, Activity, Response, AreaBurnt, GroundForces, AerialForces,
         AttendingOrganisation, FireBehaviour, Legal, PrivateDamage, PublicDamage, Comment,
@@ -30,6 +32,7 @@ from django.contrib import messages
 from django.forms import ValidationError
 from datetime import datetime
 import pytz
+import json
 from django.utils.dateparse import parse_duration
 
 import django_filters
@@ -202,6 +205,7 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
         return context
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
     model = Bushfire
     form_class = BushfireCreateForm
@@ -218,42 +222,44 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
         #self.object = self.get_object()
         form_class = self.get_form_class()
         form = self.get_form(form_class)
-        area_burnt_formset = AreaBurntFormSet(self.request.POST, prefix='area_burnt_fs')
+        #area_burnt_formset = AreaBurntFormSet(self.request.POST, prefix='area_burnt_fs')
+        #import ipdb; ipdb.set_trace()
 
-        if form.is_valid() and area_burnt_formset.is_valid():
+        if form.is_valid(): # and area_burnt_formset.is_valid():
             return self.form_valid(request,
                 form,
-                area_burnt_formset,
+                #area_burnt_formset,
             )
         else:
             return self.form_invalid(
                 form,
-                area_burnt_formset,
+                #area_burnt_formset,
                 kwargs,
             )
 
     def form_invalid(self,
             form,
-            area_burnt_formset,
+            #area_burnt_formset,
             kwargs,
         ):
         context = {
             'form': form,
-            'area_burnt_formset': area_burnt_formset,
+            #'area_burnt_formset': area_burnt_formset,
         }
         return self.render_to_response(context=context)
 
     def form_valid(self, request,
             form,
-            area_burnt_formset,
+            #area_burnt_formset,
         ):
         self.object = form.save(commit=False)
         self.object.creator = request.user #1 #User.objects.all()[0] #request.user
         self.object.modifier = request.user #1 #User.objects.all()[0] #request.user
         #calc_coords(self.object)
 
-        self.object.save()
-        areas_burnt_updated = update_areas_burnt_fs(self.object, area_burnt_formset)
+        #self.object.save()
+        #import ipdb; ipdb.set_trace()
+        #areas_burnt_updated = update_areas_burnt_fs(self.object, area_burnt_formset)
 
 #        if self.request.POST.has_key('init_authorise'):
 #            self.object.init_authorised_by = self.request.user
@@ -263,13 +269,26 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
 #        if self.object.is_init_authorised:
 #            save_initial_snapshot(self.object)
 
+        import ipdb; ipdb.set_trace()
+        if self.request.POST.has_key('sss_create'):
+            sss = json.loads(self.request.POST.get('sss_create'))
+
+            if sss.has_key('area'):
+                self.object.area = float(sss['area'])
+
+            if sss.has_key('origin_point') and isinstance(sss['origin_point'], list):
+                self.object.origin_point = Point(sss['origin_point'])
+
+            if sss.has_key('fire_boundary') and isinstance(sss['fire_'], list):
+                self.object.fire_boundary = MultiPolygon([Polygon(p[0]) for p in sss['fire_boundary']])
+
         self.object.save()
 
         redirect_referrer =  HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
-        if not areas_burnt_updated:
-            messages.error(request, 'There was an error saving Areas Burnt.')
-            return redirect_referrer
+#        if not areas_burnt_updated:
+#            messages.error(request, 'There was an error saving Areas Burnt.')
+#            return redirect_referrer
 
         return HttpResponseRedirect(self.get_success_url())
 
@@ -281,9 +300,9 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
 
         form_class = self.get_form_class()
         form = self.get_form(form_class)
-        area_burnt_formset      = AreaBurntFormSet(instance=self.object, prefix='area_burnt_fs')
+        #area_burnt_formset      = AreaBurntFormSet(instance=self.object, prefix='area_burnt_fs')
         context.update({'form': form,
-                        'area_burnt_formset': area_burnt_formset,
+                        #'area_burnt_formset': area_burnt_formset,
                         'create': True,
             })
         return context
@@ -301,34 +320,34 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
         self.object = self.get_object() # needed for update
         form_class = self.get_form_class()
         form = self.get_form(form_class)
-        area_burnt_formset      = AreaBurntFormSet(self.request.POST, prefix='area_burnt_fs')
+        #area_burnt_formset      = AreaBurntFormSet(self.request.POST, prefix='area_burnt_fs')
 
-        if form.is_valid() and area_burnt_formset.is_valid():
+        if form.is_valid(): # and area_burnt_formset.is_valid():
             return self.form_valid(request,
                 form,
-                area_burnt_formset,
+                #area_burnt_formset,
             )
         else:
             return self.form_invalid(
                 form,
-                area_burnt_formset,
+                #area_burnt_formset,
                 kwargs,
             )
 
     def form_invalid(self,
             form,
-            area_burnt_formset,
+            #area_burnt_formset,
             kwargs,
         ):
         context = {
             'form': form,
-            'area_burnt_formset': area_burnt_formset,
+            #'area_burnt_formset': area_burnt_formset,
         }
         return self.render_to_response(context=context)
 
     def form_valid(self, request,
             form,
-            area_burnt_formset,
+            #area_burnt_formset,
         ):
         self.object = form.save(commit=False)
         if not self.object.creator:
@@ -346,13 +365,13 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
 
         self.object.save()
 
-        areas_burnt_updated = update_areas_burnt_fs(self.object, area_burnt_formset)
+        #areas_burnt_updated = update_areas_burnt_fs(self.object, area_burnt_formset)
 
         redirect_referrer =  HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
-        if not areas_burnt_updated:
-            messages.error(request, 'There was an error saving Areas Burnt.')
-            return redirect_referrer
+#        if not areas_burnt_updated:
+#            messages.error(request, 'There was an error saving Areas Burnt.')
+#            return redirect_referrer
 
         return HttpResponseRedirect(self.get_success_url())
 
@@ -366,9 +385,9 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
         bushfire = Bushfire.objects.get(id=self.kwargs['pk'])
         form_class = self.get_form_class()
         form = self.get_form(form_class)
-        area_burnt_formset      = AreaBurntFormSet(instance=self.object, prefix='area_burnt_fs')
+#        area_burnt_formset      = AreaBurntFormSet(instance=self.object, prefix='area_burnt_fs')
         context.update({'form': form,
-                        'area_burnt_formset': area_burnt_formset,
+#                        'area_burnt_formset': area_burnt_formset,
                         'is_init_authorised': bushfire.is_init_authorised,
                         'snapshot': deserialize_bushfire('initial', bushfire) if bushfire.initial_snapshot else None,
                         'initial': True,

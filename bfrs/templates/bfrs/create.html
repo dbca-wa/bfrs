@@ -150,7 +150,7 @@
             <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.potential_fire_level}} {% else %} {{form.potential_fire_level}} {% endif %}</td>
 
             <th class="cbas">Investigation required *</th>
-            <td clospan="2" class="cbas">{% if is_init_authorised %} {{snapshot.dispatch_aerial}} {% else %} {{form.dispatch_aerial}} {% endif %}</td>
+            <td clospan="2" class="cbas">{% if is_init_authorised %} {{snapshot.investigation_req}} {% else %} {{form.investigation_req}} {% endif %}</td>
         </tr>
 
         <tr>
@@ -175,7 +175,7 @@
             <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.origin_coords}} {% else %} {{object.origin_coords}} {% endif %}</td>
 
             <th class="cbas" style="font-weight:normal;">Area of fire at arrival (ha)</th>
-            <td clospan="2" class="cbas">{% if is_init_authorised %} {{snapshot.area}} {% else %} {{object.area}} {% endif %}<br>
+            <td clospan="2" class="cbas">{% if is_init_authorised %} {{snapshot.area}} {% else %} {{form.area}} {% endif %}<br>
             {% if is_init_authorised %} {{snapshot.fire_not_found}} {% else %} {{form.fire_not_found}} {% endif %}Fire not found</td>
         </tr>
 
