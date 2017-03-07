@@ -14,11 +14,23 @@ from django.contrib.auth.models import User, Group
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Fieldset, ButtonHolder, Submit, Div, HTML
 from crispy_forms.bootstrap import TabHolder, Tab
+from django.utils.safestring import mark_safe
 
 YESNO_CHOICES = (
     (1, 'Yes'),
     (2, 'No')
 )
+
+
+class HorizontalRadioRenderer(forms.RadioSelect.renderer):
+    def render(self):
+        return mark_safe(u'&nbsp;&nbsp;&nbsp;&nbsp;\n'.join([u'%s&nbsp;&nbsp;&nbsp;&nbsp;\n' % w for w in self]))
+
+
+class VerticalRadioRenderer(forms.RadioSelect.renderer):
+    def render(self):
+        return mark_safe(u'<br />'.join([u'%s<br />' % w for w in self]))
+
 
 class UserForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
@@ -187,44 +199,15 @@ class BushfireForm(forms.ModelForm):
             #    raise ValidationError('Cannot Authorise, must input required fields: {}'.format(', '.join([i.replace('_', ' ').title() for i in missing_fields])))
 
 
-#class BushfireCreateForm(forms.ModelForm):
-#    class Meta:
-#        model = Bushfire
-#        fields = ('region', 'district', 'incident_no', 'season', 'job_code',
-#                  'name', 'potential_fire_level', 'init_authorised_by', 'init_authorised_date',
-#                  'distance', 'direction', 'place', 'lot_no', 'street', 'town',
-#                  'coord_type', 'fire_not_found',
-#                  'lat_decimal', 'lat_degrees', 'lat_minutes', 'lon_decimal', 'lon_degrees', 'lon_minutes',
-#                  'mga_zone', 'mga_easting', 'mga_northing',
-#                  'fd_letter', 'fd_number', 'fd_tenths',
-##                  'source','cause', 'arson_squad_notified', 'prescription', 'offence_no',
-#                  'fuel','ros', 'flame_height', 'assistance_required', 'fire_contained',
-#                  'containment_time', 'ops_point', 'communications', 'weather', 'field_officer',
-#                  'first_attack', 'other_first_attack',
-#                  'cause', 'known_possible', 'other_cause', 'investigation_req',
-#                 )
-#
-#    def clean(self):
-#        #import ipdb; ipdb.set_trace()
-#        district = self.cleaned_data['district']
-#        incident_no = self.cleaned_data['incident_no']
-#        season = self.cleaned_data['season']
-#        bushfire = Bushfire.objects.filter(district=district, season=season, incident_no=incident_no)
-#        if bushfire:
-#            raise ValidationError('There is already a Bushfire with this District, Season and Incident No. {} - {} - {}'.format(district, season, incident_no))
-#        else:
-#            return self.cleaned_data
-#
-#    fuel = models.CharField(max_length=50, null=True, blank=True)
-#    assistance_req = models.CharField(verbose_name="Assistance Required", max_length=50, null=True, blank=True)
-#    communications = models.CharField(verbose_name='Communication', max_length=50, null=True, blank=True)
-#    other_info = models.CharField(verbose_name='Other Information', max_length=100, null=True, blank=True)
-#    cause = models.ForeignKey('Cause', null=True, blank=True)
-#    other_cause = models.CharField(verbose_name='Other Cause', max_length=50, null=True, blank=True)
-#    tenure = models.ForeignKey('Tenure of Ignition Point', null=True, blank=True)
+class BushfireCreateBaseForm(forms.ModelForm):
+    days = forms.IntegerField(label='Days', required=False)
+    hours = forms.IntegerField(label='Hours', required=False)
+    dispatch_pw = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
+    dispatch_aerial = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
+    potential_fire_level = forms.ChoiceField(choices=Bushfire.FIRE_LEVEL_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
+    investigation_req = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
+    cause_state = forms.ChoiceField(choices=Bushfire.CAUSE_STATE_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
 
-
-class BushfireCreateForm(forms.ModelForm):
     class Meta:
         model = Bushfire
         fields = ('region', 'district', 'incident_no', 'job_code', 'dfes_incident_no',
@@ -232,15 +215,37 @@ class BushfireCreateForm(forms.ModelForm):
                   'media_alert_req', 'fire_position',
                   'grid', 'arrival_area', 'fire_not_found',
                   'fire_detected_date', 'dispatch_pw_date', 'dispatch_aerial_date', 'fuel_type',
-#                  'coord_type', 'arrival_area', 'fire_not_found',
-#                  'lat_decimal', 'lat_degrees', 'lat_minutes', 'lon_decimal', 'lon_degrees', 'lon_minutes',
-#                  'mga_zone', 'mga_easting', 'mga_northing',
-#                  'fd_letter', 'fd_number', 'fd_tenths',
-#                  'source','cause', 'arson_squad_notified', 'prescription', 'offence_no',
                   'assistance_req', 'assistance_details', 'communications', 'other_info',
-                  'cause', 'other_cause',
+                  'cause', 'cause_state', 'other_cause', 'tenure', 'other_tenure',
+                  'days','hours',
+                  'dispatch_pw', 'dispatch_aerial',
                  )
 
+
+#class BushfireCreateForm(forms.ModelForm):
+#    days = forms.IntegerField(label='Days', required=False)
+#    hours = forms.IntegerField(label='Hours', required=False)
+#    dispatch_pw = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
+#    dispatch_aerial = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
+#    potential_fire_level = forms.ChoiceField(choices=Bushfire.FIRE_LEVEL_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
+#    investigation_req = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
+#    cause_state = forms.ChoiceField(choices=Bushfire.CAUSE_STATE_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
+#
+#    class Meta:
+#        model = Bushfire
+#        fields = ('region', 'district', 'incident_no', 'job_code', 'dfes_incident_no',
+#                  'name', 'year', 'potential_fire_level', 'field_officer', 'duty_officer', 'init_authorised_by', 'init_authorised_date',
+#                  'media_alert_req', 'fire_position',
+#                  'grid', 'arrival_area', 'fire_not_found',
+#                  'fire_detected_date', 'dispatch_pw_date', 'dispatch_aerial_date', 'fuel_type',
+#                  'assistance_req', 'assistance_details', 'communications', 'other_info',
+#                  'cause', 'cause_state', 'other_cause', 'tenure', 'other_tenure',
+#                  'days','hours',
+#                  'dispatch_pw', 'dispatch_aerial',
+#                 )
+
+
+class BushfireCreateForm(BushfireCreateBaseForm):
     def clean(self):
         #import ipdb; ipdb.set_trace()
         district = self.cleaned_data['district']
@@ -253,41 +258,28 @@ class BushfireCreateForm(forms.ModelForm):
         else:
             return self.cleaned_data
 
-from django.utils.safestring import mark_safe
-class HorizontalRadioRenderer(forms.RadioSelect.renderer):
-    def render(self):
-        return mark_safe(u'&nbsp;&nbsp;&nbsp;&nbsp;\n'.join([u'%s&nbsp;&nbsp;&nbsp;&nbsp;\n' % w for w in self]))
+#class BushfireInitUpdateForm(forms.ModelForm):
+#    days = forms.IntegerField(label='Days', required=False)
+#    hours = forms.IntegerField(label='Hours', required=False)
+#    dispatch_pw = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
+#    dispatch_aerial = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
+#    potential_fire_level = forms.ChoiceField(choices=Bushfire.FIRE_LEVEL_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
+#    investigation_req = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
+#    cause_state = forms.ChoiceField(choices=Bushfire.CAUSE_STATE_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
+#    class Meta:
+#        model = Bushfire
+#        fields = ('region', 'district', 'incident_no', 'job_code', 'dfes_incident_no',
+#                  'name', 'year', 'potential_fire_level', 'field_officer', 'duty_officer', 'init_authorised_by', 'init_authorised_date',
+#                  'media_alert_req', 'fire_position',
+#                  'grid', 'arrival_area', 'fire_not_found',
+#                  'fire_detected_date', 'dispatch_pw_date', 'dispatch_aerial_date', 'fuel_type',
+#                  'assistance_req', 'assistance_details', 'communications', 'other_info',
+#                  'cause', 'cause_state', 'other_cause', 'tenure', 'other_tenure',
+#                  'days','hours',
+#                  'dispatch_pw', 'dispatch_aerial',
+#                 )
 
-class VerticalRadioRenderer(forms.RadioSelect.renderer):
-    def render(self):
-        return mark_safe(u'<br />'.join([u'%s<br />' % w for w in self]))
-
-class BushfireInitUpdateForm(forms.ModelForm):
-    days = forms.IntegerField(label='Days', required=False)
-    hours = forms.IntegerField(label='Hours', required=False)
-    dispatch_pw = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
-    dispatch_aerial = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
-    potential_fire_level = forms.ChoiceField(choices=Bushfire.FIRE_LEVEL_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
-    investigation_req = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
-    cause_state = forms.ChoiceField(choices=Bushfire.CAUSE_STATE_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
-    class Meta:
-        model = Bushfire
-        fields = ('region', 'district', 'incident_no', 'job_code', 'dfes_incident_no',
-                  'name', 'year', 'potential_fire_level', 'field_officer', 'duty_officer', 'init_authorised_by', 'init_authorised_date',
-                  'media_alert_req', 'fire_position',
-                  'grid', 'arrival_area', 'fire_not_found',
-                  'fire_detected_date', 'dispatch_pw_date', 'dispatch_aerial_date', 'fuel_type',
-#                  'coord_type', 'arrival_area', 'fire_not_found',
-#                  'lat_decimal', 'lat_degrees', 'lat_minutes', 'lon_decimal', 'lon_degrees', 'lon_minutes',
-#                  'mga_zone', 'mga_easting', 'mga_northing',
-#                  'fd_letter', 'fd_number', 'fd_tenths',
-#                  'source','cause', 'arson_squad_notified', 'prescription', 'offence_no',
-                  'assistance_req', 'assistance_details', 'communications', 'other_info',
-                  'cause', 'cause_state', 'other_cause', 'tenure', 'other_tenure',
-                  'days','hours',
-                  'dispatch_pw', 'dispatch_aerial',
-                 )
-
+class BushfireInitUpdateForm(BushfireCreateBaseForm):
     def clean(self):
         """
         Form can be saved prior to sign-off, without checking req'd fields.
