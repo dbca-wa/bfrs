@@ -21,6 +21,10 @@
 {% endcomment %}
 </div>
 
+{% comment %}
+<button id="my-btn" type="button">Test</button>
+{% endcomment %}
+
 <br>
 {% comment %}
 <p>perms: {{perms}}</p>
@@ -141,6 +145,15 @@
 {% endif %}
 
 <script>
+
+    var dict = {"area":5068734.39165385, "origin_point":[117.30008118682615,-30.849007786590157]};
+    $('#my-btn').click(function() {
+        $.ajax({
+            type:"POST",
+            url:"{% url 'bushfire:bushfire_create' %}",
+            data: {"sss_create": JSON.stringify(dict)},
+        });
+    });
 
     $("[data-toggle=myCollapse]").click(function( ev ) {
       ev.preventDefault();

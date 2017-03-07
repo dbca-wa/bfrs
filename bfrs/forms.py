@@ -270,7 +270,10 @@ class BushfireCreateBaseForm(forms.ModelForm):
 
 
 class BushfireCreateForm(BushfireCreateBaseForm):
-    def clean(self):
+    def __init__(self, *args, **kwargs):
+        super(BushfireCreateForm, self).__init__(*args, **kwargs)
+
+    def clean_district(self):
         #import ipdb; ipdb.set_trace()
         district = self.cleaned_data['district']
         incident_no = self.cleaned_data['incident_no']

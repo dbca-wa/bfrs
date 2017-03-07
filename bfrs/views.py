@@ -217,28 +217,24 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
 
     def get_initial(self):
         profile, created = Profile.objects.get_or_create(user=self.request.user)
-        d = {'region': profile.region, 'district': profile.district}
+        initial = {'region': profile.region, 'district': profile.district}
 
-
-        import ipdb; ipdb.set_trace()
+        #import ipdb; ipdb.set_trace()
         #tmp = '{"origin_point":[117.30008118682615,-30.849007786590157],"fire_boundary":[[[[117.29201309106732,-30.850896064320946],[117.30179780294505,-30.866002286167266],[117.30832094419686,-30.840081382771874],[117.29201309106732,-30.850896064320946]]],[[[117.31518740867246,-30.867032255838605],[117.3213672267005,-30.858277513632217],[117.34299658979864,-30.874413705149877],[117.31175417643466,-30.87733195255201],[117.31518740867246,-30.867032255838605]]]],"area":5068734.391653851,"sss_id":"6d09d9ce023e4dd3361ba125dfe1f9db"}'
         #sss = json.loads(tmp)
         if self.request.POST.has_key('sss_create'):
             sss = json.loads(self.request.POST.get('sss_create'))
-            d['area'] = float(sss['area'])
-            d['origin_point_str'] = Point(sss['origin_point']).get_coords()
-            d['origin_point'] = Point(sss['origin_point'])
-            d['fire_boundary'] = MultiPolygon([Polygon(p[0]) for p in sss['fire_boundary']])
+            if sss.has_key('area'):
+                initial['area'] = float(sss['area'])
 
-        return d
-#        return {
-#            'region': profile.region,
-#            'district': profile.district,
-#            'area': float(sss['area']),
-#            'origin_point_str': Point(sss['origin_point']).get_coords(),
-#            'origin_point': Point(sss['origin_point']),
-#            'fire_boundary': MultiPolygon([Polygon(p[0]) for p in sss['fire_boundary']]),
-#        }
+            if sss.has_key('origin_point') and isinstance(sss['origin_point'], list):
+                initial['origin_point_str'] = Point(sss['origin_point']).get_coords()
+                initial['origin_point'] = Point(sss['origin_point'])
+
+            if sss.has_key('fire_boundary') and isinstance(sss['fire_boundary'], list):
+                initial['fire_boundary'] = MultiPolygon([Polygon(p[0]) for p in sss['fire_boundary']])
+
+        return initial
 
     def post(self, request, *args, **kwargs):
         #self.object = self.get_object()
@@ -247,22 +243,9 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
         #area_burnt_formset = AreaBurntFormSet(self.request.POST, prefix='area_burnt_fs')
         #import ipdb; ipdb.set_trace()
 
-#        tmp = '{"origin_point":[117.30008118682615,-30.849007786590157],"fire_boundary":[[[[117.29201309106732,-30.850896064320946],[117.30179780294505,-30.866002286167266],[117.30832094419686,-30.840081382771874],[117.29201309106732,-30.850896064320946]]],[[[117.31518740867246,-30.867032255838605],[117.3213672267005,-30.858277513632217],[117.34299658979864,-30.874413705149877],[117.31175417643466,-30.87733195255201],[117.31518740867246,-30.867032255838605]]]],"area":5068734.391653851,"sss_id":"6d09d9ce023e4dd3361ba125dfe1f9db"}'
-#        sss = json.loads(tmp)
-#        import ipdb; ipdb.set_trace()
-#        #if self.request.POST.has_key('sss_create'):
-#        if True:
-#            #sss = json.loads(self.request.POST.get('sss_create'))
-#
-#            if sss.has_key('area'):
-#                self.object.area = float(sss['area'])
-#
-#            if sss.has_key('origin_point') and isinstance(sss['origin_point'], list):
-#                self.object.origin_point = Point(sss['origin_point'])
-#
-#            if sss.has_key('fire_boundary') and isinstance(sss['fire_'], list):
-#                self.object.fire_boundary = MultiPolygon([Polygon(p[0]) for p in sss['fire_boundary']])
-
+        #import ipdb; ipdb.set_trace()
+        if self.request.POST.has_key('sss_create'):
+            return self.render_to_response(self.get_context_data())
 
         if form.is_valid(): # and area_burnt_formset.is_valid():
             return self.form_valid(request,
