@@ -272,7 +272,7 @@ class Bushfire(Audit):
         default_permissions = ('add', 'change', 'delete', 'view')
 
     def unique_id(self):
-        return ''.join(['BF', self.district.code, str(self.year), str(self.incident_no)])
+        return ' '.join(['BF', self.district.code, str(self.year), str(self.incident_no)])
 
     def __str__(self):
         return ', '.join([self.name, self.district.name, self.year, self.incident_no])

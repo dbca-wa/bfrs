@@ -55,10 +55,9 @@
 <table id="table" class="tablesorter table table-striped table-bordered table-hover table-condensed">
   <thead>
     <td><input type="checkbox" name ="check_all" onClick=toggle(this) /></td>
-    <th>Report Status</th>
-    <th>District</th>
-    <th>Year</th>
-    <th>Cause</th>
+    <th>Fire Number</th>
+    {% comment %}<th>Report Status</th> {% endcomment %}
+    <th>Name</th>
     <th>Initial</th>
     <th>Final</th>
     <th>Review</th>
@@ -68,10 +67,9 @@
     {% for bushfire in object_list %}
       <tr class="row-vm" data-toggle="myCollapse" data-target="#{{bushfire.id}}">
         <td><input type="checkbox" name="chkbox" value={{ bushfire.id }}  /></td>
-        <td>{{ bushfire.get_report_status_display }}</td>
-        <td>{{ bushfire.district.name }}</td>
-        <td>{{ bushfire.year }}</td>
-        <td>{{ bushfire.cause.name }}</td>
+        <td>{{ bushfire.unique_id }}</td>
+        {% comment %}<td>{{ bushfire.get_report_status_display }}</td> {% endcomment %}
+        <td>{{ bushfire.name }}</td>
         <td><a href="{% url 'bushfire:bushfire_initial' bushfire.id %}">{{ bushfire.name }}</td>
 
          {% if bushfire.report_status >= bushfire.STATUS_FINAL_DRAFT %}
@@ -177,7 +175,7 @@ $(function(){
 
         profile_field_list = ['region', 'district'];
         filter_list = [
-			'region', 'district', 'year', 'report_status', 'cause'
+			'region', 'district', 'year', 'report_status'
 		];
 
         var count = 0;

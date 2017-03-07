@@ -53,14 +53,14 @@ class BushfireFilter(django_filters.FilterSet):
     for district in District.objects.distinct('name'):
         DISTRICT_CHOICES.append([district.id, district.name])
 
-    CAUSE_CHOICES = []
-    for cause in Cause.objects.all():
-        CAUSE_CHOICES.append([cause.id, cause.name])
+    #CAUSE_CHOICES = []
+    #for cause in Cause.objects.all():
+    #    CAUSE_CHOICES.append([cause.id, cause.name])
 
     region = django_filters.ChoiceFilter(choices=REGION_CHOICES, label='Region')
     district = django_filters.ChoiceFilter(choices=DISTRICT_CHOICES, label='District')
     year = django_filters.ChoiceFilter(choices=YEAR_CHOICES, label='Year')
-    cause = django_filters.ChoiceFilter(choices=CAUSE_CHOICES, label='Cause')
+    #cause = django_filters.ChoiceFilter(choices=CAUSE_CHOICES, label='Cause')
     report_status = django_filters.ChoiceFilter(choices=Bushfire.REPORT_STATUS_CHOICES, label='Report Status')
     #potential_fire_level = django_filters.ChoiceFilter(choices=Bushfire.FIRE_LEVEL_CHOICES, label='Probable Fire Level')
 
@@ -71,7 +71,7 @@ class BushfireFilter(django_filters.FilterSet):
 			'district_id',
 			'year',
 			'report_status',
-			'cause',
+#			'cause',
 			#'potential_fire_level',
 		]
         order_by = (
@@ -79,7 +79,7 @@ class BushfireFilter(django_filters.FilterSet):
             ('district_id', 'District'),
             ('year', 'Year'),
             ('report_status', 'Report Status'),
-            ('cause', 'Cause'),
+#            ('cause', 'Cause'),
             #('potential_fire_level', 'Probable Fire Level'),
         )
 
