@@ -167,7 +167,6 @@ class BushfireForm(forms.ModelForm):
             'job_code',
             'cause',
             'field_officer',
-            'arrival_area',
             'fire_level',
             #'known_possible',
         ]
