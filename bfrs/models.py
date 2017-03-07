@@ -160,8 +160,8 @@ class Bushfire(Audit):
     fire_position = models.CharField(verbose_name="Position of Fire", max_length=100, null=True, blank=True)
 
     # Point of Origin
-    origin_point = models.PointField(null=True, blank=True, editable=False, help_text='Optional.')
-    fire_boundary = models.MultiPolygonField(srid=4326, null=True, blank=True, editable=False, help_text='Optional.')
+    origin_point = models.PointField(null=True, blank=True, editable=True, help_text='Optional.')
+    fire_boundary = models.MultiPolygonField(srid=4326, null=True, blank=True, editable=True, help_text='Optional.')
     grid = models.CharField(verbose_name="Lat/Long, MGA, FD Grid", max_length=100, null=True, blank=True)
     fire_not_found = models.BooleanField(default=False)
 
@@ -205,7 +205,8 @@ class Bushfire(Audit):
     arson_squad_notified = models.BooleanField(verbose_name="Arson Squad Notified", default=False)
     investigation_req = models.BooleanField(verbose_name="Investigation Required", default=False)
     offence_no = models.CharField(verbose_name="Police Offence No.", max_length=10, null=True, blank=True)
-    area = models.DecimalField(verbose_name="Final Fire Area (ha)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
+    #area = models.DecimalField(verbose_name="Final Fire Area (ha)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
+    area = models.FloatField(verbose_name="Final Fire Area (ha)", validators=[MinValueValidator(0)], null=True, blank=True)
     time_to_control = models.DurationField(verbose_name="Time to Control", null=True, blank=True)
     # Private Damage FS here
     # Public Damage FS here

@@ -15,6 +15,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Fieldset, ButtonHolder, Submit, Div, HTML
 from crispy_forms.bootstrap import TabHolder, Tab
 from django.utils.safestring import mark_safe
+from django.forms.widgets import Widget
 
 YESNO_CHOICES = (
     (True, 'Yes'),
@@ -30,6 +31,20 @@ class HorizontalRadioRenderer(forms.RadioSelect.renderer):
 class VerticalRadioRenderer(forms.RadioSelect.renderer):
     def render(self):
         return mark_safe(u'<br />'.join([u'%s<br />' % w for w in self]))
+
+
+class DisplayOnlyField(Widget):
+
+    def __init__(self,attrs=None):
+        self.attrs = attrs or {}
+        self.required = False
+
+    def render(self, name, value="", attrs=None):
+        try:
+            val = value
+        except AttributeError:
+            val = ""
+        return val
 
 
 class UserForm(forms.ModelForm):
@@ -198,7 +213,6 @@ class BushfireForm(forms.ModelForm):
             #if missing_fields:
             #    raise ValidationError('Cannot Authorise, must input required fields: {}'.format(', '.join([i.replace('_', ' ').title() for i in missing_fields])))
 
-
 class BushfireCreateBaseForm(forms.ModelForm):
     days = forms.IntegerField(label='Days', required=False)
     hours = forms.IntegerField(label='Hours', required=False)
@@ -207,19 +221,21 @@ class BushfireCreateBaseForm(forms.ModelForm):
     potential_fire_level = forms.ChoiceField(choices=Bushfire.FIRE_LEVEL_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
     investigation_req = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
     cause_state = forms.ChoiceField(choices=Bushfire.CAUSE_STATE_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
+    origin_point_str = forms.CharField(required=False, widget=DisplayOnlyField())#, widget=forms.TextInput(attrs={'readonly':'readonly'}))
 
     class Meta:
         model = Bushfire
         fields = ('region', 'district', 'incident_no', 'job_code', 'dfes_incident_no',
                   'name', 'year', 'potential_fire_level', 'field_officer', 'duty_officer', 'init_authorised_by', 'init_authorised_date',
                   'media_alert_req', 'fire_position',
-                  'grid', 'area', 'fire_not_found',
+                  'grid', 'fire_not_found',
                   'fire_detected_date', 'dispatch_pw_date', 'dispatch_aerial_date', 'fuel_type',
                   'assistance_req', 'assistance_details', 'communications', 'other_info',
                   'cause', 'cause_state', 'other_cause', 'tenure', 'other_tenure',
                   'days','hours',
                   'dispatch_pw', 'dispatch_aerial',
                   'investigation_req',
+		  'area', 'origin_point_str', 'origin_point', 'fire_boundary',
                  )
 
     def clean_investigation_req(self):

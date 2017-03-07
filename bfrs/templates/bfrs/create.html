@@ -172,7 +172,18 @@
 
         <tr>
             <th class="cbas" style="font-weight:normal;">Point of origin</th>
+            <td colspan="2" class="cbas">
+				{% if is_init_authorised %} 
+					{{snapshot.origin_point}} 
+				{% else %} 
+					{% if object.origin_point %} {{object.origin_coords}} {% else %} {{form.origin_point_str}} {% endif %}
+				{% endif %}
+			</td>
+            {% if not is_init_authorised %} {{form.origin_point.as_hidden}} {% endif %}
+            {% if not is_init_authorised %} {{form.fire_boundary.as_hidden}} {% endif %}
+			{% comment %}
             <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.origin_coords}} {% else %} {{object.origin_coords}} {% endif %}</td>
+			{% endcomment %}
 
             <th class="cbas" style="font-weight:normal;">Area of fire at arrival (ha)</th>
             <td clospan="2" class="cbas">{% if is_init_authorised %} {{snapshot.area}} {% else %} {{form.area}} {% endif %}<br>

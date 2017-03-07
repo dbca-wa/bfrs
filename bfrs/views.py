@@ -8,6 +8,7 @@ from django.forms.formsets import formset_factory
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.gis.geos import Point, GEOSGeometry, Polygon, MultiPolygon, GEOSException
 
 from bfrs.models import (Profile, Bushfire, Activity, Response, AreaBurnt, GroundForces, AerialForces,
         AttendingOrganisation, FireBehaviour, Legal, PrivateDamage, PublicDamage, Comment,
@@ -216,7 +217,28 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
 
     def get_initial(self):
         profile, created = Profile.objects.get_or_create(user=self.request.user)
-        return { 'region': profile.region, 'district': profile.district }
+        d = {'region': profile.region, 'district': profile.district}
+
+
+        import ipdb; ipdb.set_trace()
+        #tmp = '{"origin_point":[117.30008118682615,-30.849007786590157],"fire_boundary":[[[[117.29201309106732,-30.850896064320946],[117.30179780294505,-30.866002286167266],[117.30832094419686,-30.840081382771874],[117.29201309106732,-30.850896064320946]]],[[[117.31518740867246,-30.867032255838605],[117.3213672267005,-30.858277513632217],[117.34299658979864,-30.874413705149877],[117.31175417643466,-30.87733195255201],[117.31518740867246,-30.867032255838605]]]],"area":5068734.391653851,"sss_id":"6d09d9ce023e4dd3361ba125dfe1f9db"}'
+        #sss = json.loads(tmp)
+        if self.request.POST.has_key('sss_create'):
+            sss = json.loads(self.request.POST.get('sss_create'))
+            d['area'] = float(sss['area'])
+            d['origin_point_str'] = Point(sss['origin_point']).get_coords()
+            d['origin_point'] = Point(sss['origin_point'])
+            d['fire_boundary'] = MultiPolygon([Polygon(p[0]) for p in sss['fire_boundary']])
+
+        return d
+#        return {
+#            'region': profile.region,
+#            'district': profile.district,
+#            'area': float(sss['area']),
+#            'origin_point_str': Point(sss['origin_point']).get_coords(),
+#            'origin_point': Point(sss['origin_point']),
+#            'fire_boundary': MultiPolygon([Polygon(p[0]) for p in sss['fire_boundary']]),
+#        }
 
     def post(self, request, *args, **kwargs):
         #self.object = self.get_object()
@@ -224,6 +246,23 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
         form = self.get_form(form_class)
         #area_burnt_formset = AreaBurntFormSet(self.request.POST, prefix='area_burnt_fs')
         #import ipdb; ipdb.set_trace()
+
+#        tmp = '{"origin_point":[117.30008118682615,-30.849007786590157],"fire_boundary":[[[[117.29201309106732,-30.850896064320946],[117.30179780294505,-30.866002286167266],[117.30832094419686,-30.840081382771874],[117.29201309106732,-30.850896064320946]]],[[[117.31518740867246,-30.867032255838605],[117.3213672267005,-30.858277513632217],[117.34299658979864,-30.874413705149877],[117.31175417643466,-30.87733195255201],[117.31518740867246,-30.867032255838605]]]],"area":5068734.391653851,"sss_id":"6d09d9ce023e4dd3361ba125dfe1f9db"}'
+#        sss = json.loads(tmp)
+#        import ipdb; ipdb.set_trace()
+#        #if self.request.POST.has_key('sss_create'):
+#        if True:
+#            #sss = json.loads(self.request.POST.get('sss_create'))
+#
+#            if sss.has_key('area'):
+#                self.object.area = float(sss['area'])
+#
+#            if sss.has_key('origin_point') and isinstance(sss['origin_point'], list):
+#                self.object.origin_point = Point(sss['origin_point'])
+#
+#            if sss.has_key('fire_boundary') and isinstance(sss['fire_'], list):
+#                self.object.fire_boundary = MultiPolygon([Polygon(p[0]) for p in sss['fire_boundary']])
+
 
         if form.is_valid(): # and area_burnt_formset.is_valid():
             return self.form_valid(request,
@@ -268,19 +307,6 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
 #
 #        if self.object.is_init_authorised:
 #            save_initial_snapshot(self.object)
-
-        import ipdb; ipdb.set_trace()
-        if self.request.POST.has_key('sss_create'):
-            sss = json.loads(self.request.POST.get('sss_create'))
-
-            if sss.has_key('area'):
-                self.object.area = float(sss['area'])
-
-            if sss.has_key('origin_point') and isinstance(sss['origin_point'], list):
-                self.object.origin_point = Point(sss['origin_point'])
-
-            if sss.has_key('fire_boundary') and isinstance(sss['fire_'], list):
-                self.object.fire_boundary = MultiPolygon([Polygon(p[0]) for p in sss['fire_boundary']])
 
         self.object.save()
 
