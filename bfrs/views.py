@@ -237,15 +237,13 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
         return initial
 
     def post(self, request, *args, **kwargs):
-        #self.object = self.get_object()
+        if self.request.POST.has_key('sss_create'):
+            return self.render_to_response(self.get_context_data())
+
         form_class = self.get_form_class()
         form = self.get_form(form_class)
         #area_burnt_formset = AreaBurntFormSet(self.request.POST, prefix='area_burnt_fs')
         #import ipdb; ipdb.set_trace()
-
-        #import ipdb; ipdb.set_trace()
-        if self.request.POST.has_key('sss_create'):
-            return self.render_to_response(self.get_context_data())
 
         if form.is_valid(): # and area_burnt_formset.is_valid():
             return self.form_valid(request,
@@ -258,7 +256,7 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
                 #area_burnt_formset,
                 kwargs,
             )
-
+       
     def form_invalid(self,
             form,
             #area_burnt_formset,
@@ -283,14 +281,6 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
         #import ipdb; ipdb.set_trace()
         #areas_burnt_updated = update_areas_burnt_fs(self.object, area_burnt_formset)
 
-#        if self.request.POST.has_key('init_authorise'):
-#            self.object.init_authorised_by = self.request.user
-#            self.object.init_authorised_date = datetime.now()
-#            self.object.report_status = 2
-#
-#        if self.object.is_init_authorised:
-#            save_initial_snapshot(self.object)
-
         self.object.save()
 
         redirect_referrer =  HttpResponseRedirect(request.META.get('HTTP_REFERER'))
@@ -309,6 +299,11 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
 
         form_class = self.get_form_class()
         form = self.get_form(form_class)
+
+        if self.request.POST.has_key('sss_create'):
+            # don't validate the form when initially displaying
+            form.is_bound = False
+
         #area_burnt_formset      = AreaBurntFormSet(instance=self.object, prefix='area_burnt_fs')
         context.update({'form': form,
                         #'area_burnt_formset': area_burnt_formset,
