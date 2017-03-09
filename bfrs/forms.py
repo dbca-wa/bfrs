@@ -1,6 +1,5 @@
 from django import forms
-from bfrs.models import (Bushfire, Activity, Response, AreaBurnt, GroundForces, AerialForces,
-        AttendingOrganisation, FireBehaviour, Legal, PrivateDamage, PublicDamage, Injury, Damage, Comment,
+from bfrs.models import (Bushfire, AreaBurnt, Damage, Injury,
         Region, District, Profile
     )
 from datetime import datetime, timedelta
@@ -143,11 +142,14 @@ class BushfireFilterForm(forms.ModelForm):
 
 
 class BushfireForm(forms.ModelForm):
+    """
+    Final and Review Form
+    """
     days = forms.IntegerField(label='Days', required=False)
     hours = forms.IntegerField(label='Hours', required=False)
     dispatch_pw = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
     dispatch_aerial = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
-    potential_fire_level = forms.ChoiceField(choices=Bushfire.FIRE_LEVEL_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
+    fire_level = forms.ChoiceField(choices=Bushfire.FIRE_LEVEL_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
     investigation_req = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
     cause_state = forms.ChoiceField(choices=Bushfire.CAUSE_STATE_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
     origin_point_str = forms.CharField(required=False, widget=DisplayOnlyField())#, widget=forms.TextInput(attrs={'readonly':'readonly'}))
@@ -155,12 +157,11 @@ class BushfireForm(forms.ModelForm):
     class Meta:
         model = Bushfire
         exclude = ('initial_snapshot', 'init_authorised_by', 'init_authorised_date',
-	   )
+           )
 
 #    def save(self, commit=True, *args, **kwargs):
 #        m = super(BushfireForm, self).save(commit=False, *args, **kwargs)
 #        import ipdb; ipdb.set_trace()
-
 
     def clean(self):
         """
@@ -169,7 +170,7 @@ class BushfireForm(forms.ModelForm):
         """
         req_fields = [
             #'region', 'district', 'incident_no', 'season', # these are delcared Required in models.py
-            #'name', 'potential_fire_level', 'init_authorised_by', 'init_authorised_date',
+            #'name', 'fire_level', 'init_authorised_by', 'init_authorised_date',
             'name', 'authorised_by', 'authorised_date',
             'job_code',
             'cause',
@@ -183,16 +184,7 @@ class BushfireForm(forms.ModelForm):
             'initial_control': 'other_initial_control',
             'final_control': 'other_final_control',
             'cause': 'other_cause',
-#            'coord_type': {
-#                'MGA': ['MGA Zone','MGA Easting','MGA Northing'],
-#                }
         }
-
-#        req_coord_fields = {
-#            'MGA': ['mga_zone','mga_easting','mga_northing'],
-#            'FD Grid': ['fd_letter','fd_number','fd_tenths'],
-#            'Lat/Long': ['lat_decimal','lat_degrees','lat_minutes', 'lon_decimal','lon_degrees','lon_minutes'],
-#        }
 
         if self.cleaned_data['authorised_by']:
             # check all required fields
@@ -208,23 +200,13 @@ class BushfireForm(forms.ModelForm):
                         self.add_error(req_dep_fields[field], 'This field is required.')
             #import ipdb; ipdb.set_trace()
 
-#            coord_type = [i[1] for i in Bushfire.COORD_TYPE_CHOICES if i[0]==self.cleaned_data['coord_type']]
-#            if coord_type:
-#                #import ipdb; ipdb.set_trace()
-#                for field in req_coord_fields[coord_type[0]]:
-#                    if self.cleaned_data.has_key(field) and not self.cleaned_data[field]:
-#                        self.add_error(field, 'This field is required.')
-
-            #import ipdb; ipdb.set_trace()
-            #if missing_fields:
-            #    raise ValidationError('Cannot Authorise, must input required fields: {}'.format(', '.join([i.replace('_', ' ').title() for i in missing_fields])))
 
 class BushfireCreateBaseForm(forms.ModelForm):
     days = forms.IntegerField(label='Days', required=False)
     hours = forms.IntegerField(label='Hours', required=False)
     dispatch_pw = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
     dispatch_aerial = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
-    potential_fire_level = forms.ChoiceField(choices=Bushfire.FIRE_LEVEL_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
+    fire_level = forms.ChoiceField(choices=Bushfire.FIRE_LEVEL_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
     investigation_req = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
     cause_state = forms.ChoiceField(choices=Bushfire.CAUSE_STATE_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
     origin_point_str = forms.CharField(required=False, widget=DisplayOnlyField())#, widget=forms.TextInput(attrs={'readonly':'readonly'}))
@@ -232,9 +214,9 @@ class BushfireCreateBaseForm(forms.ModelForm):
     class Meta:
         model = Bushfire
         fields = ('region', 'district', 'incident_no', 'job_code', 'dfes_incident_no',
-                  'name', 'year', 'potential_fire_level', 'field_officer', 'duty_officer', 'init_authorised_by', 'init_authorised_date',
+                  'name', 'year', 'fire_level', 'field_officer', 'duty_officer', 'init_authorised_by', 'init_authorised_date',
                   'media_alert_req', 'fire_position',
-                  'grid', 'fire_not_found',
+                  'fire_not_found',
                   'fire_detected_date', 'dispatch_pw_date', 'dispatch_aerial_date', 'fuel_type',
                   'assistance_req', 'assistance_details', 'communications', 'other_info',
                   'cause', 'cause_state', 'other_cause', 'tenure', 'other_tenure',
@@ -252,68 +234,21 @@ class BushfireCreateBaseForm(forms.ModelForm):
         return investigation_req
 
 
-#class BushfireCreateForm(forms.ModelForm):
-#    days = forms.IntegerField(label='Days', required=False)
-#    hours = forms.IntegerField(label='Hours', required=False)
-#    dispatch_pw = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
-#    dispatch_aerial = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
-#    potential_fire_level = forms.ChoiceField(choices=Bushfire.FIRE_LEVEL_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
-#    investigation_req = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
-#    cause_state = forms.ChoiceField(choices=Bushfire.CAUSE_STATE_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
-#
-#    class Meta:
-#        model = Bushfire
-#        fields = ('region', 'district', 'incident_no', 'job_code', 'dfes_incident_no',
-#                  'name', 'year', 'potential_fire_level', 'field_officer', 'duty_officer', 'init_authorised_by', 'init_authorised_date',
-#                  'media_alert_req', 'fire_position',
-#                  'grid', 'arrival_area', 'fire_not_found',
-#                  'fire_detected_date', 'dispatch_pw_date', 'dispatch_aerial_date', 'fuel_type',
-#                  'assistance_req', 'assistance_details', 'communications', 'other_info',
-#                  'cause', 'cause_state', 'other_cause', 'tenure', 'other_tenure',
-#                  'days','hours',
-#                  'dispatch_pw', 'dispatch_aerial',
-#                 )
-
-
 class BushfireCreateForm(BushfireCreateBaseForm):
     def __init__(self, *args, **kwargs):
         super(BushfireCreateForm, self).__init__(*args, **kwargs)
 
-    #def clean_district(self):
     def clean(self):
         #import ipdb; ipdb.set_trace()
         district = self.cleaned_data['district']
         incident_no = self.cleaned_data['incident_no']
-        #investigation_req = eval(self.cleaned_data['investigation_req'])
-        #season = self.cleaned_data['season']
-        #bushfire = Bushfire2.objects.filter(district=district, season=season, incident_no=incident_no)
-        bushfire = Bushfire.objects.filter(district=district, incident_no=incident_no)
+        year = self.cleaned_data['year']
+        bushfire = Bushfire.objects.filter(district=district, year=year, incident_no=incident_no)
         if bushfire:
-            raise ValidationError('There is already a Bushfire with this District and Incident No. {} - {} - {}'.format(district, incident_no))
+            raise ValidationError('There is already a Bushfire with this District- Year-Incident No. {}-{}-{}'.format(district, year, incident_no))
         else:
             return self.cleaned_data
 
-
-#class BushfireInitUpdateForm(forms.ModelForm):
-#    days = forms.IntegerField(label='Days', required=False)
-#    hours = forms.IntegerField(label='Hours', required=False)
-#    dispatch_pw = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
-#    dispatch_aerial = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
-#    potential_fire_level = forms.ChoiceField(choices=Bushfire.FIRE_LEVEL_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
-#    investigation_req = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
-#    cause_state = forms.ChoiceField(choices=Bushfire.CAUSE_STATE_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
-#    class Meta:
-#        model = Bushfire
-#        fields = ('region', 'district', 'incident_no', 'job_code', 'dfes_incident_no',
-#                  'name', 'year', 'potential_fire_level', 'field_officer', 'duty_officer', 'init_authorised_by', 'init_authorised_date',
-#                  'media_alert_req', 'fire_position',
-#                  'grid', 'arrival_area', 'fire_not_found',
-#                  'fire_detected_date', 'dispatch_pw_date', 'dispatch_aerial_date', 'fuel_type',
-#                  'assistance_req', 'assistance_details', 'communications', 'other_info',
-#                  'cause', 'cause_state', 'other_cause', 'tenure', 'other_tenure',
-#                  'days','hours',
-#                  'dispatch_pw', 'dispatch_aerial',
-#                 )
 
 class BushfireInitUpdateForm(BushfireCreateBaseForm):
     def clean(self):
@@ -322,9 +257,7 @@ class BushfireInitUpdateForm(BushfireCreateBaseForm):
         Required fields are checked during Authorisation sign-off, therefore checking and adding error fields manually
         """
         req_fields = [
-            #'region', 'district', 'incident_no', 'season', # these are delcared Required in models.py
-            'name', 'potential_fire_level', 'init_authorised_by', 'init_authorised_date',
-            #'first_attack',
+            'name', 'fire_level', 'init_authorised_by', 'init_authorised_date',
             'cause',
             'field_officer',
             #'known_possible',
@@ -332,16 +265,7 @@ class BushfireInitUpdateForm(BushfireCreateBaseForm):
 
         req_dep_fields = { # required dependent fields
             'cause': 'other_cause',
-#            'coord_type': {
-#                'MGA': ['MGA Zone','MGA Easting','MGA Northing'],
-#                }
         }
-
-#        req_coord_fields = {
-#            'MGA': ['mga_zone','mga_easting','mga_northing'],
-#            'FD Grid': ['fd_letter','fd_number','fd_tenths'],
-#            'Lat/Long': ['lat_decimal','lat_degrees','lat_minutes', 'lon_decimal','lon_degrees','lon_minutes'],
-#        }
 
         if self.cleaned_data['init_authorised_by']:
             # check all required fields
@@ -354,17 +278,6 @@ class BushfireInitUpdateForm(BushfireCreateBaseForm):
                     other_field = self.cleaned_data[req_dep_fields[field]]
                     if not other_field:
                         self.add_error(req_dep_fields[field], 'This field is required.')
-
-#            coord_type = [i[1] for i in Bushfire.COORD_TYPE_CHOICES if i[0]==self.cleaned_data['coord_type']]
-#            if coord_type:
-#                #import ipdb; ipdb.set_trace()
-#                for field in req_coord_fields[coord_type[0]]:
-#                    if self.cleaned_data.has_key(field) and not self.cleaned_data[field]:
-#                        self.add_error(field, 'This field is required.')
-
-            #import ipdb; ipdb.set_trace()
-            #if missing_fields:
-            #    raise ValidationError('Cannot Authorise, must input required fields: {}'.format(', '.join([i.replace('_', ' ').title() for i in missing_fields])))
 
 
 class BaseActivityFormSet(BaseInlineFormSet):
@@ -447,104 +360,15 @@ class BaseActivityFormSet(BaseInlineFormSet):
 #                        form.add_error('tenure', 'Duplicate (Tenure - Fuel Type): must be unique')
 
 
-class BaseAttendingOrganisationFormSet(BaseInlineFormSet):
-    def clean(self):
-        """
-        Adds validation to check:
-            1. no duplicate organisation
-        """
-        if any(self.errors):
-            return
-
-        duplicates = False
-        organisations = []
-
-        #import ipdb; ipdb.set_trace()
-        for form in self.forms:
-            if form.cleaned_data:
-                name = form.cleaned_data['name'] if form.cleaned_data.has_key('name') else None
-                other = form.cleaned_data['other'] if form.cleaned_data.has_key('other') else None
-                remove = form.cleaned_data['DELETE'] if form.cleaned_data.has_key('DELETE') else False
-
-                if not remove:
-                    # Check that no two records have the same organisation (name)
-                    if name:
-                        if name in organisations:
-                            duplicates = True
-                        organisations.append(name)
-
-                    if duplicates:
-                        form.add_error('name', 'Duplicate Organisation: must be unique')
-
-                    if name and 'other' in name.name.lower() and not other:
-                        form.add_error('name', 'Must specify other organisation')
-
-
-class BaseFireBehaviourFormSet(BaseInlineFormSet):
-    def clean(self):
-        """
-        Adds validation to check:
-            1. no duplicate fire_behaviour
-            2. FDI is a required field
-        """
-        if any(self.errors):
-            return
-
-        duplicates = False
-        fire_behaviours = []
-
-        for form in self.forms:
-            if form.cleaned_data:
-                name = form.cleaned_data['name'] if form.cleaned_data.has_key('name') else None
-                fuel_type = form.cleaned_data['fuel_type'] if form.cleaned_data.has_key('fuel_type') else None
-                fuel_weight = form.cleaned_data['fuel_weight'] if form.cleaned_data.has_key('fuel_weight') else None
-                fdi = form.cleaned_data['fdi'] if form.cleaned_data.has_key('fdi') else None
-                ros = form.cleaned_data['ros'] if form.cleaned_data.has_key('ros') else None
-                remove = form.cleaned_data['DELETE'] if form.cleaned_data.has_key('DELETE') else False
-
-                if not remove:
-                    # Check that no two records have the same organisation (name)
-                    if name:
-                        if name in fire_behaviours:
-                            duplicates = True
-                        fire_behaviours.append(name)
-
-                    if duplicates:
-                        form.add_error('name', 'Duplicate Fire Behaviour: must be unique')
-
-                    if name and not fdi:
-                        form.add_error('fdi', 'This field is required')
-
-
-ActivityFormSet             = inlineformset_factory(Bushfire, Activity, formset=BaseActivityFormSet, extra=0, max_num=7, min_num=2, can_delete=True, validate_min=True, exclude=())
-ResponseFormSet             = inlineformset_factory(Bushfire, Response, extra=0, max_num=13, min_num=1, exclude=())
 #AreaBurntFormSet            = inlineformset_factory(Bushfire, AreaBurnt, formset=BaseAreaBurntFormSet, extra=0, min_num=1, validate_min=True, exclude=())
 AreaBurntFormSet            = inlineformset_factory(Bushfire, AreaBurnt, extra=0, min_num=1, validate_min=True, exclude=())
-GroundForcesFormSet         = inlineformset_factory(Bushfire, GroundForces, extra=0, max_num=3, min_num=1, exclude=())
-AerialForcesFormSet         = inlineformset_factory(Bushfire, AerialForces, extra=0, max_num=2, min_num=1, exclude=())
-AttendingOrganisationFormSet= inlineformset_factory(Bushfire, AttendingOrganisation, formset=BaseAttendingOrganisationFormSet, extra=0, max_num=11, min_num=1, validate_min=True, exclude=())
-FireBehaviourFormSet        = inlineformset_factory(Bushfire, FireBehaviour, formset=BaseFireBehaviourFormSet, extra=0, max_num=3, min_num=1, validate_min=True, exclude=())
-LegalFormSet                = inlineformset_factory(Bushfire, Legal, extra=0, max_num=5*12, min_num=1, exclude=())
-PrivateDamageFormSet        = inlineformset_factory(Bushfire, PrivateDamage, extra=0, max_num=12, min_num=1, exclude=())
-PublicDamageFormSet         = inlineformset_factory(Bushfire, PublicDamage, extra=0, min_num=1, exclude=())
 InjuryFormSet               = inlineformset_factory(Bushfire, Injury, extra=0, max_num=7, min_num=1, exclude=())
 DamageFormSet               = inlineformset_factory(Bushfire, Damage, extra=0, max_num=5, min_num=1, exclude=())
-CommentFormSet              = inlineformset_factory(Bushfire, Comment, extra=0, min_num=1, exclude=())
 
 
 """
 NEXT - For Testing ONLY
 """
-
-#from bfrs.models import (BushfireTest2, Activity2)
-#ActivityFormSet2            = inlineformset_factory(BushfireTest2, Activity2, extra=1, max_num=7, can_delete=True, exclude=())
-#class BushfireCreateForm2(forms.ModelForm):
-#    class Meta:
-#        model = BushfireTest2
-#        fields = ('region', 'district', 'incident_no', 'season', 'job_code',
-#                  'name', 'potential_fire_level', 'init_authorised_by', 'init_authorised_date',
-#                 )
-
 
 from bfrs.models import (BushfireTest)
 class BushfireTestForm(forms.ModelForm):

@@ -156,7 +156,7 @@
         {% if initial %}
         <tr>
             <th class="cbas">Probable Fire Level *</th>
-            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.potential_fire_level}} {% else %} {{form.potential_fire_level}} {% endif %}</td>
+            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.fire_level}} {% else %} {{form.fire_level}} {% endif %}</td>
 
             <th class="cbas">Investigation required *</th>
             <td clospan="2" class="cbas">{% if is_authorised %} {{snapshot.investigation_req}} {% else %} {{form.investigation_req}} {% endif %}</td>
@@ -164,7 +164,7 @@
 		{% else %}
         <tr>
             <th class="cbas">Maximum Fire Level *</th>
-            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.potential_fire_level}} {% else %} {{form.potential_fire_level}} {% endif %}</td>
+            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.fire_level}} {% else %} {{form.fire_level}} {% endif %}</td>
 
 			<th class="cbas">Arson squad notified<br><br><div class="div_offence_no" style="display: none;">Police offence no</div></th>
             <td clospan="2" class="cbas">

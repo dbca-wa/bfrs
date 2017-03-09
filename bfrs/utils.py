@@ -1,7 +1,4 @@
-from bfrs.models import (Bushfire, Activity, AreaBurnt, AttendingOrganisation, GroundForces,
-        AerialForces, FireBehaviour, Legal, Injury, Damage, Response, Comment,
-        ActivityType,
-    )
+from bfrs.models import (Bushfire, AreaBurnt, Damage, Injury)
 from django.db import IntegrityError, transaction
 from django.http import HttpResponse
 import json
@@ -30,19 +27,19 @@ def breadcrumbs_li(links):
     return crumbs
 
 def serialize_bushfire(auth_type, obj):
-	"Serializes a Bushfire object"
-	if auth_type == 'initial':
-		obj.initial_snapshot = serializers.serialize('json', [obj])
-	if auth_type == 'final':
-		obj.final_snapshot = serializers.serialize('json', [obj])
-	obj.save()
+    "Serializes a Bushfire object"
+    if auth_type == 'initial':
+            obj.initial_snapshot = serializers.serialize('json', [obj])
+    if auth_type == 'final':
+            obj.final_snapshot = serializers.serialize('json', [obj])
+    obj.save()
 
 def deserialize_bushfire(auth_type, obj):
-	"Returns a deserialized Bushfire object"
-	if auth_type == 'initial':
-		return serializers.deserialize("json", obj.initial_snapshot).next().object
-	if auth_type == 'final':
-		return serializers.deserialize("json", obj.final_snapshot).next().object
+    "Returns a deserialized Bushfire object"
+    if auth_type == 'initial':
+            return serializers.deserialize("json", obj.initial_snapshot).next().object
+    if auth_type == 'final':
+            return serializers.deserialize("json", obj.final_snapshot).next().object
 
 
 def calc_coords(obj):
@@ -62,170 +59,21 @@ def calc_coords(obj):
         obj.mga_northing = float(obj.lat_decimal) * 2.0
 
 
-# init methods
-def update_activity_fs(bushfire, activity_formset):
-    new_fs_object = []
-    for form in activity_formset:
-        if form.is_valid():
-            activity = form.cleaned_data.get('activity')
-            dt = form.cleaned_data.get('date')
-            remove = form.cleaned_data.get('DELETE')
-
-            if not remove and (activity and dt):
-                new_fs_object.append(Activity(bushfire=bushfire, activity=activity, date=dt))
-
-    try:
-        with transaction.atomic():
-            #Replace the old with the new
-            Activity.objects.filter(bushfire=bushfire).delete()
-            Activity.objects.bulk_create(new_fs_object)
-    except IntegrityError: #If the transaction failed
-        return 0
-
-    return 1
-
-
 def update_areas_burnt_fs(bushfire, area_burnt_formset):
     new_fs_object = []
     for form in area_burnt_formset:
         if form.is_valid():
             tenure = form.cleaned_data.get('tenure')
-            #fuel_type = form.cleaned_data.get('fuel_type')
-            #area = form.cleaned_data.get('area')
-            #origin = form.cleaned_data.get('origin')
+            area = form.cleaned_data.get('area')
             remove = form.cleaned_data.get('DELETE')
 
-            #if not remove and (tenure and fuel_type and area):
-            #if not remove and (tenure and fuel_type):
-            if not remove and tenure:
-                #new_fs_object.append(AreaBurnt(bushfire=bushfire, tenure=tenure, fuel_type=fuel_type, area=area, origin=origin))
-                #new_fs_object.append(AreaBurnt(bushfire=bushfire, tenure=tenure, fuel_type=fuel_type))
-                new_fs_object.append(AreaBurnt(bushfire=bushfire, tenure=tenure))
+            if not remove and (tenure and area):
+                new_fs_object.append(AreaBurnt(bushfire=bushfire, tenure=tenure, area=area))
 
     try:
         with transaction.atomic():
             AreaBurnt.objects.filter(bushfire=bushfire).delete()
             AreaBurnt.objects.bulk_create(new_fs_object)
-    except IntegrityError:
-        return 0
-
-    return 1
-
-def update_attending_org_fs(bushfire, attending_org_formset):
-    new_fs_object = []
-    for form in attending_org_formset:
-        if form.is_valid():
-            name = form.cleaned_data.get('name')
-            other = form.cleaned_data.get('other')
-            remove = form.cleaned_data.get('DELETE')
-
-            #if not remove and (name and other):
-            if not remove and name:
-                new_fs_object.append(AttendingOrganisation(bushfire=bushfire, name=name, other=other))
-
-    try:
-        with transaction.atomic():
-            AttendingOrganisation.objects.filter(bushfire=bushfire).delete()
-            AttendingOrganisation.objects.bulk_create(new_fs_object)
-    except IntegrityError:
-        return 0
-
-    return 1
-
-# final methods
-def update_groundforces_fs(bushfire, groundforces_formset):
-    new_fs_object = []
-    #groundforces_formset.cleaned_data # hack - form.cleaned_data is unavailable unless this is called
-    for form in groundforces_formset:
-        if form.is_valid():
-            name = form.cleaned_data.get('name')
-            persons = form.cleaned_data.get('persons')
-            pumpers = form.cleaned_data.get('pumpers')
-            plant = form.cleaned_data.get('plant')
-            remove = form.cleaned_data.get('DELETE')
-
-            if not remove and (name and persons and pumpers and plant):
-                new_fs_object.append(GroundForces(bushfire=bushfire, name=name, persons=persons, pumpers=persons, plant=plant))
-
-    try:
-        with transaction.atomic():
-            GroundForces.objects.filter(bushfire=bushfire).delete()
-            GroundForces.objects.bulk_create(new_fs_object)
-    except IntegrityError:
-        return 0
-
-    return 1
-
-def update_aerialforces_fs(bushfire, aerialforces_formset):
-    new_fs_object = []
-    #aerialforces_formset.cleaned_data # hack - form.cleaned_data is unavailable unless this is called
-    for form in aerialforces_formset:
-        if form.is_valid():
-            name = form.cleaned_data.get('name')
-            observer = form.cleaned_data.get('observer')
-            transporter = form.cleaned_data.get('transporter')
-            ignition = form.cleaned_data.get('ignition')
-            water_bomber = form.cleaned_data.get('water_bomber')
-            remove = form.cleaned_data.get('DELETE')
-
-            if not remove and (name and observer and transporter and ignition and water_bomber):
-                new_fs_object.append(AerialForces(bushfire=bushfire, name=name, observer=observer, transporter=transporter, ignition=ignition, water_bomber=water_bomber))
-
-    try:
-        with transaction.atomic():
-            AerialForces.objects.filter(bushfire=bushfire).delete()
-            AerialForces.objects.bulk_create(new_fs_object)
-    except IntegrityError:
-        return 0
-
-    return 1
-
-def update_fire_behaviour_fs(bushfire, fire_behaviour_formset):
-    new_fs_object = []
-    for form in fire_behaviour_formset:
-        if form.is_valid():
-            name = form.cleaned_data.get('name')
-            fuel_type = form.cleaned_data.get('fuel_type')
-            fuel_weight = form.cleaned_data.get('fuel_weight')
-            fdi = form.cleaned_data.get('fdi')
-            ros = form.cleaned_data.get('ros')
-            remove = form.cleaned_data.get('DELETE')
-
-            if not remove and (name and fuel_type and fuel_weight and fdi and ros):
-                new_fs_object.append(FireBehaviour(bushfire=bushfire, name=name, fuel_type=fuel_type, fuel_weight=fuel_weight, fdi=fdi, ros=ros))
-
-    try:
-        with transaction.atomic():
-            FireBehaviour.objects.filter(bushfire=bushfire).delete()
-            FireBehaviour.objects.bulk_create(new_fs_object)
-    except IntegrityError:
-        return 0
-
-    return 1
-
-def update_legal_fs(bushfire, legal_formset):
-    new_fs_object = []
-    for form in legal_formset:
-        if form.is_valid():
-            protection = form.cleaned_data.get('protection')
-            cost = form.cleaned_data.get('cost')
-            restricted_period = form.cleaned_data.get('restricted_period')
-            prohibited_period = form.cleaned_data.get('prohibited_period')
-            inv_undertaken = form.cleaned_data.get('inv_undertaken')
-            legal_result = form.cleaned_data.get('legal_result')
-            remove = form.cleaned_data.get('DELETE')
-
-            if not remove and (protection and cost and inv_undertaken and legal_result):
-                new_fs_object.append(
-                    Legal(bushfire=bushfire, protection=protection, cost=cost, restricted_period=restricted_period,
-                        prohibited_period=prohibited_period, inv_undertaken=inv_undertaken, legal_result=legal_result
-                    )
-                )
-
-    try:
-        with transaction.atomic():
-            Legal.objects.filter(bushfire=bushfire).delete()
-            Legal.objects.bulk_create(new_fs_object)
     except IntegrityError:
         return 0
 
@@ -271,47 +119,6 @@ def update_damage_fs(bushfire, damage_formset):
 
     return 1
 
-def update_response_fs(bushfire, response_formset):
-    new_fs_object = []
-    for form in response_formset:
-        if form.is_valid():
-            response = form.cleaned_data.get('response')
-            remove = form.cleaned_data.get('DELETE')
-
-            if not remove and response:
-                new_fs_object.append(Response(bushfire=bushfire, response=response))
-
-    try:
-        with transaction.atomic():
-            Response.objects.filter(bushfire=bushfire).delete()
-            Response.objects.bulk_create(new_fs_object)
-    except IntegrityError:
-        return 0
-
-    return 1
-
-def update_comment_fs(bushfire, request, comment_formset):
-    new_fs_object = []
-    for form in comment_formset:
-        if form.is_valid():
-            comment = form.cleaned_data.get('comment')
-            remove = form.cleaned_data.get('DELETE')
-
-            if not remove and comment:
-                if request.user.id:
-                    new_fs_object.append(Comment(bushfire=bushfire, comment=comment, creator_id=request.user.id, modifier_id=request.user.id))
-                else:
-                    new_fs_object.append(Comment(bushfire=bushfire, comment=comment, creator_id=1, modifier_id=1))
-
-    try:
-        with transaction.atomic():
-            Comment.objects.filter(bushfire=bushfire).delete()
-            Comment.objects.bulk_create(new_fs_object)
-    except IntegrityError:
-        return 0
-
-    return 1
-
 def export_final_csv(request, queryset):
     #import csv
     filename = 'export_final-' + datetime.now().strftime('%Y-%m-%dT%H%M%S') + '.csv'
@@ -328,14 +135,12 @@ def export_final_csv(request, queryset):
 		"Incident No",
 		"DFES Incident No",
 		"Job Code",
-		"Potential Fire Level",
-		"Maximum Fire Level",
+		"Fire Level",
 		"Media Alert Req",
 		"Investigation Req",
 		"Fire Position",
 		#"Origin Point",
 		#"Fire Boundary",
-		"Grid",
 		"Fire Not Found",
 		"Assistance Req",
 		"Communications",
@@ -364,10 +169,9 @@ def export_final_csv(request, queryset):
 		"Other Initial Control",
 		"Final Control",
 		"Other Final Control",
-		"Max Fire Level",
 		"Arson Squad Notified",
 		"Offence No",
-		"Final Area",
+		"Area",
 		"Estimated Time to Control",
 		"Authorised By",
 		"Authorised Date",
@@ -384,14 +188,12 @@ def export_final_csv(request, queryset):
 			smart_str( obj.incident_no),
 			smart_str( obj.dfes_incident_no),
 			smart_str( obj.job_code),
-			smart_str( obj.get_potential_fire_level_display()),
-			smart_str( obj.get_max_fire_level_display()),
+			smart_str( obj.get_fire_level_display()),
 			smart_str( obj.media_alert_req),
 			smart_str( obj.investigation_req),
 			smart_str( obj.fire_position),
 			#row.write(col_no(), smart_str( obj.origin_point)),
 			#row.write(col_no(), smart_str( obj.fire_boundary),
-			smart_str( obj.grid),
 			smart_str( obj.fire_not_found),
 			smart_str( obj.assistance_req),
 			smart_str( obj.communications),
@@ -420,10 +222,9 @@ def export_final_csv(request, queryset):
 			smart_str( obj.other_initial_control),
 			smart_str( obj.final_control),
 			smart_str( obj.other_final_control),
-			smart_str( obj.max_fire_level),
 			smart_str( obj.arson_squad_notified),
 			smart_str( obj.offence_no),
-			smart_str( obj.final_area),
+			smart_str( obj.area),
 			smart_str( obj.time_to_control),
 			smart_str( obj.authorised_by.get_full_name() if obj.authorised_by else None ),
 			smart_str( obj.authorised_date.strftime('%Y-%m-%d %H:%M:%S') if obj.authorised_date else None ),
@@ -459,15 +260,12 @@ def export_excel(request, queryset):
     hdr.write(col_no(), "Incident Number")
     hdr.write(col_no(), "DFES Incident No")
     hdr.write(col_no(), "Job Code")
-    hdr.write(col_no(), "Potential Fire Level")
-    hdr.write(col_no(), "Maximum Fire Level")
+    hdr.write(col_no(), "Fire Level")
     hdr.write(col_no(), "Media Alert Req")
     hdr.write(col_no(), "Investigation Req")
     hdr.write(col_no(), "Fire Position")
     #"Origin Point",
     #"Fire Boundary",
-    hdr.write(col_no(), "Grid")
-    hdr.write(col_no(), "Arrival Area")
     hdr.write(col_no(), "Fire Not Found")
     hdr.write(col_no(), "Assistance Req")
     hdr.write(col_no(), "Communications")
@@ -496,10 +294,9 @@ def export_excel(request, queryset):
     hdr.write(col_no(), "Other Initial Control")
     hdr.write(col_no(), "Final Control")
     hdr.write(col_no(), "Other Final Control")
-    hdr.write(col_no(), "Max Fire Level")
     hdr.write(col_no(), "Arson Squad Notified")
     hdr.write(col_no(), "Offence No")
-    hdr.write(col_no(), "Final Area")
+    hdr.write(col_no(), "Area")
     hdr.write(col_no(), "Estimated Time to Control")
     hdr.write(col_no(), "Authorised By")
     hdr.write(col_no(), "Authorised Date")
@@ -518,15 +315,12 @@ def export_excel(request, queryset):
         row.write(col_no(), obj.incident_no )
         row.write(col_no(), obj.dfes_incident_no )
         row.write(col_no(), obj.job_code )
-        row.write(col_no(), smart_str( obj.get_potential_fire_level_display() ))
-        row.write(col_no(), smart_str( obj.get_max_fire_level_display() ))
+        row.write(col_no(), smart_str( obj.get_fire_level_display() ))
         row.write(col_no(), smart_str( obj.media_alert_req) )
         row.write(col_no(), smart_str( obj.investigation_req) )
         row.write(col_no(), smart_str( obj.fire_position) )
         #row.write(col_no(), smart_str( obj.origin_point) )
         #row.write(col_no(), smart_str( obj.fire_boundary) )
-        row.write(col_no(), smart_str( obj.grid) )
-        row.write(col_no(), obj.arrival_area )
         row.write(col_no(), smart_str( obj.fire_not_found) )
         row.write(col_no(), smart_str( obj.assistance_req) )
         row.write(col_no(), smart_str( obj.communications) )
@@ -555,10 +349,9 @@ def export_excel(request, queryset):
         row.write(col_no(), smart_str( obj.other_initial_control) )
         row.write(col_no(), smart_str( obj.final_control) )
         row.write(col_no(), smart_str( obj.other_final_control) )
-        row.write(col_no(), smart_str( obj.max_fire_level) )
         row.write(col_no(), smart_str( obj.arson_squad_notified) )
         row.write(col_no(), obj.offence_no )
-        row.write(col_no(), obj.final_area )
+        row.write(col_no(), obj.area )
         row.write(col_no(), smart_str( obj.time_to_control) )
         row.write(col_no(), smart_str( obj.authorised_by.get_full_name() if obj.authorised_by else None ) )
         row.write(col_no(), smart_str( obj.authorised_date.strftime('%Y-%m-%d %H:%M:%S') if obj.authorised_date else None ) )

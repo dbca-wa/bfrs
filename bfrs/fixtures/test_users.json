@@ -1,0 +1,39 @@
+[
+{
+    "fields": {
+        "username": "jm",
+        "first_name": "Jawaid",
+        "last_name": "Mushtaq",
+        "is_active": true,
+        "is_superuser": true,
+        "is_staff": true,
+        "last_login": "2016-06-01T08:59:44.216Z",
+        "groups": [],
+        "user_permissions": [],
+        "password": "pbkdf2_sha256$15000$gUMrMaAB0RQa$WDnO/9OEiXa3A2CuynvB5SLuPGlKkC4CYVZemCKqmjQ=",
+        "email": "",
+        "date_joined": "2016-06-01T08:59:14.598Z"
+    },
+    "model": "auth.user",
+    "pk": 1
+},
+{
+    "fields": {
+        "username": "wilsonc",
+        "first_name": "Wilson",
+        "last_name": "Cheung",
+        "is_active": true,
+        "is_superuser": true,
+        "is_staff": true,
+        "last_login": "2016-06-01T08:59:44.216Z",
+        "groups": [],
+        "user_permissions": [],
+        "password": "",
+        "email": "",
+        "date_joined": "2016-06-01T08:59:14.598Z"
+    },
+    "model": "auth.user",
+    "pk": 2
+}
+
+]
