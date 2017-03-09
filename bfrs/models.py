@@ -521,18 +521,21 @@ class Response(models.Model):
 @python_2_unicode_compatible
 class AreaBurnt(models.Model):
     tenure = models.ForeignKey(Tenure, related_name='tenures')
+    area = models.DecimalField(verbose_name="Area (ha)", max_digits=12, decimal_places=2, validators=[MinValueValidator(0)])
     bushfire = models.ForeignKey(Bushfire, related_name='tenures_burnt')
+
+    def clean(self):
+        if self.bushfire.areas_burnt.all().count() == 0:
+            raise ValidationError("You must enter one Area Burnt record")
 
     def to_json(self):
         return json.dumps(self.to_dict)
 
     def to_dict(self):
-        #return dict(tenure=self.tenure.name, fuel_type=self.fuel_type.name, area=round(self.area,2), origin=self.origin)
-        return dict(tenure=self.tenure.name)
+        return dict(tenure=self.tenure.name, area=round(self.area,2))
 
     def __str__(self):
-        return 'Tenure: {}'.format(
-            self.tenure.name)
+		return 'Tenure: {}, Area: {}'.format(self.tenure.name, self.area)
 
     class Meta:
         unique_together = ('bushfire', 'tenure',)
@@ -703,13 +706,13 @@ class PrivateDamage(models.Model):
 
 
 @python_2_unicode_compatible
-class InjuryFatality(models.Model):
+class Injury(models.Model):
     injury_type = models.ForeignKey(InjuryType)
     number = models.PositiveSmallIntegerField(validators=[MinValueValidator(0)])
     bushfire = models.ForeignKey(Bushfire, related_name='injuries')
 
     def __str__(self):
-        return self.injury_type
+        return 'Injury Type {}, Number {}'.format(self.injury_type, self.number)
 
     class Meta:
         unique_together = ('bushfire', 'injury_type',)
@@ -719,11 +722,11 @@ class InjuryFatality(models.Model):
 @python_2_unicode_compatible
 class Damage(models.Model):
     damage_type = models.ForeignKey(DamageType)
-    area = models.DecimalField(verbose_name="Area (ha)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)])
+    number = models.PositiveSmallIntegerField(validators=[MinValueValidator(0)])
     bushfire = models.ForeignKey(Bushfire, related_name='damages')
 
     def __str__(self):
-        return self.damage_type
+        return 'Damage Type {}, Number {}'.format(self.damage_type, self.number)
 
     class Meta:
         unique_together = ('bushfire', 'damage_type',)

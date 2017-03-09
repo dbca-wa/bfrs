@@ -9,7 +9,13 @@
   {% if create %}
     <li>{% trans 'Create' %}</li>
   {% else %}
-    <li>{% trans 'Initial' %}</li>
+    {% if review  %}
+      <li>{% trans 'Review' %}</li>
+    {% elif final  %}
+      <li>{% trans 'Final' %}</li>
+    {% else %}
+      <li>{% trans 'Initial' %}</li>
+    {% endif %}
     <li>{{ object.unique_id}}</li>
   {% endif %}
 </ul>
@@ -89,36 +95,36 @@
 
         <tr>
             <th class="cbas">Region *</th>
-            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.region}} {% else %} {{form.region}} {% endif %}</td>
+            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.region}} {% else %} {{form.region}} {% endif %}</td>
 
             <th class="cbas">District *</th>
-            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.district}} {% else %} {{form.district}} {% endif %}</td>
+            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.district}} {% else %} {{form.district}} {% endif %}</td>
         </tr>
 
         <tr>
             <th class="cbas">P&W Fire no. *</th>
-            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.incident_no}} {% else %} {{form.incident_no}} {% endif %}</td>
+            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.incident_no}} {% else %} {{form.incident_no}} {% endif %}</td>
 
             <th class="cbas">Date and time fire detected *</th>
-            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.fire_detected_date}} {% else %} {{form.fire_detected_date}} {% endif %}</td>
+            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.fire_detected_date}} {% else %} {{form.fire_detected_date}} {% endif %}</td>
         </tr>
 
 
         <tr>
             <th class="cbas">Job code *</th>
-            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.job_code}} {% else %} {{form.job_code}} {% endif %}</td>
+            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.job_code}} {% else %} {{form.job_code}} {% endif %}</td>
 
             <th class="cbas" style="font-weight:normal;">DFES Incident no.</th>
-            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.dfes_incident_no}} {% else %} {{form.dfes_incident_no}} {% endif %}</td>
+            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.dfes_incident_no}} {% else %} {{form.dfes_incident_no}} {% endif %}</td>
         </tr>
 
 
         <tr>
             <th class="cbas">Fire name *</th>
-            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.name}} {% else %} {{form.name}} {% endif %}</td>
+            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.name}} {% else %} {{form.name}} {% endif %}</td>
 
             <th class="cbas">Financial Year *</th>
-            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.year}} {% else %} {{form.year}} {% endif %}</td>
+            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.year}} {% else %} {{form.year}} {% endif %}</td>
 
         </tr>
   </tbody>
@@ -128,35 +134,50 @@
 <table class="table table-bordered table-striped table-condensed">
   <tbody>
         <tr>
-          <th colspan="6" style="background: black; color: white; text-align: left; font-size: 16px; padding: 12px;" > INITIAL FIRE REPORT</th>
+			<th colspan="6" style="background: black; color: white; text-align: left; font-size: 16px; padding: 12px;" >
+				{% if initial %} INITIAL {% elif final %} FINAL {% else %} REVIEW {% endif %} FIRE REPORT
+			</th>
         </tr>
 
         <tr>
 			<th class="cbas" style="font-weight:normal;">P&W Resource dispatched<br><br><div class=div_dispatch_pw_date style="display: none;">Date and time of dispatch</div></th>
             <td colspan="2" class="cbas">
-				{% if is_init_authorised %} {{snapshot.dispatch_pw}} {% else %} {{form.dispatch_pw}} {% endif %}<br>
-				<div class=div_dispatch_pw_date style="display: none;">{% if is_init_authorised %} {{snapshot.dispatch_pw_date}} {% else %} {{form.dispatch_pw_date}} {% endif %}</div>
+				{% if is_authorised %} {{snapshot.dispatch_pw}} {% else %} {{form.dispatch_pw}} {% endif %}<br>
+				<div class=div_dispatch_pw_date style="display: none;">{% if is_authorised %} {{snapshot.dispatch_pw_date}} {% else %} {{form.dispatch_pw_date}} {% endif %}</div>
 			</td>
 
 			<th class="cbas" style="font-weight:normal;">Aerial support dispatched<br><br><div class=div_dispatch_aerial_date style="display: none;">Date and time of dispatch</div></th>
             <td clospan="2" class="cbas">
-				{% if is_init_authorised %} {{snapshot.dispatch_aerial}} {% else %} {{form.dispatch_aerial}} {% endif %}<br>
-				<div class=div_dispatch_aerial_date style="display: none;">{% if is_init_authorised %} {{snapshot.dispatch_aerial_date}} {% else %} {{form.dispatch_aerial_date}} {% endif %}</div>
+				{% if is_authorised %} {{snapshot.dispatch_aerial}} {% else %} {{form.dispatch_aerial}} {% endif %}<br>
+				<div class=div_dispatch_aerial_date style="display: none;">{% if is_authorised %} {{snapshot.dispatch_aerial_date}} {% else %} {{form.dispatch_aerial_date}} {% endif %}</div>
 			</td>
         </tr>
 
+        {% if initial %}
         <tr>
             <th class="cbas">Probable Fire Level *</th>
-            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.potential_fire_level}} {% else %} {{form.potential_fire_level}} {% endif %}</td>
+            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.potential_fire_level}} {% else %} {{form.potential_fire_level}} {% endif %}</td>
 
             <th class="cbas">Investigation required *</th>
-            <td clospan="2" class="cbas">{% if is_init_authorised %} {{snapshot.investigation_req}} {% else %} {{form.investigation_req}} {% endif %}</td>
+            <td clospan="2" class="cbas">{% if is_authorised %} {{snapshot.investigation_req}} {% else %} {{form.investigation_req}} {% endif %}</td>
         </tr>
+		{% else %}
+        <tr>
+            <th class="cbas">Maximum Fire Level *</th>
+            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.potential_fire_level}} {% else %} {{form.potential_fire_level}} {% endif %}</td>
+
+			<th class="cbas">Arson squad notified<br><br><div class="div_offence_no" style="display: none;">Police offence no</div></th>
+            <td clospan="2" class="cbas">
+				{% if is_authorised %} {{snapshot.arson_squad_notified}} {% else %} {{form.arson_squad_notified}} {% endif %}
+				<div class="div_offence_no" style="display: none;">{% if is_authorised %} {{snapshot.offence_no}} {% else %} {{form.offence_no}} {% endif %}</div>
+			</td>
+        </tr>
+		{% endif %}
 
         <tr>
             <th class="cbas">Media Alert Required</th>
             <td colspan="5" class="cbas">
-              {% if is_init_authorised %}
+              {% if is_authorised %}
 			  {% if snapshot.media_alert_req %}<div class="text-center"><i class="icon-ok text-success"></i></div>{% else %}<div class="text-center"><i class="icon-remove text-danger"></i></div>{% endif %}<span class="div_pica" style="display: none; margin:20;">Call PICA on ....</span>
               {% else %}
 			  {{form.media_alert_req}} <span class="div_pica" style="display: none; margin:20;">Call PICA on ....</span>
@@ -167,38 +188,43 @@
 
         <tr>
             <th width="25%" class="cbas" style="font-weight:normal;">Position of fire<br>(street address, or km from landmark/suburb)</th>
-            <td colspan="5" class="cbas">{% if is_init_authorised %} {{snapshot.fire_position}} {% else %} {{form.fire_position}} {% endif %}</td>
+            <td colspan="5" class="cbas">{% if is_authorised %} {{snapshot.fire_position}} {% else %} {{form.fire_position}} {% endif %}</td>
         </tr>
 
         <tr>
             <th class="cbas" style="font-weight:normal;">Point of origin</th>
             <td colspan="2" class="cbas">
-				{% if is_init_authorised %} 
+				{% if is_authorised %} 
 					{{snapshot.origin_point}} 
 				{% else %} 
 					{% if object.origin_point %} {{object.origin_coords}} {% else %} {{form.origin_point_str}} {% endif %}
 				{% endif %}
 			</td>
-            {% if not is_init_authorised %} {{form.origin_point.as_hidden}} {% endif %}
-            {% if not is_init_authorised %} {{form.fire_boundary.as_hidden}} {% endif %}
+            {% if not is_authorised %} {{form.origin_point.as_hidden}} {% endif %}
+            {% if not is_authorised %} {{form.fire_boundary.as_hidden}} {% endif %}
 			{% comment %}
-            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.origin_coords}} {% else %} {{object.origin_coords}} {% endif %}</td>
+            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.origin_coords}} {% else %} {{object.origin_coords}} {% endif %}</td>
 			{% endcomment %}
 
+        {% if initial %}
             <th class="cbas" style="font-weight:normal;">Area of fire at arrival (ha)</th>
-            <td clospan="2" class="cbas">{% if is_init_authorised %} {{snapshot.area}} {% else %} {{form.area}} {% endif %}<br>
-            {% if is_init_authorised %} {{snapshot.fire_not_found}} {% else %} {{form.fire_not_found}} {% endif %}Fire not found</td>
+            <td clospan="2" class="cbas">{% if is_authorised %} {{snapshot.area}} {% else %} {{form.area}} {% endif %}<br>
+            {% if is_authorised %} {{snapshot.fire_not_found}} {% else %} {{form.fire_not_found}} {% endif %}Fire not found</td>
+        {% else %}
+            <th class="cbas" style="font-weight:normal;">Final fire size (ha) *</th>
+            <td clospan="2" class="cbas">{% if is_authorised %} {{snapshot.area}} {% else %} {{form.area}} {% endif %}</td>
+        {% endif %}
         </tr>
 
         <tr>
             <th class="cbas">Fuel and fire behaviour *</th>
-            <td colspan="5" class="cbas">{% if is_init_authorised %} {{snapshot.fuel_type}} {% else %} {{form.fuel_type}} {% endif %}</td>
+            <td colspan="5" class="cbas">{% if is_authorised %} {{snapshot.fuel_type}} {% else %} {{form.fuel_type}} {% endif %}</td>
         </tr>
 
         <tr>
             <th class="cbas" style="font-weight:normal;">Estimated Time to Control</th>
 			<td colspan="5" class="cbas">
-				{% if object.is_init_authorised %} {{snapshot.fire_safe_date}}
+				{% if object.is_authorised %} {{snapshot.fire_safe_date}}
 					<span>{{snapshot.time_to_control}}</span>
 				{% else %}
 					<span>{{form.days}} Days {{form.hours}} Hours</span>
@@ -209,31 +235,31 @@
         <tr>
             <th class="cbas" style="font-weight:normal;">Assistance required</th>
             <td colspan="5" class="cbas">
-				{% if is_init_authorised %} {{snapshot.assistance_req}} {% else %} {{form.assistance_req}} {% endif %}
-				<span class=div_assist style="visibility: hidden; margin:20;">Details {% if is_init_authorised %} {{snapshot.assistance_details}} {% else %} {{form.assistance_details}} {% endif %}</span>
+				{% if is_authorised %} {{snapshot.assistance_req}} {% else %} {{form.assistance_req}} {% endif %}
+				<span class=div_assist style="visibility: hidden; margin:20;">Details {% if is_authorised %} {{snapshot.assistance_details}} {% else %} {{form.assistance_details}} {% endif %}</span>
 			</td>
         </tr>
 
         <tr>
             <th class="cbas" style="font-weight:normal;">Communications</th>
-            <td colspan="5" class="cbas">{% if is_init_authorised %} {{snapshot.communications}} {% else %} {{form.communications}} {% endif %}</td>
+            <td colspan="5" class="cbas">{% if is_authorised %} {{snapshot.communications}} {% else %} {{form.communications}} {% endif %}</td>
         </tr>
 
         <tr>
             <th class="cbas" style="font-weight:normal;">Other information<br>(include Burn ID if cause is escape)</th>
-            <td colspan="5" class="cbas">{% if is_init_authorised %} {{snapshot.other_info}} {% else %} {{form.other_info}} {% endif %}</td>
+            <td colspan="5" class="cbas">{% if is_authorised %} {{snapshot.other_info}} {% else %} {{form.other_info}} {% endif %}</td>
         </tr>
 
         <tr>
             <th class="cbas">Fire Cause *</th>
 			<td colspan="2" class="cbas">
-				{% if is_init_authorised %} {{snapshot.cause_state}} {% else %} {{form.cause_state}} {% endif %}<br>
-				{% if is_init_authorised %} {{snapshot.cause}} {% else %} {{form.cause}} {% endif %}
+				{% if is_authorised %} {{snapshot.cause_state}} {% else %} {{form.cause_state}} {% endif %}<br>
+				{% if is_authorised %} {{snapshot.cause}} {% else %} {{form.cause}} {% endif %}
 			</td>
 			<th class="cbas"><span class="div_cause" style="visibility: hidden;">Other Cause *</span></th>
 			<td colspan="1" class="cbas">
 				<span class="div_cause" style="visibility: hidden;">
-				{% if is_init_authorised %} {{snapshot.other_cause}} {% else %} {{form.other_cause}} {% endif %}
+				{% if is_authorised %} {{snapshot.other_cause}} {% else %} {{form.other_cause}} {% endif %}
 				</span>
 			</td>
 
@@ -241,26 +267,36 @@
 
         <tr>
             <th class="cbas">Tenure of ignition point*</th>
-            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.tenure}} {% else %} {{form.tenure}} {% endif %}</td>
+            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.tenure}} {% else %} {{form.tenure}} {% endif %}</td>
 
 			<th class="cbas"><span class="div_tenure" style="visibility: hidden;">Other Tenure *</span></th>
             <td colspan="2" class="cbas">
 				<span class="div_tenure" style="visibility: hidden;">
-				{% if is_init_authorised %} {{snapshot.other_tenure}} {% else %} {{form.other_tenure}} {% endif %}
+				{% if is_authorised %} {{snapshot.other_tenure}} {% else %} {{form.other_tenure}} {% endif %}
 				</span>
 			</td>
         </tr>
 
+        {% if initial %}
         <tr>
 
             <th id="id_th_field_officer" class="cbas" style="font-weight:normal;">Field Officer</th>
-            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.field_officer}} {% else %} {{form.field_officer}} {% endif %}</td>
+            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.field_officer}} {% else %} {{form.field_officer}} {% endif %}</td>
 
             <th class="cbas" style="font-weight:normal;">Duty Officer</th>
-            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.duty_officer}} {% else %} {{form.duty_officer}} {% endif %}</td>
+            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.duty_officer}} {% else %} {{form.duty_officer}} {% endif %}</td>
         </tr>
+        {% endif %}
 
-        {% if is_init_authorised %} 
+        {% if object.is_final_authorised_by %} 
+        <tr>
+            <th class="cbas" style="font-weight:normal;">Authorised By</th>
+            <td colspan="2" class="cbas">{{object.init_authorised_by}}</td>
+
+            <th class="cbas" style="font-weight:normal;">Authorised Date</th>
+            <td colspan="2" class="cbas">{{object.init_authorised_date|date_fmt}}</td>
+        </tr>
+        {% elif object.is_init_authorised_by %} 
         <tr>
             <th class="cbas" style="font-weight:normal;">Authorised By</th>
             <td colspan="2" class="cbas">{{object.init_authorised_by}}</td>
@@ -274,6 +310,63 @@
 </table>
 
 
+{% if object.report_status > object.STATUS_INITIAL_AUTHORISED %}
+
+<table class="table table-bordered table-striped table-condensed">
+    <tbody>
+        <tr>
+            <th class="cbas">Date fire contained *</th>
+            <td class="cbas">{% if object.is_final_authorised %} {{snapshot.fire_contained_date}} {% else %} {{form.fire_contained_date}} {% endif %}</td>
+
+            <th class="cbas">Initial attack agency *<br><br><div class=div_other_first_attack style="display: none;">Other initial attack agency *</div></th>
+            <td colspan="1" class="cbas">
+				{% if is_authorised %} {{snapshot.first_attack}} {% else %} {{form.first_attack}} {% endif %}<br>
+                <div class=div_other_first_attack style="display: none;">{% if is_authorised %} {{snapshot.other_first_attack}} {% else %} {{form.other_first_attack}} {% endif %}</div>
+            </td>
+        </tr>
+
+        <tr>
+            <th class="cbas">Date fire controlled *</th>
+            <td class="cbas">{% if object.is_final_authorised %} {{snapshot.fire_controlled_date}} {% else %} {{form.fire_controlled_date}} {% endif %}</td>
+
+            <th class="cbas">Initial controlling agency *<br><br><div class=div_other_initial_control style="display: none;">Other initial controlling agency *</div></th>
+            <td colspan="1" class="cbas">
+                {% if is_authorised %} {{snapshot.initial_control}} {% else %} {{form.initial_control}} {% endif %}<br>
+                <div class=div_other_initial_control style="display: none;">{% if is_authorised %} {{snapshot.other_initial_control}} {% else %} {{form.other_initial_control}} {% endif %}</div>
+            </td>
+        </tr>
+
+        <tr>
+            <th class="cbas">Date fire safe *</th>
+            <td class="cbas">{% if object.is_final_authorised %} {{snapshot.fire_safe_date}} {% else %} {{form.fire_safe_date}} {% endif %}</td>
+
+            <th class="cbas">Final controlling agency *<br><br><div class=div_other_final_control style="display: none;">Other final controlling agency *</div></th>
+            <td colspan="1" class="cbas">
+                {% if is_authorised %} {{snapshot.final_control}} {% else %} {{form.final_control}} {% endif %}<br>
+                <div class=div_other_final_control style="display: none;">{% if is_authorised %} {{snapshot.other_final_control}} {% else %} {{form.other_final_control}} {% endif %}</div>
+            </td>
+        </tr>
+
+  </tbody>
+</table>
+
+<table class="table table-bordered table-striped table-condensed cbas">
+    <thead>
+		<th class="cbas">Tenure of burnt area *</th>
+		<th class="cbas">Damage</th>
+		<th class="cbas" >Injuries and Fatalities</th>
+    </thead>
+    <tbody>
+        <tr>
+			<td class="cbas" >{% include "bfrs/tenure_veg_fs.html" %}</td>
+			<td class="cbas" >{% include "bfrs/damage_fs.html" %}</td>
+			<td class="cbas">{% include "bfrs/injuries_fs.html" %}</td>
+        </tr>
+
+  </tbody>
+</table>
+
+{% endif %}
 
 <div class="navbar navbar-fixed-bottom">
   <div class="navbar-inner">
@@ -282,11 +375,11 @@
       {% if request.user|can_readonly and not request.user.is_superuser %}
         <input type="submit" value="Save" class="btn btn-primary btn-success" name="_save" title="You do not have 'Update' permissions" disabled />
       {% else %}
-        <input type="submit" value="Save" class="btn btn-primary btn-success" name="_save" {% if is_init_authorised %}title="Initial Report cannot be edited" disabled{% endif %} />
+        <input type="submit" value="Save" class="btn btn-primary btn-success" name="_save" {% if is_authorised %}title="Initial Report cannot be edited" disabled{% endif %} />
       {% endif %}
 
     {% comment %}
-      {% if object.is_init_authorised %} 
+      {% if object.is_authorised %} 
         <input type="submit" value="Authorise" class="btn btn-primary btn-success" name="init_authorise" title="Authorised by {{object.init_authorised_by}} on {{object.init_authorised_date|date_fmt}}" disabled/>
       {% else %}
         <input type="submit" value="Authorise" class="btn btn-primary btn-success" name="init_authorise" {% if object.can_authorise %}title="Initial Report cannot be Authorised. Some required fields are missing." disabled{% endif %} />
@@ -462,6 +555,70 @@ $('#id_tenure').on('change', function() {
 		$('.div_tenure').css('visibility','visible');
 	} else {
 		$('.div_tenure').css('visibility','hidden');
+	}
+});
+
+/* Initial Attack */
+var selected = $('#id_first_attack :selected').text();
+if ((selected.indexOf('Other') > -1) || (selected.indexOf('OTHER') > -1)) {
+	$('.div_other_first_attack').show();
+} else {
+	$('.div_other_first_attack').hide();
+}
+$('#id_first_attack').on('change', function() {
+	var selected = $('#id_first_attack :selected').text();
+	if ((selected.indexOf('Other') > -1) || (selected.indexOf('OTHER') > -1)) {
+		$('.div_other_first_attack').show();
+	} else {
+		$('.div_other_first_attack').hide();
+	}
+});
+
+/* Initial Control */
+var selected = $('#id_initial_control :selected').text();
+if ((selected.indexOf('Other') > -1) || (selected.indexOf('OTHER') > -1)) {
+	$('.div_other_initial_control').show();
+} else {
+	$('.div_other_initial_control').hide();
+}
+$('#id_initial_control').on('change', function() {
+	var selected = $('#id_initial_control :selected').text();
+	if ((selected.indexOf('Other') > -1) || (selected.indexOf('OTHER') > -1)) {
+		$('.div_other_initial_control').show();
+	} else {
+		$('.div_other_initial_control').hide();
+	}
+});
+
+/* Initial Control */
+var selected = $('#id_final_control :selected').text();
+if ((selected.indexOf('Other') > -1) || (selected.indexOf('OTHER') > -1)) {
+	$('.div_other_final_control').show();
+} else {
+	$('.div_other_final_control').hide();
+}
+$('#id_final_control').on('change', function() {
+	var selected = $('#id_final_control :selected').text();
+	if ((selected.indexOf('Other') > -1) || (selected.indexOf('OTHER') > -1)) {
+		$('.div_other_final_control').show();
+	} else {
+		$('.div_other_final_control').hide();
+	}
+});
+
+
+
+/* PICA Text */
+if($('#id_arson_squad_notified').is(':checked')) { 
+	$('.div_offence_no').show(); 
+} else {
+	$('.div_offence_no').hide(); 
+}
+$('#id_arson_squad_notified').on('change', function() {
+	if($('#id_arson_squad_notified').is(':checked')) {
+		$('.div_offence_no').show(); 
+	} else {
+		$('.div_offence_no').hide(); 
 	}
 });
 

@@ -1,5 +1,5 @@
 from bfrs.models import (Bushfire, Activity, AreaBurnt, AttendingOrganisation, GroundForces,
-        AerialForces, FireBehaviour, Legal, InjuryFatality, Damage, Response, Comment,
+        AerialForces, FireBehaviour, Legal, Injury, Damage, Response, Comment,
         ActivityType,
     )
 from django.db import IntegrityError, transaction
@@ -240,12 +240,12 @@ def update_injury_fs(bushfire, injury_formset):
             remove = form.cleaned_data.get('DELETE')
 
             if not remove and (injury_type and number):
-                new_fs_object.append(InjuryFatality(bushfire=bushfire, injury_type=injury_type, number=number))
+                new_fs_object.append(Injury(bushfire=bushfire, injury_type=injury_type, number=number))
 
     try:
         with transaction.atomic():
-            InjuryFatality.objects.filter(bushfire=bushfire).delete()
-            InjuryFatality.objects.bulk_create(new_fs_object)
+            Injury.objects.filter(bushfire=bushfire).delete()
+            Injury.objects.bulk_create(new_fs_object)
     except IntegrityError:
         return 0
 
@@ -256,11 +256,11 @@ def update_damage_fs(bushfire, damage_formset):
     for form in damage_formset:
         if form.is_valid():
             damage_type = form.cleaned_data.get('damage_type')
-            area = form.cleaned_data.get('area')
+            number = form.cleaned_data.get('number')
             remove = form.cleaned_data.get('DELETE')
 
-            if not remove and (damage_type and area):
-                new_fs_object.append(Damage(bushfire=bushfire, damage_type=damage_type, area=area))
+            if not remove and (damage_type and number):
+                new_fs_object.append(Damage(bushfire=bushfire, damage_type=damage_type, number=number))
 
     try:
         with transaction.atomic():

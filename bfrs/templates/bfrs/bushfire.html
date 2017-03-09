@@ -22,7 +22,14 @@
 </div>
 
 {% comment %}
-<button id="my-btn" type="button">Test</button>
+<button id="my-btn" type="button">My Test</button>
+{% endcomment %}
+
+{% comment %}
+<form id="bushfire_create" name="bushfire_create" action="{% url 'bushfire:bushfire_create' %}" method="post" target="_blank">
+    <input type="hidden" name="sss_create" id="sss_create">
+</form>
+<button id="my-btn2" type="button">My Test 2</button>
 {% endcomment %}
 
 <br>
@@ -144,13 +151,18 @@
 
 <script>
 
-    var dict = {"area":5068734.39165385, "origin_point":[117.30008118682615,-30.849007786590157]};
+    var spatial_data = {"area":5068734.39165385, "origin_point":[117.30008118682615,-30.849007786590157]};
     $('#my-btn').click(function() {
         $.ajax({
             type:"POST",
             url:"{% url 'bushfire:bushfire_create' %}",
-            data: {"sss_create": JSON.stringify(dict)},
+            data: {"sss_create": JSON.stringify(spatial_data)},
         });
+    });
+
+    $('#my-btn2').click(function() {
+        $("#sss_create").val(JSON.stringify(spatial_data));
+        $("#bushfire_create").submit();
     });
 
     $("[data-toggle=myCollapse]").click(function( ev ) {

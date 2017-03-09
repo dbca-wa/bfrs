@@ -227,6 +227,9 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
             if sss.has_key('area'):
                 initial['area'] = float(sss['area'])
 
+            if sss.has_key('sss_id'):
+                initial['sss_id'] = sss['sss_id']
+
             if sss.has_key('origin_point') and isinstance(sss['origin_point'], list):
                 initial['origin_point_str'] = Point(sss['origin_point']).get_coords()
                 initial['origin_point'] = Point(sss['origin_point'])
@@ -237,6 +240,7 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
         return initial
 
     def post(self, request, *args, **kwargs):
+        import ipdb; ipdb.set_trace()
         if self.request.POST.has_key('sss_create'):
             return self.render_to_response(self.get_context_data())
 
@@ -256,7 +260,7 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
                 #area_burnt_formset,
                 kwargs,
             )
-       
+
     def form_invalid(self,
             form,
             #area_burnt_formset,
@@ -392,7 +396,7 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
 #        area_burnt_formset      = AreaBurntFormSet(instance=self.object, prefix='area_burnt_fs')
         context.update({'form': form,
 #                        'area_burnt_formset': area_burnt_formset,
-                        'is_init_authorised': bushfire.is_init_authorised,
+                        'is_authorised': bushfire.is_init_authorised,
                         'snapshot': deserialize_bushfire('initial', bushfire) if bushfire.initial_snapshot else None,
                         'initial': True,
             })
@@ -402,7 +406,8 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
 class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
     model = Bushfire
     form_class = BushfireForm
-    template_name = 'bfrs/final.html'
+    #template_name = 'bfrs/final.html'
+    template_name = 'bfrs/create.html'
 
     def get_initial(self):
         if self.object.time_to_control:
@@ -526,7 +531,9 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
                         'injury_formset': injury_formset,
                         'damage_formset': damage_formset,
                         'comment_formset': comment_formset,
+                        'is_authorised': self.object.is_final_authorised,
                         'snapshot': deserialize_bushfire('final', self.object) if self.object.final_snapshot else None, #bushfire.snapshot,
+                        'final': True,
             })
         return context
 
@@ -538,9 +545,9 @@ class BushfireReviewUpdateView(BushfireFinalUpdateView):
     def get_context_data(self, **kwargs):
         context = super(BushfireReviewUpdateView, self).get_context_data(**kwargs)
 
-#        context.update({
-#            'dummy': True,
-#        })
+        context.update({
+             'review': True,
+        })
         return context
 
 

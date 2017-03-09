@@ -1,6 +1,6 @@
 from django import forms
 from bfrs.models import (Bushfire, Activity, Response, AreaBurnt, GroundForces, AerialForces,
-        AttendingOrganisation, FireBehaviour, Legal, PrivateDamage, PublicDamage, InjuryFatality, Damage, Comment,
+        AttendingOrganisation, FireBehaviour, Legal, PrivateDamage, PublicDamage, Injury, Damage, Comment,
         Region, District, Profile
     )
 from datetime import datetime, timedelta
@@ -145,10 +145,17 @@ class BushfireFilterForm(forms.ModelForm):
 class BushfireForm(forms.ModelForm):
     days = forms.IntegerField(label='Days', required=False)
     hours = forms.IntegerField(label='Hours', required=False)
+    dispatch_pw = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
+    dispatch_aerial = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
+    potential_fire_level = forms.ChoiceField(choices=Bushfire.FIRE_LEVEL_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
+    investigation_req = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
+    cause_state = forms.ChoiceField(choices=Bushfire.CAUSE_STATE_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
+    origin_point_str = forms.CharField(required=False, widget=DisplayOnlyField())#, widget=forms.TextInput(attrs={'readonly':'readonly'}))
+
     class Meta:
         model = Bushfire
         exclude = ('initial_snapshot', 'init_authorised_by', 'init_authorised_date',
-				   'potential_fire_level')
+	   )
 
 #    def save(self, commit=True, *args, **kwargs):
 #        m = super(BushfireForm, self).save(commit=False, *args, **kwargs)
@@ -520,7 +527,7 @@ FireBehaviourFormSet        = inlineformset_factory(Bushfire, FireBehaviour, for
 LegalFormSet                = inlineformset_factory(Bushfire, Legal, extra=0, max_num=5*12, min_num=1, exclude=())
 PrivateDamageFormSet        = inlineformset_factory(Bushfire, PrivateDamage, extra=0, max_num=12, min_num=1, exclude=())
 PublicDamageFormSet         = inlineformset_factory(Bushfire, PublicDamage, extra=0, min_num=1, exclude=())
-InjuryFormSet               = inlineformset_factory(Bushfire, InjuryFatality, extra=0, max_num=7, min_num=1, exclude=())
+InjuryFormSet               = inlineformset_factory(Bushfire, Injury, extra=0, max_num=7, min_num=1, exclude=())
 DamageFormSet               = inlineformset_factory(Bushfire, Damage, extra=0, max_num=5, min_num=1, exclude=())
 CommentFormSet              = inlineformset_factory(Bushfire, Comment, extra=0, min_num=1, exclude=())
 

@@ -1,25 +1,39 @@
-<div id="id_damage" class="row formset damage-formset">
-    <table class="table_fs" border="0">
+{% if is_authorised and final %}
+    <table class="table_fs" border="0" >
         <tbody>
             <th>Damage Type</th>
-            <th>Area (ha)</th>
-            <th></th>
-            {% for form in damage_formset %}
+            <th>Number</th>
+            {% for damage in snapshot.damages %}
             <tr>
-               <td>{{ form.damage_type }}</td>
-               <td>{{ form.area }}</td>
-
-               <td>
-                    {% if form.instance.pk %}{{ form.DELETE }}{% endif %}
-                    {{ form.id }}
-                </td>
+                <td>{{ damage.damage_type }}</td>
+                <td>{{ damage.number }}</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
-    {{ damage_formset.management_form }}
-</div>
+{% else %}
+    <div id="id_damage" class="row formset damage-formset">
+        <table class="table_fs" border="0">
+            <tbody>
+                <th>Damage Type</th>
+                <th>Number</th>
+                <th></th>
+                {% for form in damage_formset %}
+                <tr>
+                <td>{{ form.damage_type }}</td>
+                <td>{{ form.number }}</td>
 
+                <td>
+                        {% if form.instance.pk %}{{ form.DELETE }}{% endif %}
+                        {{ form.id }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {{ damage_formset.management_form }}
+    </div>
+{% endif %}
 
 <script>
     $('.damage-formset tbody tr').formset({
