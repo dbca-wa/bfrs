@@ -172,6 +172,17 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
                 bushfire.reviewed_date = datetime.now(tz=pytz.utc)
                 bushfire.report_status = Bushfire.STATUS_REVIEWED
 
+            # Delete Initial
+            if status_type == 'delete_initial' and bushfire.report_status==Bushfire.STATUS_INITIAL:
+                bushfire.delete()
+
+            # Delete Final Authorisation
+            if status_type == 'delete_final_auth' and bushfire.report_status==Bushfire.STATUS_FINAL_AUTHORISED:
+                bushfire.authorised_by = None
+                bushfire.authorised_date = None
+                bushfire.report_status = Bushfire.STATUS_FINAL_DRAFT
+
+
             bushfire.save()
 
         return response

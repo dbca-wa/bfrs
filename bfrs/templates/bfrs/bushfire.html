@@ -93,13 +93,19 @@
 
 
          {% if bushfire.report_status == bushfire.STATUS_INITIAL %}
-		   <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&authorise=initial_auth');" title="Authorise initial"><button>Authorise Initial</button></td>
+		   <td>
+				<a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&authorise=initial_auth');" title="Authorise initial"><button>Authorise Initial</button>
+	   			<a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&authorise=delete_initial');" title="Delete initial"><button>Delete Initial</button>
+			</td>
          {% elif bushfire.report_status == bushfire.STATUS_INITIAL_AUTHORISED %}
 		   <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&authorise=final_create');" title="Create final report"><button>Create Final</button></td>
          {% elif bushfire.report_status == bushfire.STATUS_FINAL_DRAFT %}
            <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&authorise=final_auth');" title="Authorise final report"><button>Authorise Final</button></td>
          {% elif bushfire.report_status == bushfire.STATUS_FINAL_AUTHORISED %}
-           <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&authorise=review_create');" title="Create review report"><button>Create Review</button></td>
+           <td>
+				<a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&authorise=review_create');" title="Create review report"><button>Create Review</button>
+				<a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&authorise=delete_final_auth');" title="Delete authorisation"><button>Delete Auth'n</button>
+			</td>
          {% elif bushfire.report_status == bushfire.STATUS_REVIEW_DRAFT %}
            <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&authorise=reviewed');" title="Mark Final report as Reviewed"><button>Mark as Reviewed</button></td>
          {% endif %}

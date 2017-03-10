@@ -1,14 +1,18 @@
 {% if is_authorised and final %}
     <table class="table_fs" border="0" >
         <tbody>
-            <th>Tenure</th>
-            <th>Area (ha)</th>
-            {% for area in snapshot.areas_burnt %}
-            <tr>
-                <td>{{ area.tenure }}</td>
-                <td>{{ area.area }}</td>
-            </tr>
-            {% endfor %}
+            {% if snapshot.areas_burnt.exists %}
+				<th>Tenure</th>
+				<th>Area (ha)</th>
+				{% for area in snapshot.areas_burnt %}
+				<tr>
+					<td>{{ area.tenure }}</td>
+					<td>{{ area.area }}</td>
+				</tr>
+				{% endfor %}
+            {% else %}
+                <p> No Tenures</p>
+            {% endif %}
         </tbody>
     </table>
 {% else %}

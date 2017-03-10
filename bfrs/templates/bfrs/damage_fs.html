@@ -1,14 +1,18 @@
 {% if is_authorised and final %}
     <table class="table_fs" border="0" >
         <tbody>
-            <th>Damage Type</th>
-            <th>Number</th>
-            {% for damage in snapshot.damages %}
-            <tr>
-                <td>{{ damage.damage_type }}</td>
-                <td>{{ damage.number }}</td>
-            </tr>
-            {% endfor %}
+            {% if snapshot.damages.exists %}
+				<th>Damage Type</th>
+				<th>Number</th>
+				{% for damage in snapshot.damages %}
+				<tr>
+					<td>{{ damage.damage_type }}</td>
+					<td>{{ damage.number }}</td>
+				</tr>
+				{% endfor %}
+            {% else %}
+                <p> No damages</p>
+            {% endif %}
         </tbody>
     </table>
 {% else %}
