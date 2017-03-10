@@ -1,6 +1,8 @@
 from bfrs.models import (Bushfire, AreaBurnt, Damage, Injury)
 from django.db import IntegrityError, transaction
 from django.http import HttpResponse
+from django.core.mail import send_mail
+from django.conf import settings
 import json
 
 import unicodecsv
@@ -118,6 +120,52 @@ def update_damage_fs(bushfire, damage_formset):
         return 0
 
     return 1
+
+def rdo_email(bushfire, url):
+    if not settings.ALLOW_EMAIL_NOTIFICATION:
+       return
+
+    subject = 'RDO Email - Initial report submitted - {}'.format(bushfire.unique_id())
+    message = 'RDO Email - {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.unique_id(), url)
+
+    send_mail(subject, message, settings.FROM_EMAIL, settings.RDO_EMAIL)
+
+def pvs_email(bushfire, url):
+    if not settings.ALLOW_EMAIL_NOTIFICATION:
+       return
+
+    subject = 'PVS Email - Initial report submitted - {}'.format(bushfire.unique_id())
+    message = 'PVS Email - {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.unique_id(), url)
+
+    send_mail(subject, message, settings.FROM_EMAIL, settings.PVS_EMAIL)
+
+def pica_email(bushfire, url):
+    if not settings.ALLOW_EMAIL_NOTIFICATION:
+       return
+
+    subject = 'PICA Email - Initial report submitted - {}'.format(bushfire.unique_id())
+    message = 'PICA Email - {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.unique_id(), url)
+
+    send_mail(subject, message, settings.FROM_EMAIL, settings.PICA_EMAIL)
+
+def dfes_email(bushfire, url):
+    if not settings.ALLOW_EMAIL_NOTIFICATION:
+       return
+
+    subject = 'DFES Email - Initial report submitted - {}'.format(bushfire.unique_id())
+    message = 'DFES Email - {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.unique_id(), url)
+
+    send_mail(subject, message, settings.FROM_EMAIL, settings.POLICE_EMAIL)
+
+def police_email(bushfire, url):
+    if not settings.ALLOW_EMAIL_NOTIFICATION:
+       return
+
+    subject = 'POLICE Email - Initial report submitted and an investigation is required- {}'.format(bushfire.unique_id())
+    message = 'POLICE Email - {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.unique_id(), url)
+
+    send_mail(subject, message, settings.FROM_EMAIL, settings.POLICE_EMAIL)
+
 
 def export_final_csv(request, queryset):
     #import csv

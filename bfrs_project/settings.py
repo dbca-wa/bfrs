@@ -22,6 +22,16 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
+EMAIL_HOST = env('EMAIL_HOST', 'email.host')
+EMAIL_PORT = env('EMAIL_PORT', 25)
+FROM_EMAIL = env('FROM_EMAIL', 'from_email')
+RDO_EMAIL = env('RDO_EMAIL', 'rdo_email')
+PICA_EMAIL = env('PICA_EMAIL', 'pica_email')
+PVS_EMAIL = env('PVS_EMAIL', 'pvs_email')
+POLICE_EMAIL = env('POLICE_EMAIL', 'police_email')
+DFES_EMAIL = env('DFES_EMAIL', 'dfes_email')
+ALLOW_EMAIL_NOTIFICATION = os.environ.get('ALLOW_EMAIL_NOTIFICATION', None) in ["True", "on", "1", "DEBUG"]
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/
 

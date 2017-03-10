@@ -215,7 +215,7 @@ class BushfireCreateBaseForm(forms.ModelForm):
         model = Bushfire
         fields = ('region', 'district', 'incident_no', 'job_code', 'dfes_incident_no',
                   'name', 'year', 'fire_level', 'field_officer', 'duty_officer', 'init_authorised_by', 'init_authorised_date',
-                  'media_alert_req', 'fire_position',
+                  'media_alert_req', 'park_trail_impacted', 'fire_position',
                   'fire_not_found',
                   'fire_detected_date', 'dispatch_pw_date', 'dispatch_aerial_date', 'fuel_type',
                   'assistance_req', 'assistance_details', 'communications', 'other_info',

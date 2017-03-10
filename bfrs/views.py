@@ -20,6 +20,7 @@ from bfrs.utils import (breadcrumbs_li,
         update_areas_burnt_fs, update_damage_fs, update_injury_fs,
         export_final_csv, export_excel,
         serialize_bushfire, deserialize_bushfire,
+        rdo_email, pvs_email, pica_email, police_email, dfes_email,
         #calc_coords,
     )
 from django.db import IntegrityError, transaction
@@ -139,6 +140,17 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
                 bushfire.report_status = Bushfire.STATUS_INITIAL_AUTHORISED
                 serialize_bushfire('initial', bushfire)
 
+                # send emails
+                rdo_email(bushfire, self.mail_url(bushfire))
+                dfes_email(bushfire, self.mail_url(bushfire))
+                if bushfire.park_trail_impacted:
+                    pvs_email(bushfire, self.mail_url(bushfire))
+                if bushfire.media_alert_req:
+                    pica_email(bushfire, self.mail_url(bushfire))
+                if bushfire.investigation_req:
+                    police_email(bushfire, self.mail_url(bushfire))
+
+
             # CREATE the FINAL DRAFT report
             if status_type == 'final_create' and bushfire.report_status==Bushfire.STATUS_INITIAL_AUTHORISED:
                 bushfire.report_status = Bushfire.STATUS_FINAL_DRAFT
@@ -188,6 +200,8 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
         context['object_list'] = self.object_list.order_by('id') # passed by default, but we are (possibly) updating, if profile exists!
         return context
 
+    def mail_url(self, bushfire):
+        return "http://" + self.request.get_host() + reverse('bushfire:bushfire_initial', kwargs={'pk':bushfire.id})
 
 @method_decorator(csrf_exempt, name='dispatch')
 class BushfireCreateView(LoginRequiredMixin, generic.CreateView):

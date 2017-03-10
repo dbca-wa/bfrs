@@ -116,6 +116,7 @@ class Bushfire(Audit):
 
     fire_level = models.PositiveSmallIntegerField(choices=FIRE_LEVEL_CHOICES)
     media_alert_req = models.BooleanField(verbose_name="Media Alert Required", default=False)
+    park_trail_impacted = models.BooleanField(verbose_name="Park and/or trail potentially impacted", default=False)
     fuel_type = models.CharField(verbose_name='Fuel Type', max_length=64)
     cause = models.ForeignKey('Cause')
     cause_state = models.PositiveSmallIntegerField(choices=CAUSE_STATE_CHOICES)

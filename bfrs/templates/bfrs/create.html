@@ -176,13 +176,23 @@
 
         <tr>
             <th class="cbas">Media Alert Required</th>
-            <td colspan="5" class="cbas">
+            <td colspan="2" class="cbas">
               {% if is_authorised %}
 			  {% if snapshot.media_alert_req %}<div class="text-center"><i class="icon-ok text-success"></i></div>{% else %}<div class="text-center"><i class="icon-remove text-danger"></i></div>{% endif %}<span class="div_pica" style="display: none; margin:20;">Call PICA on ....</span>
               {% else %}
 			  {{form.media_alert_req}} <span class="div_pica" style="display: none; margin:20;">Call PICA on ....</span>
               {% endif %}
             </td>
+
+            <th class="cbas">Park and/or Trail<br>potentially impacted</th>
+            <td colspan="2" class="cbas">
+              {% if is_authorised %}
+			  {% if snapshot.park_trail_impacted %}<div class="text-center"><i class="icon-ok text-success"></i></div>{% else %}<div class="text-center"><i class="icon-remove text-danger"></i></div>{% endif %}<span class="div_pvs" style="display: none; margin:20;">Call PVS on ....</span>
+              {% else %}
+			  {{form.park_trail_impacted}} <span class="div_pvs" style="display: none; margin:20;">Call PVS on ....</span>
+              {% endif %}
+            </td>
+
 
         </tr>
 
@@ -520,6 +530,21 @@ $('#id_media_alert_req').on('change', function() {
 		$('.div_pica').hide(); 
 	}
 });
+
+/* PVS Text */
+if($('#id_park_trail_impacted').is(':checked')) { 
+	$('.div_pvs').show(); 
+} else {
+	$('.div_pvs').hide(); 
+}
+$('#id_park_trail_impacted').on('change', function() {
+	if($('#id_park_trail_impacted').is(':checked')) {
+		$('.div_pvs').show(); 
+	} else {
+		$('.div_pvs').hide(); 
+	}
+});
+
 
 /* Assistance Required */
 if($('#id_assistance_req').is(':checked')) { 
