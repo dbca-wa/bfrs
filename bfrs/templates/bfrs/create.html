@@ -463,6 +463,17 @@
 $('#id_init_authorised_date').datetimepicker({ format: "Y-m-d H:i" }); //ends with
 $('[id$="-date"]').datetimepicker({ format: "Y-m-d H:i" }); //ends with
 
+$('#id_field_officer').prop('class', 'selectpicker dropup');
+$('#id_duty_officer').prop('class', 'selectpicker dropup');
+
+$('.selectpicker').selectpicker({
+  style: 'btn-default',
+  size: 6,
+  liveSearch: true,
+  dropupAuto: false,
+});
+
+
 
 /* dispatch PW */
 if($('#id_dispatch_pw_0').is(':checked')) { 
