@@ -58,6 +58,21 @@
 
 {% include "bfrs/bushfire_filter.html" %}
 
+{% comment %}
+<form id="bushfire_create" name="bushfire_create" action="{% url 'bushfire:bushfire_create' %}" method="post" target="_blank">
+<div>
+
+    <span>Action</span>
+    <select id="actions">
+    <option value="0" selected="selected">----</option>
+    <option value="1">Archive Report</option>
+    </select>
+    <button id="action-btn" name="action" class="btn btn-small btn-info" type="button" disabled>Go</button>
+</div>
+</form>
+{% endcomment %}
+
+
 {% if object_list %}
 <table id="table" class="tablesorter table table-striped table-bordered table-hover table-condensed">
   <thead>
@@ -108,6 +123,12 @@
 			</td>
          {% elif bushfire.report_status == bushfire.STATUS_REVIEW_DRAFT %}
            <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&authorise=reviewed');" title="Mark Final report as Reviewed"><button>Mark as Reviewed</button></td>
+         {% elif bushfire.report_status == bushfire.STATUS_REVIEWED %}
+           {% if not bushfire.archive %}
+             <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&authorise=archive');" title="Archive Report"><button>Archive</button></td>
+           {% else %}
+             <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&authorise=unarchive');" title="Unarchive Report"><button>Unarchive</button></td>
+           {% endif %}
          {% endif %}
 
         {% comment %}
@@ -193,7 +214,7 @@ $(function(){
 
         profile_field_list = ['region', 'district'];
         filter_list = [
-			'region', 'district', 'year', 'report_status'
+			'region', 'district', 'year', 'report_status', 'archive',
 		];
 
         var count = 0;

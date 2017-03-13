@@ -20,7 +20,7 @@ from bfrs.utils import (breadcrumbs_li,
         update_areas_burnt_fs, update_damage_fs, update_injury_fs,
         export_final_csv, export_excel,
         serialize_bushfire, deserialize_bushfire,
-        rdo_email, pvs_email, pica_email, police_email, dfes_email,
+        rdo_email, pvs_email, pica_email, police_email, dfes_email, fssdrs_email,
         #calc_coords,
     )
 from django.db import IntegrityError, transaction
@@ -48,10 +48,17 @@ class BushfireFilter(django_filters.FilterSet):
     for district in District.objects.distinct('name'):
         DISTRICT_CHOICES.append([district.id, district.name])
 
+    ARCHIVE_CHOICES = [
+        ['', 'All'],
+        [False, 'Unarchived'],
+        [True, 'Archived'],
+    ]
+
     region = django_filters.ChoiceFilter(choices=REGION_CHOICES, label='Region')
     district = django_filters.ChoiceFilter(choices=DISTRICT_CHOICES, label='District')
     year = django_filters.ChoiceFilter(choices=YEAR_CHOICES, label='Year')
     report_status = django_filters.ChoiceFilter(choices=Bushfire.REPORT_STATUS_CHOICES, label='Report Status')
+    archive = django_filters.ChoiceFilter(choices=ARCHIVE_CHOICES, label='Archive Status')
 
     class Meta:
         model = Bushfire
@@ -60,12 +67,14 @@ class BushfireFilter(django_filters.FilterSet):
             'district_id',
             'year',
             'report_status',
+            'archive',
         ]
         order_by = (
             ('region_id', 'Region'),
             ('district_id', 'District'),
             ('year', 'Year'),
             ('report_status', 'Report Status'),
+            ('archive', 'Archive'),
         )
 
     def __init__(self, *args, **kwargs):
@@ -128,7 +137,7 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
                 qs = self.get_filterset(self.filterset_class).qs
                 return export_excel(self.request, qs)
 
-        #import ipdb; ipdb.set_trace()
+        import ipdb; ipdb.set_trace()
         if self.request.GET.has_key('authorise'):
             status_type = self.request.GET.get('authorise')
             bushfire = Bushfire.objects.get(id=self.request.GET.get('bushfire_id'))
@@ -162,6 +171,9 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
                 bushfire.authorised_date = datetime.now(tz=pytz.utc)
                 bushfire.report_status = Bushfire.STATUS_FINAL_AUTHORISED
 
+                # send emails
+                fssdrs_email(bushfire, self.mail_url(bushfire, status='final'))
+
             # CREATE the REVIEWABLE DRAFT report
             if status_type == 'review_create' and bushfire.report_status==Bushfire.STATUS_FINAL_AUTHORISED:
                 bushfire.report_status = Bushfire.STATUS_REVIEW_DRAFT
@@ -181,6 +193,12 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
                 bushfire.authorised_by = None
                 bushfire.authorised_date = None
                 bushfire.report_status = Bushfire.STATUS_FINAL_DRAFT
+
+            # Archive
+            if status_type == 'archive' and bushfire.report_status==Bushfire.STATUS_REVIEWED:
+                bushfire.archive = True
+            if status_type == 'unarchive' and bushfire.archive:
+                bushfire.archive = False
 
 
             bushfire.save()
@@ -211,8 +229,11 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
         context['object_list'] = self.object_list.order_by('id') # passed by default, but we are (possibly) updating, if profile exists!
         return context
 
-    def mail_url(self, bushfire):
-        return "http://" + self.request.get_host() + reverse('bushfire:bushfire_initial', kwargs={'pk':bushfire.id})
+    def mail_url(self, bushfire, status='initial'):
+	if status == 'iniital':
+            return "http://" + self.request.get_host() + reverse('bushfire:bushfire_initial', kwargs={'pk':bushfire.id})
+	if status == 'final':
+            return "http://" + self.request.get_host() + reverse('bushfire:bushfire_final', kwargs={'pk':bushfire.id})
 
 @method_decorator(csrf_exempt, name='dispatch')
 class BushfireCreateView(LoginRequiredMixin, generic.CreateView):

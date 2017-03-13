@@ -186,6 +186,7 @@ class Bushfire(Audit):
     report_status = models.PositiveSmallIntegerField(choices=REPORT_STATUS_CHOICES, editable=False, default=1)
     sss_id = models.CharField(verbose_name="Spatial Support System ID", max_length=64, null=True, blank=True)
 
+    archive = models.BooleanField(verbose_name="Archive report", default=False)
 #    def save(self, *args, **kwargs):
 #        '''Overide save() to cleanse text input fields.
 #        '''

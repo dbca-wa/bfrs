@@ -187,9 +187,9 @@
             <th class="cbas">Park and/or Trail<br>potentially impacted</th>
             <td colspan="2" class="cbas">
               {% if is_authorised %}
-			  {% if snapshot.park_trail_impacted %}<div class="text-center"><i class="icon-ok text-success"></i></div>{% else %}<div class="text-center"><i class="icon-remove text-danger"></i></div>{% endif %}<span class="div_pvs" style="display: none; margin:20;">Call PVS on ....</span>
+			  {% if snapshot.park_trail_impacted %}<div class="text-center"><i class="icon-ok text-success"></i></div>{% else %}<div class="text-center"><i class="icon-remove text-danger"></i></div>{% endif %}<span class="div_pvs" style="display: none; margin:20;">Email notification to PVS on ....</span>
               {% else %}
-			  {{form.park_trail_impacted}} <span class="div_pvs" style="display: none; margin:20;">Call PVS on ....</span>
+			  {{form.park_trail_impacted}} <span class="div_pvs" style="display: none; margin:20;">Send email notification to PVS</span>
               {% endif %}
             </td>
 
@@ -642,9 +642,7 @@ $('#id_final_control').on('change', function() {
 	}
 });
 
-
-
-/* PICA Text */
+/* Police Notification */
 if($('#id_arson_squad_notified').is(':checked')) { 
 	$('.div_offence_no').show(); 
 } else {

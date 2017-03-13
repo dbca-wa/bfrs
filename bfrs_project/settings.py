@@ -30,6 +30,7 @@ PICA_EMAIL = env('PICA_EMAIL', 'pica_email')
 PVS_EMAIL = env('PVS_EMAIL', 'pvs_email')
 POLICE_EMAIL = env('POLICE_EMAIL', 'police_email')
 DFES_EMAIL = env('DFES_EMAIL', 'dfes_email')
+FSSDRS_EMAIL = env('FSSDRS_EMAIL', 'fssdrs_email')
 ALLOW_EMAIL_NOTIFICATION = os.environ.get('ALLOW_EMAIL_NOTIFICATION', None) in ["True", "on", "1", "DEBUG"]
 
 # Quick-start development settings - unsuitable for production

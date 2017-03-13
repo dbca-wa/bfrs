@@ -164,6 +164,17 @@ def police_email(bushfire, url):
     subject = 'POLICE Email - Initial report submitted and an investigation is required- {}'.format(bushfire.unique_id())
     message = 'POLICE Email - {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.unique_id(), url)
 
+    send_mail(subject, message, settings.FROM_EMAIL, settings.FSSDRS_EMAIL)
+
+def fssdrs_email(bushfire, url):
+    if not settings.ALLOW_EMAIL_NOTIFICATION:
+       return
+
+    subject = 'FSSDRS Email - Final Fire report has been authorised - {}'.format(bushfire.unique_id())
+    message = 'FSSDRS Email - {}\n\nFinal Fire report has been authorised. User {}, at {}.\n\nThe report is located at {}'.format(
+        bushfire.unique_id(), bushfire.authorised_by, bushfire.authorised_date, url
+    )
+
     send_mail(subject, message, settings.FROM_EMAIL, settings.POLICE_EMAIL)
 
 
