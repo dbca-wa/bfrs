@@ -150,7 +150,7 @@ class BushfireForm(forms.ModelForm):
     dispatch_pw = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
     dispatch_aerial = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
     fire_level = forms.ChoiceField(choices=Bushfire.FIRE_LEVEL_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
-    investigation_req = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
+    investigation_req = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
     cause_state = forms.ChoiceField(choices=Bushfire.CAUSE_STATE_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
     origin_point_str = forms.CharField(required=False, widget=DisplayOnlyField())#, widget=forms.TextInput(attrs={'readonly':'readonly'}))
     media_alert_req = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
@@ -167,41 +167,92 @@ class BushfireForm(forms.ModelForm):
 #        import ipdb; ipdb.set_trace()
 
     def clean(self):
-        """
-        Form can be saved prior to sign-off, without checking req'd fields.
-        Required fields are checked during Authorisation sign-off, therefore checking and adding error fields manually
-        """
-        req_fields = [
-            #'region', 'district', 'incident_no', 'season', # these are delcared Required in models.py
-            #'name', 'fire_level', 'init_authorised_by', 'init_authorised_date',
-            'name', 'authorised_by', 'authorised_date',
-            'job_code',
-            'cause',
-            'field_officer',
-            'fire_level',
-            #'known_possible',
-        ]
+        cleaned_data = super(BushfireForm, self).clean()
 
-        req_dep_fields = { # required dependent fields
-            'first_attack': 'other_first_attack',
-            'initial_control': 'other_initial_control',
-            'final_control': 'other_final_control',
-            'cause': 'other_cause',
-        }
+        if self.cleaned_data['dispatch_pw'] and eval(self.cleaned_data['dispatch_pw']):
+            if not self.cleaned_data['dispatch_pw_date']:
+                self.add_error('dispatch_pw_date', 'Must specify Date and Time of dispatch, if resource is dispatched.')
+            if not self.cleaned_data['field_officer']:
+                self.add_error('field_officer', 'Must specify Field Officer, if resource is dispatched.')
 
-        if self.cleaned_data['authorised_by']:
-            # check all required fields
-            #import ipdb; ipdb.set_trace()
-            [self.add_error(field, 'This field is required.') for field in req_fields if not self.cleaned_data.has_key(field) or not self.cleaned_data[field]]
+        if self.cleaned_data['dispatch_aerial'] and eval(self.cleaned_data['dispatch_aerial']):
+            if not self.cleaned_data['dispatch_aerial_date']:
+                self.add_error('dispatch_aerial_date', 'Must specify Date and Time of dispatch, if resource is dispatched.')
 
-            # check if 'Other' has been selected from drop down and field has been set
-            for field in req_dep_fields.keys():
-                if self.cleaned_data.has_key(field) and 'other' in str(self.cleaned_data[field]).lower():
-                    other_field = self.cleaned_data[req_dep_fields[field]]
-                    if not other_field:
-                        #import ipdb; ipdb.set_trace()
-                        self.add_error(req_dep_fields[field], 'This field is required.')
-            #import ipdb; ipdb.set_trace()
+        if self.cleaned_data['fire_not_found']:
+            if self.cleaned_data['area']:
+                area = round(float(self.cleaned_data['area']), 2)
+                if area < 0.01:
+                    self.add_error('area', 'Must specify Area, if Fire Not Found.')
+            else:
+                self.add_error('area', 'Must specify Area, if Fire Not Found.')
+
+        cause = self.cleaned_data['cause']
+        if cause.name.upper().startswith('OTHER'):
+            if not self.cleaned_data['other_cause']:
+                self.add_error('other_cause', 'Must specify, if Fire Cause is Other.')
+
+        tenure = self.cleaned_data['tenure']
+        if tenure.name.upper().startswith('OTHER'):
+            if not self.cleaned_data['other_tenure']:
+                self.add_error('other_tenure', 'Must specify, if Tenure of ignition point is Other.')
+
+        #import ipdb; ipdb.set_trace()
+        # FINAL Form
+        first_attack = self.cleaned_data['first_attack']
+        if not first_attack:
+            self.add_error('first_attack', 'Must specify First attack agency.')
+        if first_attack and first_attack.name.upper().startswith('OTHER'):
+            if not self.cleaned_data['other_first_attack']:
+                self.add_error('other_first_attack', 'Must specify, if Initial attack agency is Other.')
+
+        initial_control = self.cleaned_data['initial_control']
+        if not initial_control:
+            self.add_error('initial_control', 'Must specify Initial control agency.')
+        if initial_control and initial_control.name.upper().startswith('OTHER'):
+            if not self.cleaned_data['other_initial_control']:
+                self.add_error('other_initial_control', 'Must specify, if Initial control agency is Other.')
+
+        final_control = self.cleaned_data['final_control']
+        if not final_control:
+            self.add_error('final_control', 'Must specify Final control agency.')
+        if final_control and final_control.name.upper().startswith('OTHER'):
+            if not self.cleaned_data['other_final_control']:
+                self.add_error('other_final_control', 'Must specify, if Final control agency is Other.')
+
+
+
+#    def clean(self):
+#        """
+#        Form can be saved prior to sign-off, without checking req'd fields.
+#        Required fields are checked during Authorisation sign-off, therefore checking and adding error fields manually
+#        """
+#        req_fields = [
+#            'cause',
+#            'field_officer',
+#            'fire_level',
+#        ]
+#
+#        req_dep_fields = { # required dependent fields
+#            'first_attack': 'other_first_attack',
+#            'initial_control': 'other_initial_control',
+#            'final_control': 'other_final_control',
+#            'cause': 'other_cause',
+#        }
+#
+#        if self.cleaned_data['authorised_by']:
+#            # check all required fields
+#            #import ipdb; ipdb.set_trace()
+#            [self.add_error(field, 'This field is required.') for field in req_fields if not self.cleaned_data.has_key(field) or not self.cleaned_data[field]]
+#
+#            # check if 'Other' has been selected from drop down and field has been set
+#            for field in req_dep_fields.keys():
+#                if self.cleaned_data.has_key(field) and 'other' in str(self.cleaned_data[field]).lower():
+#                    other_field = self.cleaned_data[req_dep_fields[field]]
+#                    if not other_field:
+#                        #import ipdb; ipdb.set_trace()
+#                        self.add_error(req_dep_fields[field], 'This field is required.')
+#            #import ipdb; ipdb.set_trace()
 
 
 class BushfireCreateBaseForm(forms.ModelForm):
@@ -232,12 +283,47 @@ class BushfireCreateBaseForm(forms.ModelForm):
 		  'area', 'origin_point_str', 'origin_point', 'fire_boundary',
                  )
 
-    def clean_investigation_req(self):
-        if not self.cleaned_data.has_key('investigation_req'):
-            raise ValidationError('Must specify investigation required')
+#    def clean_investigation_req(self):
+#        if not self.cleaned_data.has_key('investigation_req'):
+#            raise ValidationError('Must specify investigation required')
+#
+#        investigation_req = eval(self.cleaned_data['investigation_req'])
+#        return investigation_req
 
-        investigation_req = eval(self.cleaned_data['investigation_req'])
-        return investigation_req
+
+    def clean(self):
+        cleaned_data = super(BushfireCreateBaseForm, self).clean()
+
+        import ipdb; ipdb.set_trace()
+        if self.cleaned_data['dispatch_pw'] and eval(self.cleaned_data['dispatch_pw']):
+            if not self.cleaned_data['dispatch_pw_date']:
+                self.add_error('dispatch_pw_date', 'Must specify Date and Time of dispatch, if resource is dispatched.')
+            if not self.cleaned_data['field_officer']:
+                self.add_error('field_officer', 'Must specify Field Officer, if resource is dispatched.')
+
+        if self.cleaned_data['dispatch_aerial'] and eval(self.cleaned_data['dispatch_aerial']):
+            if not self.cleaned_data['dispatch_aerial_date']:
+                self.add_error('dispatch_aerial_date', 'Must specify Date and Time of dispatch, if resource is dispatched.')
+
+        if self.cleaned_data['fire_not_found']:
+            if self.cleaned_data['area']:
+                area = round(float(self.cleaned_data['area']), 2)
+                if area < 0.01:
+                    self.add_error('area', 'Must specify Area, if Fire Not Found.')
+            else:
+                self.add_error('area', 'Must specify Area, if Fire Not Found.')
+
+        cause = self.cleaned_data['cause']
+        if cause.name.upper().startswith('OTHER'):
+            if not self.cleaned_data['other_cause']:
+                self.add_error('other_cause', 'Must specify, if Fire Cause is Other.')
+
+        tenure = self.cleaned_data['tenure']
+        if tenure.name.upper().startswith('OTHER'):
+            if not self.cleaned_data['other_tenure']:
+                self.add_error('other_tenure', 'Must specify, if Tenure of ignition point is Other.')
+
+
 
 
 class BushfireCreateForm(BushfireCreateBaseForm):
@@ -245,6 +331,7 @@ class BushfireCreateForm(BushfireCreateBaseForm):
         super(BushfireCreateForm, self).__init__(*args, **kwargs)
 
     def clean(self):
+	cleaned_data = super(BushfireCreateForm, self).clean()
         #import ipdb; ipdb.set_trace()
         district = self.cleaned_data['district']
         incident_no = self.cleaned_data['incident_no']
@@ -252,8 +339,6 @@ class BushfireCreateForm(BushfireCreateBaseForm):
         bushfire = Bushfire.objects.filter(district=district, year=year, incident_no=incident_no)
         if bushfire:
             raise ValidationError('There is already a Bushfire with this District- Year-Incident No. {}-{}-{}'.format(district, year, incident_no))
-        else:
-            return self.cleaned_data
 
 
 class BushfireInitUpdateForm(BushfireCreateBaseForm):
@@ -262,6 +347,7 @@ class BushfireInitUpdateForm(BushfireCreateBaseForm):
         Form can be saved prior to sign-off, without checking req'd fields.
         Required fields are checked during Authorisation sign-off, therefore checking and adding error fields manually
         """
+	cleaned_data = super(BushfireInitUpdateForm, self).clean()
         req_fields = [
             'name', 'fire_level', 'init_authorised_by', 'init_authorised_date',
             'cause',
@@ -368,8 +454,8 @@ class BaseActivityFormSet(BaseInlineFormSet):
 
 #AreaBurntFormSet            = inlineformset_factory(Bushfire, AreaBurnt, formset=BaseAreaBurntFormSet, extra=0, min_num=1, validate_min=True, exclude=())
 AreaBurntFormSet            = inlineformset_factory(Bushfire, AreaBurnt, extra=0, min_num=1, validate_min=True, exclude=())
-InjuryFormSet               = inlineformset_factory(Bushfire, Injury, extra=0, max_num=7, min_num=1, exclude=())
-DamageFormSet               = inlineformset_factory(Bushfire, Damage, extra=0, max_num=5, min_num=1, exclude=())
+InjuryFormSet               = inlineformset_factory(Bushfire, Injury, extra=1, max_num=7, min_num=0, exclude=())
+DamageFormSet               = inlineformset_factory(Bushfire, Damage, extra=1, max_num=7, min_num=0, exclude=())
 
 
 """

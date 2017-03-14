@@ -9,6 +9,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.gis.geos import Point, GEOSGeometry, Polygon, MultiPolygon, GEOSException
+from django.template import RequestContext
+from django.shortcuts import render
 
 from bfrs.models import (Profile, Bushfire,
         Region, District,
@@ -296,17 +298,19 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
         if form.is_valid(): # and area_burnt_formset.is_valid():
             return self.form_valid(request, form)
         else:
-            return self.form_invalid(form, kwargs)
+            return self.form_invalid(request, form, kwargs)
 
-    def form_invalid(self, form, kwargs):
-        context = {'form': form}
-        return self.render_to_response(context=context)
+    def form_invalid(self, request, form, kwargs):
+        context = self.get_context_data()
+        context.update({'form': form})
+        return self.render_to_response(context)
 
     def form_valid(self, request, form):
         self.object = form.save(commit=False)
         self.object.creator = request.user #1 #User.objects.all()[0] #request.user
         self.object.modifier = request.user #1 #User.objects.all()[0] #request.user
         #calc_coords(self.object)
+        #import ipdb; ipdb.set_trace()
 
         self.object.save()
 
@@ -328,6 +332,7 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
 
         context.update({'form': form,
                         'create': True,
+                        'initial': True,
             })
         return context
 
@@ -348,11 +353,12 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
         if form.is_valid(): # and area_burnt_formset.is_valid():
             return self.form_valid(request, form)
         else:
-            return self.form_invalid(form, kwargs)
+            return self.form_invalid(request, form, kwargs)
 
-    def form_invalid(self, form, kwargs):
-        context = {'form': form}
-        return self.render_to_response(context=context)
+    def form_invalid(self, request, form, kwargs):
+        context = self.get_context_data()
+        context.update({'form': form})
+        return self.render_to_response(context)
 
     def form_valid(self, request, form):
         self.object = form.save(commit=False)
@@ -429,14 +435,15 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
             damage_formset,
         ):
 
-        context = {
+        context = self.get_context_data()
+        context.update({
             'form': form,
             'area_burnt_formset': area_burnt_formset,
             'injury_formset': injury_formset,
             'damage_formset': damage_formset,
-        }
+        })
+        import ipdb; ipdb.set_trace()
         return self.render_to_response(context=context)
-
 
     def form_valid(self, request,
             form,

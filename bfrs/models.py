@@ -148,8 +148,10 @@ class Bushfire(Audit):
     init_authorised_by = models.ForeignKey(User, verbose_name="Authorised By", null=True, blank=True, related_name='init_authorised_by')
     init_authorised_date = models.DateTimeField(verbose_name='Authorised Date', null=True, blank=True)
 
-    dispatch_pw_date = models.DateTimeField(verbose_name='Dispatch - P&W', null=True, blank=True)
-    dispatch_aerial_date = models.DateTimeField(verbose_name='Dispatch - Aerial', null=True, blank=True)
+    dispatch_pw = models.BooleanField(default=False)
+    dispatch_aerial = models.BooleanField(default=False)
+    dispatch_pw_date = models.DateTimeField(verbose_name='P&W Resource dispatched', null=True, blank=True)
+    dispatch_aerial_date = models.DateTimeField(verbose_name='Aerial support dispatched', null=True, blank=True)
     fire_detected_date = models.DateTimeField(verbose_name='Fire Detected', null=True, blank=True)
     # we serialise/snapshot the initial and final reports when authorised
     initial_snapshot = models.TextField(null=True, blank=True)
@@ -322,9 +324,9 @@ class AreaBurnt(models.Model):
     area = models.DecimalField(verbose_name="Area (ha)", max_digits=12, decimal_places=2, validators=[MinValueValidator(0)])
     bushfire = models.ForeignKey(Bushfire, related_name='tenures_burnt')
 
-    def clean(self):
-        if self.bushfire.areas_burnt.all().count() == 0:
-            raise ValidationError("You must enter one Area Burnt record")
+#    def clean(self):
+#        if self.bushfire.areas_burnt.all().count() == 0:
+#            raise ValidationError("You must enter one Area Burnt record")
 
     def to_json(self):
         return json.dumps(self.to_dict)
