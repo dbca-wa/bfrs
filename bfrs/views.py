@@ -49,7 +49,7 @@ class BushfireFilter(django_filters.FilterSet):
         DISTRICT_CHOICES.append([district.id, district.name])
 
     ARCHIVE_CHOICES = [
-        ['', 'All'],
+        #['', 'All'],
         [False, 'Unarchived'],
         [True, 'Archived'],
     ]
@@ -172,7 +172,6 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
                     pica_email(bushfire, self.mail_url(bushfire))
                 if bushfire.investigation_req:
                     police_email(bushfire, self.mail_url(bushfire))
-
 
             # CREATE the FINAL DRAFT report
             if action == 'create_final' and bushfire.report_status==Bushfire.STATUS_INITIAL_AUTHORISED:

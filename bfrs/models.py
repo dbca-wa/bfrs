@@ -111,7 +111,7 @@ class Bushfire(Audit):
         show_all=False, auto_choose=True)
 
     name = models.CharField(max_length=100, verbose_name="Fire Name")
-    incident_no = models.PositiveIntegerField(verbose_name="Fire Number")
+    incident_no = models.PositiveIntegerField(verbose_name="Fire Number", validators=[MinValueValidator(1), MaxValueValidator(999)])
     year = models.CharField(verbose_name="Financial Year", max_length=9, default=current_finyear())
 
     fire_level = models.PositiveSmallIntegerField(choices=FIRE_LEVEL_CHOICES)
@@ -233,7 +233,7 @@ class Bushfire(Audit):
     User.__unicode__ = user_unicode_patch
 
     def unique_id(self):
-        return ' '.join(['BF', self.district.code, str(self.year), str(self.incident_no)])
+        return ' '.join(['BF', self.district.code, str(self.year), '{0:03d}'.format(self.incident_no)])
 
     def __str__(self):
         return ', '.join([self.name, self.district.name, self.year, self.incident_no])

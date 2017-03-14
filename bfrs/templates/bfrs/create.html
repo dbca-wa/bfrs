@@ -140,13 +140,13 @@
         </tr>
 
         <tr>
-			<th class="cbas" style="font-weight:normal;">P&W Resource dispatched<br><br><div class=div_dispatch_pw_date style="display: none;">Date and time of dispatch</div></th>
+			<th class="cbas">P&W Resource dispatched *<br><br><div class=div_dispatch_pw_date style="display: none;">Date and time of dispatch</div></th>
             <td colspan="2" class="cbas">
 				{% if is_authorised %} {{snapshot.dispatch_pw}} {% else %} {{form.dispatch_pw}} {% endif %}<br>
 				<div class=div_dispatch_pw_date style="display: none;">{% if is_authorised %} {{snapshot.dispatch_pw_date}} {% else %} {{form.dispatch_pw_date}} {% endif %}</div>
 			</td>
 
-			<th class="cbas" style="font-weight:normal;">Aerial support dispatched<br><br><div class=div_dispatch_aerial_date style="display: none;">Date and time of dispatch</div></th>
+			<th class="cbas">Aerial support dispatched *<br><br><div class=div_dispatch_aerial_date style="display: none;">Date and time of dispatch</div></th>
             <td clospan="2" class="cbas">
 				{% if is_authorised %} {{snapshot.dispatch_aerial}} {% else %} {{form.dispatch_aerial}} {% endif %}<br>
 				<div class=div_dispatch_aerial_date style="display: none;">{% if is_authorised %} {{snapshot.dispatch_aerial_date}} {% else %} {{form.dispatch_aerial_date}} {% endif %}</div>
@@ -175,21 +175,21 @@
 		{% endif %}
 
         <tr>
-            <th class="cbas">Media Alert Required</th>
+            <th class="cbas">Media Alert Required *</th>
             <td colspan="2" class="cbas">
               {% if is_authorised %}
 			  {% if snapshot.media_alert_req %}<div class="text-center"><i class="icon-ok text-success"></i></div>{% else %}<div class="text-center"><i class="icon-remove text-danger"></i></div>{% endif %}<span class="div_pica" style="display: none; margin:20;">Call PICA on ....</span>
               {% else %}
-			  {{form.media_alert_req}} <span class="div_pica" style="display: none; margin:20;">Call PICA on ....</span>
+			  {{form.media_alert_req}} <br><span class="div_pica" style="display: none;">Call PICA on ....</span>
               {% endif %}
             </td>
 
-            <th class="cbas">Park and/or Trail<br>potentially impacted</th>
+            <th class="cbas">Park and/or Trail *<br>potentially impacted</th>
             <td colspan="2" class="cbas">
               {% if is_authorised %}
 			  {% if snapshot.park_trail_impacted %}<div class="text-center"><i class="icon-ok text-success"></i></div>{% else %}<div class="text-center"><i class="icon-remove text-danger"></i></div>{% endif %}<span class="div_pvs" style="display: none; margin:20;">Email notification to PVS on ....</span>
               {% else %}
-			  {{form.park_trail_impacted}} <span class="div_pvs" style="display: none; margin:20;">Send email notification to PVS</span>
+			  {{form.park_trail_impacted}}<br> <span class="div_pvs" style="display: none;">Send email notification to PVS</span>
               {% endif %}
             </td>
 
@@ -243,7 +243,7 @@
         </tr>
 
         <tr>
-            <th class="cbas" style="font-weight:normal;">Assistance required</th>
+            <th class="cbas">Assistance required *</th>
             <td colspan="5" class="cbas">
 				{% if is_authorised %} {{snapshot.assistance_req}} {% else %} {{form.assistance_req}} {% endif %}
 				<span class=div_assist style="visibility: hidden; margin:20;">Details {% if is_authorised %} {{snapshot.assistance_details}} {% else %} {{form.assistance_details}} {% endif %}</span>
@@ -518,6 +518,36 @@ $('#id_dispatch_aerial_1').on('change', function() {
 });
 
 /* PICA Text */
+if($('#id_media_alert_req_0').is(':checked')) { $('.div_pica').show(); }
+if($('#id_media_alert_req_1').is(':checked')) { $('.div_pica').hide(); }
+$('#id_media_alert_req_0').on('change', function() {
+	if($('#id_media_alert_req_0').is(':checked')) { $('.div_pica').show(); }
+});
+$('#id_media_alert_req_1').on('change', function() {
+	if($('#id_media_alert_req_1').is(':checked')) { $('.div_pica').hide(); }
+});
+
+/* Parks and Trails Text */
+if($('#id_park_trail_impacted_0').is(':checked')) { $('.div_pvs').show(); }
+if($('#id_park_trail_impacted_1').is(':checked')) { $('.div_pvs').hide(); }
+$('#id_park_trail_impacted_0').on('change', function() {
+	if($('#id_park_trail_impacted_0').is(':checked')) { $('.div_pvs').show(); }
+});
+$('#id_park_trail_impacted_1').on('change', function() {
+	if($('#id_park_trail_impacted_1').is(':checked')) { $('.div_pvs').hide(); }
+});
+
+/* Assistance Required */
+  if($('#id_assistance_req_0').is(':checked')) { $('.div_assist').css('visibility','visible'); }
+  if($('#id_assistance_req_1').is(':checked')) { $('.div_assist').css('visibility','hidden'); }
+  $('#id_assistance_req_0').on('change', function() {
+	  if($('#id_assistance_req_0').is(':checked')) { $('.div_assist').css('visibility','visible'); }
+  });
+  $('#id_assistance_req_1').on('change', function() {
+	  if($('#id_assistance_req_1').is(':checked')) { $('.div_assist').css('visibility','hidden'); }
+  });
+
+/*
 if($('#id_media_alert_req').is(':checked')) { 
 	$('.div_pica').show(); 
 } else {
@@ -531,7 +561,6 @@ $('#id_media_alert_req').on('change', function() {
 	}
 });
 
-/* PVS Text */
 if($('#id_park_trail_impacted').is(':checked')) { 
 	$('.div_pvs').show(); 
 } else {
@@ -546,7 +575,6 @@ $('#id_park_trail_impacted').on('change', function() {
 });
 
 
-/* Assistance Required */
 if($('#id_assistance_req').is(':checked')) { 
 	$('.div_assist').css('visibility','visible');
 } else {
@@ -559,6 +587,7 @@ $('#id_assistance_req').on('change', function() {
 		$('.div_assist').css('visibility','hidden');
 	}
 });
+*/
 
 /* Fire Cause */
 var cause = $('#id_cause :selected').text();
