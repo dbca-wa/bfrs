@@ -118,12 +118,16 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
     filterset_class = BushfireFilter
     template_name = 'bfrs/bushfire.html'
 
+    def get_success_url(self):
+        return reverse('main')
+
     def get_initial(self):
         profile, created = Profile.objects.get_or_create(user=self.request.user)
         return { 'region': profile.region, 'district': profile.district }
 
     def get(self, request, *args, **kwargs):
         response = super(BushfireView, self).get(request, *args, **kwargs)
+        template = 'bfrs/confirm.html'
 
         if self.request.GET.has_key('export_to_csv'):
             report = self.request.GET.get('export_to_csv')
@@ -137,13 +141,23 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
                 qs = self.get_filterset(self.filterset_class).qs
                 return export_excel(self.request, qs)
 
-        import ipdb; ipdb.set_trace()
-        if self.request.GET.has_key('authorise'):
-            status_type = self.request.GET.get('authorise')
+        if self.request.GET.has_key('confirm_action'):
             bushfire = Bushfire.objects.get(id=self.request.GET.get('bushfire_id'))
+            action = self.request.GET.get('confirm_action')
+            return TemplateResponse(request, template, context={'action': action, 'bushfire_id': bushfire.id})
 
-            # Authorise the INITIAL report
-            if status_type == 'initial_auth' and bushfire.report_status==Bushfire.STATUS_INITIAL:
+        return response
+
+    def post(self, request, *args, **kwargs):
+
+        #import ipdb; ipdb.set_trace()
+        if self.request.POST.has_key('bushfire_id'):
+            bushfire = Bushfire.objects.get(id=self.request.POST.get('bushfire_id'))
+
+        if self.request.POST.has_key('action'):
+            action = self.request.POST.get('action')
+
+            if action == 'submit_initial' and bushfire.report_status==Bushfire.STATUS_INITIAL:
                 bushfire.init_authorised_by = self.request.user
                 bushfire.init_authorised_date = datetime.now(tz=pytz.utc)
                 bushfire.report_status = Bushfire.STATUS_INITIAL_AUTHORISED
@@ -161,12 +175,12 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
 
 
             # CREATE the FINAL DRAFT report
-            if status_type == 'final_create' and bushfire.report_status==Bushfire.STATUS_INITIAL_AUTHORISED:
+            if action == 'create_final' and bushfire.report_status==Bushfire.STATUS_INITIAL_AUTHORISED:
                 bushfire.report_status = Bushfire.STATUS_FINAL_DRAFT
                 serialize_bushfire('final', bushfire)
 
             # Authorise the FINAL report
-            if status_type == 'final_auth' and bushfire.report_status==Bushfire.STATUS_FINAL_DRAFT:
+            if action == 'authorise_final' and bushfire.report_status==Bushfire.STATUS_FINAL_DRAFT:
                 bushfire.authorised_by = self.request.user
                 bushfire.authorised_date = datetime.now(tz=pytz.utc)
                 bushfire.report_status = Bushfire.STATUS_FINAL_AUTHORISED
@@ -175,35 +189,39 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
                 fssdrs_email(bushfire, self.mail_url(bushfire, status='final'))
 
             # CREATE the REVIEWABLE DRAFT report
-            if status_type == 'review_create' and bushfire.report_status==Bushfire.STATUS_FINAL_AUTHORISED:
+            if action == 'create_review' and bushfire.report_status==Bushfire.STATUS_FINAL_AUTHORISED:
                 bushfire.report_status = Bushfire.STATUS_REVIEW_DRAFT
 
             # Authorise the REVIEW DRAFT report
-            if status_type == 'reviewed' and bushfire.report_status==Bushfire.STATUS_REVIEW_DRAFT:
+            if action == 'mark_reviewed' and bushfire.report_status==Bushfire.STATUS_REVIEW_DRAFT:
                 bushfire.reviewed_by = self.request.user
                 bushfire.reviewed_date = datetime.now(tz=pytz.utc)
                 bushfire.report_status = Bushfire.STATUS_REVIEWED
 
             # Delete Initial
-            if status_type == 'delete_initial' and bushfire.report_status==Bushfire.STATUS_INITIAL:
+            if action == 'delete_initial' and bushfire.report_status==Bushfire.STATUS_INITIAL:
+                #Bushfire.objects.filter(id=bushfire.id).delete()
                 bushfire.delete()
 
             # Delete Final Authorisation
-            if status_type == 'delete_final_auth' and bushfire.report_status==Bushfire.STATUS_FINAL_AUTHORISED:
+            if action == 'delete_final_authorisation' and bushfire.report_status==Bushfire.STATUS_FINAL_AUTHORISED:
                 bushfire.authorised_by = None
                 bushfire.authorised_date = None
                 bushfire.report_status = Bushfire.STATUS_FINAL_DRAFT
 
             # Archive
-            if status_type == 'archive' and bushfire.report_status==Bushfire.STATUS_REVIEWED:
+            if action == 'archive' and bushfire.report_status==Bushfire.STATUS_REVIEWED:
                 bushfire.archive = True
-            if status_type == 'unarchive' and bushfire.archive:
+            if action == 'unarchive' and bushfire.archive:
                 bushfire.archive = False
 
+            if not action.startswith('delete'):
+                bushfire.save()
 
-            bushfire.save()
+        return HttpResponseRedirect(self.get_success_url())
 
-        return response
+
+            # Authorise the INITIAL report
 
     def get_context_data(self, **kwargs):
         context = super(BushfireView, self).get_context_data(**kwargs)

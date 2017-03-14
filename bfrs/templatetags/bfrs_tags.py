@@ -76,3 +76,13 @@ def _can_readonly(context):
     import ipdb; ipdb.set_trace()
     return request.user.groups.filter(name='ReadOnly').exists()
 
+@register.filter
+def split_capitalize(string):
+    """
+    Usage::
+
+        {{ msg|split_capitalize}}
+    """
+    return ' '.join([i.capitalize() for i in string.split('_')])
+
+

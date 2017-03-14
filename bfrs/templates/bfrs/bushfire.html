@@ -109,25 +109,25 @@
 
          {% if bushfire.report_status == bushfire.STATUS_INITIAL %}
 		   <td>
-				<a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&authorise=initial_auth');" title="Authorise initial"><button>Authorise Initial</button>
-	   			<a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&authorise=delete_initial');" title="Delete initial"><button>Delete Initial</button>
+				<a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=submit_initial');" title="submit initial"><button>Submit Initial</button>
+	   			<a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=delete_initial');" title="Delete initial"><button>Delete Initial</button>
 			</td>
          {% elif bushfire.report_status == bushfire.STATUS_INITIAL_AUTHORISED %}
-		   <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&authorise=final_create');" title="Create final report"><button>Create Final</button></td>
+		   <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=create_final');" title="Create final report"><button>Create Final</button></td>
          {% elif bushfire.report_status == bushfire.STATUS_FINAL_DRAFT %}
-           <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&authorise=final_auth');" title="Authorise final report"><button>Authorise Final</button></td>
+           <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=authorise_final');" title="Authorise final report"><button>Authorise Final</button></td>
          {% elif bushfire.report_status == bushfire.STATUS_FINAL_AUTHORISED %}
            <td>
-				<a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&authorise=review_create');" title="Create review report"><button>Create Review</button>
-				<a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&authorise=delete_final_auth');" title="Delete authorisation"><button>Delete Auth'n</button>
+				<a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=create_review');" title="Create review report"><button>Create Review</button>
+				<a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=delete_final_authorisation');" title="Delete authorisation"><button>Delete Auth'n</button>
 			</td>
          {% elif bushfire.report_status == bushfire.STATUS_REVIEW_DRAFT %}
-           <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&authorise=reviewed');" title="Mark Final report as Reviewed"><button>Mark as Reviewed</button></td>
+           <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=mark_reviewed');" title="Mark Final report as Reviewed"><button>Mark as Reviewed</button></td>
          {% elif bushfire.report_status == bushfire.STATUS_REVIEWED %}
            {% if not bushfire.archive %}
-             <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&authorise=archive');" title="Archive Report"><button>Archive</button></td>
+             <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=archive');" title="Archive Report"><button>Archive</button></td>
            {% else %}
-             <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&authorise=unarchive');" title="Unarchive Report"><button>Unarchive</button></td>
+             <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=unarchive');" title="Unarchive Report"><button>Unarchive</button></td>
            {% endif %}
          {% endif %}
 
