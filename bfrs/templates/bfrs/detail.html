@@ -81,7 +81,14 @@
     </div>
 {% endif %}
 
+{% if action == 'submit_initial' %}
+<h1>Submit Initial Report</h1>
+{% elif action == 'authorise_final' %}
+<h1>Authorise Final Report</h1>
+{% else %}
 <h1>Bushfire Detail</h1>
+{% endif %}
+
 {% comment %}
 <a id="id_init_authorise" href="{% url 'bushfire:bushfire_init_authorise' object.id %}" class="btn"><i class="icon-button">Mark as Authorised</i></a>
 {% endcomment %}
@@ -326,7 +333,10 @@
 </table>
 
 
+{%  comment %}
 {% if object.report_status > object.STATUS_INITIAL_AUTHORISED %}
+{%  endcomment %}
+{% if not initial %}
 
 <table class="table table-bordered table-striped table-condensed">
     <tbody>
@@ -384,6 +394,7 @@
 
 {% endif %}
 
+{% if not action %}
 <div class="navbar navbar-fixed-bottom">
   <div class="navbar-inner">
     <div class="container">
@@ -407,9 +418,21 @@
     </div>
   </div>
 </div>
+{% endif %}
 
 </form>
 
+{% if action %}
+<form action="" method="post">{% csrf_token %}
+  <div>
+    <input type="hidden" name="bushfire_id" value="{{snapshot.id}}" />
+    <input type="hidden" name="action" value="{{action}}" />
+    <input type="hidden" name="confirm_action" value="yes" />
+    <input type="submit" class="btn" value="{% trans "Yes, I'm sure" %}" />
+    <a id="id_cancel_button" href="javascript: history.go(-1)" class="btn btn-danger">Cancel</a>
+  </div>
+</form>
+{% endif %}
 
 <script>
 

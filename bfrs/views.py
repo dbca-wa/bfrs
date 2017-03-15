@@ -9,8 +9,9 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.gis.geos import Point, GEOSGeometry, Polygon, MultiPolygon, GEOSException
-from django.template import RequestContext
-from django.shortcuts import render
+#from django.template import RequestContext
+#from django.shortcuts import render
+from django.core import serializers
 
 from bfrs.models import (Profile, Bushfire,
         Region, District,
@@ -129,7 +130,8 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
 
     def get(self, request, *args, **kwargs):
         response = super(BushfireView, self).get(request, *args, **kwargs)
-        template = 'bfrs/confirm.html'
+        template_confirm = 'bfrs/confirm.html'
+        template_preview = 'bfrs/detail.html'
 
         if self.request.GET.has_key('export_to_csv'):
             report = self.request.GET.get('export_to_csv')
@@ -146,7 +148,17 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
         if self.request.GET.has_key('confirm_action'):
             bushfire = Bushfire.objects.get(id=self.request.GET.get('bushfire_id'))
             action = self.request.GET.get('confirm_action')
-            return TemplateResponse(request, template, context={'action': action, 'bushfire_id': bushfire.id})
+            if action == 'submit_initial' or action == 'authorise_final':
+                context = self.get_context_data()
+                context['action'] = action
+                context['is_authorised'] = True
+                context['snapshot'] = bushfire
+                if action == 'submit_initial':
+                    context['initial'] = True
+                else:
+                    context['final'] = True
+                return TemplateResponse(request, template_preview, context=context)
+            return TemplateResponse(request, template_confirm, context={'action': action, 'bushfire_id': bushfire.id})
 
         return response
 
@@ -178,13 +190,13 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
             # CREATE the FINAL DRAFT report
             if action == 'create_final' and bushfire.report_status==Bushfire.STATUS_INITIAL_AUTHORISED:
                 bushfire.report_status = Bushfire.STATUS_FINAL_DRAFT
-                serialize_bushfire('final', bushfire)
 
             # Authorise the FINAL report
             if action == 'authorise_final' and bushfire.report_status==Bushfire.STATUS_FINAL_DRAFT:
                 bushfire.authorised_by = self.request.user
                 bushfire.authorised_date = datetime.now(tz=pytz.utc)
                 bushfire.report_status = Bushfire.STATUS_FINAL_AUTHORISED
+                serialize_bushfire('final', bushfire)
 
                 # send emails
                 fssdrs_email(bushfire, self.mail_url(bushfire, status='final'))
@@ -203,6 +215,7 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
             if action == 'delete_initial' and bushfire.report_status==Bushfire.STATUS_INITIAL:
                 #Bushfire.objects.filter(id=bushfire.id).delete()
                 bushfire.delete()
+                return HttpResponseRedirect(self.get_success_url())
 
             # Delete Final Authorisation
             if action == 'delete_final_authorisation' and bushfire.report_status==Bushfire.STATUS_FINAL_AUTHORISED:
@@ -216,8 +229,9 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
             if action == 'unarchive' and bushfire.archive:
                 bushfire.archive = False
 
-            if not action.startswith('delete'):
-                bushfire.save()
+#            if not action.startswith('delete'):
+#                bushfire.save()
+            bushfire.save()
 
         return HttpResponseRedirect(self.get_success_url())
 
@@ -258,7 +272,7 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
 class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
     model = Bushfire
     form_class = BushfireCreateForm
-    template_name = 'bfrs/create.html'
+    template_name = 'bfrs/detail.html'
 
     def get_success_url(self):
         return reverse("home")
@@ -340,7 +354,7 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
 class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
     model = Bushfire
     form_class = BushfireInitUpdateForm
-    template_name = 'bfrs/create.html'
+    template_name = 'bfrs/detail.html'
 
     def get_success_url(self):
         return reverse("home")
@@ -394,7 +408,7 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
 class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
     model = Bushfire
     form_class = BushfireForm
-    template_name = 'bfrs/create.html'
+    template_name = 'bfrs/detail.html'
 
     def get_initial(self):
         if self.object.time_to_control:
@@ -442,7 +456,7 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
             'injury_formset': injury_formset,
             'damage_formset': damage_formset,
         })
-        import ipdb; ipdb.set_trace()
+        #import ipdb; ipdb.set_trace()
         return self.render_to_response(context=context)
 
     def form_valid(self, request,
@@ -503,7 +517,7 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
 class BushfireReviewUpdateView(BushfireFinalUpdateView):
     model = Bushfire
     form_class = BushfireForm
-    template_name = 'bfrs/create.html'
+    template_name = 'bfrs/detail.html'
 
     def get_context_data(self, **kwargs):
         context = super(BushfireReviewUpdateView, self).get_context_data(**kwargs)

@@ -294,7 +294,7 @@ class BushfireCreateBaseForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super(BushfireCreateBaseForm, self).clean()
 
-        import ipdb; ipdb.set_trace()
+        #import ipdb; ipdb.set_trace()
         if self.cleaned_data['dispatch_pw'] and eval(self.cleaned_data['dispatch_pw']):
             if not self.cleaned_data['dispatch_pw_date']:
                 self.add_error('dispatch_pw_date', 'Must specify Date and Time of dispatch, if resource is dispatched.')
@@ -381,7 +381,7 @@ class BaseActivityFormSet(BaseInlineFormSet):
         """
         #import ipdb; ipdb.set_trace()
         if any(self.errors):
-            import ipdb; ipdb.set_trace()
+            #import ipdb; ipdb.set_trace()
             return
 
         activities = []
