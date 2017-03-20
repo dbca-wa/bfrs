@@ -247,7 +247,7 @@ class Bushfire(Audit):
 
 @python_2_unicode_compatible
 class Tenure(models.Model):
-    name = models.CharField(max_length=200)
+    name = models.CharField(verbose_name='Tenure category', max_length=200)
 
     class Meta:
         ordering = ['id']
@@ -321,7 +321,8 @@ class DamageType(models.Model):
 @python_2_unicode_compatible
 class AreaBurnt(models.Model):
     tenure = models.ForeignKey(Tenure, related_name='tenures')
-    area = models.DecimalField(verbose_name="Area (ha)", max_digits=12, decimal_places=2, validators=[MinValueValidator(0)])
+    area = models.DecimalField(verbose_name="Area (ha)", max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], null=True, blank=True)
+    other = models.CharField(max_length=50, verbose_name="Other tenure", null=True, blank=True)
     bushfire = models.ForeignKey(Bushfire, related_name='tenures_burnt')
 
 #    def clean(self):
@@ -332,10 +333,16 @@ class AreaBurnt(models.Model):
         return json.dumps(self.to_dict)
 
     def to_dict(self):
-        return dict(tenure=self.tenure.name, area=round(self.area,2))
+        return dict(tenure=self.tenure.name, area=round(self.area,2), other=self.other)
+
+#    def description(self):
+#        """ description is a combination of tenure category and tenure name (if name exists) """
+#        if self.name:
+#            return '{} ({} - {})'.format(self.tenure.name, self.name, self.other)
+#        return '{}'.format(self.tenure.name)
 
     def __str__(self):
-		return 'Tenure: {}, Area: {}'.format(self.tenure.name, self.area)
+		return 'Tenure: {}, Area: {}, Other: {}'.format(self.tenure.name, self.area, self.other)
 
     class Meta:
         unique_together = ('bushfire', 'tenure',)
@@ -370,181 +377,12 @@ class Damage(models.Model):
         default_permissions = ('add', 'change', 'delete', 'view')
 
 
-#@python_2_unicode_compatible
-#class Prescription(models.Model):
-#    burn_id = models.CharField(max_length=7)
-#
-#    class Meta:
-#        ordering = ['burn_id']
-#
-#    def __str__(self):
-#        return self.burn_id
-
-
-#@python_2_unicode_compatible
-#class Direction(models.Model):
-#    name = models.CharField(max_length=25)
-#    code = models.CharField(max_length=3)
-#
-#    class Meta:
-#        ordering = ['name']
-#        default_permissions = ('add', 'change', 'delete', 'view')
-#
-#    def __str__(self):
-#        return self.name
-#
-#
-#@python_2_unicode_compatible
-#class FrbEffect(models.Model):
-#    name = models.CharField(max_length=50)
-#
-#    class Meta:
-#        ordering = ['name']
-#        default_permissions = ('add', 'change', 'delete', 'view')
-#
-#    def __str__(self):
-#        return self.name
-#
-#
-#@python_2_unicode_compatible
-#class WaterBombEffect(models.Model):
-#    name = models.CharField(max_length=50)
-#
-#    class Meta:
-#        ordering = ['name']
-#        default_permissions = ('add', 'change', 'delete', 'view')
-#
-#    def __str__(self):
-#        return self.name
-#
-#
-#@python_2_unicode_compatible
-#class PriorityRating(models.Model):
-#    name = models.CharField(max_length=50)
-#
-#    class Meta:
-#        ordering = ['name']
-#        default_permissions = ('add', 'change', 'delete', 'view')
-#
-#    def __str__(self):
-#        return self.name
-
-
-
-#@python_2_unicode_compatible
-#class ResponseType(models.Model):
-#
-#    name = models.CharField(max_length=50, verbose_name="Agency Name")
-#
-#    class Meta:
-#        ordering = ['name']
-#        default_permissions = ('add', 'change', 'delete', 'view')
-#
-#    def __str__(self):
-#        return self.name
-#
-#
-#@python_2_unicode_compatible
-#class Organisation(models.Model):
-#    name = models.CharField(max_length=50, verbose_name="Organisation")
-#
-#    class Meta:
-#        ordering = ['name']
-#        default_permissions = ('add', 'change', 'delete', 'view')
-#
-#    def __str__(self):
-#        return self.name
-#
-#
-#@python_2_unicode_compatible
-#class InvestigationType(models.Model):
-#    name = models.CharField(max_length=50, verbose_name="Investigation Type")
-#
-#    class Meta:
-#        ordering = ['name']
-#        default_permissions = ('add', 'change', 'delete', 'view')
-#
-#    def __str__(self):
-#        return self.name
-#
-#
-#@python_2_unicode_compatible
-#class LegalResultType(models.Model):
-#    name = models.CharField(max_length=50, verbose_name="Legal Result Type")
-#
-#    class Meta:
-#        ordering = ['name']
-#        default_permissions = ('add', 'change', 'delete', 'view')
-#
-#    def __str__(self):
-#        return self.name
-#
-#
-#@python_2_unicode_compatible
-#class PublicDamageType(models.Model):
-#    name = models.CharField(max_length=50, verbose_name="Public Damage Type")
-#
-#    class Meta:
-#        ordering = ['name']
-#        default_permissions = ('add', 'change', 'delete', 'view')
-#
-#    def __str__(self):
-#        return self.name
-#
-#
-#@python_2_unicode_compatible
-#class PrivateDamageType(models.Model):
-#    name = models.CharField(max_length=25, verbose_name="Private Damage Type")
-#
-#    class Meta:
-#        ordering = ['name']
-#        default_permissions = ('add', 'change', 'delete', 'view')
-#
-#    def __str__(self):
-#        return self.name
-
-
-
-#@python_2_unicode_compatible
-#class ActivityType(models.Model):
-#    name = models.CharField(max_length=25, verbose_name="Activity Type")
-#
-#    class Meta:
-#        ordering = ['name']
-#        default_permissions = ('add', 'change', 'delete', 'view')
-#
-#    def __str__(self):
-#        return self.name
-#
-#
-#
-#
-#@python_2_unicode_compatible
-#class Response(models.Model):
-#    bushfire = models.ForeignKey(Bushfire, related_name='responses')
-#    response = models.ForeignKey(ResponseType)
-#    #response = models.PositiveSmallIntegerField(choices=RESPONSE_CHOICES)
-#
-#    def __str__(self):
-#        return self.response.name
-#        default_permissions = ('add', 'change', 'delete', 'view')
-#
-#    class Meta:
-#        unique_together = ('bushfire', 'response',)
-#        default_permissions = ('add', 'change', 'delete', 'view')
-
-
-
-#@python_2_unicode_compatible
-#class Comment(Audit):
-#    comment = models.TextField()
-#    bushfire = models.ForeignKey(Bushfire, related_name='comments')
-#
-#    class Meta:
-#        default_permissions = ('add', 'change', 'delete', 'view')
-#
-#    def __str__(self):
-#        return self.comment
+@python_2_unicode_compatible
+class SpatialDataHistory(Audit):
+    origin_point = models.PointField(null=True, blank=True, editable=True, help_text='Optional.')
+    fire_boundary = models.MultiPolygonField(srid=4326, null=True, blank=True, editable=True, help_text='Optional.')
+    area_burnt = models.TextField(verbose_name='Area Burnt', null=True, blank=True)
+    bushfire = models.ForeignKey(Bushfire, related_name='spatial_data_history')
 
 
 

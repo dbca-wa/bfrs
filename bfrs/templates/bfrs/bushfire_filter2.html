@@ -22,7 +22,6 @@
           {% endcomment %}
 
         <!--<form action="" method="get">-->
-		<!--<form id="bushfire_filter" action="#" method="post">{% csrf_token %}-->
         <table class="table table-bordered table-striped table-condensed">
           <body>
 
@@ -61,8 +60,8 @@
 
                 <div class="col-sm-2" > 
                   <div id="div_id_archive" class="form-group"> 
-                    <label class="nowrap" for="{{ filter.form.archive.id_for_archive  }}">Include archived</label>
-                    <div class="controls ">{{ form.include_archived }}</div>
+                    <label class="nowrap" for="{{ filter.form.archive.id_for_archive  }}">Archive</label>
+                    <div class="controls ">{{ filter.form.include_archived }}</div>
                   </div>
                 </div>
 
@@ -88,7 +87,8 @@
           </body>
         </table>
         <!--</form>-->
-		<a href="javascript: bushfire_filter();"><button><i class="icon-refresh icon-white"></i> Update</button></a>
+        <!--<input type="submit" value="Update" />-->
+        <a href="javascript: bushfire_filter();"><button><i class="icon-refresh icon-white"></i> Update</button></a>
 
       </div>
     </div>

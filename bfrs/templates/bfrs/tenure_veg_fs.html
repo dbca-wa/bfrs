@@ -1,13 +1,36 @@
-{% if is_authorised and final %}
+{% if area_burnt_formset.errors %}
+    <p>Formset Errors</p>
+    <div class="alert alert-error">
+        <button type="button" class="close" data-dismiss="alert">×</button>
+        {% for field in area_burnt_formset %} 
+            {% if field.errors %}
+            <font color="red"><li>{{ field.label }}: {{ field.errors|striptags }}</li></font>
+            {{ field.meta  }}
+            {% endif %}
+        {% endfor %}
+
+        {% if area_burnt_formset.non_field_errors %}
+            <font color="red">{{ area_burnt_formset.non_field_errors }}</font>
+        {% else %}
+            <font color="red">{{ area_burnt_formset.errors|striptags }}</font>
+        {% endif %}
+
+    </div>
+{% endif %}
+
+
+{% if is_authorised %}
     <table class="table_fs" border="0" >
         <tbody>
             {% if snapshot.areas_burnt.exists %}
 				<th>Tenure</th>
 				<th>Area (ha)</th>
+				<th>Other</th>
 				{% for area in snapshot.areas_burnt %}
 				<tr>
 					<td>{{ area.tenure }}</td>
 					<td>{{ area.area }}</td>
+					<td>{{ area.other }}</td>
 				</tr>
 				{% endfor %}
             {% else %}
@@ -21,11 +44,13 @@
             <tbody>
                 <th>Tenure</th>
                 <th>Area (ha)</th>
+                <th>Other</th>
                 <th></th>
                 {% for fs in area_burnt_formset %}
                 <tr>
                 <td>{{ fs.tenure }}</td>
                 <td>{{ fs.area }}</td>
+                <td>{{ fs.other }}</td>
                 <td>
                         {% if fs.instance.pk %}{{ fs.DELETE }}{% endif %}
                         {{ fs.id }}

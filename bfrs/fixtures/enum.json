@@ -226,32 +226,102 @@
     "pk": 4,
     "model": "bfrs.tenure",
     "fields": {
-        "name": "Unallocated crown land"
+        "name": "Unallocated Crown Land - Dept Interest"
     }
 },
 {
     "pk": 5,
     "model": "bfrs.tenure",
     "fields": {
-        "name": "Unallocated crown reserve"
+        "name": "Crown Freehold - Dept Interest"
     }
 },
 {
     "pk": 6,
     "model": "bfrs.tenure",
     "fields": {
-        "name": "Miscellaneous reserve"
+        "name": "Miscellaneous Reserve"
     }
 },
 {
     "pk": 7,
     "model": "bfrs.tenure",
     "fields": {
-        "name": "Private property"
+        "name": "Conservation Park"
     }
 },
 {
     "pk": 8,
+    "model": "bfrs.tenure",
+    "fields": {
+        "name": "SRT - River Reserve"
+    }
+},
+{
+    "pk": 9,
+    "model": "bfrs.tenure",
+    "fields": {
+        "name": "Marine Park"
+    }
+},
+{
+    "pk": 10,
+    "model": "bfrs.tenure",
+    "fields": {
+        "name": "Section 16A agreement"
+    }
+},
+{
+    "pk": 11,
+    "model": "bfrs.tenure",
+    "fields": {
+        "name": "5(1)(h) Reserve"
+    }
+},
+{
+    "pk": 12,
+    "model": "bfrs.tenure",
+    "fields": {
+        "name": "5(1)(g) Reserve"
+    }
+},
+{
+    "pk": 13,
+    "model": "bfrs.tenure",
+    "fields": {
+        "name": "Marine Nature Reserve"
+    }
+},
+{
+    "pk": 14,
+    "model": "bfrs.tenure",
+    "fields": {
+        "name": "Section 33(2)"
+    }
+},
+{
+    "pk": 15,
+    "model": "bfrs.tenure",
+    "fields": {
+        "name": "Marine Management Area"
+    }
+},
+{
+    "pk": 16,
+    "model": "bfrs.tenure",
+    "fields": {
+        "name": "Timber Reserve"
+    }
+},
+{
+    "pk": 17,
+    "model": "bfrs.tenure",
+    "fields": {
+        "name": "CALM Exec Body Freehold"
+    }
+},
+{
+    "pk": 18,
     "model": "bfrs.tenure",
     "fields": {
         "name": "Other (specify)"

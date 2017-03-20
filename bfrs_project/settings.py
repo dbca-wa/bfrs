@@ -31,6 +31,8 @@ PVS_EMAIL = env('PVS_EMAIL', 'pvs_email')
 POLICE_EMAIL = env('POLICE_EMAIL', 'police_email')
 DFES_EMAIL = env('DFES_EMAIL', 'dfes_email')
 FSSDRS_EMAIL = env('FSSDRS_EMAIL', 'fssdrs_email')
+EMAIL_TO_SMS_FROMADDRESS = env('EMAIL_TO_SMS_FROMADDRESS', 'pics_sms_from')
+MEDIA_ALERT_SMS_TOADDRESS = env('MEDIA_ALERT_SMS_TOADDRESS', 'pica_sms_to')
 ALLOW_EMAIL_NOTIFICATION = os.environ.get('ALLOW_EMAIL_NOTIFICATION', None) in ["True", "on", "1", "DEBUG"]
 
 # Quick-start development settings - unsuitable for production

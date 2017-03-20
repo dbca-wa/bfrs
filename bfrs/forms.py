@@ -130,6 +130,7 @@ class BushfireFilterForm(forms.ModelForm):
     region and district passed from this form (i.e. region and filter are also declared in the BushfireFilter class)
     """
 
+    include_archived = forms.BooleanField(required=False)
     def __init__(self, *args, **kwargs):
         super(BushfireFilterForm, self).__init__(*args, **kwargs)
 
@@ -137,7 +138,7 @@ class BushfireFilterForm(forms.ModelForm):
         self.fields['district'].required = False
 
     class Meta:
-        fields = ('region', 'district')
+        fields = ('region', 'district', 'include_archived')
         model = Bushfire
 
 
@@ -371,62 +372,13 @@ class BushfireInitUpdateForm(BushfireCreateBaseForm):
                     if not other_field:
                         self.add_error(req_dep_fields[field], 'This field is required.')
 
-
-class BaseActivityFormSet(BaseInlineFormSet):
-    def clean(self):
-        """
-        Adds validation to check:
-            1. no duplicate activities
-            2. required activities have been selected
-        """
-        #import ipdb; ipdb.set_trace()
-        if any(self.errors):
-            #import ipdb; ipdb.set_trace()
-            return
-
-        activities = []
-        dates = []
-        duplicates = False
-        required_activities = ['FIRE DETECTED*', 'FIRE REPORT COMPILED*']
-
-        #import ipdb; ipdb.set_trace()
-        for form in self.forms:
-            if form.cleaned_data:
-                activity = form.cleaned_data['activity'] if form.cleaned_data.has_key('activity') else None
-                date = form.cleaned_data['date'] if form.cleaned_data.has_key('date') else None
-                remove = form.cleaned_data['DELETE'] if form.cleaned_data.has_key('DELETE') else False
-
-                if not remove:
-                    # Check that no two records have the same activity
-                    if activity:
-                        if activity.name in activities:
-                            duplicates = True
-                        activities.append(activity.name)
-
-                    if duplicates:
-                        form.add_error('activity', 'Duplicate: must be unique')
-
-        # check required activities have been selected, only when main form has been authorised
-        #import ipdb; ipdb.set_trace()
-        if self.data.has_key('init_authorised_by') and self.data['init_authorised_by']:
-            if not set(required_activities).issubset(activities) and self.forms:
-                form.add_error('__all__', 'Must select required Activities: {}'.format(', '.join(required_activities)))
-
-        if self.data.has_key('authorised_by'):
-            if not set(required_activities).issubset(activities) and self.forms:
-                form.add_error('__all__', 'Must select required Activities: {}'.format(', '.join(required_activities)))
-
-#    class Meta:
-#        model = Activity
-#        exclude = ()
-
-
 #class BaseAreaBurntFormSet(BaseInlineFormSet):
 #    def clean(self):
 #        """
 #        Adds validation to check:
 #            1. no duplicate (tenure, fuel_type) combination
 #        """
+#        #import ipdb; ipdb.set_trace()
 #        if any(self.errors):
 #            return
 #
@@ -437,19 +389,19 @@ class BaseActivityFormSet(BaseInlineFormSet):
 #        for form in self.forms:
 #            if form.cleaned_data:
 #                tenure = form.cleaned_data['tenure'] if form.cleaned_data.has_key('tenure') else None
-#                #area = form.cleaned_data['area'] if form.cleaned_data.has_key('area') else None
+#                area = form.cleaned_data['area'] if form.cleaned_data.has_key('area') else None
 #                remove = form.cleaned_data['DELETE'] if form.cleaned_data.has_key('DELETE') else False
 #
 #                if not remove:
 #                    # Check that no two records have the same (tenure and fuel_type) combination
 #                    #if tenure and fuel_type and area:
-#					if tenure:
-#                        if set([(tenure.name, fuel_type.name)]).issubset(tenures):
+#                    if tenure and area:
+#                        if set([(tenure.name)]).issubset(tenures):
 #                            duplicates = True
-#                        tenures.append((tenure.name, fuel_type.name))
+#                        tenures.append((tenure.name))
 #
 #                    if duplicates:
-#                        form.add_error('tenure', 'Duplicate (Tenure - Fuel Type): must be unique')
+#			form.add_error('tenure', 'Duplicate: Tenure must be unique')
 
 
 #AreaBurntFormSet            = inlineformset_factory(Bushfire, AreaBurnt, formset=BaseAreaBurntFormSet, extra=0, min_num=1, validate_min=True, exclude=())

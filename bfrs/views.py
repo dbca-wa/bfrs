@@ -12,18 +12,21 @@ from django.contrib.gis.geos import Point, GEOSGeometry, Polygon, MultiPolygon, 
 #from django.template import RequestContext
 #from django.shortcuts import render
 from django.core import serializers
+from django import forms
+from django.contrib.gis.db import models
 
 from bfrs.models import (Profile, Bushfire,
         Region, District,
+        Tenure, AreaBurnt,
     )
 from bfrs.forms import (ProfileForm, BushfireFilterForm, BushfireForm, BushfireCreateForm, BushfireInitUpdateForm,
         AreaBurntFormSet, InjuryFormSet, DamageFormSet,
     )
 from bfrs.utils import (breadcrumbs_li,
-        update_areas_burnt_fs, update_damage_fs, update_injury_fs,
+        update_areas_burnt_fs, update_areas_burnt, update_damage_fs, update_injury_fs,
         export_final_csv, export_excel,
         serialize_bushfire, deserialize_bushfire,
-        rdo_email, pvs_email, pica_email, police_email, dfes_email, fssdrs_email,
+        rdo_email, pvs_email, pica_email, pica_sms, police_email, dfes_email, fssdrs_email,
         #calc_coords,
     )
 from django.db import IntegrityError, transaction
@@ -37,6 +40,11 @@ from django.utils.dateparse import parse_duration
 import django_filters
 #from  django_filters import FilterSet
 from django_filters import views as filter_views
+from django_filters.widgets import BooleanWidget
+
+
+class BooleanFilter(django_filters.filters.Filter):
+    field_class = forms.BooleanField
 
 
 class BushfireFilter(django_filters.FilterSet):
@@ -53,7 +61,8 @@ class BushfireFilter(django_filters.FilterSet):
 
     ARCHIVE_CHOICES = [
         #['', 'All'],
-        [False, 'Unarchived'],
+        [None, 'Unarchived'],
+        [False, 'All'],
         [True, 'Archived'],
     ]
 
@@ -61,7 +70,10 @@ class BushfireFilter(django_filters.FilterSet):
     district = django_filters.ChoiceFilter(choices=DISTRICT_CHOICES, label='District')
     year = django_filters.ChoiceFilter(choices=YEAR_CHOICES, label='Year')
     report_status = django_filters.ChoiceFilter(choices=Bushfire.REPORT_STATUS_CHOICES, label='Report Status')
-    archive = django_filters.ChoiceFilter(choices=ARCHIVE_CHOICES, label='Archive Status')
+    #archive = django_filters.ChoiceFilter(choices=ARCHIVE_CHOICES, label='Archive Status')
+    #archive = django_filters.BooleanFilter(widget=forms.CheckboxInput, label='Included archived')
+    #archive = django_filters.BooleanFilter(label='Included archived')
+    include_archived = BooleanFilter(name='archive', label='Include archived')
 
     class Meta:
         model = Bushfire
@@ -70,21 +82,31 @@ class BushfireFilter(django_filters.FilterSet):
             'district_id',
             'year',
             'report_status',
-            'archive',
+            'include_archived',
         ]
         order_by = (
             ('region_id', 'Region'),
             ('district_id', 'District'),
             ('year', 'Year'),
             ('report_status', 'Report Status'),
-            ('archive', 'Archive'),
+            ('include_archived', 'Include Archived'),
         )
+#        filter_overrides = {
+#            models.BooleanField: {
+#                'filter_class': django_filters.BooleanFilter,
+#                'extra': lambda f: {
+#                    'widget': forms.CheckboxInput,
+#                },
+#            },
+#        }
 
     def __init__(self, *args, **kwargs):
         super(BushfireFilter, self).__init__(*args, **kwargs)
 
         # allows dynamic update of the filter set, on page refresh
         self.filters['year'].extra['choices'] = [[None, '---------']] + [[i['year'], i['year']] for i in Bushfire.objects.all().values('year').distinct().order_by('year')]
+        #self.filters['archive'].extra['choices'] =  [(False, '---------'), ['', 'All'], [True, 'Archived']]
+        #import ipdb; ipdb.set_trace()
 
 
 class ProfileView(LoginRequiredMixin, generic.FormView):
@@ -184,6 +206,7 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
                     pvs_email(bushfire, self.mail_url(bushfire))
                 if bushfire.media_alert_req:
                     pica_email(bushfire, self.mail_url(bushfire))
+                    pica_sms(bushfire, self.mail_url(bushfire))
                 if bushfire.investigation_req:
                     police_email(bushfire, self.mail_url(bushfire))
 
@@ -243,19 +266,28 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
         #import ipdb; ipdb.set_trace()
 
         # initial parameter prevents the form from resetting, if the region and district filters had a value set previously
+
+	# TODO this can be moved to the get method
         initial = {}
         profile = self.get_initial() # Additional profile Filters must also be added to the JS in bushfire.html- profile_field_list
         if self.request.GET.has_key('region'):
             initial.update({'region': self.request.GET['region']})
+            #self.object_list = self.object_list.filter(region=self.request.GET['region'])
         elif profile['region']:
             initial.update({'region': profile['region'].id})
             self.object_list = self.object_list.filter(region=profile['region'])
 
         if self.request.GET.has_key('district'):
             initial.update({'district': self.request.GET['district']})
+            #self.object_list = self.object_list.filter(district=self.request.GET[''])
         elif profile['district']:
             initial.update({'district': profile['district'].id})
             self.object_list = self.object_list.filter(district=profile['district'])
+
+        if not self.request.GET.has_key('include_archived'):
+            self.object_list = self.object_list.exclude(archive=True)
+	else:
+            initial.update({'include_archived': self.request.GET['include_archived']})
 
         # update context with form - filter is already in the context
         context['form'] = BushfireFilterForm(initial=initial)
@@ -263,7 +295,7 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
         return context
 
     def mail_url(self, bushfire, status='initial'):
-	if status == 'iniital':
+	if status == 'initial':
             return "http://" + self.request.get_host() + reverse('bushfire:bushfire_initial', kwargs={'pk':bushfire.id})
 	if status == 'final':
             return "http://" + self.request.get_host() + reverse('bushfire:bushfire_final', kwargs={'pk':bushfire.id})
@@ -281,7 +313,7 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
         profile, created = Profile.objects.get_or_create(user=self.request.user)
         initial = {'region': profile.region, 'district': profile.district}
 
-        #import ipdb; ipdb.set_trace()
+#        import ipdb; ipdb.set_trace()
         #tmp = '{"origin_point":[117.30008118682615,-30.849007786590157],"fire_boundary":[[[[117.29201309106732,-30.850896064320946],[117.30179780294505,-30.866002286167266],[117.30832094419686,-30.840081382771874],[117.29201309106732,-30.850896064320946]]],[[[117.31518740867246,-30.867032255838605],[117.3213672267005,-30.858277513632217],[117.34299658979864,-30.874413705149877],[117.31175417643466,-30.87733195255201],[117.31518740867246,-30.867032255838605]]]],"area":5068734.391653851,"sss_id":"6d09d9ce023e4dd3361ba125dfe1f9db"}'
         #sss = json.loads(tmp)
         if self.request.POST.has_key('sss_create'):
@@ -299,6 +331,28 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
             if sss.has_key('fire_boundary') and isinstance(sss['fire_boundary'], list):
                 initial['fire_boundary'] = MultiPolygon([Polygon(p[0]) for p in sss['fire_boundary']])
 
+            if sss.has_key('fire_position'):
+                initial['fire_position'] = sss['fire_position']
+
+            #import ipdb; ipdb.set_trace()
+#            if sss.has_key('tenure_area'):
+#                self.area_burnt_list = sss['tenure_area']
+
+#            if sss.has_key('tenure_area') and hasattr(self, 'object'):
+#                self.area_burnt_list = sss['tenure_area']
+#                update_areas_burnt(self.object, self.area_burnt_list)
+
+#            if sss.has_key('fire_boundary') and isinstance(sss['fire_boundary'], list):
+#                if sss.has_key('tenure_area'):
+#                    initial['area'] = sss['sss_id']
+#
+#                initial['fire_position'] = sss['fire_position']
+
+#           1. no origin, no fire boundary --> No Arrival/Final Area, Tenure-Area Other (specify)
+#           2. origin, but no fire boundary --> No Arrival/Final Area, Tenure-Area Other (specify), tenure_iginition_point
+#           3. origin, but no fire boundary --> No Arrival/Final Area, Other (specify), No tenure_iginition_point (Other specify)
+#           4. if area --> Other (specify), Tenure-Area list exists (fields can be null, except tenure area)
+
         return initial
 
     def post(self, request, *args, **kwargs):
@@ -308,18 +362,21 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
 
         form_class = self.get_form_class()
         form = self.get_form(form_class)
+        area_burnt_formset      = AreaBurntFormSet(self.request.POST, prefix='area_burnt_fs')
 
-        if form.is_valid(): # and area_burnt_formset.is_valid():
-            return self.form_valid(request, form)
+        #import ipdb; ipdb.set_trace()
+        if form.is_valid() and area_burnt_formset.is_valid():
+            return self.form_valid(request, form, area_burnt_formset)
         else:
-            return self.form_invalid(request, form, kwargs)
+            return self.form_invalid(request, form, area_burnt_formset, kwargs)
 
-    def form_invalid(self, request, form, kwargs):
+    def form_invalid(self, request, form, area_burnt_formset, kwargs):
         context = self.get_context_data()
         context.update({'form': form})
+        context.update({'area_burnt_formset': area_burnt_formset})
         return self.render_to_response(context)
 
-    def form_valid(self, request, form):
+    def form_valid(self, request, form, area_burnt_formset):
         self.object = form.save(commit=False)
         self.object.creator = request.user #1 #User.objects.all()[0] #request.user
         self.object.modifier = request.user #1 #User.objects.all()[0] #request.user
@@ -327,8 +384,13 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
         #import ipdb; ipdb.set_trace()
 
         self.object.save()
+        areas_burnt_updated = update_areas_burnt_fs(self.object, area_burnt_formset)
 
         redirect_referrer =  HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        if not areas_burnt_updated:
+            messages.error(request, 'There was an error saving Areas Burnt.')
+            return redirect_referrer
+
         return HttpResponseRedirect(self.get_success_url())
 
     def get_context_data(self, **kwargs):
@@ -340,11 +402,34 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
         form_class = self.get_form_class()
         form = self.get_form(form_class)
 
+        #import ipdb; ipdb.set_trace()
+        area_burnt_formset = None
+        if self.request.POST.has_key('sss_create'):
+            sss = json.loads( self.request.POST['sss_create'] )
+            if sss.has_key('tenure_area'):
+                area_burnt_formset = update_areas_burnt(None, sss['tenure_area'])
+
+#        import ipdb; ipdb.set_trace()
+#        t=Tenure.objects.all()[0]
+#        initial = [{'tenure': t, 'area':0.0, 'name':'ABC', 'other':'Other'}]
+#
+#        from django.forms.models import inlineformset_factory
+#        AreaBurntFormset = inlineformset_factory(Bushfire, AreaBurnt, extra=len(initial), can_delete=False, exclude=())
+#        fs = AreaBurntFormset(instance=self.object, prefix='area_burnt_fs')
+#        for subform, data in zip(fs.forms, initial):
+#            subform.initial = data
+
+        if not area_burnt_formset:
+            area_burnt_formset      = AreaBurntFormSet(instance=self.object if self.object else None, prefix='area_burnt_fs')
+            #area_burnt_formset      = AreaBurntFormSet(instance=None, prefix='area_burnt_fs')
+
         if self.request.POST.has_key('sss_create'):
             # don't validate the form when initially displaying
             form.is_bound = False
 
         context.update({'form': form,
+                        'area_burnt_formset': area_burnt_formset,
+                        #'area_burnt_formset': fs,
                         'create': True,
                         'initial': True,
             })
@@ -363,25 +448,34 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
         self.object = self.get_object() # needed for update
         form_class = self.get_form_class()
         form = self.get_form(form_class)
+        area_burnt_formset      = AreaBurntFormSet(self.request.POST, prefix='area_burnt_fs')
 
-        if form.is_valid(): # and area_burnt_formset.is_valid():
-            return self.form_valid(request, form)
+        if form.is_valid() and area_burnt_formset.is_valid():
+            return self.form_valid(request, form, area_burnt_formset)
         else:
-            return self.form_invalid(request, form, kwargs)
+            return self.form_invalid(request, form, area_burnt_formset, kwargs)
 
-    def form_invalid(self, request, form, kwargs):
+    def form_invalid(self, request, form, area_burnt_formset, wargs):
         context = self.get_context_data()
         context.update({'form': form})
+        context.update({'area_burnt_formset': area_burnt_formset})
         return self.render_to_response(context)
 
-    def form_valid(self, request, form):
+    def form_valid(self, request, form, area_burnt_formset):
         self.object = form.save(commit=False)
         if not self.object.creator:
             self.object.creator = request.user
         self.object.modifier = request.user
         #calc_coords(self.object)
 
+        archive_spatial_data(self.object)
+
         self.object.save()
+        areas_burnt_updated = update_areas_burnt_fs(self.object, area_burnt_formset)
+
+        if not areas_burnt_updated:
+            messages.error(request, 'There was an error saving Areas Burnt.')
+            return redirect_referrer
 
         redirect_referrer =  HttpResponseRedirect(request.META.get('HTTP_REFERER'))
         return HttpResponseRedirect(self.get_success_url())
@@ -397,7 +491,19 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
         #bushfire = self.object
         form_class = self.get_form_class()
         form = self.get_form(form_class)
+
+	#import ipdb; ipdb.set_trace()
+        area_burnt_formset = None
+        if self.request.POST.has_key('sss_create'):
+            sss = json.loads( self.request.POST['sss_create'] )
+            if sss.has_key('tenure_area'):
+                area_burnt_formset = update_areas_burnt(None, sss['tenure_area'])
+
+        if not area_burnt_formset:
+            area_burnt_formset      = AreaBurntFormSet(instance=self.object, prefix='area_burnt_fs')
+
         context.update({'form': form,
+                        'area_burnt_formset': area_burnt_formset,
                         'is_authorised': bushfire.is_init_authorised,
                         'snapshot': deserialize_bushfire('initial', bushfire) if bushfire.initial_snapshot else None,
                         'initial': True,
