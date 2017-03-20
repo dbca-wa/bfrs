@@ -27,6 +27,7 @@ from bfrs.utils import (breadcrumbs_li,
         export_final_csv, export_excel,
         serialize_bushfire, deserialize_bushfire,
         rdo_email, pvs_email, pica_email, pica_sms, police_email, dfes_email, fssdrs_email,
+        archive_spatial_data,
         #calc_coords,
     )
 from django.db import IntegrityError, transaction
@@ -334,10 +335,11 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
             if sss.has_key('fire_position'):
                 initial['fire_position'] = sss['fire_position']
 
+            #import ipdb; ipdb.set_trace()
             #if sss.has_key('tenure_ignition_point') and sss['tenure_ignition_point'].has_key('category'):
-            if sss.has_key('tenure_iginition_point') and sss['tenure_iginition_point'].has_key('category'):
+            if sss['tenure_iginition_point'] and sss['tenure_iginition_point']['category']:
                 try:
-                    tenure = Tenure.objects.get(name__icontains=sss['tenure_ignition_point']['category'])
+                    tenure = Tenure.objects.get(name__icontains=sss['tenure_iginition_point']['category'])
                 except:
                     tenure = Tenure.objects.get(name__icontains='other')
                 initial['tenure'] = tenure
@@ -454,10 +456,16 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
     def get_success_url(self):
         return reverse("home")
 
+#    def get(self, request, *args, **kwargs):
+#        import ipdb; ipdb.set_trace()
+#        if self.request.POST.has_key('sss_create'):
+#            sss = json.loads(self.request.POST.get('sss_create'))
+
     def post(self, request, *args, **kwargs):
         self.object = self.get_object() # needed for update
         form_class = self.get_form_class()
         form = self.get_form(form_class)
+
         area_burnt_formset      = AreaBurntFormSet(self.request.POST, prefix='area_burnt_fs')
 
         if form.is_valid() and area_burnt_formset.is_valid():
