@@ -334,6 +334,16 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
             if sss.has_key('fire_position'):
                 initial['fire_position'] = sss['fire_position']
 
+            #if sss.has_key('tenure_ignition_point') and sss['tenure_ignition_point'].has_key('category'):
+            if sss.has_key('tenure_iginition_point') and sss['tenure_iginition_point'].has_key('category'):
+                try:
+                    tenure = Tenure.objects.get(name__icontains=sss['tenure_ignition_point']['category'])
+                except:
+                    tenure = Tenure.objects.get(name__icontains='other')
+                initial['tenure'] = tenure
+
+
+
             #import ipdb; ipdb.set_trace()
 #            if sss.has_key('tenure_area'):
 #                self.area_burnt_list = sss['tenure_area']
@@ -420,7 +430,7 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
 #            subform.initial = data
 
         if not area_burnt_formset:
-            area_burnt_formset      = AreaBurntFormSet(instance=self.object if self.object else None, prefix='area_burnt_fs')
+            area_burnt_formset      = AreaBurntFormSet(instance=self.object if hasattr(self, 'object') else None, prefix='area_burnt_fs')
             #area_burnt_formset      = AreaBurntFormSet(instance=None, prefix='area_burnt_fs')
 
         if self.request.POST.has_key('sss_create'):

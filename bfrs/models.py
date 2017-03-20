@@ -384,6 +384,8 @@ class SpatialDataHistory(Audit):
     area_burnt = models.TextField(verbose_name='Area Burnt', null=True, blank=True)
     bushfire = models.ForeignKey(Bushfire, related_name='spatial_data_history')
 
+    def __str__(self):
+        return 'Created {}, Creator {}'.format(self.created, self.creator)
 
 
 class BushfireTest(models.Model):
