@@ -1,4 +1,4 @@
-from bfrs.models import (Bushfire, AreaBurnt, Damage, Injury, Tenure)
+from bfrs.models import (Bushfire, AreaBurnt, Damage, Injury, Tenure, SpatialDataHistory)
 #from bfrs.forms import (BaseAreaBurntFormSet)
 from django.db import IntegrityError, transaction
 from django.http import HttpResponse
@@ -69,43 +69,21 @@ def archive_spatial_data(obj):
             bushfire = qs_bushfire[0]
             if bushfire.fire_boundary != obj.fire_boundary or bushfire.origin_point != obj.origin_point:
                 SpatialDataHistory.objects.create(
-                    creator = self.object.modifier,
-                    modifier = self.object.modifier,
+                    creator = obj.modifier,
+                    modifier = obj.modifier,
                     origin_point = obj.origin_point,
+                    tenure = obj.tenure,
                     fire_boundary = obj.fire_boundary,
-                    area_burnt = serializers.serialize('json', obj.tenure_areas.all()),
-                    bushfire = obj.id
+                    area_burnt = serializers.serialize('json', obj.tenures_burnt.all()),
+                    bushfire_id = obj.id
                 )
 
-def _update_areas_burnt(bushfire, area_burnt_list):
+
+def create_areas_burnt(bushfire, area_burnt_list):
     """
-    Allows to save Tenure/Area data directly from SSS
+    Creates the initial bushfire record together with AreaBurnt FormSet from BushfireCreateView (Operates on data dict from SSS)
+
     """
-    new_fs_object = []
-    for area_burnt in area_burnt_list:
-        if area_burnt['category'] or area_burnt['area']:
-            try:
-                tenure = Tenure.objects.get(name__icontains=area_burnt['category'])
-            except:
-                tenure = Tenure.objects.get(name__icontains='other')
-        else:
-            tenure = Tenure.objects.get(name__icontains='other')
-
-        area = area_burnt['area'] if area_burnt['area'] else 0.0
-
-        new_fs_object.append(AreaBurnt(bushfire=bushfire, tenure=tenure, area=area))
-
-    #import ipdb; ipdb.set_trace()
-    try:
-        with transaction.atomic():
-            AreaBurnt.objects.filter(bushfire=bushfire).delete()
-            AreaBurnt.objects.bulk_create(new_fs_object)
-    except IntegrityError:
-        return 0
-
-    return 1
-
-def update_areas_burnt(bushfire, area_burnt_list):
     #t=Tenure.objects.all()[0]
     #initial = [{'tenure': t, 'area':0.0, 'name':'ABC', 'other':'Other'}]
 
@@ -125,11 +103,11 @@ def update_areas_burnt(bushfire, area_burnt_list):
                 'other': ''
             })
 
-	elif area:
+        elif area:
             area_other += area
 
     if area_other > 0:
-	new_area_burnt_list.append({'tenure': Tenure.objects.get(name__icontains='other'), 'area': round(area_other, 2), 'other': ''})
+        new_area_burnt_list.append({'tenure': Tenure.objects.get(name__icontains='other'), 'area': round(area_other, 2), 'other': ''})
 
 #    import ipdb; ipdb.set_trace()
     #AreaBurntFormSet = inlineformset_factory(Bushfire, AreaBurnt, extra=len(new_area_burnt_list), exclude=())
@@ -141,7 +119,40 @@ def update_areas_burnt(bushfire, area_burnt_list):
 
     return area_burnt_formset
 
+def update_areas_burnt(bushfire, area_burnt_list):
+    """
+    Updates the bushfire record from api.py, via REST API (Operates on data dict from SSS)
+    """
+    # aggregate the area's in like tenure types
+    aggregated_sums = defaultdict(float)
+    for d in area_burnt_list:
+        aggregated_sums[d["category"]] += d["area"]
+
+    area_other = 0.0
+    new_area_burnt_object = []
+    for category, area in aggregated_sums.iteritems():
+        tenure_qs = Tenure.objects.filter(name=category)
+        if tenure_qs:
+            new_area_burnt_object.append(AreaBurnt(bushfire=bushfire, tenure=tenure_qs[0], area=round(area, 2), other=''))
+        elif area:
+            area_other += area
+
+    if area_other > 0:
+        new_area_burnt_object.append(AreaBurnt(bushfire=bushfire, tenure=Tenure.objects.get(name__icontains='other'), area=round(area, 2), other=''))
+
+    #import ipdb; ipdb.set_trace()
+    try:
+        with transaction.atomic():
+            archive_spatial_data(bushfire)
+            AreaBurnt.objects.filter(bushfire=bushfire).delete()
+            AreaBurnt.objects.bulk_create(new_area_burnt_object)
+    except IntegrityError:
+        return 0
+
 def update_areas_burnt_fs(bushfire, area_burnt_formset):
+    """
+    Updates the AreaBurnt FormSet from BushfireInitUpdateView
+    """
     new_fs_object = []
     #import ipdb; ipdb.set_trace()
     for form in area_burnt_formset:
@@ -156,6 +167,7 @@ def update_areas_burnt_fs(bushfire, area_burnt_formset):
 
     try:
         with transaction.atomic():
+            archive_spatial_data(bushfire)
             AreaBurnt.objects.filter(bushfire=bushfire).delete()
             AreaBurnt.objects.bulk_create(new_fs_object)
     except IntegrityError:

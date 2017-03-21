@@ -23,11 +23,10 @@ from bfrs.forms import (ProfileForm, BushfireFilterForm, BushfireForm, BushfireC
         AreaBurntFormSet, InjuryFormSet, DamageFormSet,
     )
 from bfrs.utils import (breadcrumbs_li,
-        update_areas_burnt_fs, update_areas_burnt, update_damage_fs, update_injury_fs,
+        update_areas_burnt_fs, create_areas_burnt, update_damage_fs, update_injury_fs,
         export_final_csv, export_excel,
         serialize_bushfire, deserialize_bushfire,
         rdo_email, pvs_email, pica_email, pica_sms, police_email, dfes_email, fssdrs_email,
-        archive_spatial_data,
         #calc_coords,
     )
 from django.db import IntegrityError, transaction
@@ -60,21 +59,10 @@ class BushfireFilter(django_filters.FilterSet):
     for district in District.objects.distinct('name'):
         DISTRICT_CHOICES.append([district.id, district.name])
 
-    ARCHIVE_CHOICES = [
-        #['', 'All'],
-        [None, 'Unarchived'],
-        [False, 'All'],
-        [True, 'Archived'],
-    ]
-
     region = django_filters.ChoiceFilter(choices=REGION_CHOICES, label='Region')
     district = django_filters.ChoiceFilter(choices=DISTRICT_CHOICES, label='District')
     year = django_filters.ChoiceFilter(choices=YEAR_CHOICES, label='Year')
     report_status = django_filters.ChoiceFilter(choices=Bushfire.REPORT_STATUS_CHOICES, label='Report Status')
-    #archive = django_filters.ChoiceFilter(choices=ARCHIVE_CHOICES, label='Archive Status')
-    #archive = django_filters.BooleanFilter(widget=forms.CheckboxInput, label='Included archived')
-    #archive = django_filters.BooleanFilter(label='Included archived')
-    include_archived = BooleanFilter(name='archive', label='Include archived')
 
     class Meta:
         model = Bushfire
@@ -83,31 +71,18 @@ class BushfireFilter(django_filters.FilterSet):
             'district_id',
             'year',
             'report_status',
-            'include_archived',
         ]
         order_by = (
             ('region_id', 'Region'),
             ('district_id', 'District'),
             ('year', 'Year'),
             ('report_status', 'Report Status'),
-            ('include_archived', 'Include Archived'),
         )
-#        filter_overrides = {
-#            models.BooleanField: {
-#                'filter_class': django_filters.BooleanFilter,
-#                'extra': lambda f: {
-#                    'widget': forms.CheckboxInput,
-#                },
-#            },
-#        }
-
     def __init__(self, *args, **kwargs):
         super(BushfireFilter, self).__init__(*args, **kwargs)
 
         # allows dynamic update of the filter set, on page refresh
         self.filters['year'].extra['choices'] = [[None, '---------']] + [[i['year'], i['year']] for i in Bushfire.objects.all().values('year').distinct().order_by('year')]
-        #self.filters['archive'].extra['choices'] =  [(False, '---------'), ['', 'All'], [True, 'Archived']]
-        #import ipdb; ipdb.set_trace()
 
 
 class ProfileView(LoginRequiredMixin, generic.FormView):
@@ -336,34 +311,13 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
                 initial['fire_position'] = sss['fire_position']
 
             #import ipdb; ipdb.set_trace()
-            #if sss.has_key('tenure_ignition_point') and sss['tenure_ignition_point'].has_key('category'):
-            if sss['tenure_iginition_point'] and sss['tenure_iginition_point']['category']:
+            if sss['tenure_ignition_point'] and sss['tenure_ignition_point']['category']:
                 try:
-                    tenure = Tenure.objects.get(name__icontains=sss['tenure_iginition_point']['category'])
+                    initial['tenure'] = Tenure.objects.get(name__istartswith=sss['tenure_ignition_point']['category'])
                 except:
-                    tenure = Tenure.objects.get(name__icontains='other')
-                initial['tenure'] = tenure
-
-
-
-            #import ipdb; ipdb.set_trace()
-#            if sss.has_key('tenure_area'):
-#                self.area_burnt_list = sss['tenure_area']
-
-#            if sss.has_key('tenure_area') and hasattr(self, 'object'):
-#                self.area_burnt_list = sss['tenure_area']
-#                update_areas_burnt(self.object, self.area_burnt_list)
-
-#            if sss.has_key('fire_boundary') and isinstance(sss['fire_boundary'], list):
-#                if sss.has_key('tenure_area'):
-#                    initial['area'] = sss['sss_id']
-#
-#                initial['fire_position'] = sss['fire_position']
-
-#           1. no origin, no fire boundary --> No Arrival/Final Area, Tenure-Area Other (specify)
-#           2. origin, but no fire boundary --> No Arrival/Final Area, Tenure-Area Other (specify), tenure_iginition_point
-#           3. origin, but no fire boundary --> No Arrival/Final Area, Other (specify), No tenure_iginition_point (Other specify)
-#           4. if area --> Other (specify), Tenure-Area list exists (fields can be null, except tenure area)
+                    initial['tenure'] = Tenure.objects.get(name__istartswith='other')
+            else:
+                initial['tenure'] = Tenure.objects.get(name__istartswith='other')
 
         return initial
 
@@ -419,7 +373,7 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
         if self.request.POST.has_key('sss_create'):
             sss = json.loads( self.request.POST['sss_create'] )
             if sss.has_key('tenure_area'):
-                area_burnt_formset = update_areas_burnt(None, sss['tenure_area'])
+                area_burnt_formset = create_areas_burnt(None, sss['tenure_area'])
 
 #        import ipdb; ipdb.set_trace()
 #        t=Tenure.objects.all()[0]
@@ -486,8 +440,6 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
         self.object.modifier = request.user
         #calc_coords(self.object)
 
-        archive_spatial_data(self.object)
-
         self.object.save()
         areas_burnt_updated = update_areas_burnt_fs(self.object, area_burnt_formset)
 
@@ -510,12 +462,12 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
         form_class = self.get_form_class()
         form = self.get_form(form_class)
 
-	#import ipdb; ipdb.set_trace()
+        #import ipdb; ipdb.set_trace()
         area_burnt_formset = None
         if self.request.POST.has_key('sss_create'):
             sss = json.loads( self.request.POST['sss_create'] )
             if sss.has_key('tenure_area'):
-                area_burnt_formset = update_areas_burnt(None, sss['tenure_area'])
+                area_burnt_formset = create_areas_burnt(None, sss['tenure_area'])
 
         if not area_burnt_formset:
             area_burnt_formset      = AreaBurntFormSet(instance=self.object, prefix='area_burnt_fs')

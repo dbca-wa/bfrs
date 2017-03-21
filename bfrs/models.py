@@ -380,6 +380,7 @@ class Damage(models.Model):
 @python_2_unicode_compatible
 class SpatialDataHistory(Audit):
     origin_point = models.PointField(null=True, blank=True, editable=True, help_text='Optional.')
+    tenure = models.ForeignKey(Tenure, related_name='tenure_history')
     fire_boundary = models.MultiPolygonField(srid=4326, null=True, blank=True, editable=True, help_text='Optional.')
     area_burnt = models.TextField(verbose_name='Area Burnt', null=True, blank=True)
     bushfire = models.ForeignKey(Bushfire, related_name='spatial_data_history')

@@ -4,7 +4,8 @@ from tastypie.authorization import Authorization, ReadOnlyAuthorization, DjangoA
 from tastypie.resources import ModelResource, ALL, ALL_WITH_RELATIONS
 from tastypie.api import Api
 from tastypie import fields
-from bfrs.models import Profile, Region, District, Bushfire
+from bfrs.models import Profile, Region, District, Bushfire, Tenure
+from bfrs.utils import update_areas_burnt
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point, GEOSGeometry, Polygon, MultiPolygon, GEOSException
 from tastypie.http import HttpBadRequest
@@ -113,25 +114,26 @@ class RegionResource(APIResource):
             return self.create_response(request, data={'error': str(e)}, response_class=HttpBadRequest)
         return self.create_response(request, data=([q.to_dict() for q in qs]))
 
+class TenureResource(APIResource):
+    class Meta:
+        queryset = Tenure.objects.all()
+        resource_name = 'tenure'
+        authorization= Authorization()
+        #fields = ['origin_point', 'fire_boundary', 'area', 'fire_position', 'tenure_id']
+
 
 class BushfireResource(APIResource):
     """ http://localhost:8000/api/v1/bushfire/?format=json
         curl --dump-header - -H "Content-Type: application/json" -X PATCH --data '{"origin_point":[11,-12], "area":12347, "fire_boundary": [[[[115.6528663436689,-31.177579372720448],[116.20507608972612,-31.386375097597803],[116.36167288338414,-31.009993330384674],[115.77374807912422,-30.999004081706918],[115.6528663436689,-31.177579372720448]]]]}' http://localhost:8000/api/v1/bushfire/1/?format=json
     """
+
+    tenure = fields.ToOneField(TenureResource, 'tenure')
+
     class Meta:
         queryset = Bushfire.objects.all()
         resource_name = 'bushfire'
         authorization= Authorization()
-        fields = ['origin_point', 'fire_boundary', 'area']
-
-#    def post_detail(self, request, **kwargs):
-#        """ Overriding the POST request to PATCH request instead
-#            POST creates new object, whereas we want to update an existing object
-#            (Must POST because PATCH currently not implemented in SSO - cookie is not sent with PATCH)
-#        """
-#        print kwargs
-#        print request.POST
-#        return self.patch_detail(request, **kwargs)
+        fields = ['origin_point', 'fire_boundary', 'area', 'fire_position']
 
     def hydrate_origin_point(self, bundle):
         """
@@ -148,8 +150,28 @@ class BushfireResource(APIResource):
             bundle.data['fire_boundary'] = MultiPolygon([Polygon(p[0]) for p in bundle.data['fire_boundary']]).__str__()
         return bundle
 
+    def obj_update(self, bundle, **kwargs):
+        #import ipdb; ipdb.set_trace()
+        self.full_hydrate(bundle)
+        if bundle.data['tenure_ignition_point'] and bundle.data['tenure_ignition_point']['category']:
+            try:
+                bundle.obj.tenure = Tenure.objects.get(name__istartswith=bundle.data['tenure_ignition_point']['category'])
+            except:
+                bundle.obj.tenure = Tenure.objects.get(name__istartswith='other')
+        else:
+            bundle.obj.tenure = Tenure.objects.get(name__istartswith='other')
+
+        if bundle.data['tenure_area']:
+            update_areas_burnt(bundle.obj, bundle.data['tenure_area'])
+
+        bundle.obj.save()
+        return bundle
+
+
+
 
 v1_api = Api(api_name='v1')
 v1_api.register(BushfireResource())
 v1_api.register(ProfileResource())
 v1_api.register(RegionResource())
+v1_api.register(TenureResource())
