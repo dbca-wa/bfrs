@@ -321,6 +321,20 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
 
         return initial
 
+    from django.http import JsonResponse
+    def get(self, request, *args, **kwargs):
+        #import ipdb; ipdb.set_trace()
+        fire_number = None
+        if self.request.GET.has_key('fire_number'):
+            district = json.loads(self.request.GET['fire_number'])['district']
+            year = json.loads(self.request.GET['fire_number'])['year'].split('/')[0]
+
+            fire_number = ' '.join(['BF', District.objects.get(id=district).code, year, '010'])
+            data = {'fire_number': fire_number}
+            return self.JsonResponse(data)
+
+        return super(BushfireCreateView, self).get(request, *args, **kwargs)
+
     def post(self, request, *args, **kwargs):
         #import ipdb; ipdb.set_trace()
         if self.request.POST.has_key('sss_create'):
