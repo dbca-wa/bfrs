@@ -89,7 +89,7 @@
     {% for bushfire in object_list %}
       <tr class="row-vm" data-toggle="myCollapse" data-target="#{{bushfire.id}}">
         <td><input type="checkbox" name="chkbox" value={{ bushfire.id }}  /></td>
-        <td>{{ bushfire.unique_id }}</td>
+        <td>{{ bushfire.fire_number }}</td>
         {% comment %}<td>{{ bushfire.get_report_status_display }}</td> {% endcomment %}
         <td>{{ bushfire.name }}</td>
         <td><a href="{% url 'bushfire:bushfire_initial' bushfire.id %}">{{ bushfire.name }}</td>
@@ -143,7 +143,7 @@
             <tbody>
               <tr>
                 <th>Fire Number</th>
-                <td>{{ bushfire.incident_no }}</td>
+                <td>{{ bushfire.fire_number }}</td>
                 <th colspan="1">Year</th>
                 <td>{{ bushfire.year }}</td>
               </tr>

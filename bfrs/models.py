@@ -16,7 +16,8 @@ import json
 
 def current_finyear():
     year = datetime.now().year if datetime.now().month>7 else datetime.now().year-1
-    return '/'.join([str(year), str(year+1)])
+    #return '/'.join([str(year), str(year+1)])
+    return year
 
 
 class Profile(models.Model):
@@ -111,8 +112,9 @@ class Bushfire(Audit):
         show_all=False, auto_choose=True)
 
     name = models.CharField(max_length=100, verbose_name="Fire Name")
-    incident_no = models.PositiveIntegerField(verbose_name="Fire Number", validators=[MinValueValidator(1), MaxValueValidator(999)])
-    year = models.CharField(verbose_name="Financial Year", max_length=9, default=current_finyear())
+    fire_number = models.CharField(max_length=15, verbose_name="Fire Number")
+    #year = models.CharField(verbose_name="Financial Year", max_length=9, default=current_finyear())
+    year = models.PositiveSmallIntegerField(verbose_name="Financial Year", default=current_finyear())
 
     fire_level = models.PositiveSmallIntegerField(choices=FIRE_LEVEL_CHOICES)
     media_alert_req = models.BooleanField(verbose_name="Media Alert Required", default=False)
@@ -189,6 +191,7 @@ class Bushfire(Audit):
     sss_id = models.CharField(verbose_name="Spatial Support System ID", max_length=64, null=True, blank=True)
 
     archive = models.BooleanField(verbose_name="Archive report", default=False)
+
 #    def save(self, *args, **kwargs):
 #        '''Overide save() to cleanse text input fields.
 #        '''
@@ -196,6 +199,23 @@ class Bushfire(Audit):
 #        if self.description:
 #            self.description = unidecode(unicode(self.description))
 #        super(Bushfire, self).save()
+
+    def clean(self):
+        try:
+            ids = map(int, [i.fire_number.split(' ')[-1] for i in Bushfire.objects.filter(district=self.district, year=self.year)])
+            next_id = max(ids) + 1 if ids else 1
+            self.fire_number = ' '.join(['BF', self.district.code, str(self.year), '{0:03d}'.format(next_id)])
+        except:
+            raise ValidationError('Could not create unique fire number')
+
+#    def save(self, *args, **kwargs):
+#        import ipdb; ipdb.set_trace()
+#        ids = map(int, [i.fire_number.split(' ')[-1] for i in Bushfire.objects.filter(district=self.district, year=self.year)])
+#        next_id = max(ids) + 1 if ids else 1
+#        self.fire_number = ' '.join(['BF', self.district.code, str(self.year), '{0:03d}'.format(next_id)])
+#
+#        super(Bushfire, self).save()
+
 
     @property
     def is_init_authorised(self):
@@ -234,14 +254,14 @@ class Bushfire(Audit):
         return self.username
     User.__unicode__ = user_unicode_patch
 
-    def unique_id(self):
-        return ' '.join(['BF', self.district.code, str(self.year), '{0:03d}'.format(self.incident_no)])
+#    def unique_id(self):
+#        return ' '.join(['BF', self.district.code, str(self.year), '{0:03d}'.format(self.incident_no)])
 
     def __str__(self):
-        return ', '.join([self.name, self.district.name, self.year, self.incident_no])
+        return ', '.join([self.fire_number])
 
     class Meta:
-        unique_together = ('district', 'year', 'incident_no')
+        unique_together = ('district', 'year', 'fire_number')
         default_permissions = ('add', 'change', 'delete', 'view')
 
 

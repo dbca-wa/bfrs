@@ -271,7 +271,8 @@ class BushfireCreateBaseForm(forms.ModelForm):
 
     class Meta:
         model = Bushfire
-        fields = ('region', 'district', 'incident_no', 'job_code', 'dfes_incident_no',
+        fields = ('region', 'district', 'job_code', 'dfes_incident_no',
+        #fields = ('region', 'district', 'fire_number', 'job_code', 'dfes_incident_no',
                   'name', 'year', 'fire_level', 'field_officer', 'duty_officer', 'init_authorised_by', 'init_authorised_date',
                   'media_alert_req', 'park_trail_impacted', 'fire_position',
                   'fire_not_found',
@@ -331,15 +332,15 @@ class BushfireCreateForm(BushfireCreateBaseForm):
     def __init__(self, *args, **kwargs):
         super(BushfireCreateForm, self).__init__(*args, **kwargs)
 
-    def clean(self):
-	cleaned_data = super(BushfireCreateForm, self).clean()
-        #import ipdb; ipdb.set_trace()
-        district = self.cleaned_data['district']
-        incident_no = self.cleaned_data['incident_no']
-        year = self.cleaned_data['year']
-        bushfire = Bushfire.objects.filter(district=district, year=year, incident_no=incident_no)
-        if bushfire:
-            raise ValidationError('There is already a Bushfire with this District- Year-Incident No. {}-{}-{}'.format(district, year, incident_no))
+#    def clean(self):
+#	cleaned_data = super(BushfireCreateForm, self).clean()
+#        import ipdb; ipdb.set_trace()
+#        district = self.cleaned_data['district']
+#        fire_number = self.cleaned_data['fire_number']
+#        year = self.cleaned_data['year']
+#        bushfire = Bushfire.objects.filter(fire_number=fire_number)
+#        if bushfire:
+#            raise ValidationError('There is already a Bushfire with this Fire Number {}'.format(fire_number))
 
 
 class BushfireInitUpdateForm(BushfireCreateBaseForm):

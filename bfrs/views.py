@@ -329,6 +329,8 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
             district = json.loads(self.request.GET['fire_number'])['district']
             year = json.loads(self.request.GET['fire_number'])['year'].split('/')[0]
 
+            num = Bushfire.objects.filter(district_id=district, year=year)
+
             fire_number = ' '.join(['BF', District.objects.get(id=district).code, year, '010'])
             data = {'fire_number': fire_number}
             return self.JsonResponse(data)

@@ -219,8 +219,8 @@ def rdo_email(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION:
        return
 
-    subject = 'RDO Email - Initial report submitted - {}'.format(bushfire.unique_id())
-    message = 'RDO Email - {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.unique_id(), url)
+    subject = 'RDO Email - Initial report submitted - {}'.format(bushfire.fire_number)
+    message = 'RDO Email - {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.fire_number, url)
 
     send_mail(subject, message, settings.FROM_EMAIL, settings.RDO_EMAIL)
 
@@ -228,8 +228,8 @@ def pvs_email(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION:
        return
 
-    subject = 'PVS Email - Initial report submitted - {}'.format(bushfire.unique_id())
-    message = 'PVS Email - {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.unique_id(), url)
+    subject = 'PVS Email - Initial report submitted - {}'.format(bushfire.fire_number)
+    message = 'PVS Email - {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.fire_number, url)
 
     send_mail(subject, message, settings.FROM_EMAIL, settings.PVS_EMAIL)
 
@@ -237,8 +237,8 @@ def pica_email(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION:
        return
 
-    subject = 'PICA Email - Initial report submitted - {}'.format(bushfire.unique_id())
-    message = 'PICA Email - {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.unique_id(), url)
+    subject = 'PICA Email - Initial report submitted - {}'.format(bushfire.fire_number)
+    message = 'PICA Email - {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.fire_number, url)
 
     send_mail(subject, message, settings.FROM_EMAIL, settings.PICA_EMAIL)
 
@@ -246,7 +246,7 @@ def pica_sms(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION:
        return
 
-    message = 'PICA SMS - {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.unique_id(), url)
+    message = 'PICA SMS - {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.fire_number, url)
 
     send_mail('', message, settings.EMAIL_TO_SMS_FROMADDRESS, settings.MEDIA_ALERT_SMS_TOADDRESS)
 
@@ -254,8 +254,8 @@ def dfes_email(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION:
        return
 
-    subject = 'DFES Email - Initial report submitted - {}'.format(bushfire.unique_id())
-    message = 'DFES Email - {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.unique_id(), url)
+    subject = 'DFES Email - Initial report submitted - {}'.format(bushfire.fire_number())
+    message = 'DFES Email - {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.fire_number, url)
 
     send_mail(subject, message, settings.FROM_EMAIL, settings.POLICE_EMAIL)
 
@@ -263,8 +263,8 @@ def police_email(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION:
        return
 
-    subject = 'POLICE Email - Initial report submitted and an investigation is required- {}'.format(bushfire.unique_id())
-    message = 'POLICE Email - {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.unique_id(), url)
+    subject = 'POLICE Email - Initial report submitted and an investigation is required- {}'.format(bushfire.fire_number)
+    message = 'POLICE Email - {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.fire_number, url)
 
     send_mail(subject, message, settings.FROM_EMAIL, settings.FSSDRS_EMAIL)
 
@@ -272,9 +272,9 @@ def fssdrs_email(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION:
        return
 
-    subject = 'FSSDRS Email - Final Fire report has been authorised - {}'.format(bushfire.unique_id())
+    subject = 'FSSDRS Email - Final Fire report has been authorised - {}'.format(bushfire.fire_number)
     message = 'FSSDRS Email - {}\n\nFinal Fire report has been authorised. User {}, at {}.\n\nThe report is located at {}'.format(
-        bushfire.unique_id(), bushfire.authorised_by, bushfire.authorised_date, url
+        bushfire.fire_number, bushfire.authorised_by, bushfire.authorised_date, url
     )
 
     send_mail(subject, message, settings.FROM_EMAIL, settings.POLICE_EMAIL)
@@ -346,7 +346,7 @@ def export_final_csv(request, queryset):
 			smart_str( obj.district.name),
 			smart_str( obj.name),
 			smart_str( obj.year),
-			smart_str( obj.incident_no),
+			smart_str( obj.fire_number),
 			smart_str( obj.dfes_incident_no),
 			smart_str( obj.job_code),
 			smart_str( obj.get_fire_level_display()),
@@ -473,7 +473,7 @@ def export_excel(request, queryset):
         row.write(col_no(), smart_str( obj.district.name) )
         row.write(col_no(), smart_str( obj.name) )
         row.write(col_no(), smart_str( obj.year) )
-        row.write(col_no(), obj.incident_no )
+        row.write(col_no(), obj.fire_number )
         row.write(col_no(), obj.dfes_incident_no )
         row.write(col_no(), obj.job_code )
         row.write(col_no(), smart_str( obj.get_fire_level_display() ))

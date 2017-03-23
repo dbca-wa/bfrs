@@ -16,7 +16,7 @@
     {% else %}
       <li>{% trans 'Initial' %}</li>
     {% endif %}
-    <li>{{ object.unique_id}}</li>
+    <li>{{ object.fire_number}}</li>
   {% endif %}
 </ul>
 {% endblock %}
@@ -113,7 +113,11 @@
 
         <tr>
             <th class="cbas">P&W Fire no. *</th>
+            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.fire_number}} {% else %} {{form.fire_number}} {% endif %}</td>
+            {% comment %}
             <td colspan="2" class="cbas"><input id="id_fire_number" type="text" value="Auto generated fire number" disabled readonly></td>
+            {% if not is_authorised %} {{form.fire_number.as_hidden}} {% endif %}
+            {% endcomment %}
 
             <th class="cbas">Date and time fire detected *</th>
             <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.fire_detected_date}} {% else %} {{form.fire_detected_date}} {% endif %}</td>
