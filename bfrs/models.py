@@ -14,17 +14,18 @@ import sys
 import json
 
 SUBMIT_MANDATORY_FIELDS= [
-    'region', 'district', 'year', 'fire_number', 'name', 'fire_detected_date', 'job_code',
+    #'region', 'district', 'year', 'fire_number', 'name', 'fire_detected_date', 'job_code',
+    'region', 'district', 'year', 'fire_number', 'name', 'job_code',
     'dispatch_pw', 'dispatch_aerial', 'fire_level', 'investigation_req', 'park_trail_impacted',
     'fuel_type', 'assistance_req', 'cause_state', 'cause', 'tenure',
 ]
 SUBMIT_MANDATORY_DEP_FIELDS= {
-    'dispatch_pw': 'dispatch_pw_date',
-    'dispatch_pw': 'field_officer',
-    'dispatch_aerial': 'dispatch_aerial_date',
-    'assistance_req': 'assistance_details',
-    'cause': 'other_cause',
-    'tenure': 'other_tenure',
+    # field : [field value, dep_field] - if field==field_value, then dep_field is mandatory
+    'dispatch_pw': [True, 'dispatch_pw_date'],
+    'dispatch_pw': [True, 'field_officer'],
+    'dispatch_aerial': [True, 'dispatch_aerial_date'],
+    'cause': ['Other (specify)', 'other_cause'],
+    'tenure': ['Other (specify)', 'other_tenure'],
 }
 
 AUTH_MANDATORY_FIELDS= []

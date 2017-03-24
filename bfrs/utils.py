@@ -64,12 +64,13 @@ def calc_coords(obj):
 
 
 def check_mandatory_fields(obj, fields, dep_fields):
-#    missing = []
-    import ipdb; ipdb.set_trace()
-#    [missing.append(field) for field in fields if not getattr(obj, field)]
-#    return missing
-    #missing = [field for field in fields if not getattr(obj, field)]
-    missing = [dep_field for field, dep_field in dep_fields.iteritems() if getattr(obj, field) and not getattr(obj, dep_field)]
+    # getattr(obj, 'name') ==> obj.name (when property name is available as a string)
+    missing = [field for field in fields if getattr(obj, field) is None]
+
+    for field, dep_set in dep_fields.iteritems():
+        if getattr(obj, field) and getattr(obj, field)!=dep_set[0] and getattr(obj, dep_set[1]) is None:
+            missing.append(dep_set[1])
+
     return missing
 
 def archive_spatial_data(obj):
