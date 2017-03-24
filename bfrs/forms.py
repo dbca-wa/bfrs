@@ -148,15 +148,15 @@ class BushfireForm(forms.ModelForm):
     """
     days = forms.IntegerField(label='Days', required=False)
     hours = forms.IntegerField(label='Hours', required=False)
-    dispatch_pw = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
-    dispatch_aerial = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
-    fire_level = forms.ChoiceField(choices=Bushfire.FIRE_LEVEL_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
+    dispatch_pw = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
+    dispatch_aerial = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
+    fire_level = forms.ChoiceField(choices=Bushfire.FIRE_LEVEL_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
     investigation_req = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
-    cause_state = forms.ChoiceField(choices=Bushfire.CAUSE_STATE_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
+    cause_state = forms.ChoiceField(choices=Bushfire.CAUSE_STATE_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
     origin_point_str = forms.CharField(required=False, widget=DisplayOnlyField())#, widget=forms.TextInput(attrs={'readonly':'readonly'}))
-    media_alert_req = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
-    park_trail_impacted = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
-    assistance_req = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
+    media_alert_req = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
+    park_trail_impacted = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
+    assistance_req = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
 
     class Meta:
         model = Bushfire
@@ -188,15 +188,17 @@ class BushfireForm(forms.ModelForm):
             else:
                 self.add_error('area', 'Must specify Area, if Fire Not Found.')
 
-        cause = self.cleaned_data['cause']
-        if cause.name.upper().startswith('OTHER'):
-            if not self.cleaned_data['other_cause']:
-                self.add_error('other_cause', 'Must specify, if Fire Cause is Other.')
+        if self.cleaned_data['cause']:
+            cause = self.cleaned_data['cause']
+            if cause.name.upper().startswith('OTHER'):
+                if not self.cleaned_data['other_cause']:
+                    self.add_error('other_cause', 'Must specify, if Fire Cause is Other.')
 
-        tenure = self.cleaned_data['tenure']
-        if tenure.name.upper().startswith('OTHER'):
-            if not self.cleaned_data['other_tenure']:
-                self.add_error('other_tenure', 'Must specify, if Tenure of ignition point is Other.')
+        if self.cleaned_data['cause']:
+            tenure = self.cleaned_data['tenure']
+            if tenure.name.upper().startswith('OTHER'):
+                if not self.cleaned_data['other_tenure']:
+                    self.add_error('other_tenure', 'Must specify, if Tenure of ignition point is Other.')
 
         #import ipdb; ipdb.set_trace()
         # FINAL Form
@@ -259,15 +261,15 @@ class BushfireForm(forms.ModelForm):
 class BushfireCreateBaseForm(forms.ModelForm):
     days = forms.IntegerField(label='Days', required=False)
     hours = forms.IntegerField(label='Hours', required=False)
-    dispatch_pw = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
-    dispatch_aerial = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
-    fire_level = forms.ChoiceField(choices=Bushfire.FIRE_LEVEL_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
-    investigation_req = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
-    cause_state = forms.ChoiceField(choices=Bushfire.CAUSE_STATE_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
+    dispatch_pw = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
+    dispatch_aerial = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
+    fire_level = forms.ChoiceField(choices=Bushfire.FIRE_LEVEL_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
+    investigation_req = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
+    cause_state = forms.ChoiceField(choices=Bushfire.CAUSE_STATE_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
     origin_point_str = forms.CharField(required=False, widget=DisplayOnlyField())#, widget=forms.TextInput(attrs={'readonly':'readonly'}))
-    media_alert_req = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
-    park_trail_impacted = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
-    assistance_req = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer))
+    media_alert_req = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
+    park_trail_impacted = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
+    assistance_req = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
 
     class Meta:
         model = Bushfire
@@ -275,7 +277,7 @@ class BushfireCreateBaseForm(forms.ModelForm):
         #fields = ('region', 'district', 'fire_number', 'job_code', 'dfes_incident_no',
                   'name', 'year', 'fire_level', 'field_officer', 'duty_officer', 'init_authorised_by', 'init_authorised_date',
                   'media_alert_req', 'park_trail_impacted', 'fire_position',
-                  'fire_not_found',
+                  'fire_not_found', 'area_unknown',
                   'fire_detected_date', 'dispatch_pw_date', 'dispatch_aerial_date', 'fuel_type',
                   'assistance_req', 'assistance_details', 'communications', 'other_info',
                   'cause', 'cause_state', 'other_cause', 'tenure', 'other_tenure',
@@ -297,6 +299,17 @@ class BushfireCreateBaseForm(forms.ModelForm):
         cleaned_data = super(BushfireCreateBaseForm, self).clean()
 
         #import ipdb; ipdb.set_trace()
+        # Resetting forms fields declared above to None (from '') if None if not set in form
+        if not self.cleaned_data['dispatch_pw']: self.cleaned_data['dispatch_pw'] = None
+        if not self.cleaned_data['dispatch_aerial']: self.cleaned_data['dispatch_aerial'] = None
+        if not self.cleaned_data['fire_level']: self.cleaned_data['fire_level'] = None
+        if not self.cleaned_data['investigation_req']: self.cleaned_data['investigation_req'] = None
+        if not self.cleaned_data['cause_state']: self.cleaned_data['cause_state'] = None
+        if not self.cleaned_data['media_alert_req']: self.cleaned_data['media_alert_req'] = None
+        if not self.cleaned_data['park_trail_impacted']: self.cleaned_data['park_trail_impacted'] = None
+        if not self.cleaned_data['assistance_req']: self.cleaned_data['assistance_req'] = None
+
+
         if self.cleaned_data['dispatch_pw'] and eval(self.cleaned_data['dispatch_pw']):
             if not self.cleaned_data['dispatch_pw_date']:
                 self.add_error('dispatch_pw_date', 'Must specify Date and Time of dispatch, if resource is dispatched.')
@@ -315,15 +328,17 @@ class BushfireCreateBaseForm(forms.ModelForm):
             else:
                 self.add_error('area', 'Must specify Area, if Fire Not Found.')
 
-        cause = self.cleaned_data['cause']
-        if cause.name.upper().startswith('OTHER'):
-            if not self.cleaned_data['other_cause']:
-                self.add_error('other_cause', 'Must specify, if Fire Cause is Other.')
+        if self.cleaned_data['cause']:
+            cause = self.cleaned_data['cause']
+            if cause.name.upper().startswith('OTHER'):
+                if not self.cleaned_data['other_cause']:
+                    self.add_error('other_cause', 'Must specify, if Fire Cause is Other.')
 
-        tenure = self.cleaned_data['tenure']
-        if tenure.name.upper().startswith('OTHER'):
-            if not self.cleaned_data['other_tenure']:
-                self.add_error('other_tenure', 'Must specify, if Tenure of ignition point is Other.')
+        if self.cleaned_data['tenure']:
+            tenure = self.cleaned_data['tenure']
+            if tenure.name.upper().startswith('OTHER'):
+                if not self.cleaned_data['other_tenure']:
+                    self.add_error('other_tenure', 'Must specify, if Tenure of ignition point is Other.')
 
 
 

@@ -103,18 +103,19 @@
         <tr>
             <th class="cbas">District *</th>
             <td colspan="2" class="cbas">
-                {% if is_authorised %} {{snapshot.region}} {% else %} {{form.region}} {% endif %}<span style="margin:20;"></span>
-                {% if is_authorised %} {{snapshot.district}} {% else %} {{form.district}} {% endif %}
+                {% if object %} {{object.region}} {{form.region.as_hidden}} {% else %} {{form.region}} {% endif %}<span style="margin:20;"></span>
+                {% if object %} {{object.district}} {{form.district.as_hidden}} {% else %} {{form.district}} {% endif %}
             </td>
 
             <th class="cbas">Financial Year *</th>
-            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.year}} {% else %} {{form.year}} {% endif %}</td>
+            <td colspan="2" class="cbas">{% if object %} {{object.year}} {{form.year.as_hidden}} {% else %} {{form.year}} {% endif %}</td>
         </tr>
 
         <tr>
             <th class="cbas">P&W Fire no. *</th>
-            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.fire_number}} {% else %} {{form.fire_number}} {% endif %}</td>
+            <td colspan="2" class="cbas">{% if object %} {{object.fire_number}} {% else %} Auto Generated {% endif %}</td>
             {% comment %}
+            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.fire_number}} {% else %} {{form.fire_number}} {% endif %}</td>
             <td colspan="2" class="cbas"><input id="id_fire_number" type="text" value="Auto generated fire number" disabled readonly></td>
             {% if not is_authorised %} {{form.fire_number.as_hidden}} {% endif %}
             {% endcomment %}
@@ -235,7 +236,8 @@
         {% if initial %}
             <th class="cbas" style="font-weight:normal;">Area of fire at arrival (ha)</th>
             <td clospan="2" class="cbas">{% if is_authorised %} {{snapshot.area}} {% else %} {{form.area}} {% endif %}<br>
-            {% if is_authorised %} {{snapshot.fire_not_found}} {% else %} {{form.fire_not_found}} {% endif %}Fire not found</td>
+            {% if is_authorised %} {{snapshot.fire_not_found}} {% else %} {{form.fire_not_found}} {% endif %}Fire not found
+            {% if is_authorised %} {{snapshot.area_unknown}} {% else %} {{form.area_unknown}} {% endif %}Area unknown</td>
         {% else %}
             <th class="cbas" style="font-weight:normal;">Final fire size (ha) *</th>
             <td clospan="2" class="cbas">{% if is_authorised %} {{snapshot.area}} {% else %} {{form.area}} {% endif %}</td>
@@ -383,25 +385,44 @@
 </table>
 
 {% endif %}
+
+{% if initial %}
+<div class="hidden">
 <table class="table table-bordered table-striped table-condensed cbas">
     <thead>
 		<th class="cbas">Tenure of burnt area *</th>
-{% if not initial %}
 		<th class="cbas">Damage</th>
 		<th class="cbas" >Injuries and Fatalities</th>
-{% endif %}
     </thead>
     <tbody>
         <tr>
 			<td class="cbas" >{% include "bfrs/tenure_veg_fs.html" %}</td>
-{% if not initial %}
 			<td class="cbas" >{% include "bfrs/damage_fs.html" %}</td>
 			<td class="cbas">{% include "bfrs/injuries_fs.html" %}</td>
-{% endif %}
         </tr>
 
   </tbody>
 </table>
+</div>
+{% endif %}
+
+{% if not initial %}
+<table class="table table-bordered table-striped table-condensed cbas">
+    <thead>
+		<th class="cbas">Tenure of burnt area *</th>
+		<th class="cbas">Damage</th>
+		<th class="cbas" >Injuries and Fatalities</th>
+    </thead>
+    <tbody>
+        <tr>
+			<td class="cbas" >{% include "bfrs/tenure_veg_fs.html" %}</td>
+			<td class="cbas" >{% include "bfrs/damage_fs.html" %}</td>
+			<td class="cbas">{% include "bfrs/injuries_fs.html" %}</td>
+        </tr>
+
+  </tbody>
+</table>
+{% endif %}
 
 
 {% if not action %}
@@ -413,6 +434,7 @@
         <input type="submit" value="Save" class="btn btn-primary btn-success" name="_save" title="You do not have 'Update' permissions" disabled />
       {% else %}
         <input type="submit" value="Save" class="btn btn-primary btn-success" name="_save" {% if is_authorised %}title="Initial Report cannot be edited" disabled{% endif %} />
+        {% if not is_authorised %}<input type="submit" value="Save and continue" class="btn btn-primary btn-success" name="_save_continue" />{% endif %}
       {% endif %}
 
     {% comment %}
@@ -423,7 +445,7 @@
       {% endif %}
     {% endcomment %}
 
-        <a href="javascript: history.go(-1)" class="btn btn-danger">Cancel</a>
+        <a id="id_cancel_button" {% if "javascript: history.go(-1)" %}href="javascript: history.go(-1)" {% else %} href="{% url 'main' %}" {% endif %}class="btn btn-danger">Cancel</a>
       </p>
     </div>
   </div>
@@ -433,13 +455,14 @@
 </form>
 
 {% if action %}
+<!-- This section to allow redirect confirmation -->
 <form action="" method="post">{% csrf_token %}
   <div>
     <input type="hidden" name="bushfire_id" value="{{snapshot.id}}" />
     <input type="hidden" name="action" value="{{action}}" />
     <input type="hidden" name="confirm_action" value="yes" />
     <input type="submit" class="btn" value="{% trans "Yes, I'm sure" %}" />
-    <a id="id_cancel_button" href="javascript: history.go(-1)" class="btn btn-danger">Cancel</a>
+    <a href="javascript: history.go(-1)" class="btn btn-danger">Cancel</a>
   </div>
 </form>
 {% endif %}
@@ -773,6 +796,7 @@ $('.open-all').click(function(){
 //  $("#id_year").after('<span id="id_fire_number" style="margin: 20;">BF ' + $("#id_district").val() + ' ' + $("#id_year").val()</span>');
 //});
 
+/*
     $("#id_region,#id_district,#id_year").change(function(){
         var data = {
             region: $("#id_region").val(),
@@ -798,7 +822,7 @@ $('.open-all').click(function(){
 
         });
     });
-
+*/
 </script>
 
 {% endblock %}

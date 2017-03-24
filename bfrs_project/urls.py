@@ -8,6 +8,12 @@ from bfrs.api import v1_api
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect
 from django.contrib.auth import views as auth_views
+from django.http import HttpResponseRedirect
+from django.conf import settings
+
+
+def sss_selection_view(request):
+    return HttpResponseRedirect(settings.SSS_URL)
 
 
 def home_view_selection_view(request):
@@ -48,6 +54,7 @@ urlpatterns = [
     #url(r'profile/$', views.profile),
     url(r'^api/', include(v1_api.urls)),
     url(r'profile/$', views.ProfileView.as_view(), name='profile'),
+    url(r'^sss/$', sss_selection_view, name="sss_home"),
 
     # api
     #url(r'^api/', include(v1_api.urls, namespace='api')),

@@ -62,6 +62,16 @@ def calc_coords(obj):
         obj.mga_easting = float(obj.lat_decimal) * 2.0
         obj.mga_northing = float(obj.lat_decimal) * 2.0
 
+
+def check_mandatory_fields(obj, fields, dep_fields):
+#    missing = []
+    import ipdb; ipdb.set_trace()
+#    [missing.append(field) for field in fields if not getattr(obj, field)]
+#    return missing
+    #missing = [field for field in fields if not getattr(obj, field)]
+    missing = [dep_field for field, dep_field in dep_fields.iteritems() if getattr(obj, field) and not getattr(obj, dep_field)]
+    return missing
+
 def archive_spatial_data(obj):
         """ if origin point of fire boundary has changed, archive existing """
         qs_bushfire = Bushfire.objects.filter(pk=obj.id)

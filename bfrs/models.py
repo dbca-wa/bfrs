@@ -13,6 +13,22 @@ from django.core.exceptions import (ValidationError)
 import sys
 import json
 
+SUBMIT_MANDATORY_FIELDS= [
+    'region', 'district', 'year', 'fire_number', 'name', 'fire_detected_date', 'job_code',
+    'dispatch_pw', 'dispatch_aerial', 'fire_level', 'investigation_req', 'park_trail_impacted',
+    'fuel_type', 'assistance_req', 'cause_state', 'cause', 'tenure',
+]
+SUBMIT_MANDATORY_DEP_FIELDS= {
+    'dispatch_pw': 'dispatch_pw_date',
+    'dispatch_pw': 'field_officer',
+    'dispatch_aerial': 'dispatch_aerial_date',
+    'assistance_req': 'assistance_details',
+    'cause': 'other_cause',
+    'tenure': 'other_tenure',
+}
+
+AUTH_MANDATORY_FIELDS= []
+AUTH_MANDATORY_DEP_FIELDS= []
 
 def current_finyear():
     year = datetime.now().year if datetime.now().month>7 else datetime.now().year-1
@@ -116,14 +132,14 @@ class Bushfire(Audit):
     #year = models.CharField(verbose_name="Financial Year", max_length=9, default=current_finyear())
     year = models.PositiveSmallIntegerField(verbose_name="Financial Year", default=current_finyear())
 
-    fire_level = models.PositiveSmallIntegerField(choices=FIRE_LEVEL_CHOICES)
-    media_alert_req = models.BooleanField(verbose_name="Media Alert Required", default=False)
-    park_trail_impacted = models.BooleanField(verbose_name="Park and/or trail potentially impacted", default=False)
-    fuel_type = models.CharField(verbose_name='Fuel Type', max_length=64)
-    cause = models.ForeignKey('Cause')
-    cause_state = models.PositiveSmallIntegerField(choices=CAUSE_STATE_CHOICES)
+    fire_level = models.PositiveSmallIntegerField(choices=FIRE_LEVEL_CHOICES, null=True, blank=True)
+    media_alert_req = models.NullBooleanField(verbose_name="Media Alert Required", null=True)
+    park_trail_impacted = models.NullBooleanField(verbose_name="Park and/or trail potentially impacted", null=True)
+    fuel_type = models.CharField(verbose_name='Fuel Type', max_length=64, null=True, blank=True)
+    cause = models.ForeignKey('Cause', null=True, blank=True)
+    cause_state = models.PositiveSmallIntegerField(choices=CAUSE_STATE_CHOICES, null=True, blank=True)
     other_cause = models.CharField(verbose_name='Other Cause', max_length=64, null=True, blank=True)
-    tenure = models.ForeignKey('Tenure')
+    tenure = models.ForeignKey('Tenure', null=True, blank=True)
     other_tenure = models.CharField(verbose_name='Other Tenure', max_length=64, null=True, blank=True)
 
     dfes_incident_no = models.PositiveIntegerField(verbose_name="DFES Fire Number", null=True, blank=True)
@@ -140,7 +156,7 @@ class Bushfire(Audit):
     # FireBehaviour FS here
     #tenure = models.ForeignKey('Tenure', null=True, blank=True)
     #fuel = models.CharField(max_length=50, null=True, blank=True)
-    assistance_req = models.BooleanField(default=False)
+    assistance_req = models.NullBooleanField(null=True)
     assistance_details = models.CharField(max_length=64, null=True, blank=True)
     communications = models.CharField(verbose_name='Communication', max_length=50, null=True, blank=True)
     other_info = models.CharField(verbose_name='Other Information', max_length=100, null=True, blank=True)
@@ -150,8 +166,8 @@ class Bushfire(Audit):
     init_authorised_by = models.ForeignKey(User, verbose_name="Authorised By", null=True, blank=True, related_name='init_authorised_by')
     init_authorised_date = models.DateTimeField(verbose_name='Authorised Date', null=True, blank=True)
 
-    dispatch_pw = models.BooleanField(default=False)
-    dispatch_aerial = models.BooleanField(default=False)
+    dispatch_pw = models.NullBooleanField(null=True)
+    dispatch_aerial = models.NullBooleanField(null=True)
     dispatch_pw_date = models.DateTimeField(verbose_name='P&W Resource dispatched', null=True, blank=True)
     dispatch_aerial_date = models.DateTimeField(verbose_name='Aerial support dispatched', null=True, blank=True)
     fire_detected_date = models.DateTimeField(verbose_name='Fire Detected', null=True, blank=True)
@@ -172,11 +188,12 @@ class Bushfire(Audit):
     other_final_control = models.CharField(verbose_name="Other Final Control Agency", max_length=50, null=True, blank=True)
 
     #max_fire_level = models.PositiveSmallIntegerField(choices=FIRE_LEVEL_CHOICES, null=True, blank=True)
-    arson_squad_notified = models.BooleanField(verbose_name="Arson Squad Notified", default=False)
-    investigation_req = models.BooleanField(verbose_name="Investigation Required", default=False)
+    arson_squad_notified = models.NullBooleanField(verbose_name="Arson Squad Notified", null=True)
+    investigation_req = models.NullBooleanField(verbose_name="Investigation Required", null=True)
     offence_no = models.CharField(verbose_name="Police Offence No.", max_length=10, null=True, blank=True)
     #area = models.DecimalField(verbose_name="Final Fire Area (ha)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
     area = models.FloatField(verbose_name="Final Fire Area (ha)", validators=[MinValueValidator(0)], null=True, blank=True)
+    area_unknown = models.BooleanField(default=False)
     time_to_control = models.DurationField(verbose_name="Time to Control", null=True, blank=True)
     # Private Damage FS here
     # Public Damage FS here
@@ -201,12 +218,14 @@ class Bushfire(Audit):
 #        super(Bushfire, self).save()
 
     def clean(self):
-        try:
-            ids = map(int, [i.fire_number.split(' ')[-1] for i in Bushfire.objects.filter(district=self.district, year=self.year)])
-            next_id = max(ids) + 1 if ids else 1
-            self.fire_number = ' '.join(['BF', self.district.code, str(self.year), '{0:03d}'.format(next_id)])
-        except:
-            raise ValidationError('Could not create unique fire number')
+        # create the bushfire fire number
+        if not hasattr(self, 'object'):
+            try:
+                ids = map(int, [i.fire_number.split(' ')[-1] for i in Bushfire.objects.filter(district=self.district, year=self.year)])
+                next_id = max(ids) + 1 if ids else 1
+                self.fire_number = ' '.join(['BF', self.district.code, str(self.year), '{0:03d}'.format(next_id)])
+            except:
+                raise ValidationError('Could not create unique fire number')
 
 #    def save(self, *args, **kwargs):
 #        import ipdb; ipdb.set_trace()
