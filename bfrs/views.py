@@ -176,7 +176,7 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
 
     def post(self, request, *args, **kwargs):
 
-        #import ipdb; ipdb.set_trace()
+        import ipdb; ipdb.set_trace()
         if self.request.POST.has_key('bushfire_id'):
             bushfire = Bushfire.objects.get(id=self.request.POST.get('bushfire_id'))
 

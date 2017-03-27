@@ -30,8 +30,8 @@
     {% endif %}
     <form action="" method="post">{% csrf_token %}
     <div>
-        <a id="id_ok_button" {% if initial %} href="{% url 'bushfire:bushfire_initial' object.id %}" {% elif final %} href="{% url 'bushfire:bushfire_final' object.id %}"{% endif %} class="btn btn-info">Edit bushfire</a>
-        <a id="id_ok_button" href="javascript: history.go(-1)" class="btn btn-info">Return</a>
+        <a id="id_ok_btn" {% if initial %} href="{% url 'bushfire:bushfire_initial' object.id %}" {% elif final %} href="{% url 'bushfire:bushfire_final' object.id %}"{% endif %} class="btn btn-info">Edit bushfire</a>
+        <a id="id_cancel_btn" href="javascript: history.go(-1)" class="btn btn-info">Return</a>
     </div>
     </form>
 {% endblock %}

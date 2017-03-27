@@ -94,6 +94,8 @@
 {% endcomment %}
 <form action="" method="post">{% csrf_token %}
 
+{% if initial %}
+{% endif %}
 <table class="table table-bordered table-striped table-condensed">
     <tbody>
         <tr>
@@ -170,7 +172,6 @@
 			</td>
         </tr>
 
-        {% if initial %}
         <tr>
             <th class="cbas">Probable Fire Level *</th>
             <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.fire_level}} {% else %} {{form.fire_level}} {% endif %}</td>
@@ -178,18 +179,6 @@
             <th class="cbas">Investigation required *</th>
             <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.investigation_req|yesno}} {% else %} {{form.investigation_req}} {% endif %}</td>
         </tr>
-		{% else %}
-        <tr>
-            <th class="cbas">Maximum Fire Level *</th>
-            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.fire_level}} {% else %} {{form.fire_level}} {% endif %}</td>
-
-			<th class="cbas">Arson squad notified<br><br><div class="div_offence_no" style="display: none;">Police offence no</div></th>
-            <td colspan="2" class="cbas">
-                {% if is_authorised %} {{snapshot.arson_squad_notified|yesno}}<br>{{snapshot.offence_no}} {% else %} {{form.arson_squad_notified}} {% endif %}
-				<div class="div_offence_no" style="display: none;">{% if not is_authorised %} {form.offence_no}} {% endif %}</div>
-			</td>
-        </tr>
-		{% endif %}
 
         <tr>
             <th class="cbas">Media Alert Required *</th>
@@ -380,6 +369,23 @@
             </td>
         </tr>
 
+        <tr>
+            <th class="cbas">Maximum Fire Level *</th>
+            <td colspan="1" class="cbas">{% if is_authorised %} {{snapshot.fire_level}} {% else %} {{form.fire_level}} {% endif %}</td>
+
+            <th class="cbas" style="font-weight:normal;">Final fire size (ha) *</th>
+            <td colspan="1" class="cbas">{% if is_authorised %} {{snapshot.area}} {% else %} {{form.area}} {% endif %}</td>
+        </tr>
+
+        <tr>
+			<th class="cbas">Arson squad notified</th>
+            <td colspan="3" class="cbas">
+                {% if is_authorised %} {{snapshot.arson_squad_notified|yesno}}<br>{{snapshot.offence_no}} {% else %} {{form.arson_squad_notified}} {% endif %}
+                <span class="div_offence_no" style="display: none; margin: 20px;">{% if not is_authorised %} Police offence no {{form.offence_no}} {% endif %}</span>
+			</td>
+
+        </tr>
+
   </tbody>
 </table>
 
@@ -444,7 +450,7 @@
       {% endif %}
     {% endcomment %}
 
-    <a id="id_cancel_button" {% if "javascript: history.go(-1)" %}href="javascript: history.go(-1)" {% else %} href="{% url 'main' %}" {% endif %}><button class="btn btn-primary btn-danger">Cancel</button></a>
+    <a id="id_cancel_btn" {% if "javascript: history.go(-1)" %}href="javascript: history.go(-1)" {% else %} href="{% url 'main' %}" {% endif %} class="btn btn-primary btn-danger">Cancel</a>
       </p>
     </div>
   </div>
@@ -749,17 +755,13 @@ $('#id_final_control').on('change', function() {
 });
 
 /* Police Notification */
-if($('#id_arson_squad_notified').is(':checked')) { 
-	$('.div_offence_no').show(); 
-} else {
-	$('.div_offence_no').hide(); 
-}
-$('#id_arson_squad_notified').on('change', function() {
-	if($('#id_arson_squad_notified').is(':checked')) {
-		$('.div_offence_no').show(); 
-	} else {
-		$('.div_offence_no').hide(); 
-	}
+if($('#id_arson_squad_notified_0').is(':checked')) { $('.div_offence_no').show(); }
+if($('#id_arson_squad_notified_1').is(':checked')) { $('.div_offence_no').hide(); }
+$('#id_arson_squad_notified_0').on('change', function() {
+	if($('#id_arson_squad_notified_0').is(':checked')) { $('.div_offence_no').show(); }
+});
+$('#id_arson_squad_notified_1').on('change', function() {
+	if($('#id_arson_squad_notified_1').is(':checked')) { $('.div_offence_no').hide(); }
 });
 
 

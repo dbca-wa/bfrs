@@ -234,7 +234,7 @@ def rdo_email(bushfire, url):
     subject = 'RDO Email - Initial report submitted - {}'.format(bushfire.fire_number)
     message = 'RDO Email - {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.fire_number, url)
 
-    send_mail(subject, message, settings.FROM_EMAIL, settings.RDO_EMAIL)
+    return send_mail(subject, message, settings.FROM_EMAIL, settings.RDO_EMAIL)
 
 def pvs_email(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION:
@@ -243,7 +243,7 @@ def pvs_email(bushfire, url):
     subject = 'PVS Email - Initial report submitted - {}'.format(bushfire.fire_number)
     message = 'PVS Email - {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.fire_number, url)
 
-    send_mail(subject, message, settings.FROM_EMAIL, settings.PVS_EMAIL)
+    return send_mail(subject, message, settings.FROM_EMAIL, settings.PVS_EMAIL)
 
 def pica_email(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION:
@@ -252,7 +252,7 @@ def pica_email(bushfire, url):
     subject = 'PICA Email - Initial report submitted - {}'.format(bushfire.fire_number)
     message = 'PICA Email - {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.fire_number, url)
 
-    send_mail(subject, message, settings.FROM_EMAIL, settings.PICA_EMAIL)
+    return send_mail(subject, message, settings.FROM_EMAIL, settings.PICA_EMAIL)
 
 def pica_sms(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION:
@@ -260,16 +260,17 @@ def pica_sms(bushfire, url):
 
     message = 'PICA SMS - {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.fire_number, url)
 
-    send_mail('', message, settings.EMAIL_TO_SMS_FROMADDRESS, settings.MEDIA_ALERT_SMS_TOADDRESS)
+    return send_mail('', message, settings.EMAIL_TO_SMS_FROMADDRESS, settings.MEDIA_ALERT_SMS_TOADDRESS)
 
 def dfes_email(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION:
        return
 
-    subject = 'DFES Email - Initial report submitted - {}'.format(bushfire.fire_number())
+    #import ipdb; ipdb.set_trace()
+    subject = 'DFES Email - Initial report submitted - {}'.format(bushfire.fire_number)
     message = 'DFES Email - {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.fire_number, url)
 
-    send_mail(subject, message, settings.FROM_EMAIL, settings.POLICE_EMAIL)
+    return send_mail(subject, message, settings.FROM_EMAIL, settings.POLICE_EMAIL)
 
 def police_email(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION:
@@ -278,7 +279,7 @@ def police_email(bushfire, url):
     subject = 'POLICE Email - Initial report submitted and an investigation is required- {}'.format(bushfire.fire_number)
     message = 'POLICE Email - {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.fire_number, url)
 
-    send_mail(subject, message, settings.FROM_EMAIL, settings.FSSDRS_EMAIL)
+    return send_mail(subject, message, settings.FROM_EMAIL, settings.FSSDRS_EMAIL)
 
 def fssdrs_email(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION:
@@ -289,7 +290,7 @@ def fssdrs_email(bushfire, url):
         bushfire.fire_number, bushfire.authorised_by, bushfire.authorised_date, url
     )
 
-    send_mail(subject, message, settings.FROM_EMAIL, settings.POLICE_EMAIL)
+    return send_mail(subject, message, settings.FROM_EMAIL, settings.POLICE_EMAIL)
 
 
 def export_final_csv(request, queryset):
