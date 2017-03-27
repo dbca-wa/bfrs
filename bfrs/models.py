@@ -267,6 +267,12 @@ class Bushfire(Audit):
     def origin_coords(self):
         return 'Lat/Lon {}'.format(self.origin_point.get_coords()) if self.origin_point else None
 
+    @property
+    def time_to_control_str(self):
+        s = str(self.time_to_control.days) + ' Days' if self.time_to_control.days>0 else ''
+        s += str(self.time_to_control.seconds/3600) + ' Hours' if self.time_to_control.seconds>0 else ''
+        return s
+
     def user_unicode_patch(self):
         """ overwrite the User model's __unicode__() method """
         if self.first_name or self.last_name:

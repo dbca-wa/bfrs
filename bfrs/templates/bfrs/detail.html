@@ -159,14 +159,14 @@
         <tr>
 			<th class="cbas">P&W Resource dispatched *<br><br><div class=div_dispatch_pw_date style="display: none;">Date and time of dispatch</div></th>
             <td colspan="2" class="cbas">
-				{% if is_authorised %} {{snapshot.dispatch_pw}} {% else %} {{form.dispatch_pw}} {% endif %}<br>
-				<div class=div_dispatch_pw_date style="display: none;">{% if is_authorised %} {{snapshot.dispatch_pw_date}} {% else %} {{form.dispatch_pw_date}} {% endif %}</div>
+                {% if is_authorised %} {{snapshot.dispatch_pw|yesno}}{% if snapshot.dispatch_pw %}<br>{{snapshot.dispatch_pw_date}} {% endif %} {% else %} {{form.dispatch_pw}} {% endif %}<br>
+				<div class=div_dispatch_pw_date style="display: none;">{% if not is_authorised %} {{form.dispatch_pw_date}} {% endif %}</div>
 			</td>
 
 			<th class="cbas">Aerial support dispatched *<br><br><div class=div_dispatch_aerial_date style="display: none;">Date and time of dispatch</div></th>
-            <td clospan="2" class="cbas">
-				{% if is_authorised %} {{snapshot.dispatch_aerial}} {% else %} {{form.dispatch_aerial}} {% endif %}<br>
-				<div class=div_dispatch_aerial_date style="display: none;">{% if is_authorised %} {{snapshot.dispatch_aerial_date}} {% else %} {{form.dispatch_aerial_date}} {% endif %}</div>
+            <td colspan="2" class="cbas">
+                {% if is_authorised %} {{snapshot.dispatch_aerial|yesno}}{% if snapshot.dispatch_aerial %}<br>{{snapshot.dispatch_aerial_date}}{% endif %}{% else %} {{form.dispatch_aerial}} {% endif %}<br>
+				<div class=div_dispatch_aerial_date style="display: none;">{% if not is_authorised %} {{form.dispatch_aerial_date}} {% endif %}</div>
 			</td>
         </tr>
 
@@ -176,7 +176,7 @@
             <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.fire_level}} {% else %} {{form.fire_level}} {% endif %}</td>
 
             <th class="cbas">Investigation required *</th>
-            <td clospan="2" class="cbas">{% if is_authorised %} {{snapshot.investigation_req}} {% else %} {{form.investigation_req}} {% endif %}</td>
+            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.investigation_req|yesno}} {% else %} {{form.investigation_req}} {% endif %}</td>
         </tr>
 		{% else %}
         <tr>
@@ -184,9 +184,9 @@
             <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.fire_level}} {% else %} {{form.fire_level}} {% endif %}</td>
 
 			<th class="cbas">Arson squad notified<br><br><div class="div_offence_no" style="display: none;">Police offence no</div></th>
-            <td clospan="2" class="cbas">
-				{% if is_authorised %} {{snapshot.arson_squad_notified}} {% else %} {{form.arson_squad_notified}} {% endif %}
-				<div class="div_offence_no" style="display: none;">{% if is_authorised %} {{snapshot.offence_no}} {% else %} {{form.offence_no}} {% endif %}</div>
+            <td colspan="2" class="cbas">
+                {% if is_authorised %} {{snapshot.arson_squad_notified|yesno}}<br>{{snapshot.offence_no}} {% else %} {{form.arson_squad_notified}} {% endif %}
+				<div class="div_offence_no" style="display: none;">{% if not is_authorised %} {form.offence_no}} {% endif %}</div>
 			</td>
         </tr>
 		{% endif %}
@@ -194,23 +194,22 @@
         <tr>
             <th class="cbas">Media Alert Required *</th>
             <td colspan="2" class="cbas">
-              {% if is_authorised %}
-			  {% if snapshot.media_alert_req %}<div class="text-center"><i class="icon-ok text-success"></i></div>{% else %}<div class="text-center"><i class="icon-remove text-danger"></i></div>{% endif %}<span class="div_pica" style="display: none; margin:20;">Call PICA on ....</span>
-              {% else %}
-			  {{form.media_alert_req}} <br><span class="div_pica" style="display: none;">Call PICA on ....</span>
-              {% endif %}
+                {% if is_authorised %}
+                {{snapshot.media_alert_req|yesno}} {% if snapshot.media_alert_req %}<br> <span>send email notification to PICA</span>{% endif %}
+
+                {% else %}
+                {{form.media_alert_req}} <br> <span class="div_pica" style="display: none;">Send email notification to PICA</span>
+                {% endif %}
             </td>
 
             <th class="cbas">Park and/or Trail *<br>potentially impacted</th>
             <td colspan="2" class="cbas">
-              {% if is_authorised %}
-			  {% if snapshot.park_trail_impacted %}<div class="text-center"><i class="icon-ok text-success"></i></div>{% else %}<div class="text-center"><i class="icon-remove text-danger"></i></div>{% endif %}<span class="div_pvs" style="display: none; margin:20;">Email notification to PVS on ....</span>
-              {% else %}
-			  {{form.park_trail_impacted}}<br> <span class="div_pvs" style="display: none;">Send email notification to PVS</span>
-              {% endif %}
+                {% if is_authorised %}
+                  {{snapshot.park_trail_impacted|yesno}} {% if snapshot.park_trail_impacted %}<br> <span>send email notification to PVS</span>{% endif %}
+                {% else %} 
+                  {{form.park_trail_impacted}} <br> <span class="div_pvs" style="display: none;">Send email notification to PVS </span>
+                {% endif %}
             </td>
-
-
         </tr>
 
         <tr>
@@ -220,7 +219,7 @@
             <th class="cbas" style="font-weight:normal;">Point of origin</th>
             <td colspan="2" class="cbas">
 				{% if is_authorised %} 
-					{{snapshot.origin_point}} 
+					{{snapshot.origin_point|is_none}} 
 				{% else %} 
 					{% if object.origin_point %} {{object.origin_coords}} {% else %} {{form.origin_point_str}} {% endif %}
 				{% endif %}
@@ -235,28 +234,28 @@
 
         {% if initial %}
             <th class="cbas" style="font-weight:normal;">Area of fire at arrival (ha)</th>
-            <td clospan="2" class="cbas">{% if is_authorised %} {{snapshot.area}} {% else %} {{form.area}} {% endif %}<br>
-            {% if is_authorised %} {{snapshot.fire_not_found}} {% else %} {{form.fire_not_found}} {% endif %}Fire not found
-            {% if is_authorised %} {{snapshot.area_unknown}} {% else %} {{form.area_unknown}} {% endif %}Area unknown</td>
+            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.area}} {% else %} {{form.area}} {% endif %}<br>
+                {% if is_authorised %} Fire not found - {{snapshot.fire_not_found|yesno}} {% else %} {{form.fire_not_found}} Fire not found{% endif %}<br>
+            {% if is_authorised %} Area unknown - {{snapshot.area_unknown|yesno}} {% else %} {{form.area_unknown}} Area unknown{% endif %}</td>
         {% else %}
             <th class="cbas" style="font-weight:normal;">Final fire size (ha) *</th>
-            <td clospan="2" class="cbas">{% if is_authorised %} {{snapshot.area}} {% else %} {{form.area}} {% endif %}</td>
+            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.area}} {% else %} {{form.area}} {% endif %}</td>
         {% endif %}
         </tr>
 
         <tr>
 		    <th class="cbas">Assistance Required *<br><br><div class=div_assist style="display: none; font-weight:normal;">Details</div></th>
             <td colspan="2" class="cbas">
-		        {% if is_authorised %} {{snapshot.assistance_req}} {% else %} {{form.assistance_req}} {% endif %}<br>
-		        <div class=div_assist style="display: none;">{% if is_authorised %} {{snapshot.assistance_details}} {% else %} {{form.assistance_details}} {% endif %}</div>
+                {% if is_authorised %} {{snapshot.assistance_req|yesno}} {% if snapshot.assistance_req %}<br>{{snapshot.assistance_details}} {% endif %}{% else %} {{form.assistance_req}} {% endif %}<br>
+		        <div class=div_assist style="display: none;">{% if is_authorised %}  {% else %} {{form.assistance_details}} {% endif %}</div>
 		    </td>
             
             <th class="cbas" style="font-weight:normal;">Estimated Time to Control</th>
 			<td colspan="2" class="cbas">
-				{% if object.is_authorised %} {{snapshot.fire_safe_date}}
-					<span>{{snapshot.time_to_control}}</span>
+				{% if is_authorised %}
+                  <span>{{snapshot.time_to_control_str}}</span>
 				{% else %}
-                <span>{{form.days}} Days<br>{{form.hours}} Hours</span>
+                  <span>{{form.days}} Days<br>{{form.hours}} Hours</span>
 				{% endif %}
 			</td>
 
@@ -265,26 +264,26 @@
 
         <tr>
             <th class="cbas" style="font-weight:normal;">Communications</th>
-            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.communications}} {% else %} {{form.communications}} {% endif %}</td>
+            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.communications|is_none}} {% else %} {{form.communications}} {% endif %}</td>
 
             <th class="cbas" style="font-weight:normal;">Other information<br>(include Burn ID if cause is escape)</th>
-            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.other_info}} {% else %} {{form.other_info}} {% endif %}</td>
+            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.other_info|is_none}} {% else %} {{form.other_info}} {% endif %}</td>
         </tr>
 
         <tr>
             <th class="cbas">Fire Cause *<br><br><br><br><div class=div_cause style="visibility: hidden;">Other Cause *</div></th>
 			<td colspan="2" class="cbas">
-				{% if is_authorised %} {{snapshot.cause_state}} {% else %} {{form.cause_state}} {% endif %}<br>
+				{% if is_authorised %} {{snapshot.get_cause_state_display}} {% else %} {{form.cause_state}} {% endif %}<br>
                 {% if is_authorised %} {{snapshot.cause}} {% else %} {{form.cause}} {% endif %}<br><br>
 
                 <div class="div_cause" style="visibility: hidden;">
-                    {% if is_authorised %} {{snapshot.other_cause}} {% else %} {{form.other_cause}} {% endif %}
+                    {% if is_authorised %} {{snapshot.other_cause|is_none}} {% else %} {{form.other_cause}} {% endif %}
 				</div>
 
 			</td>
 
 
-            <th class="cbas">Tenure of ignition point *<br><br><bbrbrr><div class=div_tenure style="visibility: hidden;">Other Tenure *</div></th>
+            <th class="cbas">Tenure of ignition point *<br><br><div class=div_tenure style="visibility: hidden;">Other Tenure *</div></th>
             <td colspan="2" class="cbas">
                 {% if is_authorised %} {{snapshot.tenure}} {% else %} {{form.tenure}} {% endif %}<br><br>
 
@@ -312,10 +311,10 @@
         <tr>
 
             <th id="id_th_field_officer" class="cbas" style="font-weight:normal;">Field Officer</th>
-            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.field_officer}} {% else %} {{form.field_officer}} {% endif %}</td>
+            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.field_officer|is_none}} {% else %} {{form.field_officer}} {% endif %}</td>
 
             <th class="cbas" style="font-weight:normal;">Duty Officer</th>
-            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.duty_officer}} {% else %} {{form.duty_officer}} {% endif %}</td>
+            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.duty_officer|is_none}} {% else %} {{form.duty_officer}} {% endif %}</td>
         </tr>
         {% endif %}
 
@@ -445,7 +444,7 @@
       {% endif %}
     {% endcomment %}
 
-        <a id="id_cancel_button" {% if "javascript: history.go(-1)" %}href="javascript: history.go(-1)" {% else %} href="{% url 'main' %}" {% endif %}class="btn btn-danger">Cancel</a>
+    <a id="id_cancel_button" {% if "javascript: history.go(-1)" %}href="javascript: history.go(-1)" {% else %} href="{% url 'main' %}" {% endif %}><button class="btn btn-primary btn-danger">Cancel</button></a>
       </p>
     </div>
   </div>
@@ -532,8 +531,7 @@
 
 
 // $('[id^=""]').hide() // starts with 
-$('#id_init_authorised_date').datetimepicker({ format: "Y-m-d H:i" }); //ends with
-$('[id$="-date"]').datetimepicker({ format: "Y-m-d H:i" }); //ends with
+$('[id$="_date"]').datetimepicker({ format: "Y-m-d H:i" }); //ends with
 
 $('#id_field_officer').prop('class', 'selectpicker dropup');
 $('#id_duty_officer').prop('class', 'selectpicker dropup');

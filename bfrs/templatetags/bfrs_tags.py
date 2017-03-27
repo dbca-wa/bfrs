@@ -85,4 +85,22 @@ def split_capitalize(string):
     """
     return ' '.join([i.capitalize() for i in string.split('_')])
 
+@register.filter
+def yesno(boolean):
+    """
+    Usage::
+
+        {{ bool|yesno}}
+    """
+    return 'Yes' if boolean else 'No'
+
+@register.filter
+def is_none(string):
+    """
+    Usage::
+
+        {{ string|is_none}}
+    """
+    return '---' if string is None else string
+
 
