@@ -529,7 +529,7 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
 class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
     model = Bushfire
     form_class = BushfireForm
-    template_name = 'bfrs/detail.html'
+    template_name = 'bfrs/final.html'
 
     def get_initial(self):
         if self.object.time_to_control:
@@ -544,11 +544,19 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
         self.object = self.get_object() # needed for update
         form_class = self.get_form_class()
         form = self.get_form(form_class)
-        area_burnt_formset      = AreaBurntFormSet(self.request.POST, prefix='area_burnt_fs')
+        #area_burnt_formset      = AreaBurntFormSet(self.request.POST, prefix='area_burnt_fs')
         injury_formset          = InjuryFormSet(self.request.POST, prefix='injury_fs')
         damage_formset          = DamageFormSet(self.request.POST, prefix='damage_fs')
 
-        if form.is_valid() and area_burnt_formset.is_valid() and injury_formset.is_valid() and damage_formset.is_valid():
+        if not self.request.POST.has_key('sss_create'):
+            # FOR Testing outide SSS
+            # redefine AreaBurnFormSet to require no formsets on final form (since it is readonly in the template)
+            AreaBurntFormSet = inlineformset_factory(Bushfire, AreaBurnt, extra=0, min_num=0, validate_min=False, exclude=())
+        area_burnt_formset      = AreaBurntFormSet(self.request.POST, prefix='area_burnt_fs')
+
+
+        #if form.is_valid() and area_burnt_formset.is_valid() and injury_formset.is_valid() and damage_formset.is_valid():
+        if form.is_valid() and injury_formset.is_valid() and damage_formset.is_valid(): # No need to check area_burnt_formset since the fs is readonly on the final form
             return self.form_valid(request,
                 form,
                 area_burnt_formset,
@@ -590,9 +598,6 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
         #import ipdb; ipdb.set_trace()
         self.object = form.save(commit=False)
         self.object.modifier = request.user #1 #User.objects.all()[0] #request.user
-        days = form.cleaned_data['days'] if form.cleaned_data['days'] else 0
-        hours = form.cleaned_data['hours'] if form.cleaned_data['hours'] else 0
-        self.object.time_to_control = parse_duration('{} {}:00:00'.format(days, hours)) # 3 02:00:00
         self.object.save()
 
         areas_burnt_updated = update_areas_burnt_fs(self.object, area_burnt_formset)
@@ -613,6 +618,8 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
             messages.error(request, 'There was an error saving Damage.')
             return redirect_referrer
 
+        if self.request.POST.has_key('_save_continue'):
+            return redirect_referrer
         return HttpResponseRedirect(self.get_success_url())
 
 
@@ -622,9 +629,21 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
         form_class = self.get_form_class()
         form = self.get_form(form_class)
         #import ipdb; ipdb.set_trace()
-        area_burnt_formset      = AreaBurntFormSet(instance=self.object, prefix='area_burnt_fs')
+        #area_burnt_formset      = AreaBurntFormSet(instance=self.object, prefix='area_burnt_fs')
         injury_formset  = InjuryFormSet(instance=self.object, prefix='injury_fs')
         damage_formset   = DamageFormSet(instance=self.object, prefix='damage_fs')
+
+	#import ipdb; ipdb.set_trace()
+        area_burnt_formset = None
+        if self.request.POST.has_key('sss_create'):
+            sss = json.loads( self.request.POST['sss_create'] )
+            if sss.has_key('tenure_area'):
+                area_burnt_formset = create_areas_burnt(None, sss['tenure_area'])
+
+        if not area_burnt_formset:
+            area_burnt_formset      = AreaBurntFormSet(instance=self.object, prefix='area_burnt_fs')
+
+
         context.update({'form': form,
                         'area_burnt_formset': area_burnt_formset,
                         'injury_formset': injury_formset,

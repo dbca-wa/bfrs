@@ -18,6 +18,24 @@
     </div>
 {% endif %}
 
+{% comment %}
+    <table class="table_fs" border="0" >
+        <tbody>
+            {% if snapshot.areas_burnt.exists %}
+				<th>Tenure</th>
+				<th>Area (ha)</th>
+				{% for area in snapshot.areas_burnt %}
+				<tr>
+					<td>{{ area.tenure }}</td>
+					<td>{{ area.area }}</td>
+				</tr>
+				{% endfor %}
+            {% else %}
+                <p> No Tenures</p>
+            {% endif %}
+        </tbody>
+    </table>
+{% endcomment %}
 
 {% if is_authorised %}
     <table class="table_fs" border="0" >
@@ -25,12 +43,10 @@
             {% if snapshot.areas_burnt.exists %}
 				<th>Tenure</th>
 				<th>Area (ha)</th>
-				<th>Other</th>
 				{% for area in snapshot.areas_burnt %}
 				<tr>
 					<td>{{ area.tenure }}</td>
 					<td>{{ area.area }}</td>
-					<td>{{ area.other }}</td>
 				</tr>
 				{% endfor %}
             {% else %}
@@ -44,13 +60,11 @@
             <tbody>
                 <th>Tenure</th>
                 <th>Area (ha)</th>
-                <th>Other</th>
                 <th></th>
                 {% for fs in area_burnt_formset %}
                 <tr>
                 <td>{{ fs.tenure }}</td>
                 <td>{{ fs.area }}</td>
-                <td>{{ fs.other }}</td>
                 <td>
                         {% if fs.instance.pk %}{{ fs.DELETE }}{% endif %}
                         {{ fs.id }}
@@ -75,7 +89,8 @@
     $('.area-burnt-formset tbody tr').formset({
         prefix: '{{ area_burnt_formset.prefix }}',
         formCssClass: 'area_burnt_fs',
-        addText: '<i class="icon-plus"></i> add another tenure',
+        //addText: '<i class="icon-plus"></i> add another tenure',
+        addText: None,
         deleteText: '<i class="icon-remove"></i>',
         deleteCssClass: 'delete-row' + '-' + '{{ area_burnt_formset.prefix  }}',
     });

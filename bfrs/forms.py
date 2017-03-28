@@ -146,23 +146,18 @@ class BushfireForm(forms.ModelForm):
     """
     Final and Review Form
     """
-    days = forms.IntegerField(label='Days', required=False)
-    hours = forms.IntegerField(label='Hours', required=False)
-    dispatch_pw = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
-    dispatch_aerial = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
     fire_level = forms.ChoiceField(choices=Bushfire.FIRE_LEVEL_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
-    investigation_req = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
-    cause_state = forms.ChoiceField(choices=Bushfire.CAUSE_STATE_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
-    origin_point_str = forms.CharField(required=False, widget=DisplayOnlyField())#, widget=forms.TextInput(attrs={'readonly':'readonly'}))
-    media_alert_req = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
-    park_trail_impacted = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
-    assistance_req = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
     arson_squad_notified = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
 
     class Meta:
         model = Bushfire
-        exclude = ('initial_snapshot', 'init_authorised_by', 'init_authorised_date',
-           )
+        fields = ('fire_contained_date', 'fire_controlled_date', 'fire_safe_date',
+                  'first_attack', 'initial_control', 'final_control',
+                  'other_first_attack', 'other_initial_control', 'other_final_control',
+                  'area', 'fire_level', 'arson_squad_notified', 'offence_no',
+        )
+        #exclude = ('initial_snapshot', 'init_authorised_by', 'init_authorised_date',
+        #   )
 
 #    def save(self, commit=True, *args, **kwargs):
 #        m = super(BushfireForm, self).save(commit=False, *args, **kwargs)
@@ -170,36 +165,6 @@ class BushfireForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super(BushfireForm, self).clean()
-
-        if self.cleaned_data['dispatch_pw'] and eval(self.cleaned_data['dispatch_pw']):
-            if not self.cleaned_data['dispatch_pw_date']:
-                self.add_error('dispatch_pw_date', 'Must specify Date and Time of dispatch, if resource is dispatched.')
-            if not self.cleaned_data['field_officer']:
-                self.add_error('field_officer', 'Must specify Field Officer, if resource is dispatched.')
-
-        if self.cleaned_data['dispatch_aerial'] and eval(self.cleaned_data['dispatch_aerial']):
-            if not self.cleaned_data['dispatch_aerial_date']:
-                self.add_error('dispatch_aerial_date', 'Must specify Date and Time of dispatch, if resource is dispatched.')
-
-        if self.cleaned_data['fire_not_found']:
-            if self.cleaned_data['area']:
-                area = round(float(self.cleaned_data['area']), 2)
-                if area < 0.01:
-                    self.add_error('area', 'Must specify Area, if Fire Not Found.')
-            else:
-                self.add_error('area', 'Must specify Area, if Fire Not Found.')
-
-        if self.cleaned_data['cause']:
-            cause = self.cleaned_data['cause']
-            if cause.name.upper().startswith('OTHER'):
-                if not self.cleaned_data['other_cause']:
-                    self.add_error('other_cause', 'Must specify, if Fire Cause is Other.')
-
-        if self.cleaned_data['cause']:
-            tenure = self.cleaned_data['tenure']
-            if tenure.name.upper().startswith('OTHER'):
-                if not self.cleaned_data['other_tenure']:
-                    self.add_error('other_tenure', 'Must specify, if Tenure of ignition point is Other.')
 
         #import ipdb; ipdb.set_trace()
         # FINAL Form
@@ -225,40 +190,6 @@ class BushfireForm(forms.ModelForm):
                 self.add_error('other_final_control', 'Must specify, if Final control agency is Other.')
 
 
-
-#    def clean(self):
-#        """
-#        Form can be saved prior to sign-off, without checking req'd fields.
-#        Required fields are checked during Authorisation sign-off, therefore checking and adding error fields manually
-#        """
-#        req_fields = [
-#            'cause',
-#            'field_officer',
-#            'fire_level',
-#        ]
-#
-#        req_dep_fields = { # required dependent fields
-#            'first_attack': 'other_first_attack',
-#            'initial_control': 'other_initial_control',
-#            'final_control': 'other_final_control',
-#            'cause': 'other_cause',
-#        }
-#
-#        if self.cleaned_data['authorised_by']:
-#            # check all required fields
-#            #import ipdb; ipdb.set_trace()
-#            [self.add_error(field, 'This field is required.') for field in req_fields if not self.cleaned_data.has_key(field) or not self.cleaned_data[field]]
-#
-#            # check if 'Other' has been selected from drop down and field has been set
-#            for field in req_dep_fields.keys():
-#                if self.cleaned_data.has_key(field) and 'other' in str(self.cleaned_data[field]).lower():
-#                    other_field = self.cleaned_data[req_dep_fields[field]]
-#                    if not other_field:
-#                        #import ipdb; ipdb.set_trace()
-#                        self.add_error(req_dep_fields[field], 'This field is required.')
-#            #import ipdb; ipdb.set_trace()
-
-
 class BushfireCreateBaseForm(forms.ModelForm):
     days = forms.IntegerField(label='Days', required=False)
     hours = forms.IntegerField(label='Hours', required=False)
@@ -278,7 +209,7 @@ class BushfireCreateBaseForm(forms.ModelForm):
         #fields = ('region', 'district', 'fire_number', 'job_code', 'dfes_incident_no',
                   'name', 'year', 'fire_level', 'field_officer', 'duty_officer', 'init_authorised_by', 'init_authorised_date',
                   'media_alert_req', 'park_trail_impacted', 'fire_position',
-                  'fire_not_found', 'area_unknown',
+                  'area_limit',
                   'fire_detected_date', 'dispatch_pw_date', 'dispatch_aerial_date', 'fuel_type',
                   'assistance_req', 'assistance_details', 'communications', 'other_info',
                   'cause', 'cause_state', 'other_cause', 'tenure', 'other_tenure',
@@ -321,13 +252,13 @@ class BushfireCreateBaseForm(forms.ModelForm):
             if not self.cleaned_data['dispatch_aerial_date']:
                 self.add_error('dispatch_aerial_date', 'Must specify Date and Time of dispatch, if resource is dispatched.')
 
-        if self.cleaned_data['fire_not_found']:
-            if self.cleaned_data['area']:
-                area = round(float(self.cleaned_data['area']), 2)
-                if area < 0.01:
-                    self.add_error('area', 'Must specify Area, if Fire Not Found.')
-            else:
-                self.add_error('area', 'Must specify Area, if Fire Not Found.')
+#        if self.cleaned_data['fire_not_found']:
+#            if self.cleaned_data['area']:
+#                area = round(float(self.cleaned_data['area']), 2)
+#                if area < 0.01:
+#                    self.add_error('area', 'Must specify Area, if Fire Not Found.')
+#            else:
+#                self.add_error('area', 'Must specify Area, if Fire Not Found.')
 
         if self.cleaned_data['cause']:
             cause = self.cleaned_data['cause']
@@ -420,9 +351,21 @@ class BushfireInitUpdateForm(BushfireCreateBaseForm):
 #                    if duplicates:
 #			form.add_error('tenure', 'Duplicate: Tenure must be unique')
 
+class AreaBurntForm(forms.ModelForm):
+    class Meta:
+        model = AreaBurnt
+        fields = ('tenure', 'area',)
+
+    def __init__(self, *args, **kwargs):
+        super(AreaBurntForm, self).__init__(*args, **kwargs)
+        if self.instance.id:
+            self.fields['tenure'].widget.attrs['readonly'] = True
+            self.fields['area'].widget.attrs['readonly'] = True
 
 #AreaBurntFormSet            = inlineformset_factory(Bushfire, AreaBurnt, formset=BaseAreaBurntFormSet, extra=0, min_num=1, validate_min=True, exclude=())
-AreaBurntFormSet            = inlineformset_factory(Bushfire, AreaBurnt, extra=0, min_num=1, validate_min=True, exclude=())
+#AreaBurntFormSet            = inlineformset_factory(Bushfire, AreaBurnt, extra=0, min_num=1, validate_min=True, exclude=())
+AreaBurntFormSet            = inlineformset_factory(Bushfire, AreaBurnt, extra=0, min_num=0, exclude=(), form=AreaBurntForm)
+#AreaBurntFormSet            = inlineformset_factory(Bushfire, AreaBurnt, extra=0, min_num=0, exclude=())
 InjuryFormSet               = inlineformset_factory(Bushfire, Injury, extra=1, max_num=7, min_num=0, exclude=())
 DamageFormSet               = inlineformset_factory(Bushfire, Damage, extra=1, max_num=7, min_num=0, exclude=())
 

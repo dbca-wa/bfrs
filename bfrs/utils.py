@@ -111,15 +111,16 @@ def create_areas_burnt(bushfire, area_burnt_list):
         if tenure_qs:
             new_area_burnt_list.append({
                 'tenure': tenure_qs[0],
-                'area': round(area, 2),
-                'other': ''
+                'area': round(area, 2)
+                #'other': ''
             })
 
         elif area:
             area_other += area
 
     if area_other > 0:
-        new_area_burnt_list.append({'tenure': Tenure.objects.get(name__icontains='other'), 'area': round(area_other, 2), 'other': ''})
+        #new_area_burnt_list.append({'tenure': Tenure.objects.get(name__icontains='other'), 'area': round(area_other, 2), 'other': ''})
+        new_area_burnt_list.append({'tenure': Tenure.objects.get(name__icontains='other'), 'area': round(area_other, 2)})
 
 #    import ipdb; ipdb.set_trace()
     #AreaBurntFormSet = inlineformset_factory(Bushfire, AreaBurnt, extra=len(new_area_burnt_list), exclude=())
@@ -171,11 +172,12 @@ def update_areas_burnt_fs(bushfire, area_burnt_formset):
         if form.is_valid():
             tenure = form.cleaned_data.get('tenure')
             area = form.cleaned_data.get('area')
-            other = form.cleaned_data.get('other')
+            #other = form.cleaned_data.get('other')
             remove = form.cleaned_data.get('DELETE')
 
             if not remove and (tenure):
-                new_fs_object.append(AreaBurnt(bushfire=bushfire, tenure=tenure, area=area, other=other))
+                #new_fs_object.append(AreaBurnt(bushfire=bushfire, tenure=tenure, area=area, other=other))
+                new_fs_object.append(AreaBurnt(bushfire=bushfire, tenure=tenure, area=area))
 
     try:
         with transaction.atomic():

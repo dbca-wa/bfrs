@@ -1,0 +1,415 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+{% load static from staticfiles %}
+{% load bfrs_tags %}
+
+{% block breadcrumbs %}
+<ul class="breadcrumb">
+  <li><a href="{% url 'main' %}">{% trans 'Bushfire Overview' %}</a></li>
+  {% if create %}
+    <li>{% trans 'Create' %}</li>
+  {% else %}
+    {% if review  %}
+      <li>{% trans 'Review' %}</li>
+    {% elif final  %}
+      <li>{% trans 'Final' %}</li>
+    {% else %}
+      <li>{% trans 'Initial' %}</li>
+    {% endif %}
+    <li>{{ object.fire_number}}</li>
+  {% endif %}
+</ul>
+{% endblock %}
+
+  {% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" type="text/css" href="{% static 'css/jquery.datetimepicker.css' %}"/ >
+
+  {% endblock %}
+  {% comment %}
+  <link rel="stylesheet" href="{% static "css/bootstrap.css" %}">
+  <link rel="stylesheet" href="http://static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/twitter-bootstrap/3.3.6/css/bootstrap.min.css">
+  http://static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/twitter-bootstrap/3.3.7/css/
+  <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+  <link rel="stylesheet" href="{% static "twitter-bootstrap/3.3.7/css/bootstrap.min.css" %}">
+  {% endcomment %}
+
+
+
+  {% comment %}
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+
+  <link rel="stylesheet" href="{% static "css/jquery-ui-1.11.4.min.css" %}">
+  <script src="{% static 'js/jquery-1.9.1.min.js' %}"></script>
+  <script src="{% static 'js/jquery-ui-1.11.4.min.js' %}"></script>
+  {% endcomment %}
+
+  {% block extra_js %}
+  {{ block.super }}
+  <script src="{% static 'js/jquery.formset.js' %}"></script>
+  {% comment %}
+  <script src="{% static 'js/bootstrap.min.js' %}"></script>
+  <script href="http://static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/twitter-bootstrap/3.3.6/css/bootstrap.min.js"></script>
+  <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+  <script src="{% static 'twitter-bootstrap/3.3.7/js/bootstrap.min.js' %}"></script>
+  {% endcomment %}
+
+  <!-- http://xdsoft.net/jqplugins/datetimepicker/ -->
+  <script src="{% static 'js/jquery.datetimepicker.full.min.js' %}"></script>
+
+  {% endblock %}
+
+
+{% block content %}
+
+{% if form.errors %}
+    <p>Form Errors</p>
+    <div class="alert alert-error">
+        <button type="button" class="close" data-dismiss="alert">×</button>
+        {% for field in form %} 
+            {% if field.errors %}
+            <font color="red"><li>{{ field.label }}: {{ field.errors|striptags }}</li></font>
+            {{ field.meta  }}
+            {% endif %}
+        {% endfor %}
+
+        {% if form.non_field_errors %}
+            {{ form.non_field_errors  }}
+        {% else %}
+            <p>**********</p>
+        {% endif %}
+
+    </div>
+{% endif %}
+
+{% if action == 'submit_initial' %}
+<h1>Submit Initial Report</h1>
+{% elif action == 'authorise_final' %}
+<h1>Authorise Final Report</h1>
+{% else %}
+<h1>Bushfire Detail</h1>
+{% endif %}
+
+<form action="" method="post">{% csrf_token %}
+
+<table class="table table-bordered table-striped table-condensed">
+    <tbody>
+        <tr>
+            <th class="cbas">Date fire contained *</th>
+            <td class="cbas">{% if object.is_final_authorised %} {{snapshot.fire_contained_date}} {% else %} {{form.fire_contained_date}} {% endif %}</td>
+
+            <th class="cbas">Initial attack agency *<br><br><div class=div_other_first_attack style="display: none;">Other initial attack agency *</div></th>
+            <td colspan="1" class="cbas">
+				{% if is_authorised %} {{snapshot.first_attack}} {% else %} {{form.first_attack}} {% endif %}<br>
+                <div class=div_other_first_attack style="display: none;">{% if is_authorised %} {{snapshot.other_first_attack}} {% else %} {{form.other_first_attack}} {% endif %}</div>
+            </td>
+        </tr>
+
+        <tr>
+            <th class="cbas">Date fire controlled *</th>
+            <td class="cbas">{% if object.is_final_authorised %} {{snapshot.fire_controlled_date}} {% else %} {{form.fire_controlled_date}} {% endif %}</td>
+
+            <th class="cbas">Initial controlling agency *<br><br><div class=div_other_initial_control style="display: none;">Other initial controlling agency *</div></th>
+            <td colspan="1" class="cbas">
+                {% if is_authorised %} {{snapshot.initial_control}} {% else %} {{form.initial_control}} {% endif %}<br>
+                <div class=div_other_initial_control style="display: none;">{% if is_authorised %} {{snapshot.other_initial_control}} {% else %} {{form.other_initial_control}} {% endif %}</div>
+            </td>
+        </tr>
+
+        <tr>
+            <th class="cbas">Date fire safe *</th>
+            <td class="cbas">{% if object.is_final_authorised %} {{snapshot.fire_safe_date}} {% else %} {{form.fire_safe_date}} {% endif %}</td>
+
+            <th class="cbas">Final controlling agency *<br><br><div class=div_other_final_control style="display: none;">Other final controlling agency *</div></th>
+            <td colspan="1" class="cbas">
+                {% if is_authorised %} {{snapshot.final_control}} {% else %} {{form.final_control}} {% endif %}<br>
+                <div class=div_other_final_control style="display: none;">{% if is_authorised %} {{snapshot.other_final_control}} {% else %} {{form.other_final_control}} {% endif %}</div>
+            </td>
+        </tr>
+
+        <tr>
+            <th class="cbas">Maximum Fire Level *</th>
+            <td colspan="1" class="cbas">{% if is_authorised %} {{snapshot.fire_level}} {% else %} {{form.fire_level}} {% endif %}</td>
+
+            <th class="cbas" style="font-weight:normal;">Final fire size (ha) *</th>
+            <td colspan="1" class="cbas">{% if is_authorised %} {{snapshot.area}} {% else %} {{form.area}} {% endif %}</td>
+        </tr>
+
+        <tr>
+			<th class="cbas">Arson squad notified</th>
+            <td colspan="3" class="cbas">
+                {% if is_authorised %} {{snapshot.arson_squad_notified|yesno}}<br>{{snapshot.offence_no}} {% else %} {{form.arson_squad_notified}} {% endif %}
+                <span class="div_offence_no" style="display: none; margin: 20px;">{% if not is_authorised %} Police offence no {{form.offence_no}} {% endif %}</span>
+			</td>
+
+        </tr>
+
+  </tbody>
+</table>
+
+<table class="table table-bordered table-striped table-condensed cbas">
+    <thead>
+		<th class="cbas">Tenure of burnt area *</th>
+		<th class="cbas">Damage</th>
+		<th class="cbas" >Injuries and Fatalities</th>
+    </thead>
+    <tbody>
+        <tr>
+		<td class="cbas" >{% include "bfrs/tenure_veg_fs.html" %}</td>
+		<td class="cbas" >{% include "bfrs/damage_fs.html" %}</td>
+		<td class="cbas">{% include "bfrs/injuries_fs.html" %}</td>
+        </tr>
+
+  </tbody>
+</table>
+
+
+{% if not action %}
+<div class="navbar navbar-fixed-bottom">
+  <div class="navbar-inner">
+    <div class="container">
+      <p class="pull-right">
+      {% if request.user|can_readonly and not request.user.is_superuser %}
+        <input type="submit" value="Save" class="btn btn-primary btn-success" name="_save" title="You do not have 'Update' permissions" disabled />
+      {% else %}
+        <input type="submit" value="Save" class="btn btn-primary btn-success" name="_save" {% if is_authorised %}title="Initial Report cannot be edited" disabled{% endif %} />
+        {% if not is_authorised %}<input type="submit" value="Save and continue" class="btn btn-primary btn-success" name="_save_continue" />{% endif %}
+      {% endif %}
+
+    {% comment %}
+      {% if object.is_authorised %} 
+        <input type="submit" value="Authorise" class="btn btn-primary btn-success" name="init_authorise" title="Authorised by {{object.init_authorised_by}} on {{object.init_authorised_date|date_fmt}}" disabled/>
+      {% else %}
+        <input type="submit" value="Authorise" class="btn btn-primary btn-success" name="init_authorise" {% if object.can_authorise %}title="Initial Report cannot be Authorised. Some required fields are missing." disabled{% endif %} />
+      {% endif %}
+    {% endcomment %}
+
+    <a id="id_cancel_btn" {% if "javascript: history.go(-1)" %}href="javascript: history.go(-1)" {% else %} href="{% url 'main' %}" {% endif %} class="btn btn-primary btn-danger">Cancel</a>
+      </p>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+</form>
+
+{% if action %}
+<!-- This section to allow redirect confirmation -->
+<form action="" method="post">{% csrf_token %}
+  <div>
+    <input type="hidden" name="bushfire_id" value="{{snapshot.id}}" />
+    <input type="hidden" name="action" value="{{action}}" />
+    <input type="hidden" name="confirm_action" value="yes" />
+    <input type="submit" class="btn" value="{% trans "Yes, I'm sure" %}" />
+    <a href="javascript: history.go(-1)" class="btn btn-danger">Cancel</a>
+  </div>
+</form>
+{% endif %}
+
+<script>
+
+// $('[id^=""]').hide() // starts with 
+$('[id$="_date"]').datetimepicker({ format: "Y-m-d H:i" }); //ends with
+
+$('#id_field_officer').prop('class', 'selectpicker dropup');
+$('#id_duty_officer').prop('class', 'selectpicker dropup');
+
+$('.selectpicker').selectpicker({
+  style: 'btn-default',
+  size: 6,
+  liveSearch: true,
+  dropupAuto: false,
+});
+
+//$('[id^="id_area_burnt_fs"][id$="area"]').css({width:100}); // startswith and endswith
+//$('[id^="id_damage_fs"][id$="number"]').css({width:60}); // startswith and endswith
+//$('[id^="id_injury_fs"][id$="number"]').css({width:60}); // startswith and endswith
+
+/* dispatch PW */
+if($('#id_dispatch_pw_0').is(':checked')) { 
+	$('.div_dispatch_pw_date').show(); 
+	$('#id_th_field_officer').css("font-weight", "bold");
+	$("#id_th_field_officer").html("Field Officer *");
+}
+if($('#id_dispatch_pw_1').is(':checked')) { 
+	$('.div_dispatch_pw_date').hide(); 
+	$('#id_th_field_officer').css("font-weight", "normal");
+	$("#id_th_field_officer").html("Field Officer");
+}
+$('#id_dispatch_pw_0').on('change', function() {
+	if($('#id_dispatch_pw_0').is(':checked')) { $('.div_dispatch_pw_date').show(); }
+	$('#id_th_field_officer').css("font-weight", "bold");
+	$("#id_th_field_officer").html("Field Officer *");
+});
+$('#id_dispatch_pw_1').on('change', function() {
+	if($('#id_dispatch_pw_1').is(':checked')) { $('.div_dispatch_pw_date').hide(); }
+	$('#id_th_field_officer').css("font-weight", "normal");
+	$("#id_th_field_officer").html("Field Officer");
+});
+
+/* dispatch Aerial */
+if($('#id_dispatch_aerial_0').is(':checked')) { $('.div_dispatch_aerial_date').show(); }
+if($('#id_dispatch_aerial_1').is(':checked')) { $('.div_dispatch_aerial_date').hide(); }
+$('#id_dispatch_aerial_0').on('change', function() {
+	if($('#id_dispatch_aerial_0').is(':checked')) { $('.div_dispatch_aerial_date').show(); }
+});
+$('#id_dispatch_aerial_1').on('change', function() {
+	if($('#id_dispatch_aerial_1').is(':checked')) { $('.div_dispatch_aerial_date').hide(); }
+});
+
+/* PICA Text */
+if($('#id_media_alert_req_0').is(':checked')) { $('.div_pica').show(); }
+if($('#id_media_alert_req_1').is(':checked')) { $('.div_pica').hide(); }
+$('#id_media_alert_req_0').on('change', function() {
+	if($('#id_media_alert_req_0').is(':checked')) { $('.div_pica').show(); }
+});
+$('#id_media_alert_req_1').on('change', function() {
+	if($('#id_media_alert_req_1').is(':checked')) { $('.div_pica').hide(); }
+});
+
+/* Parks and Trails Text */
+if($('#id_park_trail_impacted_0').is(':checked')) { $('.div_pvs').show(); }
+if($('#id_park_trail_impacted_1').is(':checked')) { $('.div_pvs').hide(); }
+$('#id_park_trail_impacted_0').on('change', function() {
+	if($('#id_park_trail_impacted_0').is(':checked')) { $('.div_pvs').show(); }
+});
+$('#id_park_trail_impacted_1').on('change', function() {
+	if($('#id_park_trail_impacted_1').is(':checked')) { $('.div_pvs').hide(); }
+});
+
+/* Assistance Required */
+if($('#id_assistance_req_0').is(':checked')) { 
+	$('.div_assist').show(); 
+}
+if($('#id_assistance_req_1').is(':checked')) { 
+	$('.div_assist').hide(); 
+}
+$('#id_assistance_req_0').on('change', function() {
+	if($('#id_assistance_req_0').is(':checked')) { $('.div_assist').show(); }
+});
+$('#id_assistance_req_1').on('change', function() {
+	if($('#id_assistance_req_1').is(':checked')) { $('.div_assist').hide(); }
+});
+
+/* Fire Cause */
+var cause = $('#id_cause :selected').text();
+//console.log('Cause Type: ' + cause);
+if (cause.indexOf('Other') > -1) {
+	$('.div_cause').css('visibility','visible');
+} else {
+	$('.div_cause').css('visibility','hidden');
+}
+$('#id_cause').on('change', function() {
+	var cause = $('#id_cause :selected').text();
+	//console.log('Cause Type: ' + cause);
+	if (cause.indexOf('Other') > -1) {
+		$('.div_cause').css('visibility','visible');
+	} else {
+		$('.div_cause').css('visibility','hidden');
+	}
+});
+
+/* Tenure */
+var tenure = $('#id_tenure :selected').text();
+if (tenure.indexOf('Other') > -1) {
+	$('.div_tenure').css('visibility','visible');
+} else {
+	$('.div_tenure').css('visibility','hidden');
+}
+$('#id_tenure').on('change', function() {
+	var tenure = $('#id_tenure :selected').text();
+	if (tenure.indexOf('Other') > -1) {
+		$('.div_tenure').css('visibility','visible');
+	} else {
+		$('.div_tenure').css('visibility','hidden');
+	}
+});
+
+/* Initial Attack */
+var selected = $('#id_first_attack :selected').text();
+if ((selected.indexOf('Other') > -1) || (selected.indexOf('OTHER') > -1)) {
+	$('.div_other_first_attack').show();
+} else {
+	$('.div_other_first_attack').hide();
+}
+$('#id_first_attack').on('change', function() {
+	var selected = $('#id_first_attack :selected').text();
+	if ((selected.indexOf('Other') > -1) || (selected.indexOf('OTHER') > -1)) {
+		$('.div_other_first_attack').show();
+	} else {
+		$('.div_other_first_attack').hide();
+	}
+});
+
+/* Initial Control */
+var selected = $('#id_initial_control :selected').text();
+if ((selected.indexOf('Other') > -1) || (selected.indexOf('OTHER') > -1)) {
+	$('.div_other_initial_control').show();
+} else {
+	$('.div_other_initial_control').hide();
+}
+$('#id_initial_control').on('change', function() {
+	var selected = $('#id_initial_control :selected').text();
+	if ((selected.indexOf('Other') > -1) || (selected.indexOf('OTHER') > -1)) {
+		$('.div_other_initial_control').show();
+	} else {
+		$('.div_other_initial_control').hide();
+	}
+});
+
+/* Initial Control */
+var selected = $('#id_final_control :selected').text();
+if ((selected.indexOf('Other') > -1) || (selected.indexOf('OTHER') > -1)) {
+	$('.div_other_final_control').show();
+} else {
+	$('.div_other_final_control').hide();
+}
+$('#id_final_control').on('change', function() {
+	var selected = $('#id_final_control :selected').text();
+	if ((selected.indexOf('Other') > -1) || (selected.indexOf('OTHER') > -1)) {
+		$('.div_other_final_control').show();
+	} else {
+		$('.div_other_final_control').hide();
+	}
+});
+
+/* Police Notification */
+if($('#id_arson_squad_notified_0').is(':checked')) { $('.div_offence_no').show(); }
+if($('#id_arson_squad_notified_1').is(':checked')) { $('.div_offence_no').hide(); }
+$('#id_arson_squad_notified_0').on('change', function() {
+	if($('#id_arson_squad_notified_0').is(':checked')) { $('.div_offence_no').show(); }
+});
+$('#id_arson_squad_notified_1').on('change', function() {
+	if($('#id_arson_squad_notified_1').is(':checked')) { $('.div_offence_no').hide(); }
+});
+
+
+
+
+
+
+
+// default is to collapse all on page load
+$('.collapse').collapse()
+
+//$('.open-close-all').click(function() {
+//    $('.panel-collapse').collapse('toggle');
+//});
+
+$('.close-all').click(function(){
+  $('.panel-collapse.in').collapse('hide');
+  // toggle the buttons also
+  $(".close-all").hide();
+  $(".open-all").show();
+});
+
+$('.open-all').click(function(){
+  $('.panel-collapse:not(".in")').collapse('show');
+  // toggle the buttons also
+  $(".close-all").show();
+  $(".open-all").hide();
+});
+
+</script>
+
+{% endblock %}

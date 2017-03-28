@@ -151,7 +151,7 @@ class Bushfire(Audit):
     origin_point = models.PointField(null=True, blank=True, editable=True, help_text='Optional.')
     fire_boundary = models.MultiPolygonField(srid=4326, null=True, blank=True, editable=True, help_text='Optional.')
     #grid = models.CharField(verbose_name="Lat/Long, MGA, FD Grid", max_length=100, null=True, blank=True)
-    fire_not_found = models.BooleanField(default=False)
+    #fire_not_found = models.BooleanField(default=False)
 
 
     # FireBehaviour FS here
@@ -194,7 +194,8 @@ class Bushfire(Audit):
     offence_no = models.CharField(verbose_name="Police Offence No.", max_length=10, null=True, blank=True)
     #area = models.DecimalField(verbose_name="Final Fire Area (ha)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
     area = models.FloatField(verbose_name="Final Fire Area (ha)", validators=[MinValueValidator(0)], null=True, blank=True)
-    area_unknown = models.BooleanField(default=False)
+    area_limit = models.BooleanField(verbose_name="Area < 2ha", default=False)
+    #area_unknown = models.BooleanField(default=False)
     time_to_control = models.DurationField(verbose_name="Time to Control", null=True, blank=True)
     # Private Damage FS here
     # Public Damage FS here
@@ -206,7 +207,7 @@ class Bushfire(Audit):
     reviewed_date = models.DateTimeField(verbose_name="Reviewed Date", null=True, blank=True)
 
     report_status = models.PositiveSmallIntegerField(choices=REPORT_STATUS_CHOICES, editable=False, default=1)
-    sss_id = models.CharField(verbose_name="Spatial Support System ID", max_length=64, null=True, blank=True)
+    #sss_id = models.CharField(verbose_name="Spatial Support System ID", max_length=64, null=True, blank=True)
 
     archive = models.BooleanField(verbose_name="Archive report", default=False)
 
@@ -368,7 +369,7 @@ class DamageType(models.Model):
 class AreaBurnt(models.Model):
     tenure = models.ForeignKey(Tenure, related_name='tenures')
     area = models.DecimalField(verbose_name="Area (ha)", max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], null=True, blank=True)
-    other = models.CharField(max_length=50, verbose_name="Other tenure", null=True, blank=True)
+    #other = models.CharField(max_length=50, verbose_name="Other tenure", null=True, blank=True)
     bushfire = models.ForeignKey(Bushfire, related_name='tenures_burnt')
 
 #    def clean(self):
@@ -379,7 +380,8 @@ class AreaBurnt(models.Model):
         return json.dumps(self.to_dict)
 
     def to_dict(self):
-        return dict(tenure=self.tenure.name, area=round(self.area,2), other=self.other)
+        #return dict(tenure=self.tenure.name, area=round(self.area,2), other=self.other)
+        return dict(tenure=self.tenure.name, area=round(self.area,2))
 
 #    def description(self):
 #        """ description is a combination of tenure category and tenure name (if name exists) """
@@ -388,7 +390,8 @@ class AreaBurnt(models.Model):
 #        return '{}'.format(self.tenure.name)
 
     def __str__(self):
-		return 'Tenure: {}, Area: {}, Other: {}'.format(self.tenure.name, self.area, self.other)
+		#return 'Tenure: {}, Area: {}, Other: {}'.format(self.tenure.name, self.area, self.other)
+		return 'Tenure: {}, Area: {}'.format(self.tenure.name, self.area)
 
     class Meta:
         unique_together = ('bushfire', 'tenure',)

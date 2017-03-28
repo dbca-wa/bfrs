@@ -95,7 +95,6 @@
 <form action="" method="post">{% csrf_token %}
 
 {% if initial %}
-{% endif %}
 <table class="table table-bordered table-striped table-condensed">
     <tbody>
         <tr>
@@ -223,9 +222,10 @@
 
         {% if initial %}
             <th class="cbas" style="font-weight:normal;">Area of fire at arrival (ha)</th>
-            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.area}} {% else %} {{form.area}} {% endif %}<br>
-                {% if is_authorised %} Fire not found - {{snapshot.fire_not_found|yesno}} {% else %} {{form.fire_not_found}} Fire not found{% endif %}<br>
-            {% if is_authorised %} Area unknown - {{snapshot.area_unknown|yesno}} {% else %} {{form.area_unknown}} Area unknown{% endif %}</td>
+            <td colspan="2" class="cbas">
+                {% if is_authorised %} {{snapshot.area}} {% else %} {{form.area}} {% endif %}<br>
+                {% if is_authorised %} Area < 2ha - {{snapshot.area_limit|yesno}} {% else %} {{form.area_limit}} Area < 2ha{% endif %}
+            </td>
         {% else %}
             <th class="cbas" style="font-weight:normal;">Final fire size (ha) *</th>
             <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.area}} {% else %} {{form.area}} {% endif %}</td>
@@ -327,6 +327,7 @@
 
   </tbody>
 </table>
+{% endif %}
 
 
 {%  comment %}
