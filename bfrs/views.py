@@ -30,7 +30,7 @@ from bfrs.utils import (breadcrumbs_li,
         export_final_csv, export_excel,
         serialize_bushfire, deserialize_bushfire,
         rdo_email, pvs_email, pica_email, pica_sms, police_email, dfes_email, fssdrs_email,
-        check_mandatory_fields,
+        check_mandatory_fields, invalidate_bushfire,
         #calc_coords,
     )
 from django.db import IntegrityError, transaction
@@ -170,13 +170,14 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
                     return TemplateResponse(request, template_mandatory, context=context)
 
                 return TemplateResponse(request, template_preview, context=context)
+
             return TemplateResponse(request, template_confirm, context={'action': action, 'bushfire_id': bushfire.id})
 
         return response
 
     def post(self, request, *args, **kwargs):
 
-        import ipdb; ipdb.set_trace()
+        #import ipdb; ipdb.set_trace()
         if self.request.POST.has_key('bushfire_id'):
             bushfire = Bushfire.objects.get(id=self.request.POST.get('bushfire_id'))
 
@@ -221,7 +222,7 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
             # Authorise the REVIEW DRAFT report
             if action == 'mark_reviewed' and bushfire.report_status==Bushfire.STATUS_REVIEW_DRAFT:
                 bushfire.reviewed_by = self.request.user
-                bushfire.reviewed_date = datetime.now(tz=pytz.utc)
+                bushfire.reviewed_date = datetime.now(tz=pytzyy.utc)
                 bushfire.report_status = Bushfire.STATUS_REVIEWED
 
             # Delete Initial
@@ -457,6 +458,26 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
         form = self.get_form(form_class)
 
         #import ipdb; ipdb.set_trace()
+        # Check if district is has changed and whether the record needs to be invalidated
+        cur_obj = Bushfire.objects.get(id=self.object.id)
+        district = District.objects.get(id=request.POST['district']) if request.POST.has_key('district') else None # get the district from the form
+        if self.request.POST.has_key('action') and self.request.POST.get('action')=='invalidate' and not cur_obj.invalid:
+            self.object = invalidate_bushfire(self.object, district)
+            url_name = 'bushfire_initial' if self.object.report_status <= Bushfire.STATUS_INITIAL_AUTHORISED else 'bushfire_final'
+            return  HttpResponseRedirect(reverse('bushfire:' + url_name, kwargs={'pk': self.object.id}))
+
+        elif district != cur_obj.district:
+            message = 'District has changed (from {} to {}). This action will invalidate the existing bushfire and create  a new bushfire with the new district, and a new fire number.'.format(
+                district.name,
+                cur_obj.district.name
+            )
+            context={
+               'action': 'invalidate',
+               'district': district.id,
+               'message': message,
+            }
+            return TemplateResponse(request, 'bfrs/confirm.html', context=context)
+
         if not self.request.POST.has_key('sss_create'):
             # FOR Testing outide SSS
             # redefine AreaBurnFormSet to require no formsets on initial form (since its hidden in the template)
@@ -476,12 +497,32 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
         return self.render_to_response(context)
 
     def form_valid(self, request, form, area_burnt_formset):
-        #import ipdb; ipdb.set_trace()
+        import ipdb; ipdb.set_trace()
         self.object = form.save(commit=False)
         if not self.object.creator:
             self.object.creator = request.user
         self.object.modifier = request.user
         #calc_coords(self.object)
+
+        # Invalidate
+        #import ipdb; ipdb.set_trace()
+#        cur_obj = Bushfire.objects.get(id=self.object.id)
+#        if self.request.POST.has_key('invalidate') and not cur_obj.invalid:
+#            invalidate_bushfire(self.object, cur_obj)
+#        elif self.object.district != cur_obj.district:
+#            message = 'District has changed (from {} to {}). This action will invalidate the existing bushfire and create  a new bushfire with the new district, and a new fire number.'.format(
+#                self.object.district.name,
+#                cur_obj.district.name
+#            )
+#            context={
+#               'form': form,
+#               'area_burnt_formset': area_burnt_formset,
+#               'is_authorised': self.object.is_init_authorised,
+#               'initial': True,
+#               'action': 'invalidate',
+#               'message': message,
+#            }
+#            return TemplateResponse(request, 'bfrs/confirm.html', context=context)
 
         self.object.save()
         areas_burnt_updated = update_areas_burnt_fs(self.object, area_burnt_formset)

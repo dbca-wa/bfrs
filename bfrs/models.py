@@ -210,6 +210,7 @@ class Bushfire(Audit):
     #sss_id = models.CharField(verbose_name="Spatial Support System ID", max_length=64, null=True, blank=True)
 
     archive = models.BooleanField(verbose_name="Archive report", default=False)
+    invalid = models.BooleanField(verbose_name="Invalidate report", default=False)
 
 #    def save(self, *args, **kwargs):
 #        '''Overide save() to cleanse text input fields.
@@ -219,15 +220,30 @@ class Bushfire(Audit):
 #            self.description = unidecode(unicode(self.description))
 #        super(Bushfire, self).save()
 
+    @property
+    def next_id(self):
+        ids = map(int, [i.fire_number.split(' ')[-1] for i in Bushfire.objects.filter(district=self.district, year=self.year)])
+        return max(ids) + 1 if ids else 1
+
     def clean(self):
+        #import ipdb; ipdb.set_trace()
         # create the bushfire fire number
-        if not hasattr(self, 'object'):
+        if not self.id or self.district != Bushfire.objects.get(id=self.id).district:
             try:
-                ids = map(int, [i.fire_number.split(' ')[-1] for i in Bushfire.objects.filter(district=self.district, year=self.year)])
-                next_id = max(ids) + 1 if ids else 1
-                self.fire_number = ' '.join(['BF', self.district.code, str(self.year), '{0:03d}'.format(next_id)])
+                self.fire_number = ' '.join(['BF', self.district.code, str(self.year), '{0:03d}'.format(self.next_id)])
             except:
                 raise ValidationError('Could not create unique fire number')
+
+#    def save(self, *args, **kwargs):
+#        #import ipdb; ipdb.set_trace()
+#        district_code = self.fire_number.split(' ')[1]
+#        year = self.fire_number.split(' ')[2]
+#        if self.district.code!=district_code or self.year!=year:
+#            try:
+#                self.fire_number = ' '.join(['BF', self.district.code, str(self.year), '{0:03d}'.format(self.next_id)])
+#            except:
+#                raise ValidationError('Could not create unique fire number')
+#        super(Bushfire, self).save()
 
 #    def save(self, *args, **kwargs):
 #        import ipdb; ipdb.set_trace()
@@ -273,6 +289,10 @@ class Bushfire(Audit):
         s = str(self.time_to_control.days) + ' Days' if self.time_to_control.days>0 else ''
         s += str(self.time_to_control.seconds/3600) + ' Hours' if self.time_to_control.seconds>0 else ''
         return s
+
+#    @property
+#    def linked_rpts(self):
+#        return self.linked
 
     def user_unicode_patch(self):
         """ overwrite the User model's __unicode__() method """
@@ -436,6 +456,19 @@ class SpatialDataHistory(Audit):
 
     def __str__(self):
         return 'Created {}, Creator {}'.format(self.created, self.creator)
+
+
+@python_2_unicode_compatible
+class LinkedBushfire(models.Model):
+    linked_id = models.PositiveSmallIntegerField(validators=[MinValueValidator(0)])
+    created = models.DateTimeField(verbose_name='Created date')
+    bushfire = models.ForeignKey(Bushfire, related_name='linked')
+
+    def __str__(self):
+		return 'Created {}, Linked Rpt ID {}'.format(self.created.strftime('%Y-%m-%d %H:%M:%S'), self.linked_id)
+
+#    class Meta:
+#        unique_together = ('bushfire', 'injury_type',)
 
 
 class BushfireTest(models.Model):

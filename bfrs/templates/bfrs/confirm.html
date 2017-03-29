@@ -11,16 +11,22 @@
 {% endblock %}
 
 {% block content_title %}
-    <h1>Please confirm you wish to perform action '{{action|split_capitalize}}' </h1>
+      <h1>Please confirm you wish to perform action '{{action|split_capitalize}}' </h1>
 {% endblock %}
 
 {% block content %}
+
+{% if message %}
+      <p>{{message}}</p>
+{% endif %}
+
 
     <form action="" method="post">{% csrf_token %}
     <div>
     <input type="hidden" name="bushfire_id" value="{{bushfire_id}}" />
     <input type="hidden" name="action" value="{{action}}" />
     <input type="hidden" name="confirm_action" value="yes" />
+    <input type="hidden" name="district" value="{{district}}" />
     <input type="submit" class="btn" value="{% trans "Yes, I'm sure" %}" />
     <a id="id_cancel_btn" href="javascript: history.go(-1)" class="btn btn-danger">Cancel</a>
     </div>

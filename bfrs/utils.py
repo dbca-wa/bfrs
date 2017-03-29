@@ -1,10 +1,11 @@
-from bfrs.models import (Bushfire, AreaBurnt, Damage, Injury, Tenure, SpatialDataHistory)
+from bfrs.models import (Bushfire, AreaBurnt, Damage, Injury, Tenure, SpatialDataHistory, LinkedBushfire)
 #from bfrs.forms import (BaseAreaBurntFormSet)
 from django.db import IntegrityError, transaction
 from django.http import HttpResponse
 from django.core.mail import send_mail
 from django.conf import settings
 import json
+import pytz
 
 import unicodecsv
 from django.utils.encoding import smart_str
@@ -89,6 +90,44 @@ def archive_spatial_data(obj):
                     area_burnt = serializers.serialize('json', obj.tenures_burnt.all()),
                     bushfire_id = obj.id
                 )
+
+def invalidate_bushfire(obj, new_district):
+    """ Invalidate the current bushfire, create new bushfire and update links, including historical links """
+    #cur_obj = Bushfire.objects.get(pk=obj.id)
+    if obj.district == new_district:
+        return None
+
+    with transaction.atomic():
+        obj.invalid = True
+        obj.save()
+        old_obj = obj
+        old_obj_id = obj.pk
+        old_linked = obj.linked.all()
+
+        # create a new object as a copy of existing
+        obj.pk = None
+        obj.invalid = False
+        obj.district = new_district
+        obj.region = new_district.region
+        obj.fire_number = ' '.join(['BF', obj.district.code, str(obj.year), '{0:03d}'.format(obj.next_id)])
+        obj.save()
+
+        # link the new bushfire to the old invalidated bushfire
+        LinkedBushfire.objects.create(bushfire=obj, created=datetime.now(tz=pytz.utc), linked_id=old_obj_id)
+
+        #import ipdb; ipdb.set_trace()
+	# copy all links from the above invalidated bushfire to the new bushfire
+        if old_linked:
+            for linked in old_linked:
+            linked.pk = None
+            linked.save()
+            obj.linked.add(linked)
+
+        # link the old invalidate bushfire to the new (valid) bushfire - fwd link
+        LinkedBushfire.objects.create(bushfire_id=old_obj_id, created=datetime.now(tz=pytz.utc), linked_id=obj.pk)
+
+        return obj
+    return False
 
 
 def create_areas_burnt(bushfire, area_burnt_list):
