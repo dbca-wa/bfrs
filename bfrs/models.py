@@ -220,17 +220,26 @@ class Bushfire(Audit):
 #            self.description = unidecode(unicode(self.description))
 #        super(Bushfire, self).save()
 
-    @property
-    def next_id(self):
-        ids = map(int, [i.fire_number.split(' ')[-1] for i in Bushfire.objects.filter(district=self.district, year=self.year)])
+    def next_id(self, district):
+        #import ipdb; ipdb.set_trace()
+        ids = map(int, [i.fire_number.split(' ')[-1] for i in Bushfire.objects.filter(district=district, year=self.year)])
         return max(ids) + 1 if ids else 1
+
+    @property
+    def linked_display(self):
+        for i in self.linked.all():
+            try:
+                b=Bushfire.objects.get(id=i.linked_id)
+                print '{}\t{}\t{}\tinvalid={}'.format(b.id, b.fire_number, b.district, b.invalid)
+            except:
+                print 'Missing Bushfire: {}'.format(i.linked_id)
 
     def clean(self):
         #import ipdb; ipdb.set_trace()
         # create the bushfire fire number
         if not self.id or self.district != Bushfire.objects.get(id=self.id).district:
             try:
-                self.fire_number = ' '.join(['BF', self.district.code, str(self.year), '{0:03d}'.format(self.next_id)])
+                self.fire_number = ' '.join(['BF', self.district.code, str(self.year), '{0:03d}'.format(self.next_id(self.district))])
             except:
                 raise ValidationError('Could not create unique fire number')
 

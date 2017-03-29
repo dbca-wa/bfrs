@@ -468,8 +468,8 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
 
         elif district != cur_obj.district:
             message = 'District has changed (from {} to {}). This action will invalidate the existing bushfire and create  a new bushfire with the new district, and a new fire number.'.format(
-                district.name,
-                cur_obj.district.name
+                cur_obj.district.name,
+                district.name
             )
             context={
                'action': 'invalidate',

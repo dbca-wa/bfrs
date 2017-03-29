@@ -99,29 +99,44 @@ def invalidate_bushfire(obj, new_district):
 
     with transaction.atomic():
         obj.invalid = True
+#        obj.fire_number = None
         obj.save()
-        old_obj = obj
         old_obj_id = obj.pk
         old_linked = obj.linked.all()
 
         # create a new object as a copy of existing
         obj.pk = None
+
+        #import ipdb; ipdb.set_trace()
+        # check if we have this district already in the list of invalidated linked bushfires
+        linked_bushfire = [Bushfire.objects.get(id=i.linked_id) for i in old_linked if Bushfire.objects.get(id=i.linked_id).district.id==new_district.id]
+        if linked_bushfire and linked_bushfire[0].invalid:
+            # re-use previous fire_number
+            import ipdb; ipdb.set_trace()
+            obj.fire_number = linked_bushfire[0].fire_number
+            LinkedBushfire.objects.filter(linked_id=linked_bushfire[0].id).delete()
+            linked_bushfire[0].delete() # to avoid integrity constraint
+        else:
+            # create new fire_number
+            obj.fire_number = ' '.join(['BF', new_district.code, str(obj.year), '{0:03d}'.format(obj.next_id(new_district))])
+
+        #obj.pk = None
         obj.invalid = False
         obj.district = new_district
         obj.region = new_district.region
-        obj.fire_number = ' '.join(['BF', obj.district.code, str(obj.year), '{0:03d}'.format(obj.next_id)])
+        #obj.fire_number = ' '.join(['BF', obj.district.code, str(obj.year), '{0:03d}'.format(obj.next_id)])
         obj.save()
 
         # link the new bushfire to the old invalidated bushfire
         LinkedBushfire.objects.create(bushfire=obj, created=datetime.now(tz=pytz.utc), linked_id=old_obj_id)
 
         #import ipdb; ipdb.set_trace()
-	# copy all links from the above invalidated bushfire to the new bushfire
+        # copy all links from the above invalidated bushfire to the new bushfire
         if old_linked:
             for linked in old_linked:
-            linked.pk = None
-            linked.save()
-            obj.linked.add(linked)
+                #linked.pk = None # uncomment this for a two-way link
+                #linked.save()
+                obj.linked.add(linked)
 
         # link the old invalidate bushfire to the new (valid) bushfire - fwd link
         LinkedBushfire.objects.create(bushfire_id=old_obj_id, created=datetime.now(tz=pytz.utc), linked_id=obj.pk)
