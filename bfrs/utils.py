@@ -15,6 +15,8 @@ from xlwt import Workbook
 from itertools import count
 from django.forms.models import inlineformset_factory
 from collections import defaultdict
+from copy import deepcopy
+
 
 def breadcrumbs_li(links):
     """Returns HTML: an unordered list of URLs (no surrounding <ul> tags).
@@ -91,7 +93,7 @@ def archive_spatial_data(obj):
                     bushfire_id = obj.id
                 )
 
-def invalidate_bushfire(obj, new_district):
+def invalidate_bushfire(obj, new_district, user):
     """ Invalidate the current bushfire, create new bushfire and update links, including historical links """
     #cur_obj = Bushfire.objects.get(pk=obj.id)
     if obj.district == new_district:
@@ -101,21 +103,26 @@ def invalidate_bushfire(obj, new_district):
         obj.invalid = True
 #        obj.fire_number = None
         obj.save()
-        old_obj_id = obj.pk
-        old_linked = obj.linked.all()
+        old_obj = deepcopy(obj)
+        #old_id = obj.pk
+        #old_fire_number = obj.fire_number
+        old_linked = old_obj.linked.all()
 
         # create a new object as a copy of existing
         obj.pk = None
 
         #import ipdb; ipdb.set_trace()
         # check if we have this district already in the list of invalidated linked bushfires
-        linked_bushfire = [Bushfire.objects.get(id=i.linked_id) for i in old_linked if Bushfire.objects.get(id=i.linked_id).district.id==new_district.id]
-        if linked_bushfire and linked_bushfire[0].invalid:
+        #linked_bushfire = [Bushfire.objects.get(id=i.linked_id) for i in old_linked if Bushfire.objects.get(id=i.linked_id).district.id==new_district.id]
+        linked_objs = [linked_obj for linked_obj in old_linked if linked_obj.linked_bushfire.district==new_district]
+        if linked_objs and linked_objs[0].linked_bushfire.invalid:
             # re-use previous fire_number
-            import ipdb; ipdb.set_trace()
-            obj.fire_number = linked_bushfire[0].fire_number
-            LinkedBushfire.objects.filter(linked_id=linked_bushfire[0].id).delete()
-            linked_bushfire[0].delete() # to avoid integrity constraint
+            #import ipdb; ipdb.set_trace()
+            linked_bushfire = linked_objs[0].linked_bushfire
+            obj.fire_number = linked_bushfire.fire_number
+            #LinkedBushfire.objects.filter(linked_id=linked_bushfire[0].id).delete()
+            LinkedBushfire.objects.filter(linked_bushfire=linked_bushfire).delete()
+            linked_bushfire.delete() # to avoid integrity constraint
         else:
             # create new fire_number
             obj.fire_number = ' '.join(['BF', new_district.code, str(obj.year), '{0:03d}'.format(obj.next_id(new_district))])
@@ -128,7 +135,9 @@ def invalidate_bushfire(obj, new_district):
         obj.save()
 
         # link the new bushfire to the old invalidated bushfire
-        LinkedBushfire.objects.create(bushfire=obj, created=datetime.now(tz=pytz.utc), linked_id=old_obj_id)
+        created = datetime.now(tz=pytz.utc)
+        #LinkedBushfire.objects.create(bushfire=obj, linked_bushfire=creator=user, modifier=user, linked_id=old_id, linked_fire_number=old_fire_number)
+        LinkedBushfire.objects.create(bushfire=obj, linked_bushfire=old_obj, creator=user, modifier=user)
 
         #import ipdb; ipdb.set_trace()
         # copy all links from the above invalidated bushfire to the new bushfire
@@ -139,7 +148,8 @@ def invalidate_bushfire(obj, new_district):
                 obj.linked.add(linked)
 
         # link the old invalidate bushfire to the new (valid) bushfire - fwd link
-        LinkedBushfire.objects.create(bushfire_id=old_obj_id, created=datetime.now(tz=pytz.utc), linked_id=obj.pk)
+        #LinkedBushfire.objects.create(bushfire_id=old_id, creator=user, modifier=user, linked_id=obj.pk, linked_fire_number=obj.fire_number)
+        LinkedBushfire.objects.create(bushfire=old_obj, linked_bushfire=obj, creator=user, modifier=user)
 
         return obj
     return False

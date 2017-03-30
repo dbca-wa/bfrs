@@ -225,14 +225,25 @@ class Bushfire(Audit):
         ids = map(int, [i.fire_number.split(' ')[-1] for i in Bushfire.objects.filter(district=district, year=self.year)])
         return max(ids) + 1 if ids else 1
 
+#    @property
+#    def linked_display(self):
+#        for i in self.linked.all():
+#            try:
+#                b=Bushfire.objects.get(id=i.linked_id)
+#                print '{}\t{}\t{}\tinvalid={}'.format(b.id, b.fire_number, b.district, b.invalid)
+#            except:
+#                print 'Missing Bushfire: {}'.format(i.linked_id)
+#
+#    @property
+#    def linked_fire_numbers(self):
+#        return [Bushfire.objects.get(id=i.linked_id) for i in self.linked.all()]
+
     @property
-    def linked_display(self):
-        for i in self.linked.all():
-            try:
-                b=Bushfire.objects.get(id=i.linked_id)
-                print '{}\t{}\t{}\tinvalid={}'.format(b.id, b.fire_number, b.district, b.invalid)
-            except:
-                print 'Missing Bushfire: {}'.format(i.linked_id)
+    def linked_bushfire(self):
+        objs = LinkedBushfire.objects.filter(linked_bushfire=self)
+        if objs:
+            return objs[0]
+        return LinkedBushfire.objects.none()
 
     def clean(self):
         #import ipdb; ipdb.set_trace()
@@ -243,11 +254,17 @@ class Bushfire(Audit):
             except:
                 raise ValidationError('Could not create unique fire number')
 
+    def full_clean(self, *args, **kwargs):
+        return self.clean()
+
+    def save(self, *args, **kwargs):
+        self.full_clean(*args, **kwargs)
+        super(Bushfire, self).save(*args, **kwargs)
+
 #    def save(self, *args, **kwargs):
 #        #import ipdb; ipdb.set_trace()
-#        district_code = self.fire_number.split(' ')[1]
-#        year = self.fire_number.split(' ')[2]
-#        if self.district.code!=district_code or self.year!=year:
+#        #if self.district.code!=district_code or self.year!=year:
+#		if self.district and self.year and not self.fire_number:
 #            try:
 #                self.fire_number = ' '.join(['BF', self.district.code, str(self.year), '{0:03d}'.format(self.next_id)])
 #            except:
@@ -468,13 +485,14 @@ class SpatialDataHistory(Audit):
 
 
 @python_2_unicode_compatible
-class LinkedBushfire(models.Model):
-    linked_id = models.PositiveSmallIntegerField(validators=[MinValueValidator(0)])
-    created = models.DateTimeField(verbose_name='Created date')
+class LinkedBushfire(Audit):
+    #linked_id = models.PositiveSmallIntegerField(validators=[MinValueValidator(0)])
+    #linked_fire_number = models.CharField(max_length=15, verbose_name="Linked fire Number")
+    linked_bushfire = models.ForeignKey(Bushfire)
     bushfire = models.ForeignKey(Bushfire, related_name='linked')
 
     def __str__(self):
-		return 'Created {}, Linked Rpt ID {}'.format(self.created.strftime('%Y-%m-%d %H:%M:%S'), self.linked_id)
+		return 'Created {}, Linked Rpt ID {}'.format(self.created.strftime('%Y-%m-%d %H:%M:%S'), self.linked_bushfire.id)
 
 #    class Meta:
 #        unique_together = ('bushfire', 'injury_type',)

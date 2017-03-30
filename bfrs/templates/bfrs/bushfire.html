@@ -142,20 +142,10 @@
           <table class="table table-bordered table-striped table-condensed">
             <tbody>
               <tr>
-                <th>Fire Number</th>
-                <td>{{ bushfire.fire_number }}</td>
-                <th colspan="1">Year</th>
-                <td>{{ bushfire.year }}</td>
-              </tr>
-              <tr>
                 <th>Region</th>
                 <td>{{ bushfire.region.name }}</td>
                 <th colspan="1">District</th>
                 <td>{{ bushfire.district.name }}</td>
-              </tr>
-              <tr>
-                <th>Bushfire name</th>
-                <td colspan="3" >{{ bushfire.name }}</td>
               </tr>
               <tr>
                 <th colspan="1">Field Officer</th>
@@ -163,6 +153,34 @@
                 <th colspan="1">Duty Officer</th>
                 <td>{{ bushfire.duty_officer }}</td>
               </tr>
+			  <tr>
+                <th>Linked bushfires</th>
+				<td colspan="3" >
+                  {% if bushfire.linked.all %}
+                  <table class="table table-bordered table-condensed">
+			        <thead>
+                      <th>Fire Number</th>
+                      <th>created</th>
+                      <th>User</th>
+                      <th>Invalid</th>
+                    </thead>
+                    <tbody>
+                    {% for linked_obj in bushfire.linked.all %}
+                      <tr>
+				        <td><a href="{% url 'bushfire:bushfire_initial' linked_obj.linked_bushfire.id %}">{{linked_obj.linked_bushfire.fire_number}}</a></td>
+				        <td>{{linked_obj.modified|date_fmt}}</td>
+				        <td>{{linked_obj.modifier}}</td>
+				        <td>{{linked_obj.linked_bushfire.invalid|yesno}}</td>
+                      </tr>
+                    {% endfor %}
+                    </tbody>
+                  </table>
+                  {% else %}
+				    No linked records
+                  {% endif %}
+				</td>
+              </tr>
+
             </tbody>
           </table>
         </td>

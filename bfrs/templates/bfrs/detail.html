@@ -16,7 +16,7 @@
     {% else %}
       <li>{% trans 'Initial' %}</li>
     {% endif %}
-    <li>{{ object.fire_number}}</li>
+	<li>{% if object.invalid %} <font color="red">{{ object.fire_number}} (Invalid)</font>{% else %}{{ object.fire_number }}{% endif %}</li>
   {% endif %}
 </ul>
 {% endblock %}
@@ -81,7 +81,14 @@
     </div>
 {% endif %}
 
-{% if action == 'submit_initial' %}
+{% if object.invalid %}
+<h1>Bushfire Detail
+    <h2>
+		<font color="red"> Report invalidated on {{object.linked_bushfire.modified|date_fmt}} by {{object.linked_bushfire.modifier}}</font>
+	(Linked valid bushfire <a href="{% url 'bushfire:bushfire_initial' object.linked_bushfire.bushfire.id %}">{{object.linked_bushfire.bushfire.fire_number}}</a>)
+    </h2>
+</h1>
+{% elif action == 'submit_initial' %}
 <h1>Submit Initial Report</h1>
 {% elif action == 'authorise_final' %}
 <h1>Authorise Final Report</h1>
@@ -440,22 +447,16 @@
   <div class="navbar-inner">
     <div class="container">
       <p class="pull-right">
-      {% if request.user|can_readonly and not request.user.is_superuser %}
-        <input type="submit" value="Save" class="btn btn-primary btn-success" name="_save" title="You do not have 'Update' permissions" disabled />
-      {% else %}
-        <input type="submit" value="Save" class="btn btn-primary btn-success" name="_save" {% if is_authorised %}title="Initial Report cannot be edited" disabled{% endif %} />
-        {% if not is_authorised %}<input type="submit" value="Save and continue" class="btn btn-primary btn-success" name="_save_continue" />{% endif %}
+      {% if not object.invalid %}
+        {% if request.user|can_readonly and not request.user.is_superuser %}
+          <input type="submit" value="Save" class="btn btn-primary btn-success" name="_save" title="You do not have 'Update' permissions" disabled />
+        {% else %}
+          <input type="submit" value="Save" class="btn btn-primary btn-success" name="_save" {% if is_authorised %}title="Initial Report cannot be edited" disabled{% endif %} />
+          {% if not is_authorised %}<input type="submit" value="Save and continue" class="btn btn-primary btn-success" name="_save_continue" />{% endif %}
+        {% endif %}
       {% endif %}
 
-    {% comment %}
-      {% if object.is_authorised %} 
-        <input type="submit" value="Authorise" class="btn btn-primary btn-success" name="init_authorise" title="Authorised by {{object.init_authorised_by}} on {{object.init_authorised_date|date_fmt}}" disabled/>
-      {% else %}
-        <input type="submit" value="Authorise" class="btn btn-primary btn-success" name="init_authorise" {% if object.can_authorise %}title="Initial Report cannot be Authorised. Some required fields are missing." disabled{% endif %} />
-      {% endif %}
-    {% endcomment %}
-
-    <a id="id_cancel_btn" {% if "javascript: history.go(-1)" %}href="javascript: history.go(-1)" {% else %} href="{% url 'main' %}" {% endif %} class="btn btn-primary btn-danger">Cancel</a>
+      <a id="id_cancel_btn" {% if "javascript: history.go(-1)" %}href="javascript: history.go(-1)" {% else %} href="{% url 'main' %}" {% endif %} class="btn btn-primary btn-danger">Cancel</a>
       </p>
     </div>
   </div>

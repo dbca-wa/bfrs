@@ -123,6 +123,9 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
     filterset_class = BushfireFilter
     template_name = 'bfrs/bushfire.html'
 
+    def get_queryset(self):
+        return Bushfire.objects.filter(invalid=False).order_by('-created')
+
     def get_success_url(self):
         return reverse('main')
 
@@ -462,7 +465,7 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
         cur_obj = Bushfire.objects.get(id=self.object.id)
         district = District.objects.get(id=request.POST['district']) if request.POST.has_key('district') else None # get the district from the form
         if self.request.POST.has_key('action') and self.request.POST.get('action')=='invalidate' and not cur_obj.invalid:
-            self.object = invalidate_bushfire(self.object, district)
+            self.object = invalidate_bushfire(self.object, district, request.user)
             url_name = 'bushfire_initial' if self.object.report_status <= Bushfire.STATUS_INITIAL_AUTHORISED else 'bushfire_final'
             return  HttpResponseRedirect(reverse('bushfire:' + url_name, kwargs={'pk': self.object.id}))
 
