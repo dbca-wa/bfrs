@@ -100,7 +100,9 @@ def invalidate_bushfire(obj, new_district, user):
         return None
 
     with transaction.atomic():
-        obj.invalid = True
+        #obj.invalid = True
+	old_rpt_status = obj.report_status
+        obj.report_status = Bushfire.STATUS_INVALIDATED
 #        obj.fire_number = None
         obj.save()
         old_obj = deepcopy(obj)
@@ -115,7 +117,8 @@ def invalidate_bushfire(obj, new_district, user):
         # check if we have this district already in the list of invalidated linked bushfires
         #linked_bushfire = [Bushfire.objects.get(id=i.linked_id) for i in old_linked if Bushfire.objects.get(id=i.linked_id).district.id==new_district.id]
         linked_objs = [linked_obj for linked_obj in old_linked if linked_obj.linked_bushfire.district==new_district]
-        if linked_objs and linked_objs[0].linked_bushfire.invalid:
+        #if linked_objs and linked_objs[0].linked_bushfire.invalid:
+        if linked_objs and linked_objs[0].linked_bushfire.report_status==Bushfire.STATUS_INVALIDATED:
             # re-use previous fire_number
             #import ipdb; ipdb.set_trace()
             linked_bushfire = linked_objs[0].linked_bushfire
@@ -128,7 +131,8 @@ def invalidate_bushfire(obj, new_district, user):
             obj.fire_number = ' '.join(['BF', new_district.code, str(obj.year), '{0:03d}'.format(obj.next_id(new_district))])
 
         #obj.pk = None
-        obj.invalid = False
+        #obj.invalid = False
+        obj.report_status = old_rpt_status
         obj.district = new_district
         obj.region = new_district.region
         #obj.fire_number = ' '.join(['BF', obj.district.code, str(obj.year), '{0:03d}'.format(obj.next_id)])

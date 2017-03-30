@@ -124,7 +124,11 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
     template_name = 'bfrs/bushfire.html'
 
     def get_queryset(self):
-        return Bushfire.objects.filter(invalid=False).order_by('-created')
+        #import ipdb; ipdb.set_trace()
+        if self.request.GET.has_key('report_status') and int(self.request.GET.get('report_status'))==Bushfire.STATUS_INVALIDATED:
+            # show only invalidated (This is taken care of from FilterView)
+            return super(BushfireView, self).get_queryset()
+        return Bushfire.objects.exclude(report_status=Bushfire.STATUS_INVALIDATED)
 
     def get_success_url(self):
         return reverse('main')
@@ -151,6 +155,7 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
                 qs = self.get_filterset(self.filterset_class).qs
                 return export_excel(self.request, qs)
 
+        #import ipdb; ipdb.set_trace()
         if self.request.GET.has_key('confirm_action'):
             bushfire = Bushfire.objects.get(id=self.request.GET.get('bushfire_id'))
             action = self.request.GET.get('confirm_action')
@@ -464,7 +469,8 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
         # Check if district is has changed and whether the record needs to be invalidated
         cur_obj = Bushfire.objects.get(id=self.object.id)
         district = District.objects.get(id=request.POST['district']) if request.POST.has_key('district') else None # get the district from the form
-        if self.request.POST.has_key('action') and self.request.POST.get('action')=='invalidate' and not cur_obj.invalid:
+        #if self.request.POST.has_key('action') and self.request.POST.get('action')=='invalidate' and not cur_obj.invalid:
+        if self.request.POST.has_key('action') and self.request.POST.get('action')=='invalidate' and cur_obj.report_status!=Bushfire.STATUS_INVALIDATED:
             self.object = invalidate_bushfire(self.object, district, request.user)
             url_name = 'bushfire_initial' if self.object.report_status <= Bushfire.STATUS_INITIAL_AUTHORISED else 'bushfire_final'
             return  HttpResponseRedirect(reverse('bushfire:' + url_name, kwargs={'pk': self.object.id}))

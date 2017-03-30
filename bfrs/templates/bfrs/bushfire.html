@@ -170,7 +170,7 @@
 				        <td><a href="{% url 'bushfire:bushfire_initial' linked_obj.linked_bushfire.id %}">{{linked_obj.linked_bushfire.fire_number}}</a></td>
 				        <td>{{linked_obj.modified|date_fmt}}</td>
 				        <td>{{linked_obj.modifier}}</td>
-				        <td>{{linked_obj.linked_bushfire.invalid|yesno}}</td>
+				        <td>{{linked_obj.linked_bushfire.get_report_status_display}}</td>
                       </tr>
                     {% endfor %}
                     </tbody>
