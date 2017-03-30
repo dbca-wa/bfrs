@@ -148,6 +148,7 @@ class Bushfire(Audit):
     dfes_incident_no = models.PositiveIntegerField(verbose_name="DFES Fire Number", null=True, blank=True)
     job_code = models.PositiveIntegerField(verbose_name="job Code", null=True, blank=True)
     fire_position = models.CharField(verbose_name="Position of Fire", max_length=100, null=True, blank=True)
+    fire_position_override = models.BooleanField(verbose_name="SSS override", default=False)
 
     # Point of Origin
     origin_point = models.PointField(null=True, blank=True, editable=True, help_text='Optional.')

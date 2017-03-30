@@ -346,17 +346,23 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
 
     from django.http import JsonResponse
     def get(self, request, *args, **kwargs):
-        #import ipdb; ipdb.set_trace()
-        fire_number = None
-        if self.request.GET.has_key('fire_number'):
-            district = json.loads(self.request.GET['fire_number'])['district']
-            year = json.loads(self.request.GET['fire_number'])['year'].split('/')[0]
+#        import ipdb; ipdb.set_trace()
+#        fire_number = None
+#        if self.request.GET.has_key('fire_number'):
+#            district = json.loads(self.request.GET['fire_number'])['district']
+#            year = json.loads(self.request.GET['fire_number'])['year'].split('/')[0]
+#
+#            num = Bushfire.objects.filter(district_id=district, year=year)
+#
+#            fire_number = ' '.join(['BF', District.objects.get(id=district).code, year, '010'])
+#            data = {'fire_number': fire_number}
+#            return self.JsonResponse(data)
 
-            num = Bushfire.objects.filter(district_id=district, year=year)
-
-            fire_number = ' '.join(['BF', District.objects.get(id=district).code, year, '010'])
-            data = {'fire_number': fire_number}
-            return self.JsonResponse(data)
+#        area = None
+#	if self.request.GET.has_key('area'): # and eval(self.request.GET.get('area')) > 0:
+#            #area = round(eval(self.request.GET.get('area')), 1)
+#            data = {'area': 10}
+#            return self.JsonResponse(data)
 
         return super(BushfireCreateView, self).get(request, *args, **kwargs)
 

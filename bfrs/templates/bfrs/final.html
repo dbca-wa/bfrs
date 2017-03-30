@@ -136,13 +136,19 @@
         </tr>
 
         <tr>
-			<th class="cbas">Arson squad notified</th>
+            <th class="cbas">Arson squad notified</th>
             <td colspan="3" class="cbas">
                 {% if is_authorised %} {{snapshot.arson_squad_notified|yesno}}<br>{{snapshot.offence_no}} {% else %} {{form.arson_squad_notified}} {% endif %}
                 <span class="div_offence_no" style="display: none; margin: 20px;">{% if not is_authorised %} Police offence no {{form.offence_no}} {% endif %}</span>
 			</td>
 
         </tr>
+
+        <tr>
+            <th class="cbas">Job code *</th>
+            <td colspan="3" class="cbas">{% if is_authorised %} {{snapshot.job_code}} {% else %} {{form.job_code}} {% endif %}</td>
+        </tr>
+
 
   </tbody>
 </table>

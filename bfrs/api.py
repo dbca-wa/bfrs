@@ -133,7 +133,8 @@ class BushfireResource(APIResource):
         queryset = Bushfire.objects.all()
         resource_name = 'bushfire'
         authorization= Authorization()
-        fields = ['origin_point', 'fire_boundary', 'area', 'fire_position']
+        #fields = ['origin_point', 'fire_boundary', 'area', 'fire_position']
+        fields = ['origin_point', 'fire_boundary']
 
     def hydrate_origin_point(self, bundle):
         """
@@ -163,6 +164,16 @@ class BushfireResource(APIResource):
 
         if bundle.data['tenure_area']:
             update_areas_burnt(bundle.obj, bundle.data['tenure_area'])
+
+        if bundle.data['area']:
+	    if float(bundle.data['area']) > 2.0:
+                bundle.obj.area_limit = False
+                bundle.obj.area = float(bundle.data['area'])
+
+        if bundle.data['fire_position']:
+            # only update if user has not over-ridden
+            if not bundle.obj.fire_position_override:
+                bundle.obj.fire_position = bundle.data['fire_position']
 
         bundle.obj.save()
         return bundle

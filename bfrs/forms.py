@@ -154,7 +154,7 @@ class BushfireForm(forms.ModelForm):
         fields = ('fire_contained_date', 'fire_controlled_date', 'fire_safe_date',
                   'first_attack', 'initial_control', 'final_control',
                   'other_first_attack', 'other_initial_control', 'other_final_control',
-                  'area', 'fire_level', 'arson_squad_notified', 'offence_no',
+                  'area', 'fire_level', 'arson_squad_notified', 'offence_no', 'job_code',
         )
         #exclude = ('initial_snapshot', 'init_authorised_by', 'init_authorised_date',
         #   )
@@ -205,10 +205,10 @@ class BushfireCreateBaseForm(forms.ModelForm):
 
     class Meta:
         model = Bushfire
-        fields = ('region', 'district', 'job_code', 'dfes_incident_no',
+        fields = ('region', 'district', 'dfes_incident_no',
         #fields = ('region', 'district', 'fire_number', 'job_code', 'dfes_incident_no',
                   'name', 'year', 'fire_level', 'field_officer', 'duty_officer', 'init_authorised_by', 'init_authorised_date',
-                  'media_alert_req', 'park_trail_impacted', 'fire_position',
+                  'media_alert_req', 'park_trail_impacted', 'fire_position', 'fire_position_override',
                   'area_limit',
                   'fire_detected_date', 'dispatch_pw_date', 'dispatch_aerial_date', 'fuel_type',
                   'assistance_req', 'assistance_details', 'communications', 'other_info',
