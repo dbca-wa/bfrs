@@ -93,7 +93,6 @@ class Region(models.Model):
 class District(models.Model):
     region = models.ForeignKey(Region)
     name = models.CharField(max_length=200, unique=True)
-    alias = models.CharField(verbose_name="Equiv. name in SSS", max_length=200, unique=True)
     code = models.CharField(max_length=3)
     archive_date = models.DateField(null=True, blank=True)
 
@@ -289,6 +288,11 @@ class Bushfire(Audit):
 #        self.fire_number = ' '.join(['BF', self.district.code, str(self.year), '{0:03d}'.format(next_id)])
 #
 #        super(Bushfire, self).save()
+
+
+    def can_submit(self):
+        missing_fields = check_mandatory_fields(self, SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS)
+        return True if not missing_fields else False
 
 
     @property

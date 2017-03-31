@@ -237,10 +237,10 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
                 bushfire.report_status = Bushfire.STATUS_REVIEWED
 
             # Delete Initial
-            if action == 'delete_initial' and bushfire.report_status==Bushfire.STATUS_INITIAL:
-                #Bushfire.objects.filter(id=bushfire.id).delete()
-                bushfire.delete()
-                return HttpResponseRedirect(self.get_success_url())
+#            if action == 'delete_initial' and bushfire.report_status==Bushfire.STATUS_INITIAL:
+#                #Bushfire.objects.filter(id=bushfire.id).delete()
+#                bushfire.delete()
+#                return HttpResponseRedirect(self.get_success_url())
 
             # Delete Final Authorisation
             if action == 'delete_final_authorisation' and bushfire.report_status==Bushfire.STATUS_FINAL_AUTHORISED:
@@ -292,6 +292,8 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
             initial.update({'include_archived': self.request.GET['include_archived']})
 
         # update context with form - filter is already in the context
+        #context['initial_mandatory_fields'] = check_mandatory_fields(bushfire, SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS)
+        #context['initial_mandatory_fields'] = check_mandatory_fields(bushfire, SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS)
         context['form'] = BushfireFilterForm(initial=initial)
         context['object_list'] = self.object_list.order_by('id') # passed by default, but we are (possibly) updating, if profile exists!
         return context

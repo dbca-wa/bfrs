@@ -90,7 +90,25 @@
         <td>{{ bushfire.fire_number }}</td>
         {% comment %}<td>{{ bushfire.get_report_status_display }}</td> {% endcomment %}
         <td>{{ bushfire.name }}</td>
-        <td><a href="{% url 'bushfire:bushfire_initial' bushfire.id %}">{{ bushfire.name }}</td>
+		<td>
+            {% if bushfire.report_status == bushfire.STATUS_INITIAL %}
+			  <a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="Edit initial fire report"><i class="icon-edit icon-white"></i></a>
+			{% else %}
+			  <a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="Initial fire report submitted"><i class="icon-ok icon-white"></i></a>
+		    {% endif %}
+		</td>
+
+		<td>
+            {% if bushfire.report_status == bushfire.STATUS_INITIAL_AUTHORISED %}
+		      <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=create_final');" title="Create final fire report"><i class="icon-plus icon-white"></i></a>
+			{% comment %}
+            {% elif bushfire.report_status == bushfire.STATUS_FINAL_DRAFT %}
+              a
+			{% endcomment %}
+			{% else %}
+              <a href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Edit final fire report"><i class="icon-edit icon-white"></i></a>
+		    {% endif %}
+		</td>
 
          {% if bushfire.report_status >= bushfire.STATUS_FINAL_DRAFT %}
             <td><a href="{% url 'bushfire:bushfire_final' bushfire.id %}">{{ bushfire.name }}</td>
@@ -108,7 +126,9 @@
          {% if bushfire.report_status == bushfire.STATUS_INITIAL %}
 		   <td>
 				<a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=submit_initial');" title="submit initial"><button>Submit Initial</button>
+        {% comment %}
 	   			<a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=delete_initial');" title="Delete initial"><button>Delete Initial</button>
+        {% endcomment %}
 			</td>
          {% elif bushfire.report_status == bushfire.STATUS_INITIAL_AUTHORISED %}
 		   <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=create_final');" title="Create final report"><button>Create Final</button></td>
