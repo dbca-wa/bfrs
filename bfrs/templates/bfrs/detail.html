@@ -209,7 +209,7 @@
             <th class="cbas" style="font-weight:normal;">Area of fire at arrival (ha)</th>
             <td colspan="2" class="cbas">
                 {% if is_authorised %} {{snapshot.area}} {% else %} {{form.area}} {% endif %}<br>
-                {% if is_authorised %} Area < 2ha - {{snapshot.area_limit|yesno}} {% else %} {{form.area_limit}} Area < 2ha{% endif %}
+                {% if is_authorised %} Unknown - {{snapshot.area_unknown|yesno}} {% else %} {{form.area_unknown}} Unknown{% endif %}
             </td>
         </tr>
 
@@ -692,17 +692,18 @@ $('.open-all').click(function(){
     });
 */
 
+
 /* Area Override */
 var orig_area = $("#id_area").val();
 
-if($("#id_area_limit").is(':checked')) { 
+if($("#id_area_unknown").is(':checked')) { 
     $("#id_area").removeAttr('readonly').removeAttr('style');
 } else {
     $("#id_area").attr('readonly','readonly').css('background-color' , '#DEDEDE');
 }
 
-$('#id_area_limit').on('change', function() {
-    if($("#id_area_limit").is(':checked')) { 
+$('#id_area_unknown').on('change', function() {
+    if($("#id_area_unknown").is(':checked')) { 
 	    $("#id_area").removeAttr('readonly').removeAttr('style');
 	} else {
         $("#id_area").val(orig_area);
@@ -710,33 +711,6 @@ $('#id_area_limit').on('change', function() {
 	}
 });
 
-/*
-$('#id_area_limit').on('change', function() {
-    var data = {
-        area: $("#id_area").val(),
-    }
-
-    if($("#id_area_limit").is(':checked')) { 
-	    $("#id_area").removeAttr('readonly').removeAttr('style');
-        $("#id_area").val(orig_area);
-	} else {
-
-        $.ajax({
-            type:"GET",
-            url:"{% url 'bushfire:bushfire_create' %}",
-            data: {
-                'area': $("#id_area").val()
-            },
-            success: function(response){
-                //console.log("response 2 " + response);
-                $("#id_area").val(response.area);
-            }
-
-        });
-	    $("#id_area").attr('readonly','readonly').css('background-color' , '#DEDEDE');
-	}
-});
-*/
 
 /* Fire Position Override */
 var orig_fire_position = $("#id_fire_position").val();

@@ -53,19 +53,19 @@ class BooleanFilter(django_filters.filters.Filter):
 
 class BushfireFilter(django_filters.FilterSet):
 
-    YEAR_CHOICES = [[i['year'], i['year']] for i in Bushfire.objects.all().values('year').distinct()]
-
-    REGION_CHOICES = []
-    for region in Region.objects.distinct('name'):
-        REGION_CHOICES.append([region.id, region.name])
-
-    DISTRICT_CHOICES = []
-    for district in District.objects.distinct('name'):
-        DISTRICT_CHOICES.append([district.id, district.name])
-
-    region = django_filters.ChoiceFilter(choices=REGION_CHOICES, label='Region')
-    district = django_filters.ChoiceFilter(choices=DISTRICT_CHOICES, label='District')
-    year = django_filters.ChoiceFilter(choices=YEAR_CHOICES, label='Year')
+#    YEAR_CHOICES = [[i['year'], i['year']] for i in Bushfire.objects.all().values('year').distinct()]
+#
+#    REGION_CHOICES = []
+#    for region in Region.objects.distinct('name'):
+#        REGION_CHOICES.append([region.id, region.name])
+#
+#    DISTRICT_CHOICES = []
+#    for district in District.objects.distinct('name'):
+#        DISTRICT_CHOICES.append([district.id, district.name])
+#
+#    region = django_filters.ChoiceFilter(choices=REGION_CHOICES, label='Region')
+#    district = django_filters.ChoiceFilter(choices=DISTRICT_CHOICES, label='District')
+#    year = django_filters.ChoiceFilter(choices=YEAR_CHOICES, label='Year')
     report_status = django_filters.ChoiceFilter(choices=Bushfire.REPORT_STATUS_CHOICES, label='Report Status')
 
     class Meta:
@@ -86,7 +86,7 @@ class BushfireFilter(django_filters.FilterSet):
         super(BushfireFilter, self).__init__(*args, **kwargs)
 
         # allows dynamic update of the filter set, on page refresh
-        self.filters['year'].extra['choices'] = [[None, '---------']] + [[i['year'], i['year']] for i in Bushfire.objects.all().values('year').distinct().order_by('year')]
+#        self.filters['year'].extra['choices'] = [[None, '---------']] + [[i['year'], i['year']] for i in Bushfire.objects.all().values('year').distinct().order_by('year')]
 
 
 class ProfileView(LoginRequiredMixin, generic.FormView):
@@ -141,7 +141,8 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
         response = super(BushfireView, self).get(request, *args, **kwargs)
         template_confirm = 'bfrs/confirm.html'
         template_mandatory = 'bfrs/mandatory_fields.html'
-        template_preview = 'bfrs/detail.html'
+        template_initial = 'bfrs/detail.html'
+        template_final = 'bfrs/final.html'
 
         if self.request.GET.has_key('export_to_csv'):
             report = self.request.GET.get('export_to_csv')
@@ -169,10 +170,12 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
                     context['initial'] = True
                     mandatory_fields = SUBMIT_MANDATORY_FIELDS
                     mandatory_dep_fields = SUBMIT_MANDATORY_DEP_FIELDS
+                    template_preview = template_initial
                 else:
                     context['final'] = True
                     mandatory_fields = AUTH_MANDATORY_FIELDS
                     mandatory_dep_fields = AUTH_MANDATORY_DEP_FIELDS
+                    template_preview = template_final
                 context['mandatory_fields'] = check_mandatory_fields(bushfire, mandatory_fields, mandatory_dep_fields)
                 if context['mandatory_fields']:
                     return TemplateResponse(request, template_mandatory, context=context)
@@ -512,7 +515,7 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
         return self.render_to_response(context)
 
     def form_valid(self, request, form, area_burnt_formset):
-        import ipdb; ipdb.set_trace()
+        #import ipdb; ipdb.set_trace()
         self.object = form.save(commit=False)
         if not self.object.creator:
             self.object.creator = request.user
@@ -611,6 +614,7 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
         area_burnt_formset      = AreaBurntFormSet(self.request.POST, prefix='area_burnt_fs')
 
 
+        #import ipdb; ipdb.set_trace()
         #if form.is_valid() and area_burnt_formset.is_valid() and injury_formset.is_valid() and damage_formset.is_valid():
         if form.is_valid() and injury_formset.is_valid() and damage_formset.is_valid(): # No need to check area_burnt_formset since the fs is readonly on the final form
             return self.form_valid(request,

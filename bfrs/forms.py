@@ -154,7 +154,7 @@ class BushfireForm(forms.ModelForm):
         fields = ('fire_contained_date', 'fire_controlled_date', 'fire_safe_date',
                   'first_attack', 'initial_control', 'final_control',
                   'other_first_attack', 'other_initial_control', 'other_final_control',
-                  'area', 'fire_level', 'arson_squad_notified', 'offence_no', 'job_code',
+                  'area', 'area_limit', 'fire_level', 'arson_squad_notified', 'offence_no', 'job_code',
         )
         #exclude = ('initial_snapshot', 'init_authorised_by', 'init_authorised_date',
         #   )
@@ -209,14 +209,13 @@ class BushfireCreateBaseForm(forms.ModelForm):
         #fields = ('region', 'district', 'fire_number', 'job_code', 'dfes_incident_no',
                   'name', 'year', 'fire_level', 'field_officer', 'duty_officer', 'init_authorised_by', 'init_authorised_date',
                   'media_alert_req', 'park_trail_impacted', 'fire_position', 'fire_position_override',
-                  'area_limit',
                   'fire_detected_date', 'dispatch_pw_date', 'dispatch_aerial_date', 'fuel_type',
                   'assistance_req', 'assistance_details', 'communications', 'other_info',
                   'cause', 'cause_state', 'other_cause', 'tenure', 'other_tenure',
                   'days','hours',
                   'dispatch_pw', 'dispatch_aerial',
                   'investigation_req',
-		  'area', 'origin_point_str', 'origin_point', 'fire_boundary',
+		  'area', 'area_unknown', 'origin_point_str', 'origin_point', 'fire_boundary',
                  )
 
 #    def clean_investigation_req(self):
@@ -351,6 +350,46 @@ class BushfireInitUpdateForm(BushfireCreateBaseForm):
 #                    if duplicates:
 #			form.add_error('tenure', 'Duplicate: Tenure must be unique')
 
+#class BaseInjuryFormSet(BaseInlineFormSet):
+#    def clean(self):
+#        """
+#        Adds validation to check:
+#            1. no duplicate (injury_type) combination
+#            2. all fields are filled
+#        """
+#        #import ipdb; ipdb.set_trace()
+#        if any(self.errors):
+#            return
+#
+#        duplicates = False
+#        injuries = []
+#
+#        import ipdb; ipdb.set_trace()
+#        for form in self.forms:
+#            if form.cleaned_data:
+#                tenure = form.cleaned_data['injury_type'] if form.cleaned_data.has_key('tenure') else None
+#                area = form.cleaned_data['number'] if form.cleaned_data.has_key('number') else None
+#                remove = form.cleaned_data['DELETE'] if form.cleaned_data.has_key('DELETE') else False
+#
+#                if not remove:
+#                    # Check that no two records have the same (tenure and fuel_type) combination
+#                    #if tenure and fuel_type and area:
+#                    if injury_type and number:
+#                        if set([(injury_type.name)]).issubset(injuries):
+#                            duplicates = True
+#                        injuries.append((injury_type.name))
+#
+#                    if duplicates:
+#                        form.add_error('injury_type', 'Duplicate: Injury type must be unique')
+#
+#                    # check all fields have been filled
+#                    if not (injury_type and number):
+#                        if not injury_type:
+#                            form.add_error('injury_type', 'Injury type required')
+#                        if not number:
+#                            form.add_error('number', 'Number required')
+
+
 class AreaBurntForm(forms.ModelForm):
     class Meta:
         model = AreaBurnt
@@ -366,6 +405,7 @@ class AreaBurntForm(forms.ModelForm):
 #AreaBurntFormSet            = inlineformset_factory(Bushfire, AreaBurnt, extra=0, min_num=1, validate_min=True, exclude=())
 AreaBurntFormSet            = inlineformset_factory(Bushfire, AreaBurnt, extra=0, min_num=0, exclude=(), form=AreaBurntForm)
 #AreaBurntFormSet            = inlineformset_factory(Bushfire, AreaBurnt, extra=0, min_num=0, exclude=())
+#InjuryFormSet               = inlineformset_factory(Bushfire, Injury, formset=BaseInjuryFormSet, extra=1, max_num=7, min_num=0, exclude=())
 InjuryFormSet               = inlineformset_factory(Bushfire, Injury, extra=1, max_num=7, min_num=0, exclude=())
 DamageFormSet               = inlineformset_factory(Bushfire, Damage, extra=1, max_num=7, min_num=0, exclude=())
 

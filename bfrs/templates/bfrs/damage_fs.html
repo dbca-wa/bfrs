@@ -1,10 +1,29 @@
-{% if is_authorised and final %}
+{% if damage_formset.errors %}
+    <p>Formset Errors</p>
+    <div class="alert alert-error">
+        <button type="button" class="close" data-dismiss="alert">×</button>
+        {% for field in damage_formset %} 
+            {% if field.errors %}
+            <font color="red"><li>{{ field.label }}: {{ field.errors|striptags }}</li></font>
+            {{ field.meta  }}
+            {% endif %}
+        {% endfor %}
+
+        {% if damage_formset.non_field_errors %}
+            <font color="red">{{ damage_formset.non_field_errors }}</font>
+        {% endif %}
+
+    </div>
+{% endif %}
+
+
+{% if is_authorised and final  or action %}
     <table class="table_fs" border="0" >
         <tbody>
             {% if snapshot.damages.exists %}
 				<th>Damage Type</th>
 				<th>Number</th>
-				{% for damage in snapshot.damages %}
+				{% for damage in snapshot.damages.all %}
 				<tr>
 					<td>{{ damage.damage_type }}</td>
 					<td>{{ damage.number }}</td>
@@ -24,13 +43,20 @@
                 <th></th>
                 {% for form in damage_formset %}
                 <tr>
-                <td>{{ form.damage_type }}</td>
-                <td>{{ form.number }}</td>
+                  <td>{{ form.damage_type }}</td>
+                  <td>{{ form.number }}</td>
 
-                <td>
-                        {% if form.instance.pk %}{{ form.DELETE }}{% endif %}
-                        {{ form.id }}
-                    </td>
+                  <td>
+                    {% if form.instance.pk %}{{ form.DELETE }}{% endif %}
+                    {{ form.id }}
+
+					{% for field in form %} 
+                      {% if field.errors %}
+                         <font color="red"><li>{{ field.label }}: {{ field.errors|striptags }}</li></font>
+                      {% endif %}
+                    {% endfor %}
+
+                  </td>
                 </tr>
                 {% endfor %}
             </tbody>

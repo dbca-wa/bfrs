@@ -628,41 +628,5 @@
         "offence_no": 123,
         "time_to_control": "7200"
     }
-},
-{
-    "pk": 19,
-    "model": "bfrs.bushfire",
-    "fields": {
-        "modified": "2016-07-16T16:55:27.452Z",
-        "created": "2016-07-16T16:55:27.452Z",
-        "modifier": 1,
-        "creator": 1,
-        "region": 9,
-        "district": 19,
-        "name": "Bushfire 19",
-        "year": 2017,
-        "fire_number": "BF SWB 2017 001",
-        "dfes_incident_no": 1,
-        "job_code": 1,
-        "fire_level": 1,
-        "media_alert_req": "True",
-        "investigation_req": "True",
-        "fire_position": "30K North of Abc",
-        "area": 1900.0,
-        "assistance_req": "True",
-        "communications": "ABC DEF",
-        "other_info": "None",
-        "cause": 1,
-        "cause_state": 1,
-        "other_cause": "None",
-        "tenure": 1,
-        "first_attack": 1,
-        "initial_control": 1,
-        "final_control": 1,
-        "arson_squad_notified": "True",
-        "offence_no": 123,
-        "time_to_control": "7200"
-    }
 }
-
 ]

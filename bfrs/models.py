@@ -28,8 +28,17 @@ SUBMIT_MANDATORY_DEP_FIELDS= {
     'tenure': ['Other (specify)', 'other_tenure'],
 }
 
-AUTH_MANDATORY_FIELDS= []
-AUTH_MANDATORY_DEP_FIELDS= []
+AUTH_MANDATORY_FIELDS= [
+    'fire_contained_date', 'fire_controlled_date', 'fire_safe_date',
+    'first_attack', 'initial_control', 'final_control',
+    'fire_level', 'arson_squad_notified', 'job_code',
+]
+AUTH_MANDATORY_DEP_FIELDS= {
+    'first_attack': [True, 'other_first_attack'],
+    'initial_control': [True, 'other_initial_control'],
+    'final_control': [True, 'other_final_control'],
+    'area_limit': [True, 'area'],
+}
 
 def current_finyear():
     year = datetime.now().year if datetime.now().month>7 else datetime.now().year-1
@@ -71,7 +80,7 @@ class Region(models.Model):
         """ Returns a dict of regions with their corresponding districts
         """
         qs=District.objects.filter(region_id=self.id)
-        return dict(region=self.name, region_id=self.id, districts=[dict(district=q.name, id=q.id) for q in qs])
+        return dict(region=self.name, region_id=self.id, districts=[dict(district=q.name, alias=q.alias, id=q.id) for q in qs])
 
     class Meta:
         ordering = ['name']
@@ -84,10 +93,9 @@ class Region(models.Model):
 class District(models.Model):
     region = models.ForeignKey(Region)
     name = models.CharField(max_length=200, unique=True)
+    alias = models.CharField(verbose_name="Equiv. name in SSS", max_length=200, unique=True)
     code = models.CharField(max_length=3)
-    archive_date = models.DateField(
-        null=True, blank=True, help_text="Archive this District (prevent from creating new ePFPs)"
-    )
+    archive_date = models.DateField(null=True, blank=True)
 
     class Meta:
         ordering = ['name']
@@ -198,7 +206,7 @@ class Bushfire(Audit):
     #area = models.DecimalField(verbose_name="Final Fire Area (ha)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
     area = models.FloatField(verbose_name="Final Fire Area (ha)", validators=[MinValueValidator(0)], null=True, blank=True)
     area_limit = models.BooleanField(verbose_name="Area < 2ha", default=False)
-    #area_unknown = models.BooleanField(default=False)
+    area_unknown = models.BooleanField(default=False)
     time_to_control = models.DurationField(verbose_name="Time to Control", null=True, blank=True)
     # Private Damage FS here
     # Public Damage FS here

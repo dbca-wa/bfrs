@@ -1,11 +1,50 @@
-{% if is_authorised and final %}
+{% if injury_formset.errors %}
+    <p>Formset Errors</p>
+    <div class="alert alert-error">
+        <button type="button" class="close" data-dismiss="alert">×</button>
+        {% for field in injury_formset %} 
+            {% if field.errors %}
+            <font color="red"><li>{{ field.label }}: {{ field.errors|striptags }}</li></font>
+            {{ field.meta  }}
+            {% endif %}
+        {% endfor %}
+
+        {% if injury_formset.non_field_errors %}
+            <font color="red">{{ injury_formset.non_field_errors }}</font>
+        {% endif %}
+
+    </div>
+{% endif %}
+
+{% comment %}
+    <table class="table_fs" border="0" >
+        <tbody>
+            {% if object.injuries.exists %}
+				<th>Injury Type</th>
+				<th>Number</th>
+				
+				{% for injury in object.injuries.all %}
+				<tr>
+					<td>{{ injury.injury_type }}</td>
+					<td>{{ injury.number }}</td>
+				</tr>
+				{% endfor %}
+
+            {% else %}
+                <p> No Injuries or Fatalities</p>
+            {% endif %}
+        </tbody>
+    </table>
+{% endcomment %}
+
+{% if is_authorised and final or action %}
     <table class="table_fs" border="0" >
         <tbody>
             {% if snapshot.injuries.exists %}
 				<th>Injury Type</th>
 				<th>Number</th>
 				
-				{% for injury in snapshot.injuries %}
+				{% for injury in snapshot.injuries.all %}
 				<tr>
 					<td>{{ injury.injury_type }}</td>
 					<td>{{ injury.number }}</td>
@@ -32,6 +71,13 @@
                <td>
                     {% if form.instance.pk %}{{ form.DELETE }}{% endif %}
                     {{ form.id }}
+
+					{% for field in form %} 
+                      {% if field.errors %}
+                         <font color="red"><li>{{ field.label }}: {{ field.errors|striptags }}</li></font>
+                      {% endif %}
+                    {% endfor %}
+
                 </td>
             </tr>
             {% endfor %}

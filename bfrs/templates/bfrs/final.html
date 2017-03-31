@@ -75,16 +75,12 @@
 
         {% if form.non_field_errors %}
             {{ form.non_field_errors  }}
-        {% else %}
-            <p>**********</p>
         {% endif %}
 
     </div>
 {% endif %}
 
-{% if action == 'submit_initial' %}
-<h1>Submit Initial Report</h1>
-{% elif action == 'authorise_final' %}
+{% if action == 'authorise_final' %}
 <h1>Authorise Final Report</h1>
 {% else %}
 <h1>Bushfire Detail</h1>
@@ -96,33 +92,33 @@
     <tbody>
         <tr>
             <th class="cbas">Date fire contained *</th>
-            <td class="cbas">{% if object.is_final_authorised %} {{snapshot.fire_contained_date}} {% else %} {{form.fire_contained_date}} {% endif %}</td>
+            <td class="cbas">{% if is_authorised %} {{snapshot.fire_contained_date}} {% else %} {{form.fire_contained_date}} {% endif %}</td>
 
             <th class="cbas">Initial attack agency *<br><br><div class=div_other_first_attack style="display: none;">Other initial attack agency *</div></th>
             <td colspan="1" class="cbas">
-				{% if is_authorised %} {{snapshot.first_attack}} {% else %} {{form.first_attack}} {% endif %}<br>
+		{% if is_authorised %} {{snapshot.first_attack}}<br>{% if snapshot.other_first_attack %} {{snapshot.other_first_attack}} {% endif %}{% else %} {{form.first_attack}} {% endif %}<br>
                 <div class=div_other_first_attack style="display: none;">{% if is_authorised %} {{snapshot.other_first_attack}} {% else %} {{form.other_first_attack}} {% endif %}</div>
             </td>
         </tr>
 
         <tr>
             <th class="cbas">Date fire controlled *</th>
-            <td class="cbas">{% if object.is_final_authorised %} {{snapshot.fire_controlled_date}} {% else %} {{form.fire_controlled_date}} {% endif %}</td>
+            <td class="cbas">{% if is_authorised %} {{snapshot.fire_controlled_date}} {% else %} {{form.fire_controlled_date}} {% endif %}</td>
 
             <th class="cbas">Initial controlling agency *<br><br><div class=div_other_initial_control style="display: none;">Other initial controlling agency *</div></th>
             <td colspan="1" class="cbas">
-                {% if is_authorised %} {{snapshot.initial_control}} {% else %} {{form.initial_control}} {% endif %}<br>
+                {% if is_authorised %} {{snapshot.initial_control}} <br>{% if snapshot.other_initial_control %} {{snapshot.other_initial_control}} {% endif %} {% else %} {{form.initial_control}} {% endif %}<br>
                 <div class=div_other_initial_control style="display: none;">{% if is_authorised %} {{snapshot.other_initial_control}} {% else %} {{form.other_initial_control}} {% endif %}</div>
             </td>
         </tr>
 
         <tr>
             <th class="cbas">Date fire safe *</th>
-            <td class="cbas">{% if object.is_final_authorised %} {{snapshot.fire_safe_date}} {% else %} {{form.fire_safe_date}} {% endif %}</td>
+            <td class="cbas">{% if is_authorised %} {{snapshot.fire_safe_date}} {% else %} {{form.fire_safe_date}} {% endif %}</td>
 
             <th class="cbas">Final controlling agency *<br><br><div class=div_other_final_control style="display: none;">Other final controlling agency *</div></th>
             <td colspan="1" class="cbas">
-                {% if is_authorised %} {{snapshot.final_control}} {% else %} {{form.final_control}} {% endif %}<br>
+                {% if is_authorised %} {{snapshot.final_control}} <br>{% if snapshot.other_final_control %} {{snapshot.other_final_control}} {% endif %} {% else %} {{form.final_control}} {% endif %}<br>
                 <div class=div_other_final_control style="display: none;">{% if is_authorised %} {{snapshot.other_final_control}} {% else %} {{form.other_final_control}} {% endif %}</div>
             </td>
         </tr>
@@ -131,22 +127,22 @@
             <th class="cbas">Maximum Fire Level *</th>
             <td colspan="1" class="cbas">{% if is_authorised %} {{snapshot.fire_level}} {% else %} {{form.fire_level}} {% endif %}</td>
 
-            <th class="cbas" style="font-weight:normal;">Final fire size (ha) *</th>
-            <td colspan="1" class="cbas">{% if is_authorised %} {{snapshot.area}} {% else %} {{form.area}} {% endif %}</td>
+            <th class="cbas">Final fire size (ha) *</th>
+            <td colspan="2" class="cbas">
+                {% if is_authorised %} {{snapshot.area}} {% else %} {{form.area}} {% endif %}
+		<span style="margin: 20px;">{% if is_authorised %} Is area < 2ha? {{snapshot.area_limit|yesno}} {% else %} {{form.area_limit}} Area < 2ha{% endif %}</span>
+            </td>
         </tr>
 
         <tr>
-            <th class="cbas">Arson squad notified</th>
-            <td colspan="3" class="cbas">
-                {% if is_authorised %} {{snapshot.arson_squad_notified|yesno}}<br>{{snapshot.offence_no}} {% else %} {{form.arson_squad_notified}} {% endif %}
-                <span class="div_offence_no" style="display: none; margin: 20px;">{% if not is_authorised %} Police offence no {{form.offence_no}} {% endif %}</span>
-			</td>
+            <th class="cbas">Arson squad notified *</th>
+            <td colspan="1" class="cbas">
+		{% if is_authorised %} {{snapshot.arson_squad_notified|yesno}}<br>Police offence no {{snapshot.offence_no}} {% else %} {{form.arson_squad_notified}} {% endif %}<br>
+                <span class="div_offence_no" style="display: none; margin: 0px;">{% if not is_authorised %} {{form.offence_no}} Police offence no {% endif %}</span>
+            </td>
 
-        </tr>
-
-        <tr>
             <th class="cbas">Job code *</th>
-            <td colspan="3" class="cbas">{% if is_authorised %} {{snapshot.job_code}} {% else %} {{form.job_code}} {% endif %}</td>
+            <td colspan="1" class="cbas">{% if is_authorised %} {{snapshot.job_code}} {% else %} {{form.job_code}} {% endif %}</td>
         </tr>
 
 
@@ -415,6 +411,25 @@ $('.open-all').click(function(){
   $(".close-all").show();
   $(".open-all").hide();
 });
+
+/* Area Override */
+var orig_area = $("#id_area").val();
+
+if($("#id_area_limit").is(':checked')) { 
+    $("#id_area").removeAttr('readonly').removeAttr('style');
+} else {
+    $("#id_area").attr('readonly','readonly').css('background-color' , '#DEDEDE');
+}
+
+$('#id_area_limit').on('change', function() {
+    if($("#id_area_limit").is(':checked')) { 
+	    $("#id_area").removeAttr('readonly').removeAttr('style');
+	} else {
+        $("#id_area").val(orig_area);
+	    $("#id_area").attr('readonly','readonly').css('background-color' , '#DEDEDE');
+	}
+});
+
 
 </script>
 

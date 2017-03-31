@@ -70,7 +70,8 @@
         "archive_date": null,
         "region": 1,
         "code": "KAL",
-        "name": "Kalgoorlie"
+        "name": "Kalgoorlie",
+        "alias": "GOLDFIELDS REGION"
     }
 },
 {
@@ -80,7 +81,8 @@
         "archive_date": null,
         "region": 2,
         "code": "EKM",
-        "name": "East Kimberley"
+        "name": "East Kimberley",
+        "alias": "EAST KIMBERLEY"
     }
 },
 {
@@ -90,7 +92,8 @@
         "archive_date": null,
         "region": 2,
         "code": "WKM",
-        "name": "West Kimberley"
+        "name": "West Kimberley",
+        "alias": "WEST KIMBERLEY"
     }
 },
 {
@@ -100,7 +103,8 @@
         "archive_date": null,
         "region": 3,
         "code": "GER",
-        "name": "Geraldton"
+        "name": "Geraldton",
+        "alias": "GERALDTON"
     }
 },
 {
@@ -110,7 +114,8 @@
         "archive_date": null,
         "region": 3,
         "code": "MOR",
-        "name": "Moora"
+        "name": "Moora",
+        "alias": "MOORA"
     }
 },
 {
@@ -120,7 +125,8 @@
         "archive_date": null,
         "region": 3,
         "code": "SHB",
-        "name": "Shark Bay"
+        "name": "Shark Bay",
+        "alias": "SHARK BAY"
     }
 },
 {
@@ -130,7 +136,8 @@
         "archive_date": null,
         "region": 4,
         "code": "EXM",
-        "name": "Exmouth"
+        "name": "Exmouth",
+        "alias": "EXMOUTH"
     }
 },
 {
@@ -140,7 +147,8 @@
         "archive_date": null,
         "region": 4,
         "code": "PIL",
-        "name": "Pilbara"
+        "name": "Pilbara",
+        "alias": "PILBARA REGION"
     }
 },
 {
@@ -150,7 +158,8 @@
         "archive_date": null,
         "region": 5,
         "code": "ALB",
-        "name": "Albany"
+        "name": "Albany",
+        "alias": "ALBANY"
     }
 },
 {
@@ -160,7 +169,8 @@
         "archive_date": null,
         "region": 5,
         "code": "ESP",
-        "name": "Esperance"
+        "name": "Esperance",
+        "alias": "ESPERANCE"
     }
 },
 {
@@ -170,7 +180,8 @@
         "archive_date": null,
         "region": 6,
         "code": "BWD",
-        "name": "Blackwood"
+        "name": "Blackwood",
+        "alias": "BLACKWOOD"
     }
 },
 {
@@ -180,7 +191,8 @@
         "archive_date": null,
         "region": 6,
         "code": "WTN",
-        "name": "Wellington"
+        "name": "Wellington",
+        "alias": "WELLINGTON"
     }
 },
 {
@@ -190,7 +202,8 @@
         "archive_date": null,
         "region": 7,
         "code": "PHS",
-        "name": "Perth Hills"
+        "name": "Perth Hills",
+        "alias": "PERTH HILLS"
     }
 },
 {
@@ -200,7 +213,8 @@
         "archive_date": null,
         "region": 7,
         "code": "SWC",
-        "name": "Swan Coastal"
+        "name": "Swan Coastal",
+        "alias": "SWAN COASTAL"
     }
 },
 {
@@ -210,7 +224,8 @@
         "archive_date": null,
         "region": 8,
         "code": "DON",
-        "name": "Donnelly"
+        "name": "Donnelly",
+        "alias": "DONNELLY"
     }
 },
 {
@@ -220,7 +235,8 @@
         "archive_date": null,
         "region": 8,
         "code": "FRK",
-        "name": "Frankland"
+        "name": "Frankland",
+        "alias": "FRANKLAND"
     }
 },
 {
@@ -230,27 +246,19 @@
         "archive_date": null,
         "region": 9,
         "code": "CWB",
-        "name": "Central Wheatbelt"
+        "name": "Central Wheatbelt",
+        "alias": "CENTRAL WHEATBELT"
     }
 },
 {
     "pk": 18,
     "model": "bfrs.district",
     "fields": {
-        "archive_date": "2015-08-06",
-        "region": 9,
-        "code": "GSN",
-        "name": "Great Southern"
-    }
-},
-{
-    "pk": 19,
-    "model": "bfrs.district",
-    "fields": {
         "archive_date": null,
         "region": 9,
         "code": "SWB",
-        "name": "Southern Wheatbelt"
+        "name": "Southern Wheatbelt",
+        "alias": "WHEATBELT REGION"
     }
 }
 ]
