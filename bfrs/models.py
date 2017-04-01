@@ -46,6 +46,18 @@ def current_finyear():
     return year
 
 
+def check_mandatory_fields(obj, fields, dep_fields):
+    # getattr(obj, 'name') ==> obj.name (when property name is available as a string)
+    missing = [field for field in fields if getattr(obj, field) is None or getattr(obj, field)=='']
+    #import ipdb; ipdb.set_trace()
+
+    for field, dep_set in dep_fields.iteritems():
+        if getattr(obj, field) and getattr(obj, field)!=dep_set[0] and getattr(obj, dep_set[1]) is None:
+            missing.append(dep_set[1])
+
+    return missing
+
+
 class Profile(models.Model):
     DEFAULT_GROUP = "Users"
 
@@ -289,11 +301,33 @@ class Bushfire(Audit):
 #
 #        super(Bushfire, self).save()
 
-
-    def can_submit(self):
+    def missing_initial(self):
         missing_fields = check_mandatory_fields(self, SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS)
-        return True if not missing_fields else False
+        l = []
+        for field in missing_fields:
+            l.append(
+                ' '.join([i.capitalize() for i in field.split('_')])
+            )
+        return l
 
+    def missing_final(self):
+        missing_fields = check_mandatory_fields(self, AUTH_MANDATORY_FIELDS, AUTH_MANDATORY_DEP_FIELDS)
+        l = []
+        for field in missing_fields:
+            l.append(
+                ' '.join([i.capitalize() for i in field.split('_')])
+            )
+        return l
+
+    @property
+    def can_submit(self):
+        return True if not self.missing_initial() else False
+
+    @property
+    def can_authorise(self):
+        if not self.missing_final() and self.report_status == self.STATUS_FINAL_DRAFT:
+            return True
+        return False
 
     @property
     def is_init_authorised(self):

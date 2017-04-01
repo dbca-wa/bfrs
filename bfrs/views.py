@@ -21,6 +21,7 @@ from bfrs.models import (Profile, Bushfire,
         Tenure, AreaBurnt,
         SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS,
         AUTH_MANDATORY_FIELDS, AUTH_MANDATORY_DEP_FIELDS,
+        check_mandatory_fields,
     )
 from bfrs.forms import (ProfileForm, BushfireFilterForm, BushfireForm, BushfireCreateForm, BushfireInitUpdateForm,
         AreaBurntFormSet, InjuryFormSet, DamageFormSet,
@@ -30,7 +31,7 @@ from bfrs.utils import (breadcrumbs_li,
         export_final_csv, export_excel,
         serialize_bushfire, deserialize_bushfire,
         rdo_email, pvs_email, pica_email, pica_sms, police_email, dfes_email, fssdrs_email,
-        check_mandatory_fields, invalidate_bushfire,
+        invalidate_bushfire,
         #calc_coords,
     )
 from django.db import IntegrityError, transaction
@@ -233,7 +234,7 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
             # Authorise the REVIEW DRAFT report
             if action == 'mark_reviewed' and bushfire.report_status==Bushfire.STATUS_REVIEW_DRAFT:
                 bushfire.reviewed_by = self.request.user
-                bushfire.reviewed_date = datetime.now(tz=pytzyy.utc)
+                bushfire.reviewed_date = datetime.now(tz=pytz.utc)
                 bushfire.report_status = Bushfire.STATUS_REVIEWED
 
             # Delete Initial

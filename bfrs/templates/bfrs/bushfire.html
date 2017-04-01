@@ -90,62 +90,50 @@
         <td>{{ bushfire.fire_number }}</td>
         {% comment %}<td>{{ bushfire.get_report_status_display }}</td> {% endcomment %}
         <td>{{ bushfire.name }}</td>
-		<td>
+		<td align="center">
             {% if bushfire.report_status == bushfire.STATUS_INITIAL %}
-			  <a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="Edit initial fire report"><i class="icon-edit icon-white"></i></a>
+			  <a  href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=submit_initial');" title="Edit initial fire report"><i class="icon-edit icon-white"></i></a>
 			{% else %}
-			  <a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="Initial fire report submitted"><i class="icon-ok icon-white"></i></a>
+			  <a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="Initial fire report submitted on {{bushfire.init_authorised_date|date_fmt}} by {{bushfire.init_authorised_by}}"><i class="icon-ok icon-white"></i></a>
 		    {% endif %}
 		</td>
 
-		<td>
+		<td align="center">
             {% if bushfire.report_status == bushfire.STATUS_INITIAL_AUTHORISED %}
 		      <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=create_final');" title="Create final fire report"><i class="icon-plus icon-white"></i></a>
-			{% comment %}
             {% elif bushfire.report_status == bushfire.STATUS_FINAL_DRAFT %}
-              a
-			{% endcomment %}
-			{% else %}
               <a href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Edit final fire report"><i class="icon-edit icon-white"></i></a>
+            {% elif bushfire.report_status >= bushfire.STATUS_FINAL_AUTHORISED %}
+              <a href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Final fire report authorised on {{bushfire.authorised_date}} by {{bushfire.authorised_by}}"><i class="icon-ok icon-white"></i></a>
 		    {% endif %}
 		</td>
+        <td align="center">
+         {% if bushfire.report_status == bushfire.STATUS_FINAL_AUTHORISED %}
+            <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=create_review');" title="Create review report"><i class="icon-plus icon-white"></i></a>
+         {% elif bushfire.report_status == bushfire.STATUS_REVIEW_DRAFT %}
+            <a href="{% url 'sss_home' %}" title="Open report in SSS"><i class="icon-link icon-white"></i></a>
 
-         {% if bushfire.report_status >= bushfire.STATUS_FINAL_DRAFT %}
-            <td><a href="{% url 'bushfire:bushfire_final' bushfire.id %}">{{ bushfire.name }}</td>
-         {% else %}
-            <td title="The initial report has not yet been authorised">{{ bushfire.name }}</td>
-         {% endif %}
+         {% elif bushfire.report_status == bushfire.STATUS_REVIEWED %}
+            <a href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Final fire report reviewed on {{bushfire.reviewed_date}} by {{bushfire.reviewed_by}}"><i class="icon-ok icon-white"></i></a>
 
-         {% if bushfire.report_status >= bushfire.STATUS_REVIEW_DRAFT %}
-            <td><a href="{% url 'bushfire:bushfire_review' bushfire.id %}">{{ bushfire.name }}</td>
-         {% else %}
-            <td title="The final report has not yet been authorised">{{ bushfire.name }}</td>
          {% endif %}
+		</td>
 
 
          {% if bushfire.report_status == bushfire.STATUS_INITIAL %}
-		   <td>
-				<a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=submit_initial');" title="submit initial"><button>Submit Initial</button>
-        {% comment %}
-	   			<a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=delete_initial');" title="Delete initial"><button>Delete Initial</button>
-        {% endcomment %}
-			</td>
-         {% elif bushfire.report_status == bushfire.STATUS_INITIAL_AUTHORISED %}
-		   <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=create_final');" title="Create final report"><button>Create Final</button></td>
+         <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=submit_initial');" title="submit initial"><font color="red"><i class="icon-warning-sign"></i></font></a></td>
+
          {% elif bushfire.report_status == bushfire.STATUS_FINAL_DRAFT %}
-           <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=authorise_final');" title="Authorise final report"><button>Authorise Final</button></td>
+         <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=authorise_final');" title="Authorise final report"><font color="red"><i class="icon-warning-sign"></i></font></a></td>
          {% elif bushfire.report_status == bushfire.STATUS_FINAL_AUTHORISED %}
-           <td>
-				<a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=create_review');" title="Create review report"><button>Create Review</button>
-				<a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=delete_final_authorisation');" title="Delete authorisation"><button>Delete Auth'n</button>
-			</td>
+         <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=delete_final_authorisation');" title="Delete authorisation"><i class="icon-trash icon-white"></i></a></td>
          {% elif bushfire.report_status == bushfire.STATUS_REVIEW_DRAFT %}
-           <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=mark_reviewed');" title="Mark Final report as Reviewed"><button>Mark as Reviewed</button></td>
+         <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=mark_reviewed');" title="Mark Final report as Reviewed"><font color="red"><i class="icon-warning-sign"></i></font></a></td>
          {% elif bushfire.report_status == bushfire.STATUS_REVIEWED %}
            {% if not bushfire.archive %}
-             <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=archive');" title="Archive Report"><button>Archive</button></td>
+             <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=archive');" title="Archive Report"><i class="icon-save-file icon-white"></i></a></td>
            {% else %}
-             <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=unarchive');" title="Unarchive Report"><button>Unarchive</button></td>
+             <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=unarchive');" title="Unarchive Report"><i class="icon-open-file icon-white"></i></a></td>
            {% endif %}
          {% endif %}
 
