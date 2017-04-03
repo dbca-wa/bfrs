@@ -25,10 +25,12 @@
 <button id="my-btn" type="button">My Test</button>
 {% endcomment %}
 
+{% comment %}
 <form id="bushfire_create" name="bushfire_create" action="{% url 'bushfire:bushfire_create' %}" method="post" target="_blank">
     <input type="hidden" name="sss_create" id="sss_create">
 </form>
 <button id="my-btn2" type="button">My Test 2</button>
+{% endcomment %}
 
 <br>
 {% comment %}
@@ -93,6 +95,8 @@
 		<td align="center">
             {% if bushfire.report_status == bushfire.STATUS_INITIAL %}
               <a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="Edit initial fire report"><i class="icon-edit icon-white"></i></a>
+            {% elif bushfire.report_status == bushfire.STATUS_INVALIDATED %}
+              <a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="View the invalidated initial fire report"><i class="icon-ban-circle icon-white"></i></a>
 		    {% else %}
 			  <a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="Initial fire report submitted on {{bushfire.init_authorised_date|date_fmt}} by {{bushfire.init_authorised_by}}"><i class="icon-ok icon-white"></i></a>
 		    {% endif %}
@@ -103,7 +107,7 @@
 		      <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=create_final');" title="Create final fire report"><i class="icon-plus icon-white"></i></a>
             {% elif bushfire.report_status == bushfire.STATUS_FINAL_DRAFT %}
               <a href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Edit final fire report"><i class="icon-edit icon-white"></i></a>
-            {% elif bushfire.report_status >= bushfire.STATUS_FINAL_AUTHORISED %}
+            {% elif bushfire.report_status >= bushfire.STATUS_FINAL_AUTHORISED and bushfire.report_status != bushfire.STATUS_INVALIDATED%}
               <a href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Final fire report authorised on {{bushfire.authorised_date}} by {{bushfire.authorised_by}}"><i class="icon-ok icon-white"></i></a>
 		    {% endif %}
 		</td>
@@ -111,7 +115,7 @@
          {% if bushfire.report_status == bushfire.STATUS_FINAL_AUTHORISED %}
             <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=create_review');" title="Create review report"><i class="icon-plus icon-white"></i></a>
          {% elif bushfire.report_status == bushfire.STATUS_REVIEW_DRAFT %}
-            <a href="{% url 'sss_home' %}" title="Open report in SSS"><i class="icon-link icon-white"></i></a>
+            <a href="{% url 'sss_home' %}" title="Open report in SSS" target="_blank"><i class="icon-link icon-white"></i></a>
 
          {% elif bushfire.report_status == bushfire.STATUS_REVIEWED %}
             <a href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Final fire report reviewed on {{bushfire.reviewed_date}} by {{bushfire.reviewed_by}}"><i class="icon-ok icon-white"></i></a>
@@ -131,9 +135,9 @@
          <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=mark_reviewed');" title="Mark Final report as Reviewed"><font color="red"><i class="icon-warning-sign"></i></font></a></td>
          {% elif bushfire.report_status == bushfire.STATUS_REVIEWED %}
            {% if not bushfire.archive %}
-             <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=archive');" title="Archive Report"><i class="icon-save-file icon-white"></i></a></td>
+             <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=archive');" title="Archive Report"><i class="icon-folder-close"></i></a></td>
            {% else %}
-             <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=unarchive');" title="Unarchive Report"><i class="icon-open-file icon-white"></i></a></td>
+             <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=unarchive');" title="Unarchive Report"><i class="icon-folder-open"></i></a></td>
            {% endif %}
          {% endif %}
 
