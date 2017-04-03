@@ -5,7 +5,7 @@ from tastypie.resources import ModelResource, ALL, ALL_WITH_RELATIONS
 from tastypie.api import Api
 from tastypie import fields
 from bfrs.models import Profile, Region, District, Bushfire, Tenure
-from bfrs.utils import update_areas_burnt
+from bfrs.utils import update_areas_burnt, invalidate_bushfire
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point, GEOSGeometry, Polygon, MultiPolygon, GEOSException
 from tastypie.http import HttpBadRequest
@@ -166,7 +166,7 @@ class BushfireResource(APIResource):
             update_areas_burnt(bundle.obj, bundle.data['tenure_area'])
 
         if bundle.data['area']:
-	    if float(bundle.data['area']) > 2.0:
+            if float(bundle.data['area']) > 2.0:
                 bundle.obj.area_limit = False
                 bundle.obj.area = float(bundle.data['area'])
 
@@ -174,6 +174,13 @@ class BushfireResource(APIResource):
             # only update if user has not over-ridden
             if not bundle.obj.fire_position_override:
                 bundle.obj.fire_position = bundle.data['fire_position']
+
+        if bundle.data['region_id'] and bundle.data['district_id']:
+            if bundle.data['district_id'] != bundle.obj.district.id:
+                district = District.objects.get(id=bundle.data['district_id'])
+                invalidate_bushfire(bundle.obj, district, bundle.request.user)
+                #bundle.obj.district = district
+                #bundle.obj.region = district.region
 
         bundle.obj.save()
         return bundle

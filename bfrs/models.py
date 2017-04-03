@@ -92,7 +92,7 @@ class Region(models.Model):
         """ Returns a dict of regions with their corresponding districts
         """
         qs=District.objects.filter(region_id=self.id)
-        return dict(region=self.name, region_id=self.id, districts=[dict(district=q.name, alias=q.alias, id=q.id) for q in qs])
+        return dict(region=self.name, region_id=self.id, districts=[dict(district=q.name, id=q.id) for q in qs])
 
     class Meta:
         ordering = ['name']

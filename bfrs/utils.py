@@ -90,7 +90,7 @@ def invalidate_bushfire(obj, new_district, user):
 
     with transaction.atomic():
         #obj.invalid = True
-	old_rpt_status = obj.report_status
+        old_rpt_status = obj.report_status
         obj.report_status = Bushfire.STATUS_INVALIDATED
 #        obj.fire_number = None
         obj.save()
@@ -208,7 +208,7 @@ def update_areas_burnt(bushfire, area_burnt_list):
             area_other += area
 
     if area_other > 0:
-        new_area_burnt_object.append(AreaBurnt(bushfire=bushfire, tenure=Tenure.objects.get(name__icontains='other'), area=round(area, 2), other=''))
+        new_area_burnt_object.append(AreaBurnt(bushfire=bushfire, tenure=Tenure.objects.get(name__icontains='other'), area=round(area, 2)))
 
     #import ipdb; ipdb.set_trace()
     try:
@@ -427,7 +427,6 @@ def export_final_csv(request, queryset):
 			smart_str( obj.fire_position),
 			#row.write(col_no(), smart_str( obj.origin_point)),
 			#row.write(col_no(), smart_str( obj.fire_boundary),
-			smart_str( obj.fire_not_found),
 			smart_str( obj.assistance_req),
 			smart_str( obj.communications),
 			smart_str( obj.other_info),
@@ -554,7 +553,6 @@ def export_excel(request, queryset):
         row.write(col_no(), smart_str( obj.fire_position) )
         #row.write(col_no(), smart_str( obj.origin_point) )
         #row.write(col_no(), smart_str( obj.fire_boundary) )
-        row.write(col_no(), smart_str( obj.fire_not_found) )
         row.write(col_no(), smart_str( obj.assistance_req) )
         row.write(col_no(), smart_str( obj.communications) )
         row.write(col_no(), smart_str( obj.other_info) )

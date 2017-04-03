@@ -318,7 +318,7 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
         profile, created = Profile.objects.get_or_create(user=self.request.user)
         initial = {'region': profile.region, 'district': profile.district}
 
-#        import ipdb; ipdb.set_trace()
+        import ipdb; ipdb.set_trace()
         #tmp = '{"origin_point":[117.30008118682615,-30.849007786590157],"fire_boundary":[[[[117.29201309106732,-30.850896064320946],[117.30179780294505,-30.866002286167266],[117.30832094419686,-30.840081382771874],[117.29201309106732,-30.850896064320946]]],[[[117.31518740867246,-30.867032255838605],[117.3213672267005,-30.858277513632217],[117.34299658979864,-30.874413705149877],[117.31175417643466,-30.87733195255201],[117.31518740867246,-30.867032255838605]]]],"area":5068734.391653851,"sss_id":"6d09d9ce023e4dd3361ba125dfe1f9db"}'
         #sss = json.loads(tmp)
         if self.request.POST.has_key('sss_create'):
@@ -347,6 +347,10 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
                     initial['tenure'] = Tenure.objects.get(name__istartswith='other')
             else:
                 initial['tenure'] = Tenure.objects.get(name__istartswith='other')
+
+            if sss.has_key('region_id') and sss.has_key('district_id'):
+                initial['region'] = Region.objects.get(id=sss['region_id'])
+                initial['district'] = District.objects.get(id=sss['district_id'])
 
         return initial
 
@@ -477,6 +481,12 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
         form_class = self.get_form_class()
         form = self.get_form(form_class)
 
+
+        """ _________________________________________________________________________________________________________________
+
+        This Section used if district is changed from within the bushfire reporting system
+        However, actual use case is to update the district from SSS, which then executes the equiv code below from bfrs/api.py
+        """
         #import ipdb; ipdb.set_trace()
         # Check if district is has changed and whether the record needs to be invalidated
         cur_obj = Bushfire.objects.get(id=self.object.id)
@@ -498,6 +508,8 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
                'message': message,
             }
             return TemplateResponse(request, 'bfrs/confirm.html', context=context)
+        """ _________________________________________________________________________________________________________________ """
+
 
         if not self.request.POST.has_key('sss_create'):
             # FOR Testing outide SSS
