@@ -92,8 +92,8 @@
         <td>{{ bushfire.name }}</td>
 		<td align="center">
             {% if bushfire.report_status == bushfire.STATUS_INITIAL %}
-			  <a  href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=submit_initial');" title="Edit initial fire report"><i class="icon-edit icon-white"></i></a>
-			{% else %}
+              <a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="Edit initial fire report"><i class="icon-edit icon-white"></i></a>
+		    {% else %}
 			  <a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="Initial fire report submitted on {{bushfire.init_authorised_date|date_fmt}} by {{bushfire.init_authorised_by}}"><i class="icon-ok icon-white"></i></a>
 		    {% endif %}
 		</td>
