@@ -351,6 +351,77 @@ def fssdrs_email(bushfire, url):
 
     return send_mail(subject, message, settings.FROM_EMAIL, settings.POLICE_EMAIL)
 
+def create_view():
+    """
+    cursor.execute('''drop view bfrs_bushfire_v''')
+    """
+    from django.db import connection
+    cursor = connection.cursor()
+    cursor.execute('''
+        create or replace view bfrs_bushfire_v as
+        select
+            b.id,
+            b.region_id,
+            b.district_id,
+            b.name,
+            b.fire_number,
+            b.year,
+            b.fire_level,
+            b.media_alert_req,
+            b.park_trail_impacted,
+            b.fuel_type,
+            b.cause_id,
+            b.cause_state,
+            b.other_cause,
+            b.tenure_id,
+            b.other_tenure,
+            b.dfes_incident_no,
+            b.job_code,
+            b.fire_position,
+            b.fire_position_override,
+            b.origin_point,
+            b.fire_boundary,
+            b.assistance_req,
+            b.assistance_details,
+            b.communications,
+            b.other_info,
+            b.field_officer_id,
+            b.duty_officer_id,
+            b.init_authorised_by_id,
+            b.init_authorised_date,
+            b.dispatch_pw,
+            b.dispatch_aerial,
+            b.dispatch_pw_date,
+            b.dispatch_aerial_date,
+            b.fire_detected_date,
+            b.fire_contained_date,
+            b.fire_controlled_date,
+            b.fire_safe_date,
+            b.first_attack_id,
+            b.other_first_attack,
+            b.initial_control_id,
+            b.other_initial_control,
+            b.final_control_id,
+            b.other_final_control,
+            b.arson_squad_notified,
+            b.investigation_req,
+            b.offence_no,
+            b.area,
+            b.area_limit,
+            b.area_unknown,
+            b.time_to_control,
+            b.authorised_by_id,
+            b.authorised_date,
+            b.reviewed_by_id,
+            b.reviewed_date,
+            b.report_status,
+            b.archive
+	from bfrs_bushfire AS b
+        where
+           b.archive=false AND
+           b.report_status<>{}
+    '''.format(Bushfire.STATUS_INVALIDATED))
+
 
 def export_final_csv(request, queryset):
     #import csv

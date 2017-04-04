@@ -365,19 +365,12 @@ class Bushfire(Audit):
         s += str(self.time_to_control.seconds/3600) + ' Hours' if self.time_to_control.seconds>0 else ''
         return s
 
-#    @property
-#    def linked_rpts(self):
-#        return self.linked
-
     def user_unicode_patch(self):
         """ overwrite the User model's __unicode__() method """
         if self.first_name or self.last_name:
             return '%s %s' % (self.first_name, self.last_name)
         return self.username
     User.__unicode__ = user_unicode_patch
-
-#    def unique_id(self):
-#        return ' '.join(['BF', self.district.code, str(self.year), '{0:03d}'.format(self.incident_no)])
 
     def __str__(self):
         return ', '.join([self.fire_number])
