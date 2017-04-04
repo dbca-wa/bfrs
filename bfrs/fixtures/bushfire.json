@@ -66,7 +66,12 @@
         "final_control": 1,
         "arson_squad_notified": "True",
         "offence_no": 123,
-        "time_to_control": "7200"
+        "time_to_control": "7200",
+        "fire_detected_date": "2016-07-16T16:55:27.452Z",
+        "dispatch_pw": "False",
+        "dispatch_aerial": "False",
+        "park_trail_impacted": "False",
+        "fuel_type": "ABC Fuel Type"
     }
 },
 {
@@ -101,7 +106,16 @@
         "final_control": 1,
         "arson_squad_notified": "True",
         "offence_no": 123,
-        "time_to_control": "7200"
+        "time_to_control": "7200",
+        "fire_detected_date": "2016-07-16T16:55:27.452Z",
+        "dispatch_pw": "False",
+        "dispatch_aerial": "False",
+        "park_trail_impacted": "False",
+        "fuel_type": "ABC Fuel Type",
+        "report_status": 2,
+        "init_authorised_by": 1,
+        "init_authorised_date": "2016-07-16T16:55:27.452Z"
+
     }
 },
 {
@@ -136,7 +150,15 @@
         "final_control": 1,
         "arson_squad_notified": "True",
         "offence_no": 123,
-        "time_to_control": "7200"
+        "time_to_control": "7200",
+        "fire_detected_date": "2016-07-16T16:55:27.452Z",
+        "dispatch_pw": "False",
+        "dispatch_aerial": "False",
+        "park_trail_impacted": "False",
+        "fuel_type": "ABC Fuel Type",
+        "report_status": 3,
+        "init_authorised_by": 1,
+        "init_authorised_date": "2016-07-16T16:55:27.452Z"
     }
 },
 {
@@ -171,7 +193,21 @@
         "final_control": 1,
         "arson_squad_notified": "True",
         "offence_no": 123,
-        "time_to_control": "7200"
+        "time_to_control": "7200",
+        "fire_detected_date": "2016-07-16T16:55:27.452Z",
+        "dispatch_pw": "False",
+        "dispatch_aerial": "False",
+        "park_trail_impacted": "False",
+        "fuel_type": "ABC Fuel Type",
+        "report_status": 4,
+        "fire_contained_date": "2016-07-16T16:55:27.452Z",
+        "fire_controlled_date": "2016-07-16T16:55:27.452Z",
+        "fire_safe_date": "2016-07-16T16:55:27.452Z",
+        "init_authorised_by": 1,
+        "init_authorised_date": "2016-07-16T16:55:27.452Z",
+        "authorised_by": 2,
+        "authorised_date": "2016-07-16T16:55:27.452Z"
+
     }
 },
 {
@@ -206,7 +242,20 @@
         "final_control": 1,
         "arson_squad_notified": "True",
         "offence_no": 123,
-        "time_to_control": "7200"
+        "time_to_control": "7200",
+        "fire_detected_date": "2016-07-16T16:55:27.452Z",
+        "dispatch_pw": "False",
+        "dispatch_aerial": "False",
+        "park_trail_impacted": "False",
+        "fuel_type": "ABC Fuel Type",
+        "report_status": 5,
+        "fire_contained_date": "2016-07-16T16:55:27.452Z",
+        "fire_controlled_date": "2016-07-16T16:55:27.452Z",
+        "fire_safe_date": "2016-07-16T16:55:27.452Z",
+        "init_authorised_by": 1,
+        "init_authorised_date": "2016-07-16T16:55:27.452Z",
+        "authorised_by": 2,
+        "authorised_date": "2016-07-16T16:55:27.452Z"
     }
 },
 {
@@ -241,7 +290,23 @@
         "final_control": 1,
         "arson_squad_notified": "True",
         "offence_no": 123,
-        "time_to_control": "7200"
+        "time_to_control": "7200",
+        "fire_detected_date": "2016-07-16T16:55:27.452Z",
+        "dispatch_pw": "False",
+        "dispatch_aerial": "False",
+        "park_trail_impacted": "False",
+        "fuel_type": "ABC Fuel Type",
+        "report_status": 6,
+        "fire_contained_date": "2016-07-16T16:55:27.452Z",
+        "fire_controlled_date": "2016-07-16T16:55:27.452Z",
+        "fire_safe_date": "2016-07-16T16:55:27.452Z",
+        "init_authorised_by": 1,
+        "init_authorised_date": "2016-07-16T16:55:27.452Z",
+        "authorised_by": 2,
+        "authorised_date": "2016-07-16T16:55:27.452Z",
+        "reviewed_by": 1,
+        "reviewed_date": "2016-07-16T16:55:27.452Z"
+
     }
 },
 {
@@ -276,7 +341,24 @@
         "final_control": 1,
         "arson_squad_notified": "True",
         "offence_no": 123,
-        "time_to_control": "7200"
+        "time_to_control": "7200",
+        "fire_detected_date": "2016-07-16T16:55:27.452Z",
+        "dispatch_pw": "False",
+        "dispatch_aerial": "False",
+        "park_trail_impacted": "False",
+        "fuel_type": "ABC Fuel Type",
+        "report_status": 6,
+        "fire_contained_date": "2016-07-16T16:55:27.452Z",
+        "fire_controlled_date": "2016-07-16T16:55:27.452Z",
+        "fire_safe_date": "2016-07-16T16:55:27.452Z",
+        "init_authorised_by": 1,
+        "init_authorised_date": "2016-07-16T16:55:27.452Z",
+        "authorised_by": 2,
+        "authorised_date": "2016-07-16T16:55:27.452Z",
+        "reviewed_by": 1,
+        "reviewed_date": "2016-07-16T16:55:27.452Z",
+        "archive": "True"
+
     }
 },
 {
@@ -311,7 +393,13 @@
         "final_control": 1,
         "arson_squad_notified": "True",
         "offence_no": 123,
-        "time_to_control": "7200"
+        "time_to_control": "7200",
+        "fire_detected_date": "2016-07-16T16:55:27.452Z",
+        "dispatch_pw": "False",
+        "dispatch_aerial": "False",
+        "park_trail_impacted": "False",
+        "fuel_type": "ABC Fuel Type"
+
     }
 },
 {
@@ -346,7 +434,13 @@
         "final_control": 1,
         "arson_squad_notified": "True",
         "offence_no": 123,
-        "time_to_control": "7200"
+        "time_to_control": "7200",
+        "fire_detected_date": "2016-07-16T16:55:27.452Z",
+        "dispatch_pw": "False",
+        "dispatch_aerial": "False",
+        "park_trail_impacted": "False",
+        "fuel_type": "ABC Fuel Type"
+
     }
 },
 {
@@ -381,7 +475,13 @@
         "final_control": 1,
         "arson_squad_notified": "True",
         "offence_no": 123,
-        "time_to_control": "7200"
+        "time_to_control": "7200",
+        "fire_detected_date": "2016-07-16T16:55:27.452Z",
+        "dispatch_pw": "False",
+        "dispatch_aerial": "False",
+        "park_trail_impacted": "False",
+        "fuel_type": "ABC Fuel Type"
+
     }
 },
 {
@@ -416,7 +516,13 @@
         "final_control": 1,
         "arson_squad_notified": "True",
         "offence_no": 123,
-        "time_to_control": "7200"
+        "time_to_control": "7200",
+        "fire_detected_date": "2016-07-16T16:55:27.452Z",
+        "dispatch_pw": "False",
+        "dispatch_aerial": "False",
+        "park_trail_impacted": "False",
+        "fuel_type": "ABC Fuel Type"
+
     }
 },
 {
@@ -451,7 +557,13 @@
         "final_control": 1,
         "arson_squad_notified": "True",
         "offence_no": 123,
-        "time_to_control": "7200"
+        "time_to_control": "7200",
+        "fire_detected_date": "2016-07-16T16:55:27.452Z",
+        "dispatch_pw": "False",
+        "dispatch_aerial": "False",
+        "park_trail_impacted": "False",
+        "fuel_type": "ABC Fuel Type"
+
     }
 },
 {
@@ -486,7 +598,13 @@
         "final_control": 1,
         "arson_squad_notified": "True",
         "offence_no": 123,
-        "time_to_control": "7200"
+        "time_to_control": "7200",
+        "fire_detected_date": "2016-07-16T16:55:27.452Z",
+        "dispatch_pw": "False",
+        "dispatch_aerial": "False",
+        "park_trail_impacted": "False",
+        "fuel_type": "ABC Fuel Type"
+
     }
 },
 {
@@ -521,7 +639,13 @@
         "final_control": 1,
         "arson_squad_notified": "True",
         "offence_no": 123,
-        "time_to_control": "7200"
+        "time_to_control": "7200",
+        "fire_detected_date": "2016-07-16T16:55:27.452Z",
+        "dispatch_pw": "False",
+        "dispatch_aerial": "False",
+        "park_trail_impacted": "False",
+        "fuel_type": "ABC Fuel Type"
+
     }
 },
 {
@@ -556,7 +680,13 @@
         "final_control": 1,
         "arson_squad_notified": "True",
         "offence_no": 123,
-        "time_to_control": "7200"
+        "time_to_control": "7200",
+        "fire_detected_date": "2016-07-16T16:55:27.452Z",
+        "dispatch_pw": "False",
+        "dispatch_aerial": "False",
+        "park_trail_impacted": "False",
+        "fuel_type": "ABC Fuel Type"
+
     }
 },
 {
@@ -591,7 +721,13 @@
         "final_control": 1,
         "arson_squad_notified": "True",
         "offence_no": 123,
-        "time_to_control": "7200"
+        "time_to_control": "7200",
+        "fire_detected_date": "2016-07-16T16:55:27.452Z",
+        "dispatch_pw": "False",
+        "dispatch_aerial": "False",
+        "park_trail_impacted": "False",
+        "fuel_type": "ABC Fuel Type"
+
     }
 },
 {
@@ -626,7 +762,13 @@
         "final_control": 1,
         "arson_squad_notified": "True",
         "offence_no": 123,
-        "time_to_control": "7200"
+        "time_to_control": "7200",
+        "fire_detected_date": "2016-07-16T16:55:27.452Z",
+        "dispatch_pw": "False",
+        "dispatch_aerial": "False",
+        "park_trail_impacted": "False",
+        "fuel_type": "ABC Fuel Type"
+
     }
 }
 ]

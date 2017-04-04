@@ -318,7 +318,7 @@
         {% endif %}
       {% endif %}
 
-      <a id="id_cancel_btn" {% if "javascript: history.go(-1)" %}href="javascript: history.go(-1)" {% else %} href="{% url 'main' %}" {% endif %} class="btn btn-primary btn-danger">Cancel</a>
+      <a id="id_cancel_btn" href="{% url 'main' %}" class="btn btn-primary btn-danger">Cancel</a>
       </p>
     </div>
   </div>

@@ -422,6 +422,11 @@ def create_view():
            b.report_status<>{}
     '''.format(Bushfire.STATUS_INVALIDATED))
 
+def test_view():
+    from django.db import connection
+    cursor=connection.cursor()
+    cursor.execute('''select fire_number, year, district_id from bfrs_bushfire_v''')
+    return cursor.fetchall()
 
 def export_final_csv(request, queryset):
     #import csv

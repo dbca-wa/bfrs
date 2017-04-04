@@ -15,7 +15,7 @@ import json
 
 SUBMIT_MANDATORY_FIELDS= [
     #'region', 'district', 'year', 'fire_number', 'name', 'fire_detected_date', 'job_code',
-    'region', 'district', 'year', 'fire_number', 'name', 'job_code',
+    'region', 'district', 'year', 'fire_number', 'name', 'job_code', 'fire_detected_date',
     'dispatch_pw', 'dispatch_aerial', 'fire_level', 'investigation_req', 'park_trail_impacted',
     'fuel_type', 'assistance_req', 'cause_state', 'cause', 'tenure',
 ]
@@ -52,7 +52,7 @@ def check_mandatory_fields(obj, fields, dep_fields):
     #import ipdb; ipdb.set_trace()
 
     for field, dep_set in dep_fields.iteritems():
-        if getattr(obj, field) and getattr(obj, field)!=dep_set[0] and getattr(obj, dep_set[1]) is None:
+        if getattr(obj, field) and getattr(obj, field)==dep_set[0] and getattr(obj, dep_set[1]) is None:
             missing.append(dep_set[1])
 
     return missing
