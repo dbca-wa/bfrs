@@ -153,6 +153,7 @@ class Bushfire(Audit):
     fire_number = models.CharField(max_length=15, verbose_name="Fire Number")
     #year = models.CharField(verbose_name="Financial Year", max_length=9, default=current_finyear())
     year = models.PositiveSmallIntegerField(verbose_name="Financial Year", default=current_finyear())
+    reporting_year = models.PositiveSmallIntegerField(verbose_name="Reporting Year", default=current_finyear())
 
     fire_level = models.PositiveSmallIntegerField(choices=FIRE_LEVEL_CHOICES, null=True, blank=True)
     media_alert_req = models.NullBooleanField(verbose_name="Media Alert Required", null=True)

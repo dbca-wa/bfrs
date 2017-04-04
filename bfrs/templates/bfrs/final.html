@@ -145,6 +145,12 @@
             <td colspan="1" class="cbas">{% if is_authorised %} {{snapshot.job_code}} {% else %} {{form.job_code}} {% endif %}</td>
         </tr>
 
+        <tr>
+            <th class="cbas">Reporting Year *</th>
+            <td colspan="1" class="cbas">{% if is_authorised %} {{snapshot.reporting_year}} {% else %} {{form.reporting_year}} {% endif %}</td>
+        </tr>
+
+
 
   </tbody>
 </table>

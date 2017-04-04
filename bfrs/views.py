@@ -54,19 +54,21 @@ class BooleanFilter(django_filters.filters.Filter):
 
 class BushfireFilter(django_filters.FilterSet):
 
-#    YEAR_CHOICES = [[i['year'], i['year']] for i in Bushfire.objects.all().values('year').distinct()]
-#
-#    REGION_CHOICES = []
-#    for region in Region.objects.distinct('name'):
-#        REGION_CHOICES.append([region.id, region.name])
-#
-#    DISTRICT_CHOICES = []
-#    for district in District.objects.distinct('name'):
-#        DISTRICT_CHOICES.append([district.id, district.name])
-#
-#    region = django_filters.ChoiceFilter(choices=REGION_CHOICES, label='Region')
-#    district = django_filters.ChoiceFilter(choices=DISTRICT_CHOICES, label='District')
-#    year = django_filters.ChoiceFilter(choices=YEAR_CHOICES, label='Year')
+    YEAR_CHOICES = [[i['year'], i['year']] for i in Bushfire.objects.all().values('year').distinct()]
+    RPT_YEAR_CHOICES = [[i['reporting_year'], i['reporting_year']] for i in Bushfire.objects.all().values('reporting_year').distinct()]
+
+    REGION_CHOICES = []
+    for region in Region.objects.distinct('name'):
+        REGION_CHOICES.append([region.id, region.name])
+
+    DISTRICT_CHOICES = []
+    for district in District.objects.distinct('name'):
+        DISTRICT_CHOICES.append([district.id, district.name])
+
+    region = django_filters.ChoiceFilter(choices=REGION_CHOICES, label='Region')
+    district = django_filters.ChoiceFilter(choices=DISTRICT_CHOICES, label='District')
+    year = django_filters.ChoiceFilter(choices=YEAR_CHOICES, label='Year')
+    reporting_year = django_filters.ChoiceFilter(choices=RPT_YEAR_CHOICES, label='Reporting Year')
     report_status = django_filters.ChoiceFilter(choices=Bushfire.REPORT_STATUS_CHOICES, label='Report Status')
 
     class Meta:
@@ -75,19 +77,22 @@ class BushfireFilter(django_filters.FilterSet):
             'region_id',
             'district_id',
             'year',
+            'reporting_year',
             'report_status',
         ]
         order_by = (
             ('region_id', 'Region'),
             ('district_id', 'District'),
             ('year', 'Year'),
+            ('reporting_year', 'Reporting Year'),
             ('report_status', 'Report Status'),
         )
     def __init__(self, *args, **kwargs):
         super(BushfireFilter, self).__init__(*args, **kwargs)
 
         # allows dynamic update of the filter set, on page refresh
-#        self.filters['year'].extra['choices'] = [[None, '---------']] + [[i['year'], i['year']] for i in Bushfire.objects.all().values('year').distinct().order_by('year')]
+        self.filters['year'].extra['choices'] = [[None, '---------']] + [[i['year'], i['year']] for i in Bushfire.objects.all().values('year').distinct().order_by('year')]
+        self.filters['reporting_year'].extra['choices'] = [[None, '---------']] + [[i['reporting_year'], i['reporting_year']] for i in Bushfire.objects.all().values('reporting_year').distinct().order_by('reporting_year')]
 
 
 class ProfileView(LoginRequiredMixin, generic.FormView):
@@ -129,6 +134,11 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
         if self.request.GET.has_key('report_status') and int(self.request.GET.get('report_status'))==Bushfire.STATUS_INVALIDATED:
             # show only invalidated (This is taken care of from FilterView)
             return super(BushfireView, self).get_queryset()
+
+#        if self.request.GET.has_key('report_status') and int(self.request.GET.get('report_status'))==Bushfire.STATUS_MISSING_FINAL:
+#            # show only invalidated (This is taken care of from FilterView)
+#            #return super(BushfireView, self).get_queryset()
+#            return Bushfire.objects.filter(report_status=Bushfire.STATUS_FINAL_DRAFT)
         return Bushfire.objects.exclude(report_status=Bushfire.STATUS_INVALIDATED)
 
     def get_success_url(self):
