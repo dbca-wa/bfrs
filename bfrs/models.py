@@ -123,6 +123,7 @@ class Bushfire(Audit):
     STATUS_REVIEW_DRAFT       = 5 # allows for CREATE of REVIEW DRAFT REPORT
     STATUS_REVIEWED           = 6
     STATUS_INVALIDATED        = 7
+    STATUS_MISSING_FINAL      = 8 # This is not really a status, and is never set - used for filtering qs only
     REPORT_STATUS_CHOICES = (
         (STATUS_INITIAL, 'Initial'),
         (STATUS_INITIAL_AUTHORISED, 'Initial Authorised'),
@@ -131,6 +132,7 @@ class Bushfire(Audit):
         (STATUS_REVIEW_DRAFT, 'Draft Review'),
         (STATUS_REVIEWED, 'Reviewed'),
         (STATUS_INVALIDATED, 'Invalidated'),
+        (STATUS_MISSING_FINAL, 'Missing Final'), # This is not really a status, and is never set - used for filtering qs only
     )
 
     FIRE_LEVEL_CHOICES = (
@@ -234,6 +236,7 @@ class Bushfire(Audit):
 
     archive = models.BooleanField(verbose_name="Archive report", default=False)
     #invalid = models.BooleanField(verbose_name="Invalidate report", default=False)
+    #invalid_details = models.CharField(verbose_name="Reason for invalidating", max_length=64, null=True, blank=True)
 
 #    def save(self, *args, **kwargs):
 #        '''Overide save() to cleanse text input fields.

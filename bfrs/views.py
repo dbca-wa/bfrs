@@ -69,7 +69,10 @@ class BushfireFilter(django_filters.FilterSet):
     district = django_filters.ChoiceFilter(choices=DISTRICT_CHOICES, label='District')
     year = django_filters.ChoiceFilter(choices=YEAR_CHOICES, label='Year')
     reporting_year = django_filters.ChoiceFilter(choices=RPT_YEAR_CHOICES, label='Reporting Year')
-    report_status = django_filters.ChoiceFilter(choices=Bushfire.REPORT_STATUS_CHOICES, label='Report Status')
+    report_status = django_filters.ChoiceFilter(choices=Bushfire.REPORT_STATUS_CHOICES, label='Report Status', name='report_status', method='filter_report_status')
+
+    def filter_report_status(self, queryset, name, value):
+        return queryset.filter(report_status__in=[Bushfire.STATUS_INITIAL_AUTHORISED, Bushfire.STATUS_FINAL_DRAFT])
 
     class Meta:
         model = Bushfire

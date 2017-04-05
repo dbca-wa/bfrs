@@ -91,6 +91,11 @@
 <table class="table table-bordered table-striped table-condensed">
     <tbody>
         <tr>
+            <th class="cbas" style="font-weight:normal;">Reporting Year</th>
+            <td colspan="3" class="cbas">{% if is_authorised %} {{snapshot.reporting_year}} {% else %} {{form.reporting_year}} {% endif %}</td>
+        </tr>
+
+        <tr>
             <th class="cbas">Date fire contained *</th>
             <td class="cbas">{% if is_authorised %} {{snapshot.fire_contained_date}} {% else %} {{form.fire_contained_date}} {% endif %}</td>
 
@@ -146,8 +151,8 @@
         </tr>
 
         <tr>
-            <th class="cbas">Reporting Year *</th>
-            <td colspan="1" class="cbas">{% if is_authorised %} {{snapshot.reporting_year}} {% else %} {{form.reporting_year}} {% endif %}</td>
+            <th class="cbas" style="font-weight:normal;">Reporting Year</th>
+            <td colspan="3" class="cbas">{% if is_authorised %} {{snapshot.reporting_year}} {% else %} {{form.reporting_year}} {% endif %}</td>
         </tr>
 
 
