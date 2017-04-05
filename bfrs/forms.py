@@ -1,6 +1,7 @@
 from django import forms
 from bfrs.models import (Bushfire, AreaBurnt, Damage, Injury,
-        Region, District, Profile
+        Region, District, Profile,
+        current_finyear,
     )
 from datetime import datetime, timedelta
 from django.conf import settings
@@ -167,8 +168,32 @@ class BushfireForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super(BushfireForm, self).clean()
 
-        #import ipdb; ipdb.set_trace()
         # FINAL Form
+        if self.cleaned_data['fire_not_found']:
+            self.cleaned_data['fire_level'] = None
+            self.cleaned_data['arson_squad_notified'] = None
+            self.cleaned_data['fire_contained_date'] = None
+            self.cleaned_data['fire_controlled_date'] = None
+            self.cleaned_data['fire_safe_date'] = None
+            self.cleaned_data['first_attack'] = None
+            self.cleaned_data['initial_control'] = None
+            self.cleaned_data['final_control'] = None
+            self.cleaned_data['other_first_attack'] = None
+            self.cleaned_data['other_initial_control'] = None
+            self.cleaned_data['other_final_control'] = None
+            self.cleaned_data['area'] = None
+            self.cleaned_data['area_limit'] = False
+            self.cleaned_data['arson_squad_notified'] = False
+            self.cleaned_data['offence_no'] = None
+            self.cleaned_data['job_code'] = None
+            self.cleaned_data['reporting_year'] = current_finyear()
+            return cleaned_data
+        else:
+            self.cleaned_data['invalid_details'] = None
+
+        if not self.cleaned_data['fire_level']:
+            self.add_error('fire_level', 'Must specify fire level.')
+
         first_attack = self.cleaned_data['first_attack']
         if not first_attack:
             self.add_error('first_attack', 'Must specify First attack agency.')
@@ -190,6 +215,7 @@ class BushfireForm(forms.ModelForm):
             if not self.cleaned_data['other_final_control']:
                 self.add_error('other_final_control', 'Must specify, if Final control agency is Other.')
 
+        return cleaned_data
 
 class BushfireCreateBaseForm(forms.ModelForm):
     days = forms.IntegerField(label='Days', required=False)
@@ -272,6 +298,7 @@ class BushfireCreateBaseForm(forms.ModelForm):
                 if not self.cleaned_data['other_tenure']:
                     self.add_error('other_tenure', 'Must specify, if Tenure of ignition point is Other.')
 
+        return cleaned_data
 
 
 

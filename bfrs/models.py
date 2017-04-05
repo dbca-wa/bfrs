@@ -48,6 +48,9 @@ def current_finyear():
 
 def check_mandatory_fields(obj, fields, dep_fields):
     # getattr(obj, 'name') ==> obj.name (when property name is available as a string)
+    if obj.fire_not_found:
+        return []
+
     missing = [field for field in fields if getattr(obj, field) is None or getattr(obj, field)=='']
     #import ipdb; ipdb.set_trace()
 
@@ -155,7 +158,7 @@ class Bushfire(Audit):
     fire_number = models.CharField(max_length=15, verbose_name="Fire Number")
     #year = models.CharField(verbose_name="Financial Year", max_length=9, default=current_finyear())
     year = models.PositiveSmallIntegerField(verbose_name="Financial Year", default=current_finyear())
-    reporting_year = models.PositiveSmallIntegerField(verbose_name="Reporting Year", default=current_finyear())
+    reporting_year = models.PositiveSmallIntegerField(verbose_name="Reporting Year", default=current_finyear(), blank=True)
 
     fire_level = models.PositiveSmallIntegerField(choices=FIRE_LEVEL_CHOICES, null=True, blank=True)
     media_alert_req = models.NullBooleanField(verbose_name="Media Alert Required", null=True)

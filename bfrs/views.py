@@ -642,15 +642,19 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
         area_burnt_formset      = AreaBurntFormSet(self.request.POST, prefix='area_burnt_fs')
 
 
-        #import ipdb; ipdb.set_trace()
         #if form.is_valid() and area_burnt_formset.is_valid() and injury_formset.is_valid() and damage_formset.is_valid():
-        if form.is_valid() and injury_formset.is_valid() and damage_formset.is_valid(): # No need to check area_burnt_formset since the fs is readonly on the final form
-            return self.form_valid(request,
-                form,
-                area_burnt_formset,
-                injury_formset,
-                damage_formset,
-            )
+        if form.is_valid():
+            #import ipdb; ipdb.set_trace()
+            if form.cleaned_data['fire_not_found']:
+                return self.form_valid(request, form)
+
+            if injury_formset.is_valid() and damage_formset.is_valid(): # No need to check area_burnt_formset since the fs is readonly on the final form
+                return self.form_valid(request,
+                    form,
+                    area_burnt_formset,
+                    injury_formset,
+                    damage_formset,
+                )
         else:
             return self.form_invalid(request,
                 form,
@@ -678,33 +682,33 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
 
     def form_valid(self, request,
             form,
-            area_burnt_formset,
-            injury_formset,
-            damage_formset,
+            area_burnt_formset=None,
+            injury_formset=None,
+            damage_formset=None,
         ):
 
-        #import ipdb; ipdb.set_trace()
+        redirect_referrer =  HttpResponseRedirect(request.META.get('HTTP_REFERER'))
         self.object = form.save(commit=False)
         self.object.modifier = request.user #1 #User.objects.all()[0] #request.user
         self.object.save()
 
-        areas_burnt_updated = update_areas_burnt_fs(self.object, area_burnt_formset)
-        injury_updated = update_injury_fs(self.object, injury_formset)
-        damage_updated = update_damage_fs(self.object, damage_formset)
+        if area_burnt_formset:
+            areas_burnt_updated = update_areas_burnt_fs(self.object, area_burnt_formset)
+            injury_updated = update_injury_fs(self.object, injury_formset)
+            damage_updated = update_damage_fs(self.object, damage_formset)
 
-        redirect_referrer =  HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
-        if not areas_burnt_updated:
-            messages.error(request, 'There was an error saving Areas Burnt.')
-            return redirect_referrer
+            if not areas_burnt_updated:
+                messages.error(request, 'There was an error saving Areas Burnt.')
+                return redirect_referrer
 
-        elif not injury_updated:
-            messages.error(request, 'There was an error saving Injury.')
-            return redirect_referrer
+            elif not injury_updated:
+                messages.error(request, 'There was an error saving Injury.')
+                return redirect_referrer
 
-        elif not damage_updated:
-            messages.error(request, 'There was an error saving Damage.')
-            return redirect_referrer
+            elif not damage_updated:
+                messages.error(request, 'There was an error saving Damage.')
+                return redirect_referrer
 
         if self.request.POST.has_key('_save_continue'):
             return redirect_referrer
