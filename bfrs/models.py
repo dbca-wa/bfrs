@@ -176,7 +176,7 @@ class Bushfire(Audit):
     origin_point = models.PointField(null=True, blank=True, editable=True, help_text='Optional.')
     fire_boundary = models.MultiPolygonField(srid=4326, null=True, blank=True, editable=True, help_text='Optional.')
     #grid = models.CharField(verbose_name="Lat/Long, MGA, FD Grid", max_length=100, null=True, blank=True)
-    #fire_not_found = models.BooleanField(default=False)
+    fire_not_found = models.BooleanField(default=False)
 
 
     # FireBehaviour FS here
@@ -235,8 +235,7 @@ class Bushfire(Audit):
     #sss_id = models.CharField(verbose_name="Spatial Support System ID", max_length=64, null=True, blank=True)
 
     archive = models.BooleanField(verbose_name="Archive report", default=False)
-    #invalid = models.BooleanField(verbose_name="Invalidate report", default=False)
-    #invalid_details = models.CharField(verbose_name="Reason for invalidating", max_length=64, null=True, blank=True)
+    invalid_details = models.CharField(verbose_name="Reason for invalidating", max_length=64, null=True, blank=True)
 
 #    def save(self, *args, **kwargs):
 #        '''Overide save() to cleanse text input fields.

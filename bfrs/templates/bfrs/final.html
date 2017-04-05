@@ -90,11 +90,27 @@
 
 <table class="table table-bordered table-striped table-condensed">
     <tbody>
+	{% comment %}
         <tr>
-            <th class="cbas" style="font-weight:normal;">Reporting Year</th>
-            <td colspan="3" class="cbas">{% if is_authorised %} {{snapshot.reporting_year}} {% else %} {{form.reporting_year}} {% endif %}</td>
+            <th class="cbas" style="font-weight:normal;" width ='17%'>Fire not found</th>
+            <td colspan="3" class="cbas">{% if is_authorised %} {{snapshot.fire_not_found}} {% else %} {{form.fire_not_found}} {% endif %}</td>
+        </tr>
+	{% endcomment %}
+        <tr>
+            <th class="cbas" style="font-weight:normal;" width ='17%'>Fire not found</th>
+            <td colspan="1" class="cbas" >
+		{% if is_authorised %} {{snapshot.fire_not_found}} Details {{snapshot.invalid_details}} {% else %} {{form.fire_not_found}} {% endif %}
+                <span class="div_invalid_details" style="display: none; margin: 20px;">{% if not is_authorised %} Details{{form.invalid_details}} {% endif %}</span>
+            </td>
         </tr>
 
+  </tbody>
+</table>
+
+<div class="div_form_invalidate">
+    <!--<div class=div_form_invalidate style="display: none;">-->
+<table class="table table-bordered table-striped table-condensed">
+    <tbody>
         <tr>
             <th class="cbas">Date fire contained *</th>
             <td class="cbas">{% if is_authorised %} {{snapshot.fire_contained_date}} {% else %} {{form.fire_contained_date}} {% endif %}</td>
@@ -175,7 +191,7 @@
 
   </tbody>
 </table>
-
+</div> <!-- div_form_invalidate -->
 
 {% if not action %}
 <div class="navbar navbar-fixed-bottom">
@@ -441,6 +457,15 @@ $('#id_area_limit').on('change', function() {
 	}
 });
 
+$('#id_fire_not_found').on('change', function() {
+  if($("#id_fire_not_found").is(':checked')) { 
+      $(".div_form_invalidate *").prop('disabled',true).css({ opacity: 0.8  });
+      $(".div_invalid_details").show();
+} else {
+      $(".div_form_invalidate *").prop('disabled',false).css({ opacity: 1  });
+      $(".div_invalid_details").hide();
+  }
+});
 
 </script>
 

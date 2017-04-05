@@ -151,7 +151,8 @@ class BushfireForm(forms.ModelForm):
 
     class Meta:
         model = Bushfire
-        fields = ('fire_contained_date', 'fire_controlled_date', 'fire_safe_date',
+        fields = ('fire_not_found', 'invalid_details',
+                  'fire_contained_date', 'fire_controlled_date', 'fire_safe_date',
                   'first_attack', 'initial_control', 'final_control',
                   'other_first_attack', 'other_initial_control', 'other_final_control',
                   'area', 'area_limit', 'fire_level', 'arson_squad_notified', 'offence_no', 'job_code', 'reporting_year',
