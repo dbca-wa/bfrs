@@ -508,6 +508,8 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
         district = District.objects.get(id=request.POST['district']) if request.POST.has_key('district') else None # get the district from the form
         #if self.request.POST.has_key('action') and self.request.POST.get('action')=='invalidate' and not cur_obj.invalid:
         if self.request.POST.has_key('action') and self.request.POST.get('action')=='invalidate' and cur_obj.report_status!=Bushfire.STATUS_INVALIDATED:
+            self.object.invalid_details = self.request.POST.get('invalid_details')
+            self.object.save()
             self.object = invalidate_bushfire(self.object, district, request.user)
             url_name = 'bushfire_initial' if self.object.report_status <= Bushfire.STATUS_INITIAL_AUTHORISED else 'bushfire_final'
             return  HttpResponseRedirect(reverse('bushfire:' + url_name, kwargs={'pk': self.object.id}))
