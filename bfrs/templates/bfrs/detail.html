@@ -143,13 +143,13 @@
         <tr>
 			<th class="cbas">P&W Resource dispatched *<br><br><div class=div_dispatch_pw_date style="display: none;">Date and time of dispatch</div></th>
             <td colspan="2" class="cbas">
-                {% if is_authorised %} {{snapshot.dispatch_pw|yesno}}{% if snapshot.dispatch_pw %}<br>{{snapshot.dispatch_pw_date}} {% endif %} {% else %} {{form.dispatch_pw}} {% endif %}<br>
+                {% if is_authorised %} {{snapshot.dispatch_pw|yesno:"Yes,No"}}{% if snapshot.dispatch_pw %}<br>{{snapshot.dispatch_pw_date}} {% endif %} {% else %} {{form.dispatch_pw}} {% endif %}<br>
 				<div class=div_dispatch_pw_date style="display: none;">{% if not is_authorised %} {{form.dispatch_pw_date}} {% endif %}</div>
 			</td>
 
 			<th class="cbas">Aerial support dispatched *<br><br><div class=div_dispatch_aerial_date style="display: none;">Date and time of dispatch</div></th>
             <td colspan="2" class="cbas">
-                {% if is_authorised %} {{snapshot.dispatch_aerial|yesno}}{% if snapshot.dispatch_aerial %}<br>{{snapshot.dispatch_aerial_date}}{% endif %}{% else %} {{form.dispatch_aerial}} {% endif %}<br>
+                {% if is_authorised %} {{snapshot.dispatch_aerial|yesno:"Yes,No"}}{% if snapshot.dispatch_aerial %}<br>{{snapshot.dispatch_aerial_date}}{% endif %}{% else %} {{form.dispatch_aerial}} {% endif %}<br>
 				<div class=div_dispatch_aerial_date style="display: none;">{% if not is_authorised %} {{form.dispatch_aerial_date}} {% endif %}</div>
 			</td>
         </tr>
@@ -159,14 +159,14 @@
             <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.fire_level}} {% else %} {{form.fire_level}} {% endif %}</td>
 
             <th class="cbas">Investigation required *</th>
-            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.investigation_req|yesno}} {% else %} {{form.investigation_req}} {% endif %}</td>
+            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.investigation_req|yesno:"Yes,No"}} {% else %} {{form.investigation_req}} {% endif %}</td>
         </tr>
 
         <tr>
             <th class="cbas">Media Alert Required *</th>
             <td colspan="2" class="cbas">
                 {% if is_authorised %}
-                {{snapshot.media_alert_req|yesno}} {% if snapshot.media_alert_req %}<br> <span>send email notification to PICA</span>{% endif %}
+                {{snapshot.media_alert_req|yesno:"Yes,No"}} {% if snapshot.media_alert_req %}<br> <span>send email notification to PICA</span>{% endif %}
 
                 {% else %}
                 {{form.media_alert_req}} <br> <span class="div_pica" style="display: none;">Send email notification to PICA</span>
@@ -176,7 +176,7 @@
             <th class="cbas">Park and/or Trail *<br>potentially impacted</th>
             <td colspan="2" class="cbas">
                 {% if is_authorised %}
-                  {{snapshot.park_trail_impacted|yesno}} {% if snapshot.park_trail_impacted %}<br> <span>send email notification to PVS</span>{% endif %}
+                  {{snapshot.park_trail_impacted|yesno:"Yes,No"}} {% if snapshot.park_trail_impacted %}<br> <span>send email notification to PVS</span>{% endif %}
                 {% else %} 
                   {{form.park_trail_impacted}} <br> <span class="div_pvs" style="display: none;">Send email notification to PVS </span>
                 {% endif %}
@@ -203,20 +203,20 @@
             <th width="25%" class="cbas" style="font-weight:normal;">Position of fire<br>(street address, or km from landmark/suburb)</th>
             <td colspan="2" class="cbas">
 				{% if is_authorised %} {{snapshot.fire_position}} {% else %} {{form.fire_position}} {% endif %}<br>
-                {% if is_authorised %} SSS overide - {{snapshot.fire_position_override|yesno}} {% else %} {{form.fire_position_override}} SSS override{% endif %}
+                {% if is_authorised %} SSS overide - {{snapshot.fire_position_override|yesno:"Yes,No"}} {% else %} {{form.fire_position_override}} SSS override{% endif %}
 			</td>
 
             <th class="cbas" style="font-weight:normal;">Area of fire at arrival (ha)</th>
             <td colspan="2" class="cbas">
-                {% if is_authorised %} {{snapshot.area}} {% else %} {{form.area}} {% endif %}<br>
-                {% if is_authorised %} Unknown - {{snapshot.area_unknown|yesno}} {% else %} {{form.area_unknown}} Unknown{% endif %}
+				{% if is_authorised %} Unknown - {{snapshot.area_unknown|yesno:"Yes,No"}} {% else %} {{form.area_unknown}} Unknown{% endif %}<br>
+				<div class="div_area" style="visibility: visible;">{% if is_authorised %} {{snapshot.area}} {% else %} {{form.area}} {% endif %}</div>
             </td>
         </tr>
 
         <tr>
 		    <th class="cbas">Assistance Required *<br><br><div class=div_assist style="display: none; font-weight:normal;">Details</div></th>
             <td colspan="2" class="cbas">
-                {% if is_authorised %} {{snapshot.assistance_req|yesno}} {% if snapshot.assistance_req %}<br>{{snapshot.assistance_details}} {% endif %}{% else %} {{form.assistance_req}} {% endif %}<br>
+                {% if is_authorised %} {{snapshot.assistance_req|yesno:"Yes,No"}} {% if snapshot.assistance_req %}<br>{{snapshot.assistance_details}} {% endif %}{% else %} {{form.assistance_req}} {% endif %}<br>
 		        <div class=div_assist style="display: none;">{% if is_authorised %}  {% else %} {{form.assistance_details}} {% endif %}</div>
 		    </td>
             
@@ -342,67 +342,6 @@
 
 <script>
 
-    $(function(){
-        /**
-        Highlight tabs RED if error field is located in that tab
-        */
-        var origin = ['mga_zone', 'mga_easting', 'mga_northing', 'lat_decimal', 'lat_degrees', 'lat_minutes', 'lon_decimal', 'lon_degrees', 'lon_minutes', 'fd_letter', 'fd_number', 'fd_tenths'];
-        var detail = ['first_attack', 'other_agency', 'cause', 'known_possible', 'other_cause'];
-        var comments = ['field_officer'];
-        var tab_origin_error = false;
-        var tab_detail_error = false;
-        var tab_comments_error = false;
-
-        {% for field in form %} 
-            {% if field.errors %}
-                if (origin.indexOf("{{ field.name }}") > -1) {
-                    tab_origin_error = true;
-                }
-
-                if (detail.indexOf("{{ field.name }}") > -1) {
-                    tab_detail_error = true;
-                    console.log("***** " + "{{ field.name }} : {{ field.label }}: {{ field.errors|striptags }}");
-                }
-
-                if (comments.indexOf("{{ field.name }}") > -1) {
-                    tab_comments_error = true;
-                }
-
-                //console.log("MYTEST ***** " + "{{ field.name }} : {{ field.label }}: {{ field.errors|striptags }}");
-            {% endif %}
-        {% endfor %}
-
-        if (tab_origin_error) {
-            $( "#origin-tab" ).find( "a" ).css( "color", "red" );
-        } else {
-            $( "#origin-tab" ).find( "a" ).css( "color", "" );
-        }
-
-        if (tab_detail_error) {
-            $( "#detail-tab" ).find( "a" ).css( "color", "red" );
-        } else {
-            $( "#detail-tab" ).find( "a" ).css( "color", "" );
-        }
-
-        if (tab_comments_error) {
-            $( "#comments-tab" ).find( "a" ).css( "color", "red" );
-        } else {
-            $( "#comments-tab" ).find( "a" ).css( "color", "" );
-        }
-
-        {% if area_burnt_formset.total_error_count > 0 or attending_org_formset.total_error_count > 0 %}
-            $( "#detail-tab" ).find( "a" ).css( "color", "red" );
-            //console.log('RED area_burnt' + {{ area_burnt_formset.total_error_count }})
-            //console.log('RED attending_org' + {{ area_burnt_formset.total_error_count }})
-        {% else %}
-            if (! tab_detail_error) {
-                $( "#detail-tab" ).find( "a" ).css( "color", "" );
-                //console.log('GREEN area_burnt' + {{ area_burnt_formset.total_error_count }})
-                //console.log('GREEN attending_org' + {{ area_burnt_formset.total_error_count }})
-            }
-        {% endif %}
-    });
-
 
 // $('[id^=""]').hide() // starts with 
 $('[id$="_date"]').datetimepicker({ format: "Y-m-d H:i" }); //ends with
@@ -420,6 +359,7 @@ $('.selectpicker').selectpicker({
 
 
 /* dispatch PW */
+/*
 if($('#id_dispatch_pw_0').is(':checked')) { 
 	$('.div_dispatch_pw_date').show(); 
 	$('#id_th_field_officer').css("font-weight", "bold");
@@ -430,117 +370,74 @@ if($('#id_dispatch_pw_1').is(':checked')) {
 	$('#id_th_field_officer').css("font-weight", "normal");
 	$("#id_th_field_officer").html("Field Officer");
 }
+*/
 $('#id_dispatch_pw_0').on('change', function() {
 	if($('#id_dispatch_pw_0').is(':checked')) { $('.div_dispatch_pw_date').show(); }
 	$('#id_th_field_officer').css("font-weight", "bold");
 	$("#id_th_field_officer").html("Field Officer *");
-});
+}).change();
 $('#id_dispatch_pw_1').on('change', function() {
 	if($('#id_dispatch_pw_1').is(':checked')) { $('.div_dispatch_pw_date').hide(); }
 	$('#id_th_field_officer').css("font-weight", "normal");
 	$("#id_th_field_officer").html("Field Officer");
-});
+}).change();
 
 /* dispatch Aerial */
+/*
 if($('#id_dispatch_aerial_0').is(':checked')) { $('.div_dispatch_aerial_date').show(); }
 if($('#id_dispatch_aerial_1').is(':checked')) { $('.div_dispatch_aerial_date').hide(); }
+*/
 $('#id_dispatch_aerial_0').on('change', function() {
 	if($('#id_dispatch_aerial_0').is(':checked')) { $('.div_dispatch_aerial_date').show(); }
-});
+}).change();
 $('#id_dispatch_aerial_1').on('change', function() {
 	if($('#id_dispatch_aerial_1').is(':checked')) { $('.div_dispatch_aerial_date').hide(); }
-});
+}).change();
 
 /* PICA Text */
+/*
 if($('#id_media_alert_req_0').is(':checked')) { $('.div_pica').show(); }
 if($('#id_media_alert_req_1').is(':checked')) { $('.div_pica').hide(); }
+*/
 $('#id_media_alert_req_0').on('change', function() {
 	if($('#id_media_alert_req_0').is(':checked')) { $('.div_pica').show(); }
-});
+}).change();
 $('#id_media_alert_req_1').on('change', function() {
 	if($('#id_media_alert_req_1').is(':checked')) { $('.div_pica').hide(); }
-});
+}).change();
 
 /* Parks and Trails Text */
+/*
 if($('#id_park_trail_impacted_0').is(':checked')) { $('.div_pvs').show(); }
 if($('#id_park_trail_impacted_1').is(':checked')) { $('.div_pvs').hide(); }
+*/
 $('#id_park_trail_impacted_0').on('change', function() {
 	if($('#id_park_trail_impacted_0').is(':checked')) { $('.div_pvs').show(); }
-});
+}).change();
 $('#id_park_trail_impacted_1').on('change', function() {
 	if($('#id_park_trail_impacted_1').is(':checked')) { $('.div_pvs').hide(); }
-});
+}).change();
 
 /* Assistance Required */
 /*
-  if($('#id_assistance_req_0').is(':checked')) { $('.div_assist').css('visibility','visible'); }
-  if($('#id_assistance_req_1').is(':checked')) { $('.div_assist').css('visibility','hidden'); }
-  $('#id_assistance_req_0').on('change', function() {
-	  if($('#id_assistance_req_0').is(':checked')) { $('.div_assist').css('visibility','visible'); }
-  });
-  $('#id_assistance_req_1').on('change', function() {
-	  if($('#id_assistance_req_1').is(':checked')) { $('.div_assist').css('visibility','hidden'); }
-  });
-*/
-
-/* Assistance Required */
 if($('#id_assistance_req_0').is(':checked')) { 
 	$('.div_assist').show(); 
 }
 if($('#id_assistance_req_1').is(':checked')) { 
 	$('.div_assist').hide(); 
 }
+*/
 $('#id_assistance_req_0').on('change', function() {
 	if($('#id_assistance_req_0').is(':checked')) { $('.div_assist').show(); }
-});
+}).change();
 $('#id_assistance_req_1').on('change', function() {
 	if($('#id_assistance_req_1').is(':checked')) { $('.div_assist').hide(); }
-});
+}).change();
 
 
-/*
-if($('#id_media_alert_req').is(':checked')) { 
-	$('.div_pica').show(); 
-} else {
-	$('.div_pica').hide(); 
-}
-$('#id_media_alert_req').on('change', function() {
-	if($('#id_media_alert_req').is(':checked')) {
-		$('.div_pica').show(); 
-	} else {
-		$('.div_pica').hide(); 
-	}
-});
-
-if($('#id_park_trail_impacted').is(':checked')) { 
-	$('.div_pvs').show(); 
-} else {
-	$('.div_pvs').hide(); 
-}
-$('#id_park_trail_impacted').on('change', function() {
-	if($('#id_park_trail_impacted').is(':checked')) {
-		$('.div_pvs').show(); 
-	} else {
-		$('.div_pvs').hide(); 
-	}
-});
-
-
-if($('#id_assistance_req').is(':checked')) { 
-	$('.div_assist').css('visibility','visible');
-} else {
-	$('.div_assist').css('visibility','hidden');
-}
-$('#id_assistance_req').on('change', function() {
-	if($('#id_assistance_req').is(':checked')) {
-		$('.div_assist').css('visibility','visible');
-	} else {
-		$('.div_assist').css('visibility','hidden');
-	}
-});
-*/
 
 /* Fire Cause */
+/*
 var cause = $('#id_cause :selected').text();
 //console.log('Cause Type: ' + cause);
 if (cause.indexOf('Other') > -1) {
@@ -548,6 +445,7 @@ if (cause.indexOf('Other') > -1) {
 } else {
 	$('.div_cause').css('visibility','hidden');
 }
+*/
 $('#id_cause').on('change', function() {
 	var cause = $('#id_cause :selected').text();
 	//console.log('Cause Type: ' + cause);
@@ -556,15 +454,17 @@ $('#id_cause').on('change', function() {
 	} else {
 		$('.div_cause').css('visibility','hidden');
 	}
-});
+}).change();
 
 /* Tenure */
+/*
 var tenure = $('#id_tenure :selected').text();
 if (tenure.indexOf('Other') > -1) {
 	$('.div_tenure').css('visibility','visible');
 } else {
 	$('.div_tenure').css('visibility','hidden');
 }
+*/
 $('#id_tenure').on('change', function() {
 	var tenure = $('#id_tenure :selected').text();
 	if (tenure.indexOf('Other') > -1) {
@@ -572,78 +472,10 @@ $('#id_tenure').on('change', function() {
 	} else {
 		$('.div_tenure').css('visibility','hidden');
 	}
-});
-
-/* Initial Attack */
-var selected = $('#id_first_attack :selected').text();
-if ((selected.indexOf('Other') > -1) || (selected.indexOf('OTHER') > -1)) {
-	$('.div_other_first_attack').show();
-} else {
-	$('.div_other_first_attack').hide();
-}
-$('#id_first_attack').on('change', function() {
-	var selected = $('#id_first_attack :selected').text();
-	if ((selected.indexOf('Other') > -1) || (selected.indexOf('OTHER') > -1)) {
-		$('.div_other_first_attack').show();
-	} else {
-		$('.div_other_first_attack').hide();
-	}
-});
-
-/* Initial Control */
-var selected = $('#id_initial_control :selected').text();
-if ((selected.indexOf('Other') > -1) || (selected.indexOf('OTHER') > -1)) {
-	$('.div_other_initial_control').show();
-} else {
-	$('.div_other_initial_control').hide();
-}
-$('#id_initial_control').on('change', function() {
-	var selected = $('#id_initial_control :selected').text();
-	if ((selected.indexOf('Other') > -1) || (selected.indexOf('OTHER') > -1)) {
-		$('.div_other_initial_control').show();
-	} else {
-		$('.div_other_initial_control').hide();
-	}
-});
-
-/* Initial Control */
-var selected = $('#id_final_control :selected').text();
-if ((selected.indexOf('Other') > -1) || (selected.indexOf('OTHER') > -1)) {
-	$('.div_other_final_control').show();
-} else {
-	$('.div_other_final_control').hide();
-}
-$('#id_final_control').on('change', function() {
-	var selected = $('#id_final_control :selected').text();
-	if ((selected.indexOf('Other') > -1) || (selected.indexOf('OTHER') > -1)) {
-		$('.div_other_final_control').show();
-	} else {
-		$('.div_other_final_control').hide();
-	}
-});
-
-/* Police Notification */
-if($('#id_arson_squad_notified_0').is(':checked')) { $('.div_offence_no').show(); }
-if($('#id_arson_squad_notified_1').is(':checked')) { $('.div_offence_no').hide(); }
-$('#id_arson_squad_notified_0').on('change', function() {
-	if($('#id_arson_squad_notified_0').is(':checked')) { $('.div_offence_no').show(); }
-});
-$('#id_arson_squad_notified_1').on('change', function() {
-	if($('#id_arson_squad_notified_1').is(':checked')) { $('.div_offence_no').hide(); }
-});
-
-
-
-
-
-
+}).change();
 
 // default is to collapse all on page load
 $('.collapse').collapse()
-
-//$('.open-close-all').click(function() {
-//    $('.panel-collapse').collapse('toggle');
-//});
 
 $('.close-all').click(function(){
   $('.panel-collapse.in').collapse('hide');
@@ -694,42 +526,34 @@ $('.open-all').click(function(){
 
 
 /* Area Override */
-var orig_area = $("#id_area").val();
-
-if($("#id_area_unknown").is(':checked')) { 
-    $("#id_area").removeAttr('readonly').removeAttr('style');
-} else {
-    $("#id_area").attr('readonly','readonly').css('background-color' , '#DEDEDE');
-}
-
 $('#id_area_unknown').on('change', function() {
     if($("#id_area_unknown").is(':checked')) { 
-	    $("#id_area").removeAttr('readonly').removeAttr('style');
+		$('.div_area').css('visibility','hidden');
+		$('#id_area').val(0);
 	} else {
-        $("#id_area").val(orig_area);
-	    $("#id_area").attr('readonly','readonly').css('background-color' , '#DEDEDE');
+		$('.div_area').css('visibility','visible');
 	}
-});
+}).change();
 
 
 /* Fire Position Override */
 var orig_fire_position = $("#id_fire_position").val();
-
+/*
 if($("#id_fire_position_override").is(':checked')) { 
     $("#id_fire_position").removeAttr('readonly').removeAttr('style');
 } else {
     $("#id_fire_position").attr('readonly','readonly').css('background-color' , '#DEDEDE');
 }
+*/
 
 $('#id_fire_position_override').on('change', function() {
-
     if($("#id_fire_position_override").is(':checked')) { 
 	    $("#id_fire_position").removeAttr('readonly').removeAttr('style');
 	} else {
         $("#id_fire_position").val(orig_fire_position);
 	    $("#id_fire_position").attr('readonly','readonly').css('background-color' , '#DEDEDE');
 	}
-});
+}).change();
 
 </script>
 

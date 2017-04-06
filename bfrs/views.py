@@ -72,7 +72,9 @@ class BushfireFilter(django_filters.FilterSet):
     report_status = django_filters.ChoiceFilter(choices=Bushfire.REPORT_STATUS_CHOICES, label='Report Status', name='report_status', method='filter_report_status')
 
     def filter_report_status(self, queryset, name, value):
-        return queryset.filter(report_status__in=[Bushfire.STATUS_INITIAL_AUTHORISED, Bushfire.STATUS_FINAL_DRAFT])
+        if int(value) == Bushfire.STATUS_MISSING_FINAL:
+            return queryset.filter(report_status__in=[Bushfire.STATUS_INITIAL_AUTHORISED, Bushfire.STATUS_FINAL_DRAFT])
+        return queryset.filter(report_status=value)
 
     class Meta:
         model = Bushfire
