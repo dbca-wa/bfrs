@@ -163,7 +163,7 @@ class Bushfire(Audit):
     fire_level = models.PositiveSmallIntegerField(choices=FIRE_LEVEL_CHOICES, null=True, blank=True)
     media_alert_req = models.NullBooleanField(verbose_name="Media Alert Required", null=True)
     park_trail_impacted = models.NullBooleanField(verbose_name="Park and/or trail potentially impacted", null=True)
-    fuel_type = models.CharField(verbose_name='Fuel Type', max_length=64, null=True, blank=True)
+    #fuel_type = models.CharField(verbose_name='Fuel Type', max_length=64, null=True, blank=True)
     cause = models.ForeignKey('Cause', null=True, blank=True)
     cause_state = models.PositiveSmallIntegerField(choices=CAUSE_STATE_CHOICES, null=True, blank=True)
     other_cause = models.CharField(verbose_name='Other Cause', max_length=64, null=True, blank=True)
@@ -517,6 +517,20 @@ class Damage(models.Model):
 
     class Meta:
         unique_together = ('bushfire', 'damage_type',)
+        default_permissions = ('add', 'change', 'delete', 'view')
+
+@python_2_unicode_compatible
+class FireBehaviour(models.Model):
+    fuel_type = models.ForeignKey(FuelType)
+    ros = models.PositiveSmallIntegerField(verbose_name="ROS (m/h)", validators=[MinValueValidator(0)])
+    flame_height = models.PositiveSmallIntegerField(verbose_name="Flame height (m)", validators=[MinValueValidator(0)])
+    bushfire = models.ForeignKey(Bushfire, related_name='fire_behaviour')
+
+    def __str__(self):
+        return 'Fuel type {}, ROS {}, Flame height {}'.format(self.fuel_type, self.ros, self.flame_height)
+
+    class Meta:
+        unique_together = ('bushfire', 'fuel_type',)
         default_permissions = ('add', 'change', 'delete', 'view')
 
 

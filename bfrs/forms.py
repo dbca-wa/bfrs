@@ -1,5 +1,5 @@
 from django import forms
-from bfrs.models import (Bushfire, AreaBurnt, Damage, Injury,
+from bfrs.models import (Bushfire, AreaBurnt, Damage, Injury, FireBehaviour,
         Region, District, Profile,
         current_finyear,
     )
@@ -236,7 +236,7 @@ class BushfireCreateBaseForm(forms.ModelForm):
         #fields = ('region', 'district', 'fire_number', 'job_code', 'dfes_incident_no',
                   'name', 'year', 'fire_level', 'field_officer', 'duty_officer', 'init_authorised_by', 'init_authorised_date',
                   'media_alert_req', 'park_trail_impacted', 'fire_position', 'fire_position_override',
-                  'fire_detected_date', 'dispatch_pw_date', 'dispatch_aerial_date', 'fuel_type',
+                  'fire_detected_date', 'dispatch_pw_date', 'dispatch_aerial_date',
                   'assistance_req', 'assistance_details', 'communications', 'other_info',
                   'cause', 'cause_state', 'other_cause', 'tenure', 'other_tenure',
                   'days','hours',
@@ -436,6 +436,7 @@ AreaBurntFormSet            = inlineformset_factory(Bushfire, AreaBurnt, extra=0
 #InjuryFormSet               = inlineformset_factory(Bushfire, Injury, formset=BaseInjuryFormSet, extra=1, max_num=7, min_num=0, exclude=())
 InjuryFormSet               = inlineformset_factory(Bushfire, Injury, extra=1, max_num=7, min_num=0, exclude=())
 DamageFormSet               = inlineformset_factory(Bushfire, Damage, extra=1, max_num=7, min_num=0, exclude=())
+FireBehaviourFormSet        = inlineformset_factory(Bushfire, FireBehaviour, extra=0, min_num=1, validate_min=True, exclude=())
 
 
 """

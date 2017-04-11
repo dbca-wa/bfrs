@@ -1,4 +1,4 @@
-from bfrs.models import (Bushfire, AreaBurnt, Damage, Injury, Tenure, SpatialDataHistory, LinkedBushfire)
+from bfrs.models import (Bushfire, AreaBurnt, Damage, Injury, FireBehaviour, Tenure, SpatialDataHistory, LinkedBushfire)
 #from bfrs.forms import (BaseAreaBurntFormSet)
 from django.db import IntegrityError, transaction
 from django.http import HttpResponse
@@ -285,6 +285,28 @@ def update_damage_fs(bushfire, damage_formset):
         return 0
 
     return 1
+
+def update_fire_behaviour_fs(bushfire, fire_behaviour_formset):
+    new_fs_object = []
+    for form in fire_behaviour_formset:
+        if form.is_valid():
+            fuel_type = form.cleaned_data.get('fuel_type')
+            ros = form.cleaned_data.get('ros')
+            flame_height = form.cleaned_data.get('flame_height')
+            remove = form.cleaned_data.get('DELETE')
+
+            if not remove and (fuel_type and ros and flame_height):
+                new_fs_object.append(FireBehaviour(bushfire=bushfire, fuel_type=fuel_type, ros=ros, flame_height=flame_height))
+
+    try:
+        with transaction.atomic():
+            FireBehaviour.objects.filter(bushfire=bushfire).delete()
+            FireBehaviour.objects.bulk_create(new_fs_object)
+    except IntegrityError:
+        return 0
+
+    return 1
+
 
 def rdo_email(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION:
