@@ -338,11 +338,8 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
         #sss = json.loads(tmp)
         if self.request.POST.has_key('sss_create'):
             sss = json.loads(self.request.POST.get('sss_create'))
-            if sss.has_key('area'):
+            if sss.has_key('area') and sss.get('area'):
                 initial['area'] = float(sss['area'])
-
-            if sss.has_key('sss_id'):
-                initial['sss_id'] = sss['sss_id']
 
             if sss.has_key('origin_point') and isinstance(sss['origin_point'], list):
                 initial['origin_point_str'] = Point(sss['origin_point']).get_coords()
@@ -351,7 +348,7 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
             if sss.has_key('fire_boundary') and isinstance(sss['fire_boundary'], list):
                 initial['fire_boundary'] = MultiPolygon([Polygon(p[0]) for p in sss['fire_boundary']])
 
-            if sss.has_key('fire_position'):
+            if sss.has_key('fire_position') and sss.get('fire_position'):
                 initial['fire_position'] = sss['fire_position']
 
             #import ipdb; ipdb.set_trace()
@@ -363,7 +360,7 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
             else:
                 initial['tenure'] = Tenure.objects.get(name__istartswith='other')
 
-            if sss.has_key('region_id') and sss.has_key('district_id'):
+            if sss.has_key('region_id') and sss.has_key('district_id') and sss.get('district_id'):
                 initial['region'] = Region.objects.get(id=sss['region_id'])
                 initial['district'] = District.objects.get(id=sss['district_id'])
 
