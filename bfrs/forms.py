@@ -436,7 +436,8 @@ AreaBurntFormSet            = inlineformset_factory(Bushfire, AreaBurnt, extra=0
 #InjuryFormSet               = inlineformset_factory(Bushfire, Injury, formset=BaseInjuryFormSet, extra=1, max_num=7, min_num=0, exclude=())
 InjuryFormSet               = inlineformset_factory(Bushfire, Injury, extra=1, max_num=7, min_num=0, exclude=())
 DamageFormSet               = inlineformset_factory(Bushfire, Damage, extra=1, max_num=7, min_num=0, exclude=())
-FireBehaviourFormSet        = inlineformset_factory(Bushfire, FireBehaviour, extra=0, min_num=1, validate_min=True, exclude=())
+#FireBehaviourFormSet        = inlineformset_factory(Bushfire, FireBehaviour, extra=0, min_num=1, validate_min=True, exclude=())
+FireBehaviourFormSet        = inlineformset_factory(Bushfire, FireBehaviour, extra=1, min_num=0, validate_min=False, exclude=())
 
 
 """

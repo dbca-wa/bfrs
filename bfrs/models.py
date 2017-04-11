@@ -17,7 +17,7 @@ SUBMIT_MANDATORY_FIELDS= [
     #'region', 'district', 'year', 'fire_number', 'name', 'fire_detected_date', 'job_code',
     'region', 'district', 'year', 'fire_number', 'name', 'fire_detected_date',
     'dispatch_pw', 'dispatch_aerial', 'fire_level', 'investigation_req', 'park_trail_impacted',
-    'fuel_type', 'assistance_req', 'cause_state', 'cause', 'tenure',
+    'assistance_req', 'cause_state', 'cause', 'tenure',
 ]
 SUBMIT_MANDATORY_DEP_FIELDS= {
     # field : [field value, dep_field] - if field==field_value, then dep_field is mandatory
@@ -27,6 +27,9 @@ SUBMIT_MANDATORY_DEP_FIELDS= {
     'cause': ['Other (specify)', 'other_cause'],
     'tenure': ['Other (specify)', 'other_tenure'],
 }
+SUBMIT_MANDATORY_FORMSETS= [
+    'fire_behaviour'
+]
 
 AUTH_MANDATORY_FIELDS= [
     'fire_contained_date', 'fire_controlled_date', 'fire_safe_date',
@@ -39,6 +42,7 @@ AUTH_MANDATORY_DEP_FIELDS= {
     'final_control': [True, 'other_final_control'],
     'area_limit': [True, 'area'],
 }
+AUTH_MANDATORY_FORMSETS= []
 
 def current_finyear():
     year = datetime.now().year if datetime.now().month>7 else datetime.now().year-1
@@ -46,7 +50,7 @@ def current_finyear():
     return year
 
 
-def check_mandatory_fields(obj, fields, dep_fields):
+def check_mandatory_fields(obj, fields, dep_fields, formsets):
     # getattr(obj, 'name') ==> obj.name (when property name is available as a string)
     if obj.fire_not_found:
         return []
@@ -57,6 +61,10 @@ def check_mandatory_fields(obj, fields, dep_fields):
     for field, dep_set in dep_fields.iteritems():
         if getattr(obj, field) and getattr(obj, field)==dep_set[0] and getattr(obj, dep_set[1]) is None:
             missing.append(dep_set[1])
+
+    for fs in formsets:
+        if getattr(obj, fs) is None or not getattr(obj, fs).all():
+            missing.append(fs)
 
     return missing
 

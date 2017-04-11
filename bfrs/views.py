@@ -19,15 +19,15 @@ from django.forms.models import inlineformset_factory
 from bfrs.models import (Profile, Bushfire,
         Region, District,
         Tenure, AreaBurnt,
-        SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS,
-        AUTH_MANDATORY_FIELDS, AUTH_MANDATORY_DEP_FIELDS,
+        SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS, SUBMIT_MANDATORY_FORMSETS,
+        AUTH_MANDATORY_FIELDS, AUTH_MANDATORY_DEP_FIELDS, AUTH_MANDATORY_FORMSETS,
         check_mandatory_fields,
     )
 from bfrs.forms import (ProfileForm, BushfireFilterForm, BushfireForm, BushfireCreateForm, BushfireInitUpdateForm,
         AreaBurntFormSet, InjuryFormSet, DamageFormSet, FireBehaviourFormSet,
     )
 from bfrs.utils import (breadcrumbs_li,
-        update_areas_burnt_fs, create_areas_burnt, update_damage_fs, update_injury_fs,
+        update_areas_burnt_fs, create_areas_burnt, update_damage_fs, update_injury_fs, update_fire_behaviour_fs,
         export_final_csv, export_excel,
         serialize_bushfire, deserialize_bushfire,
         rdo_email, pvs_email, pica_email, pica_sms, police_email, dfes_email, fssdrs_email,
@@ -186,13 +186,15 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
                     context['initial'] = True
                     mandatory_fields = SUBMIT_MANDATORY_FIELDS
                     mandatory_dep_fields = SUBMIT_MANDATORY_DEP_FIELDS
+                    mandatory_formsets = SUBMIT_MANDATORY_FORMSETS
                     template_preview = template_initial
                 else:
                     context['final'] = True
                     mandatory_fields = AUTH_MANDATORY_FIELDS
                     mandatory_dep_fields = AUTH_MANDATORY_DEP_FIELDS
+                    mandatory_formsets = AUTH_MANDATORY_FORMSETS
                     template_preview = template_final
-                context['mandatory_fields'] = check_mandatory_fields(bushfire, mandatory_fields, mandatory_dep_fields)
+                context['mandatory_fields'] = check_mandatory_fields(bushfire, mandatory_fields, mandatory_dep_fields, mandatory_formsets)
                 if context['mandatory_fields']:
                     return TemplateResponse(request, template_mandatory, context=context)
 
@@ -405,7 +407,7 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
 
         #import ipdb; ipdb.set_trace()
         #if form.is_valid() and area_burnt_formset.is_valid():
-	if form.is_valid(): # No need to check area_burnt_formset since the fs is hidden on the initial form
+	if form.is_valid() and fire_behaviour_formset.is_valid(): # No need to check area_burnt_formset since the fs is hidden on the initial form
             return self.form_valid(request, form, area_burnt_formset, fire_behaviour_formset)
         else:
             return self.form_invalid(request, form, area_burnt_formset, fire_behaviour_formset, kwargs)
@@ -542,7 +544,7 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
         fire_behaviour_formset  = FireBehaviourFormSet(self.request.POST, prefix='fire_behaviour_fs')
 
         #if form.is_valid() and area_burnt_formset.is_valid():
-	if form.is_valid(): # No need to check area_burnt_formset since the fs is hidden on the initial form
+	if form.is_valid() and fire_behaviour_formset.is_valid(): # No need to check area_burnt_formset since the fs is hidden on the initial form
             return self.form_valid(request, form, area_burnt_formset, fire_behaviour_formset)
         else:
             return self.form_invalid(request, form, area_burnt_formset, fire_behaviour_formset, kwargs)
