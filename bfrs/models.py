@@ -15,7 +15,7 @@ import json
 
 SUBMIT_MANDATORY_FIELDS= [
     #'region', 'district', 'year', 'fire_number', 'name', 'fire_detected_date', 'job_code',
-    'region', 'district', 'year', 'fire_number', 'name', 'job_code', 'fire_detected_date',
+    'region', 'district', 'year', 'fire_number', 'name', 'fire_detected_date',
     'dispatch_pw', 'dispatch_aerial', 'fire_level', 'investigation_req', 'park_trail_impacted',
     'fuel_type', 'assistance_req', 'cause_state', 'cause', 'tenure',
 ]
@@ -367,8 +367,10 @@ class Bushfire(Audit):
 
     @property
     def time_to_control_str(self):
-        s = str(self.time_to_control.days) + ' Days' if self.time_to_control.days>0 else ''
-        s += str(self.time_to_control.seconds/3600) + ' Hours' if self.time_to_control.seconds>0 else ''
+        s = None
+        if self.time_to_control:
+            s = str(self.time_to_control.days) + ' Days' if self.time_to_control.days>0 else ''
+            s += str(self.time_to_control.seconds/3600) + ' Hours' if self.time_to_control.seconds>0 else ''
         return s
 
     def user_unicode_patch(self):

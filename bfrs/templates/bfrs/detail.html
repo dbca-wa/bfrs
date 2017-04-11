@@ -309,7 +309,7 @@
   <div class="navbar-inner">
     <div class="container">
       <p class="pull-right">
-      {% if object.report_status != object.STATUS_INVALIDATED %}
+      {% if object.report_status != object.STATUS_INVALIDATED or not object.report_status %}
         {% if request.user|can_readonly and not request.user.is_superuser %}
           <input type="submit" value="Save" class="btn btn-primary btn-success" name="_save" title="You do not have 'Update' permissions" disabled />
         {% else %}
