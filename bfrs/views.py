@@ -15,6 +15,7 @@ from django.core import serializers
 from django import forms
 from django.contrib.gis.db import models
 from django.forms.models import inlineformset_factory
+from django.conf import settings
 
 from bfrs.models import (Profile, Bushfire,
         Region, District,
@@ -314,6 +315,7 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
         #context['initial_mandatory_fields'] = check_mandatory_fields(bushfire, SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS)
         context['form'] = BushfireFilterForm(initial=initial)
         context['object_list'] = self.object_list.order_by('id') # passed by default, but we are (possibly) updating, if profile exists!
+        context['sss_url'] = settings.SSS_URL
         return context
 
     def mail_url(self, bushfire, status='initial'):

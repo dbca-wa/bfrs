@@ -175,8 +175,8 @@ class BushfireResource(APIResource):
             if not bundle.obj.fire_position_override:
                 bundle.obj.fire_position = bundle.data['fire_position']
 
-        if bundle.data['region_id'] and bundle.data['district_id']:
-            if bundle.data['district_id'] != bundle.obj.district.id:
+        if bundle.data.has_key('region_id') and bundle.data.has_key('district_id') and bundle.data['region_id'] and bundle.data['district_id']:
+            if bundle.data['district_id'] != bundle.obj.district.id and bundle.obj.report_status == Bushfire.STATUS_INITIAL:
                 district = District.objects.get(id=bundle.data['district_id'])
                 invalidate_bushfire(bundle.obj, district, bundle.request.user)
                 #bundle.obj.district = district

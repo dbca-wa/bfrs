@@ -391,7 +391,6 @@ def create_view():
             b.fire_level,
             b.media_alert_req,
             b.park_trail_impacted,
-            b.fuel_type,
             b.cause_id,
             b.cause_state,
             b.other_cause,
