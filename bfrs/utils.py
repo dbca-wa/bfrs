@@ -103,8 +103,7 @@ def invalidate_bushfire(obj, new_district, user):
         obj.pk = None
 
         #import ipdb; ipdb.set_trace()
-        # check if we have this district already in the list of invalidated linked bushfires
-        #linked_bushfire = [Bushfire.objects.get(id=i.linked_id) for i in old_linked if Bushfire.objects.get(id=i.linked_id).district.id==new_district.id]
+        # check if we have this district already in the list of invalidated linked bushfires, and re-use fire_number if so
         linked_objs = [linked_obj for linked_obj in old_linked if linked_obj.linked_bushfire.district==new_district]
         #if linked_objs and linked_objs[0].linked_bushfire.invalid:
         if linked_objs and linked_objs[0].linked_bushfire.report_status==Bushfire.STATUS_INVALIDATED:
@@ -143,6 +142,10 @@ def invalidate_bushfire(obj, new_district, user):
         # link the old invalidate bushfire to the new (valid) bushfire - fwd link
         #LinkedBushfire.objects.create(bushfire_id=old_id, creator=user, modifier=user, linked_id=obj.pk, linked_fire_number=obj.fire_number)
         LinkedBushfire.objects.create(bushfire=old_obj, linked_bushfire=obj, creator=user, modifier=user)
+
+        #for linked in LinkedBushfire.objects.filter(bushfire=obj):
+        #    linked.update(linked_bushfire=obj)
+
 
         return obj
     return False

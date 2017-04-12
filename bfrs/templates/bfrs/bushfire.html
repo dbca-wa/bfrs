@@ -185,9 +185,10 @@
                   <table class="table table-bordered table-condensed">
 			        <thead>
                       <th>Fire Number</th>
-                      <th>created</th>
+                      <th>Date</th>
                       <th>User</th>
                       <th>Invalid</th>
+                      <th>Details</th>
                     </thead>
                     <tbody>
                     {% for linked_obj in bushfire.linked.all %}
@@ -195,7 +196,8 @@
 				        <td><a href="{% url 'bushfire:bushfire_initial' linked_obj.linked_bushfire.id %}">{{linked_obj.linked_bushfire.fire_number}}</a></td>
 				        <td>{{linked_obj.modified|date_fmt}}</td>
 				        <td>{{linked_obj.modifier}}</td>
-				        <td>{{linked_obj.linked_bushfire.get_report_status_display}}</td>
+				        <td>{{linked_obj.linked_bushfire.report_status|yesno:"Yes,No"}}</td>
+				        <td>{{linked_obj.linked_bushfire.invalid_details}}</td>
                       </tr>
                     {% endfor %}
                     </tbody>

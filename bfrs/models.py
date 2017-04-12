@@ -66,6 +66,11 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
         if getattr(obj, fs) is None or not getattr(obj, fs).all():
             missing.append(fs)
 
+    # final fire boundary required for fires > 2 ha
+    if not obj.area_limit:
+        if not obj.area:
+            missing.append('Must upload fire boundary for area > 2ha')
+
     return missing
 
 
@@ -276,10 +281,25 @@ class Bushfire(Audit):
 
     @property
     def linked_bushfire(self):
+		# check forwards - current valid bushfire, what are its invalidated linked bushfires
         objs = LinkedBushfire.objects.filter(linked_bushfire=self)
         if objs:
             return objs[0]
         return LinkedBushfire.objects.none()
+
+
+    @property
+    def linked_valid_bushfire(self):
+		# check forwards
+        for linked in self.linked.all():
+            if linked.linked_bushfire.report_status != Bushfire.STATUS_INVALIDATED:
+                return linked.linked_bushfire
+
+		# check backwards
+        for linked in self.linkedbushfire_set.all():
+            if linked.linked_bushfire.report_status != Bushfire.STATUS_INVALIDATED:
+                return linked.linked_bushfire
+
 
     def clean(self):
         #import ipdb; ipdb.set_trace()

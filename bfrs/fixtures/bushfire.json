@@ -70,8 +70,7 @@
         "fire_detected_date": "2016-07-16T16:55:27.452Z",
         "dispatch_pw": "False",
         "dispatch_aerial": "False",
-        "park_trail_impacted": "False",
-        "fuel_type": "ABC Fuel Type"
+        "park_trail_impacted": "False"
     }
 },
 {
@@ -111,7 +110,6 @@
         "dispatch_pw": "False",
         "dispatch_aerial": "False",
         "park_trail_impacted": "False",
-        "fuel_type": "ABC Fuel Type",
         "report_status": 2,
         "init_authorised_by": 1,
         "init_authorised_date": "2016-07-16T16:55:27.452Z"
@@ -155,7 +153,6 @@
         "dispatch_pw": "False",
         "dispatch_aerial": "False",
         "park_trail_impacted": "False",
-        "fuel_type": "ABC Fuel Type",
         "report_status": 3,
         "init_authorised_by": 1,
         "init_authorised_date": "2016-07-16T16:55:27.452Z"
@@ -198,7 +195,6 @@
         "dispatch_pw": "False",
         "dispatch_aerial": "False",
         "park_trail_impacted": "False",
-        "fuel_type": "ABC Fuel Type",
         "report_status": 4,
         "fire_contained_date": "2016-07-16T16:55:27.452Z",
         "fire_controlled_date": "2016-07-16T16:55:27.452Z",
@@ -247,7 +243,6 @@
         "dispatch_pw": "False",
         "dispatch_aerial": "False",
         "park_trail_impacted": "False",
-        "fuel_type": "ABC Fuel Type",
         "report_status": 5,
         "fire_contained_date": "2016-07-16T16:55:27.452Z",
         "fire_controlled_date": "2016-07-16T16:55:27.452Z",
@@ -295,7 +290,6 @@
         "dispatch_pw": "False",
         "dispatch_aerial": "False",
         "park_trail_impacted": "False",
-        "fuel_type": "ABC Fuel Type",
         "report_status": 6,
         "fire_contained_date": "2016-07-16T16:55:27.452Z",
         "fire_controlled_date": "2016-07-16T16:55:27.452Z",
@@ -346,7 +340,6 @@
         "dispatch_pw": "False",
         "dispatch_aerial": "False",
         "park_trail_impacted": "False",
-        "fuel_type": "ABC Fuel Type",
         "report_status": 6,
         "fire_contained_date": "2016-07-16T16:55:27.452Z",
         "fire_controlled_date": "2016-07-16T16:55:27.452Z",
@@ -397,8 +390,7 @@
         "fire_detected_date": "2016-07-16T16:55:27.452Z",
         "dispatch_pw": "False",
         "dispatch_aerial": "False",
-        "park_trail_impacted": "False",
-        "fuel_type": "ABC Fuel Type"
+        "park_trail_impacted": "False"
 
     }
 },
@@ -438,8 +430,7 @@
         "fire_detected_date": "2016-07-16T16:55:27.452Z",
         "dispatch_pw": "False",
         "dispatch_aerial": "False",
-        "park_trail_impacted": "False",
-        "fuel_type": "ABC Fuel Type"
+        "park_trail_impacted": "False"
 
     }
 },
@@ -479,8 +470,7 @@
         "fire_detected_date": "2016-07-16T16:55:27.452Z",
         "dispatch_pw": "False",
         "dispatch_aerial": "False",
-        "park_trail_impacted": "False",
-        "fuel_type": "ABC Fuel Type"
+        "park_trail_impacted": "False"
 
     }
 },
@@ -520,8 +510,7 @@
         "fire_detected_date": "2016-07-16T16:55:27.452Z",
         "dispatch_pw": "False",
         "dispatch_aerial": "False",
-        "park_trail_impacted": "False",
-        "fuel_type": "ABC Fuel Type"
+        "park_trail_impacted": "False"
 
     }
 },
@@ -561,8 +550,7 @@
         "fire_detected_date": "2016-07-16T16:55:27.452Z",
         "dispatch_pw": "False",
         "dispatch_aerial": "False",
-        "park_trail_impacted": "False",
-        "fuel_type": "ABC Fuel Type"
+        "park_trail_impacted": "False"
 
     }
 },
@@ -602,8 +590,7 @@
         "fire_detected_date": "2016-07-16T16:55:27.452Z",
         "dispatch_pw": "False",
         "dispatch_aerial": "False",
-        "park_trail_impacted": "False",
-        "fuel_type": "ABC Fuel Type"
+        "park_trail_impacted": "False"
 
     }
 },
@@ -643,8 +630,7 @@
         "fire_detected_date": "2016-07-16T16:55:27.452Z",
         "dispatch_pw": "False",
         "dispatch_aerial": "False",
-        "park_trail_impacted": "False",
-        "fuel_type": "ABC Fuel Type"
+        "park_trail_impacted": "False"
 
     }
 },
@@ -684,8 +670,7 @@
         "fire_detected_date": "2016-07-16T16:55:27.452Z",
         "dispatch_pw": "False",
         "dispatch_aerial": "False",
-        "park_trail_impacted": "False",
-        "fuel_type": "ABC Fuel Type"
+        "park_trail_impacted": "False"
 
     }
 },
@@ -725,8 +710,7 @@
         "fire_detected_date": "2016-07-16T16:55:27.452Z",
         "dispatch_pw": "False",
         "dispatch_aerial": "False",
-        "park_trail_impacted": "False",
-        "fuel_type": "ABC Fuel Type"
+        "park_trail_impacted": "False"
 
     }
 },
@@ -766,8 +750,7 @@
         "fire_detected_date": "2016-07-16T16:55:27.452Z",
         "dispatch_pw": "False",
         "dispatch_aerial": "False",
-        "park_trail_impacted": "False",
-        "fuel_type": "ABC Fuel Type"
+        "park_trail_impacted": "False"
 
     }
 }

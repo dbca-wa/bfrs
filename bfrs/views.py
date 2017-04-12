@@ -654,6 +654,41 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
         self.object = self.get_object() # needed for update
         form_class = self.get_form_class()
         form = self.get_form(form_class)
+
+        """ _________________________________________________________________________________________________________________
+
+        This Section used if district is changed from within the bushfire reporting system
+        Only FSSDRS Group can change district after it is STATUS_INITIAL_SUBMITTED
+
+        """
+        #import ipdb; ipdb.set_trace()
+        # Check if district is has changed and whether the record needs to be invalidated
+        cur_obj = Bushfire.objects.get(id=self.object.id)
+        district = District.objects.get(id=request.POST['district']) if request.POST.has_key('district') else None # get the district from the form
+        #if self.request.POST.has_key('action') and self.request.POST.get('action')=='invalidate' and not cur_obj.invalid:
+        if self.request.POST.has_key('action') and self.request.POST.get('action')=='invalidate' and cur_obj.report_status!=Bushfire.STATUS_INVALIDATED:
+            import ipdb; ipdb.set_trace()
+            self.object.invalid_details = self.request.POST.get('invalid_details')
+            self.object.save()
+            self.object = invalidate_bushfire(self.object, district, request.user)
+            url_name = 'bushfire_initial' if self.object.report_status <= Bushfire.STATUS_INITIAL_AUTHORISED else 'bushfire_final'
+            return  HttpResponseRedirect(reverse('bushfire:' + url_name, kwargs={'pk': self.object.id}))
+
+        elif district != cur_obj.district:
+            message = 'District has changed (from {} to {}). This action will invalidate the existing bushfire and create  a new bushfire with the new district, and a new fire number.'.format(
+                cur_obj.district.name,
+                district.name
+            )
+            context={
+               'action': 'invalidate',
+               'district': district.id,
+               'message': message,
+            }
+            return TemplateResponse(request, 'bfrs/confirm.html', context=context)
+        """ _________________________________________________________________________________________________________________ """
+
+
+
         #area_burnt_formset      = AreaBurntFormSet(self.request.POST, prefix='area_burnt_fs')
         injury_formset          = InjuryFormSet(self.request.POST, prefix='injury_fs')
         damage_formset          = DamageFormSet(self.request.POST, prefix='damage_fs')
