@@ -206,7 +206,7 @@ def update_areas_burnt(bushfire, area_burnt_list):
     for category, area in aggregated_sums.iteritems():
         tenure_qs = Tenure.objects.filter(name=category)
         if tenure_qs:
-            new_area_burnt_object.append(AreaBurnt(bushfire=bushfire, tenure=tenure_qs[0], area=round(area, 2), other=''))
+            new_area_burnt_object.append(AreaBurnt(bushfire=bushfire, tenure=tenure_qs[0], area=round(area, 2)))
         elif area:
             area_other += area
 
