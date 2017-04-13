@@ -37,14 +37,20 @@
     <div id="id_areas_burnt" class="row formset area-burnt-formset">
         <table class="table_fs" border="0">
             <tbody>
-            {% if areas_burnt_fs %}
                 <th>Tenure</th>
                 <th>Area (ha)</th>
                 <th></th>
                 {% for fs in area_burnt_formset %}
+                    {% comment %}
+                    {% for hidden in fs.hidden_fields %}
+                        {{ hidden }}
+                    {% endfor %}
+                    {% endcomment %}
                 <tr>
+                <fieldset disabled="disabled">
                 <td>{{ fs.tenure }}</td>
                 <td>{{ fs.area }}</td>
+                </fieldset">
                 <td>
                         {% if fs.instance.pk %}{{ fs.DELETE }}{% endif %}
                         {{ fs.id }}
@@ -57,10 +63,9 @@
                 </td>
 
                 </tr>
+                {% empty %}
+                <tr><td> No Tenures</td></tr>
                 {% endfor %}
-            {% else %}
-                <th> No Tenures</th>
-            {% endif %}
             </tbody>
         </table>
         {{ area_burnt_formset.management_form }}
