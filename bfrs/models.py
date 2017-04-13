@@ -17,7 +17,7 @@ SUBMIT_MANDATORY_FIELDS= [
     #'region', 'district', 'year', 'fire_number', 'name', 'fire_detected_date', 'job_code',
     'region', 'district', 'year', 'fire_number', 'name', 'fire_detected_date',
     'dispatch_pw', 'dispatch_aerial', 'fire_level', 'investigation_req', 'park_trail_impacted',
-    'fuel_type', 'assistance_req', 'cause_state', 'cause', 'tenure',
+    'assistance_req', 'cause_state', 'cause', 'tenure',
 ]
 SUBMIT_MANDATORY_DEP_FIELDS= {
     # field : [field value, dep_field] - if field==field_value, then dep_field is mandatory
@@ -27,6 +27,9 @@ SUBMIT_MANDATORY_DEP_FIELDS= {
     'cause': ['Other (specify)', 'other_cause'],
     'tenure': ['Other (specify)', 'other_tenure'],
 }
+SUBMIT_MANDATORY_FORMSETS= [
+    'fire_behaviour'
+]
 
 AUTH_MANDATORY_FIELDS= [
     'fire_contained_date', 'fire_controlled_date', 'fire_safe_date',
@@ -39,6 +42,7 @@ AUTH_MANDATORY_DEP_FIELDS= {
     'final_control': [True, 'other_final_control'],
     'area_limit': [True, 'area'],
 }
+AUTH_MANDATORY_FORMSETS= []
 
 def current_finyear():
     year = datetime.now().year if datetime.now().month>7 else datetime.now().year-1
@@ -46,7 +50,7 @@ def current_finyear():
     return year
 
 
-def check_mandatory_fields(obj, fields, dep_fields):
+def check_mandatory_fields(obj, fields, dep_fields, formsets):
     # getattr(obj, 'name') ==> obj.name (when property name is available as a string)
     if obj.fire_not_found:
         return []
@@ -57,6 +61,15 @@ def check_mandatory_fields(obj, fields, dep_fields):
     for field, dep_set in dep_fields.iteritems():
         if getattr(obj, field) and getattr(obj, field)==dep_set[0] and getattr(obj, dep_set[1]) is None:
             missing.append(dep_set[1])
+
+    for fs in formsets:
+        if getattr(obj, fs) is None or not getattr(obj, fs).all():
+            missing.append(fs)
+
+    # final fire boundary required for fires > 2 ha
+    if not obj.area_limit:
+        if not obj.area:
+            missing.append('Must upload fire boundary for area > 2ha')
 
     return missing
 
@@ -163,7 +176,7 @@ class Bushfire(Audit):
     fire_level = models.PositiveSmallIntegerField(choices=FIRE_LEVEL_CHOICES, null=True, blank=True)
     media_alert_req = models.NullBooleanField(verbose_name="Media Alert Required", null=True)
     park_trail_impacted = models.NullBooleanField(verbose_name="Park and/or trail potentially impacted", null=True)
-    fuel_type = models.CharField(verbose_name='Fuel Type', max_length=64, null=True, blank=True)
+    #fuel_type = models.CharField(verbose_name='Fuel Type', max_length=64, null=True, blank=True)
     cause = models.ForeignKey('Cause', null=True, blank=True)
     cause_state = models.PositiveSmallIntegerField(choices=CAUSE_STATE_CHOICES, null=True, blank=True)
     other_cause = models.CharField(verbose_name='Other Cause', max_length=64, null=True, blank=True)
@@ -268,10 +281,25 @@ class Bushfire(Audit):
 
     @property
     def linked_bushfire(self):
+		# check forwards - current valid bushfire, what are its invalidated linked bushfires
         objs = LinkedBushfire.objects.filter(linked_bushfire=self)
         if objs:
             return objs[0]
         return LinkedBushfire.objects.none()
+
+
+    @property
+    def linked_valid_bushfire(self):
+		# check forwards
+        for linked in self.linked.all():
+            if linked.linked_bushfire.report_status != Bushfire.STATUS_INVALIDATED:
+                return linked.linked_bushfire
+
+		# check backwards
+        for linked in self.linkedbushfire_set.all():
+            if linked.linked_bushfire.report_status != Bushfire.STATUS_INVALIDATED:
+                return linked.linked_bushfire
+
 
     def clean(self):
         #import ipdb; ipdb.set_trace()
@@ -519,6 +547,20 @@ class Damage(models.Model):
 
     class Meta:
         unique_together = ('bushfire', 'damage_type',)
+        default_permissions = ('add', 'change', 'delete', 'view')
+
+@python_2_unicode_compatible
+class FireBehaviour(models.Model):
+    fuel_type = models.ForeignKey(FuelType)
+    ros = models.PositiveSmallIntegerField(verbose_name="ROS (m/h)", validators=[MinValueValidator(0)])
+    flame_height = models.PositiveSmallIntegerField(verbose_name="Flame height (m)", validators=[MinValueValidator(0)])
+    bushfire = models.ForeignKey(Bushfire, related_name='fire_behaviour')
+
+    def __str__(self):
+        return 'Fuel type {}, ROS {}, Flame height {}'.format(self.fuel_type, self.ros, self.flame_height)
+
+    class Meta:
+        unique_together = ('bushfire', 'fuel_type',)
         default_permissions = ('add', 'change', 'delete', 'view')
 
 

@@ -106,6 +106,19 @@
 <table class="table table-bordered table-striped table-condensed">
     <tbody>
         <tr>
+            <th class="cbas">District *</th>
+            <td colspan="5" class="cbas">
+                {% if is_authorised %} {{object.region}} {{form.region.as_hidden}} {% else %} {{form.region}} {% endif %}<span style="margin:20;"></span>
+                {% if is_authorised %} {{object.district}} {{form.district.as_hidden}} {% else %} {{form.district}} {% endif %}
+            {% comment %}
+                {{form.region}}<span style="margin:20;"></span>
+                {{form.district}}
+            {% endcomment %}
+            </td>
+        </tr>
+
+
+        <tr>
             <th class="cbas">Date fire contained *</th>
             <td class="cbas">{% if is_authorised %} {{snapshot.fire_contained_date}} {% else %} {{form.fire_contained_date}} {% endif %}</td>
 

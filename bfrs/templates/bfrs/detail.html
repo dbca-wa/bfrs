@@ -185,10 +185,15 @@
 
         <tr>
             <th class="cbas">Fuel and fire behaviour *</th>
-            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.fuel_type}} {% else %} {{form.fuel_type}} {% endif %}</td>
+			{% comment %}
+            <td colspan="5" class="cbas">{% if is_authorised %} {{snapshot.fuel_type}} {% else %} {{form.fuel_type}} {% endif %}</td>
+			{% endcomment %}
+			<td colspan="5" class="cbas" >{% include "bfrs/fire_behaviour_fs.html" %}</td>
+        </tr>
 
+        <tr>
             <th class="cbas" style="font-weight:normal;">Point of origin</th>
-            <td colspan="2" class="cbas">
+            <td colspan="5" class="cbas">
 				{% if is_authorised %} 
 					{{snapshot.origin_point|is_none}} 
 				{% else %} 
@@ -285,6 +290,19 @@
   </tbody>
 </table>
 
+{% comment %}
+<table class="table table-bordered table-striped table-condensed cbas">
+    <thead>
+		<th class="cbas">Fuel and fire behaviour *</th>
+    </thead>
+    <tbody>
+        <tr>
+			<td class="cbas" >{% include "bfrs/fire_behaviour_fs.html" %}</td>
+        </tr>
+
+  </tbody>
+</table>
+{% endcomment %}
 
 <div class="hidden">
 <table class="table table-bordered table-striped table-condensed cbas">

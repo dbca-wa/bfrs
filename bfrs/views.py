@@ -15,19 +15,20 @@ from django.core import serializers
 from django import forms
 from django.contrib.gis.db import models
 from django.forms.models import inlineformset_factory
+from django.conf import settings
 
 from bfrs.models import (Profile, Bushfire,
         Region, District,
         Tenure, AreaBurnt,
-        SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS,
-        AUTH_MANDATORY_FIELDS, AUTH_MANDATORY_DEP_FIELDS,
+        SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS, SUBMIT_MANDATORY_FORMSETS,
+        AUTH_MANDATORY_FIELDS, AUTH_MANDATORY_DEP_FIELDS, AUTH_MANDATORY_FORMSETS,
         check_mandatory_fields,
     )
 from bfrs.forms import (ProfileForm, BushfireFilterForm, BushfireForm, BushfireCreateForm, BushfireInitUpdateForm,
-        AreaBurntFormSet, InjuryFormSet, DamageFormSet,
+        AreaBurntFormSet, InjuryFormSet, DamageFormSet, FireBehaviourFormSet,
     )
 from bfrs.utils import (breadcrumbs_li,
-        update_areas_burnt_fs, create_areas_burnt, update_damage_fs, update_injury_fs,
+        update_areas_burnt_fs, create_areas_burnt, update_damage_fs, update_injury_fs, update_fire_behaviour_fs,
         export_final_csv, export_excel,
         serialize_bushfire, deserialize_bushfire,
         rdo_email, pvs_email, pica_email, pica_sms, police_email, dfes_email, fssdrs_email,
@@ -186,13 +187,15 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
                     context['initial'] = True
                     mandatory_fields = SUBMIT_MANDATORY_FIELDS
                     mandatory_dep_fields = SUBMIT_MANDATORY_DEP_FIELDS
+                    mandatory_formsets = SUBMIT_MANDATORY_FORMSETS
                     template_preview = template_initial
                 else:
                     context['final'] = True
                     mandatory_fields = AUTH_MANDATORY_FIELDS
                     mandatory_dep_fields = AUTH_MANDATORY_DEP_FIELDS
+                    mandatory_formsets = AUTH_MANDATORY_FORMSETS
                     template_preview = template_final
-                context['mandatory_fields'] = check_mandatory_fields(bushfire, mandatory_fields, mandatory_dep_fields)
+                context['mandatory_fields'] = check_mandatory_fields(bushfire, mandatory_fields, mandatory_dep_fields, mandatory_formsets)
                 if context['mandatory_fields']:
                     return TemplateResponse(request, template_mandatory, context=context)
 
@@ -312,6 +315,7 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
         #context['initial_mandatory_fields'] = check_mandatory_fields(bushfire, SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS)
         context['form'] = BushfireFilterForm(initial=initial)
         context['object_list'] = self.object_list.order_by('id') # passed by default, but we are (possibly) updating, if profile exists!
+        context['sss_url'] = settings.SSS_URL
         return context
 
     def mail_url(self, bushfire, status='initial'):
@@ -402,21 +406,23 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
             # redefine AreaBurnFormSet to require no formsets on initial form (since its hidden in the template)
             AreaBurntFormSet = inlineformset_factory(Bushfire, AreaBurnt, extra=0, min_num=0, validate_min=False, exclude=())
         area_burnt_formset      = AreaBurntFormSet(self.request.POST, prefix='area_burnt_fs')
+        fire_behaviour_formset      = FireBehaviourFormSet(self.request.POST, prefix='fire_behaviour_fs')
 
         #import ipdb; ipdb.set_trace()
         #if form.is_valid() and area_burnt_formset.is_valid():
-	if form.is_valid(): # No need to check area_burnt_formset since the fs is hidden on the initial form
-            return self.form_valid(request, form, area_burnt_formset)
+	if form.is_valid() and fire_behaviour_formset.is_valid(): # No need to check area_burnt_formset since the fs is hidden on the initial form
+            return self.form_valid(request, form, area_burnt_formset, fire_behaviour_formset)
         else:
-            return self.form_invalid(request, form, area_burnt_formset, kwargs)
+            return self.form_invalid(request, form, area_burnt_formset, fire_behaviour_formset, kwargs)
 
-    def form_invalid(self, request, form, area_burnt_formset, kwargs):
+    def form_invalid(self, request, form, area_burnt_formset, fire_behaviour_formset, kwargs):
         context = self.get_context_data()
         context.update({'form': form})
         context.update({'area_burnt_formset': area_burnt_formset})
+        context.update({'fire_behaviour_formset': fire_behaviour_formset})
         return self.render_to_response(context)
 
-    def form_valid(self, request, form, area_burnt_formset):
+    def form_valid(self, request, form, area_burnt_formset, fire_behaviour_formset):
         self.object = form.save(commit=False)
         self.object.creator = request.user #1 #User.objects.all()[0] #request.user
         self.object.modifier = request.user #1 #User.objects.all()[0] #request.user
@@ -425,10 +431,15 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
 
         self.object.save()
         areas_burnt_updated = update_areas_burnt_fs(self.object, area_burnt_formset)
+        fire_behaviour_updated = update_fire_behaviour_fs(self.object, fire_behaviour_formset)
 
         redirect_referrer =  HttpResponseRedirect(request.META.get('HTTP_REFERER'))
         if not areas_burnt_updated:
             messages.error(request, 'There was an error saving Areas Burnt.')
+            return redirect_referrer
+
+        if not fire_behaviour_updated:
+            messages.error(request, 'There was an error saving Fuel Behaviour.')
             return redirect_referrer
 
         return HttpResponseRedirect(self.get_success_url())
@@ -462,6 +473,7 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
         if not area_burnt_formset:
             area_burnt_formset      = AreaBurntFormSet(instance=self.object if hasattr(self, 'object') else None, prefix='area_burnt_fs')
             #area_burnt_formset      = AreaBurntFormSet(instance=None, prefix='area_burnt_fs')
+        fire_behaviour_formset      = FireBehaviourFormSet(instance=None, prefix='fire_behaviour_fs')
 
         if self.request.POST.has_key('sss_create'):
             # don't validate the form when initially displaying
@@ -469,6 +481,7 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
 
         context.update({'form': form,
                         'area_burnt_formset': area_burnt_formset,
+                        'fire_behaviour_formset': fire_behaviour_formset,
                         #'area_burnt_formset': fs,
                         'create': True,
                         'initial': True,
@@ -532,20 +545,22 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
             # redefine AreaBurnFormSet to require no formsets on initial form (since its hidden in the template)
             AreaBurntFormSet = inlineformset_factory(Bushfire, AreaBurnt, extra=0, min_num=0, validate_min=False, exclude=())
         area_burnt_formset      = AreaBurntFormSet(self.request.POST, prefix='area_burnt_fs')
+        fire_behaviour_formset  = FireBehaviourFormSet(self.request.POST, prefix='fire_behaviour_fs')
 
         #if form.is_valid() and area_burnt_formset.is_valid():
-	if form.is_valid(): # No need to check area_burnt_formset since the fs is hidden on the initial form
-            return self.form_valid(request, form, area_burnt_formset)
+	if form.is_valid() and fire_behaviour_formset.is_valid(): # No need to check area_burnt_formset since the fs is hidden on the initial form
+            return self.form_valid(request, form, area_burnt_formset, fire_behaviour_formset)
         else:
-            return self.form_invalid(request, form, area_burnt_formset, kwargs)
+            return self.form_invalid(request, form, area_burnt_formset, fire_behaviour_formset, kwargs)
 
-    def form_invalid(self, request, form, area_burnt_formset, wargs):
+    def form_invalid(self, request, form, area_burnt_formset, fire_behaviour_formset, wargs):
         context = self.get_context_data()
         context.update({'form': form})
         context.update({'area_burnt_formset': area_burnt_formset})
+        context.update({'fire_behaviour_formset': fire_behaviour_formset})
         return self.render_to_response(context)
 
-    def form_valid(self, request, form, area_burnt_formset):
+    def form_valid(self, request, form, area_burnt_formset, fire_behaviour_formset):
         #import ipdb; ipdb.set_trace()
         self.object = form.save(commit=False)
         if not self.object.creator:
@@ -555,10 +570,15 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
 
         self.object.save()
         areas_burnt_updated = update_areas_burnt_fs(self.object, area_burnt_formset)
+        fire_behaviour_updated = update_fire_behaviour_fs(self.object, fire_behaviour_formset)
 
         redirect_referrer =  HttpResponseRedirect(request.META.get('HTTP_REFERER'))
         if not areas_burnt_updated:
             messages.error(request, 'There was an error saving Areas Burnt.')
+            return redirect_referrer
+
+        if not fire_behaviour_updated:
+            messages.error(request, 'There was an error saving Fuel Behaviour.')
             return redirect_referrer
 
         if self.request.POST.has_key('_save_continue'):
@@ -586,9 +606,11 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
 
         if not area_burnt_formset:
             area_burnt_formset      = AreaBurntFormSet(instance=self.object, prefix='area_burnt_fs')
+        fire_behaviour_formset = FireBehaviourFormSet(instance=self.object, prefix='fire_behaviour_fs')
 
         context.update({'form': form,
                         'area_burnt_formset': area_burnt_formset,
+                        'fire_behaviour_formset': fire_behaviour_formset,
                         'is_authorised': bushfire.is_init_authorised,
                         'snapshot': deserialize_bushfire('initial', bushfire) if bushfire.initial_snapshot else None,
                         'initial': True,
@@ -614,6 +636,41 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
         self.object = self.get_object() # needed for update
         form_class = self.get_form_class()
         form = self.get_form(form_class)
+
+        """ _________________________________________________________________________________________________________________
+
+        This Section used if district is changed from within the bushfire reporting system
+        Only FSSDRS Group can change district after it is STATUS_INITIAL_SUBMITTED
+
+        """
+        #import ipdb; ipdb.set_trace()
+        # Check if district is has changed and whether the record needs to be invalidated
+        cur_obj = Bushfire.objects.get(id=self.object.id)
+        district = District.objects.get(id=request.POST['district']) if request.POST.has_key('district') else None # get the district from the form
+        #if self.request.POST.has_key('action') and self.request.POST.get('action')=='invalidate' and not cur_obj.invalid:
+        if self.request.POST.has_key('action') and self.request.POST.get('action')=='invalidate' and cur_obj.report_status!=Bushfire.STATUS_INVALIDATED:
+            import ipdb; ipdb.set_trace()
+            self.object.invalid_details = self.request.POST.get('invalid_details')
+            self.object.save()
+            self.object = invalidate_bushfire(self.object, district, request.user)
+            url_name = 'bushfire_initial' if self.object.report_status <= Bushfire.STATUS_INITIAL_AUTHORISED else 'bushfire_final'
+            return  HttpResponseRedirect(reverse('bushfire:' + url_name, kwargs={'pk': self.object.id}))
+
+        elif district != cur_obj.district:
+            message = 'District has changed (from {} to {}). This action will invalidate the existing bushfire and create  a new bushfire with the new district, and a new fire number.'.format(
+                cur_obj.district.name,
+                district.name
+            )
+            context={
+               'action': 'invalidate',
+               'district': district.id,
+               'message': message,
+            }
+            return TemplateResponse(request, 'bfrs/confirm.html', context=context)
+        """ _________________________________________________________________________________________________________________ """
+
+
+
         #area_burnt_formset      = AreaBurntFormSet(self.request.POST, prefix='area_burnt_fs')
         injury_formset          = InjuryFormSet(self.request.POST, prefix='injury_fs')
         damage_formset          = DamageFormSet(self.request.POST, prefix='damage_fs')

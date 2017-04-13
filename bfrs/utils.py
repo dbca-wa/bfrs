@@ -1,4 +1,4 @@
-from bfrs.models import (Bushfire, AreaBurnt, Damage, Injury, Tenure, SpatialDataHistory, LinkedBushfire)
+from bfrs.models import (Bushfire, AreaBurnt, Damage, Injury, FireBehaviour, Tenure, SpatialDataHistory, LinkedBushfire)
 #from bfrs.forms import (BaseAreaBurntFormSet)
 from django.db import IntegrityError, transaction
 from django.http import HttpResponse
@@ -103,8 +103,7 @@ def invalidate_bushfire(obj, new_district, user):
         obj.pk = None
 
         #import ipdb; ipdb.set_trace()
-        # check if we have this district already in the list of invalidated linked bushfires
-        #linked_bushfire = [Bushfire.objects.get(id=i.linked_id) for i in old_linked if Bushfire.objects.get(id=i.linked_id).district.id==new_district.id]
+        # check if we have this district already in the list of invalidated linked bushfires, and re-use fire_number if so
         linked_objs = [linked_obj for linked_obj in old_linked if linked_obj.linked_bushfire.district==new_district]
         #if linked_objs and linked_objs[0].linked_bushfire.invalid:
         if linked_objs and linked_objs[0].linked_bushfire.report_status==Bushfire.STATUS_INVALIDATED:
@@ -143,6 +142,10 @@ def invalidate_bushfire(obj, new_district, user):
         # link the old invalidate bushfire to the new (valid) bushfire - fwd link
         #LinkedBushfire.objects.create(bushfire_id=old_id, creator=user, modifier=user, linked_id=obj.pk, linked_fire_number=obj.fire_number)
         LinkedBushfire.objects.create(bushfire=old_obj, linked_bushfire=obj, creator=user, modifier=user)
+
+        #for linked in LinkedBushfire.objects.filter(bushfire=obj):
+        #    linked.update(linked_bushfire=obj)
+
 
         return obj
     return False
@@ -286,6 +289,28 @@ def update_damage_fs(bushfire, damage_formset):
 
     return 1
 
+def update_fire_behaviour_fs(bushfire, fire_behaviour_formset):
+    new_fs_object = []
+    for form in fire_behaviour_formset:
+        if form.is_valid():
+            fuel_type = form.cleaned_data.get('fuel_type')
+            ros = form.cleaned_data.get('ros')
+            flame_height = form.cleaned_data.get('flame_height')
+            remove = form.cleaned_data.get('DELETE')
+
+            if not remove and (fuel_type and ros and flame_height):
+                new_fs_object.append(FireBehaviour(bushfire=bushfire, fuel_type=fuel_type, ros=ros, flame_height=flame_height))
+
+    try:
+        with transaction.atomic():
+            FireBehaviour.objects.filter(bushfire=bushfire).delete()
+            FireBehaviour.objects.bulk_create(new_fs_object)
+    except IntegrityError:
+        return 0
+
+    return 1
+
+
 def rdo_email(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION:
        return
@@ -369,7 +394,6 @@ def create_view():
             b.fire_level,
             b.media_alert_req,
             b.park_trail_impacted,
-            b.fuel_type,
             b.cause_id,
             b.cause_state,
             b.other_cause,
