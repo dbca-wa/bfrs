@@ -141,20 +141,21 @@ class BushfireResource(APIResource):
         Converts the json string format to the one required by tastypie's full_hydrate() method
         converts the string: [11,-12] --> POINT (11 -12)
         """
-        if isinstance(bundle.data['origin_point'], list):
+        if bundle.data.has_key('origin_point') and isinstance(bundle.data['origin_point'], list):
             bundle.data['origin_point'] = Point(bundle.data['origin_point']).__str__()
         return bundle
 
     def hydrate_fire_boundary(self, bundle):
         #import ipdb; ipdb.set_trace()
-        if isinstance(bundle.data['fire_boundary'], list):
+        if bundle.data.has_key('fire_boundary') and isinstance(bundle.data['fire_boundary'], list):
             bundle.data['fire_boundary'] = MultiPolygon([Polygon(p[0]) for p in bundle.data['fire_boundary']]).__str__()
         return bundle
 
     def obj_update(self, bundle, **kwargs):
         #import ipdb; ipdb.set_trace()
         self.full_hydrate(bundle)
-        if bundle.data['tenure_ignition_point'] and bundle.data['tenure_ignition_point']['category']:
+        if bundle.data.has_key('tenure_ignition_point') and bundle.data['tenure_ignition_point'] and \
+            bundle.data['tenure_ignition_point'].has_key('category') and bundle.data['tenure_ignition_point']['category']:
             try:
                 bundle.obj.tenure = Tenure.objects.get(name__istartswith=bundle.data['tenure_ignition_point']['category'])
             except:
@@ -162,20 +163,20 @@ class BushfireResource(APIResource):
         else:
             bundle.obj.tenure = Tenure.objects.get(name__istartswith='other')
 
-        if bundle.data['tenure_area']:
+        if bundle.data.has_key('tenure_area') and bundle.data['tenure_area']:
             update_areas_burnt(bundle.obj, bundle.data['tenure_area'])
 
-        if bundle.data['area']:
+        if bundle.data.has_key('area') and bundle.data['area']:
             if float(bundle.data['area']) > 2.0:
                 bundle.obj.area_limit = False
                 bundle.obj.area = float(bundle.data['area'])
 
-        if bundle.data['fire_position']:
+        if bundle.data.has_key('fire_position') and bundle.data['fire_position']:
             # only update if user has not over-ridden
             if not bundle.obj.fire_position_override:
                 bundle.obj.fire_position = bundle.data['fire_position']
 
-        if bundle.data['region_id'] and bundle.data['district_id']:
+        if bundle.data.has_key('region_id') and bundle.data.has_key('district_id') and bundle.data['region_id'] and bundle.data['district_id']:
             if bundle.data['district_id'] != bundle.obj.district.id:
                 district = District.objects.get(id=bundle.data['district_id'])
                 invalidate_bushfire(bundle.obj, district, bundle.request.user)

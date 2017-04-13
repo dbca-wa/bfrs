@@ -352,7 +352,8 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
                 initial['fire_position'] = sss['fire_position']
 
             #import ipdb; ipdb.set_trace()
-            if sss['tenure_ignition_point'] and sss['tenure_ignition_point']['category']:
+            if sss.has_key('tenure_ignition_point') and sss['tenure_ignition_point'] and \
+                sss['tenure_ignition_point'].has_key('category') and sss['tenure_ignition_point']['category']:
                 try:
                     initial['tenure'] = Tenure.objects.get(name__istartswith=sss['tenure_ignition_point']['category'])
                 except:
@@ -445,7 +446,7 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
         area_burnt_formset = None
         if self.request.POST.has_key('sss_create'):
             sss = json.loads( self.request.POST['sss_create'] )
-            if sss.has_key('tenure_area'):
+            if sss.has_key('tenure_area') and sss['tenure_area']:
                 area_burnt_formset = create_areas_burnt(None, sss['tenure_area'])
 
 #        import ipdb; ipdb.set_trace()
@@ -525,6 +526,7 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
         """ _________________________________________________________________________________________________________________ """
 
 
+        #import ipdb; ipdb.set_trace()
         if not self.request.POST.has_key('sss_create'):
             # FOR Testing outide SSS
             # redefine AreaBurnFormSet to require no formsets on initial form (since its hidden in the template)
@@ -550,26 +552,6 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
             self.object.creator = request.user
         self.object.modifier = request.user
         #calc_coords(self.object)
-
-        # Invalidate
-        #import ipdb; ipdb.set_trace()
-#        cur_obj = Bushfire.objects.get(id=self.object.id)
-#        if self.request.POST.has_key('invalidate') and not cur_obj.invalid:
-#            invalidate_bushfire(self.object, cur_obj)
-#        elif self.object.district != cur_obj.district:
-#            message = 'District has changed (from {} to {}). This action will invalidate the existing bushfire and create  a new bushfire with the new district, and a new fire number.'.format(
-#                self.object.district.name,
-#                cur_obj.district.name
-#            )
-#            context={
-#               'form': form,
-#               'area_burnt_formset': area_burnt_formset,
-#               'is_authorised': self.object.is_init_authorised,
-#               'initial': True,
-#               'action': 'invalidate',
-#               'message': message,
-#            }
-#            return TemplateResponse(request, 'bfrs/confirm.html', context=context)
 
         self.object.save()
         areas_burnt_updated = update_areas_burnt_fs(self.object, area_burnt_formset)
@@ -599,7 +581,7 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
         area_burnt_formset = None
         if self.request.POST.has_key('sss_create'):
             sss = json.loads( self.request.POST['sss_create'] )
-            if sss.has_key('tenure_area'):
+            if sss.has_key('tenure_area') and sss['tenure_area']:
                 area_burnt_formset = create_areas_burnt(None, sss['tenure_area'])
 
         if not area_burnt_formset:
@@ -730,7 +712,7 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
         area_burnt_formset = None
         if self.request.POST.has_key('sss_create'):
             sss = json.loads( self.request.POST['sss_create'] )
-            if sss.has_key('tenure_area'):
+            if sss.has_key('tenure_area') and sss['tenure_area']:
                 area_burnt_formset = create_areas_burnt(None, sss['tenure_area'])
 
         if not area_burnt_formset:
