@@ -181,25 +181,36 @@
 			  <tr>
                 <th>Linked bushfires</th>
 				<td colspan="3" >
-                  {% if bushfire.linked.all %}
+                  {% if bushfire.invalidated.all or bushfire.valid_bushfire %}
                   <table class="table table-bordered table-condensed">
 			        <thead>
                       <th>Fire Number</th>
                       <th>Date</th>
                       <th>User</th>
-                      <th>Invalid</th>
+                      <th>Status</th>
                       <th>Details</th>
                     </thead>
                     <tbody>
-                    {% for linked_obj in bushfire.linked.all %}
+                    {% if bushfire.invalidated.all %}
+                      {% for linked_obj in bushfire.invalidated.all %}
                       <tr>
-				        <td><a href="{% url 'bushfire:bushfire_initial' linked_obj.linked_bushfire.id %}">{{linked_obj.linked_bushfire.fire_number}}</a></td>
+				        <td><a href="{% url 'bushfire:bushfire_initial' linked_obj.id %}">{{linked_obj.fire_number}}</a></td>
 				        <td>{{linked_obj.modified|date_fmt}}</td>
 				        <td>{{linked_obj.modifier}}</td>
-				        <td>{{linked_obj.linked_bushfire.report_status|yesno:"Yes,No"}}</td>
-				        <td>{{linked_obj.linked_bushfire.invalid_details}}</td>
+				        <td>{{linked_obj.get_report_status_display}}</td>
+				        <td>{{linked_obj.invalid_details}}</td>
                       </tr>
-                    {% endfor %}
+                      {% endfor %}
+                    {% else %}
+                      <tr>
+				        <td><a href="{% url 'bushfire:bushfire_initial' bushfire.valid_bushfire.id %}">{{bushfire.valid_bushfire.fire_number}}</a></td>
+				        <td>{{bushfire.valid_bushfire.modified|date_fmt}}</td>
+				        <td>{{bushfire.valid_bushfire.modifier}}</td>
+				        <td>{{bushfire.valid_bushfire.get_report_status_display}}</td>
+				        <td>{{bushfire.valid_bushfire.invalid_details}}</td>
+                      </tr>
+                    {% endif %}
+
                     </tbody>
                   </table>
                   {% else %}

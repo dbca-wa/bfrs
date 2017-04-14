@@ -75,11 +75,11 @@
     </div>
 {% endif %}
 
-{% if object.report_status == object.STATUS_INVALIDATED  and object.linked_bushfire %}
+{% if object.report_status == object.STATUS_INVALIDATED %}
 <h1>Bushfire Detail
     <h2>
-		<font color="red"> Report invalidated on {{object.linked_bushfire.modified|date_fmt}} by {{object.linked_bushfire.modifier}}</font>
-	(Linked valid bushfire <a href="{% url 'bushfire:bushfire_initial' object.linked_bushfire.bushfire.id %}">{{object.linked_bushfire.bushfire.fire_number}}</a>)
+		<font color="red"> Report invalidated on {{object.modified|date_fmt}} by {{object.modifier}}</font>
+	(Linked valid bushfire <a href="{% url 'bushfire:bushfire_initial' object.valid_bushfire.id %}">{{object.valid_bushfire.fire_number}}</a>)
     </h2>
 </h1>
 {% elif action == 'submit_initial' %}

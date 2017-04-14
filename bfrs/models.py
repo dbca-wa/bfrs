@@ -253,6 +253,11 @@ class Bushfire(Audit):
     archive = models.BooleanField(verbose_name="Archive report", default=False)
     invalid_details = models.CharField(verbose_name="Reason for invalidating", max_length=64, null=True, blank=True)
 
+    #linked_bushfire = models.ForeignKey('Bushfire')
+
+    # recursive relationship - an object that has a many-to-many relationship with itself
+    valid_bushfire = models.ForeignKey('self', null=True, related_name='invalidated')
+
 #    def save(self, *args, **kwargs):
 #        '''Overide save() to cleanse text input fields.
 #        '''
@@ -279,13 +284,13 @@ class Bushfire(Audit):
 #    def linked_fire_numbers(self):
 #        return [Bushfire.objects.get(id=i.linked_id) for i in self.linked.all()]
 
-    @property
-    def linked_bushfire(self):
-		# check forwards - current valid bushfire, what are its invalidated linked bushfires
-        objs = LinkedBushfire.objects.filter(linked_bushfire=self)
-        if objs:
-            return objs[0]
-        return LinkedBushfire.objects.none()
+#    @property
+#    def linked_bushfire(self):
+#		# check forwards - current valid bushfire, what are its invalidated linked bushfires
+#        objs = LinkedBushfire.objects.filter(linked_bushfire=self)
+#        if objs:
+#            return objs[0]
+#        return LinkedBushfire.objects.none()
 
 
     @property
@@ -576,18 +581,15 @@ class SpatialDataHistory(Audit):
         return 'Created {}, Creator {}'.format(self.created, self.creator)
 
 
-@python_2_unicode_compatible
-class LinkedBushfire(Audit):
-    #linked_id = models.PositiveSmallIntegerField(validators=[MinValueValidator(0)])
-    #linked_fire_number = models.CharField(max_length=15, verbose_name="Linked fire Number")
-    linked_bushfire = models.ForeignKey(Bushfire)
-    bushfire = models.ForeignKey(Bushfire, related_name='linked')
-
-    def __str__(self):
-		return 'Created {}, Linked Rpt ID {}'.format(self.created.strftime('%Y-%m-%d %H:%M:%S'), self.linked_bushfire.id)
-
-#    class Meta:
-#        unique_together = ('bushfire', 'injury_type',)
+#@python_2_unicode_compatible
+#class LinkedBushfire(Audit):
+#    #linked_id = models.PositiveSmallIntegerField(validators=[MinValueValidator(0)])
+#    #linked_fire_number = models.CharField(max_length=15, verbose_name="Linked fire Number")
+#    #linked_bushfire = models.OneToOneField(Bushfire)
+#    bushfire = models.ForeignKey(Bushfire, related_name='linked')
+#
+#    def __str__(self):
+#		return 'Created {}, Linked Rpt ID {}'.format(self.created.strftime('%Y-%m-%d %H:%M:%S'), self.linked_bushfire.id)
 
 
 class BushfireTest(models.Model):

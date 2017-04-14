@@ -1,4 +1,4 @@
-from bfrs.models import (Bushfire, AreaBurnt, Damage, Injury, FireBehaviour, Tenure, SpatialDataHistory, LinkedBushfire)
+from bfrs.models import (Bushfire, AreaBurnt, Damage, Injury, FireBehaviour, Tenure, SpatialDataHistory) #, LinkedBushfire)
 #from bfrs.forms import (BaseAreaBurntFormSet)
 from django.db import IntegrityError, transaction
 from django.http import HttpResponse
@@ -97,22 +97,22 @@ def invalidate_bushfire(obj, new_district, user):
         old_obj = deepcopy(obj)
         #old_id = obj.pk
         #old_fire_number = obj.fire_number
-        old_linked = old_obj.linked.all()
+        old_invalidated = old_obj.invalidated.all()
 
         # create a new object as a copy of existing
         obj.pk = None
 
         #import ipdb; ipdb.set_trace()
         # check if we have this district already in the list of invalidated linked bushfires, and re-use fire_number if so
-        linked_objs = [linked_obj for linked_obj in old_linked if linked_obj.linked_bushfire.district==new_district]
-        #if linked_objs and linked_objs[0].linked_bushfire.invalid:
-        if linked_objs and linked_objs[0].linked_bushfire.report_status==Bushfire.STATUS_INVALIDATED:
+        invalidated_objs = [invalidated_obj for invalidated_obj in old_invalidated if invalidated_obj.district==new_district]
+        if invalidated_objs and invalidated_objs[0].report_status==Bushfire.STATUS_INVALIDATED:
             # re-use previous fire_number
             #import ipdb; ipdb.set_trace()
-            linked_bushfire = linked_objs[0].linked_bushfire
+            linked_bushfire = invalidated_objs[0]
             obj.fire_number = linked_bushfire.fire_number
             #LinkedBushfire.objects.filter(linked_id=linked_bushfire[0].id).delete()
-            LinkedBushfire.objects.filter(linked_bushfire=linked_bushfire).delete()
+            #LinkedBushfire.objects.filter(linked_bushfire=linked_bushfire).delete()
+            #obj.linked_bushfire.filter(bushfire=linked_bushfire).delete()
             linked_bushfire.delete() # to avoid integrity constraint
         else:
             # create new fire_number
@@ -123,25 +123,30 @@ def invalidate_bushfire(obj, new_district, user):
         obj.report_status = old_rpt_status
         obj.district = new_district
         obj.region = new_district.region
+        obj.valid_bushfire = None
         #obj.fire_number = ' '.join(['BF', obj.district.code, str(obj.year), '{0:03d}'.format(obj.next_id)])
         obj.save()
 
         # link the new bushfire to the old invalidated bushfire
         created = datetime.now(tz=pytz.utc)
         #LinkedBushfire.objects.create(bushfire=obj, linked_bushfire=creator=user, modifier=user, linked_id=old_id, linked_fire_number=old_fire_number)
-        LinkedBushfire.objects.create(bushfire=obj, linked_bushfire=old_obj, creator=user, modifier=user)
+        #LinkedBushfire.objects.create(bushfire=obj, linked_bushfire=old_obj, creator=user, modifier=user)
+        #LinkedBushfire.objects.create(bushfire=obj, creator=user, modifier=user)
 
         #import ipdb; ipdb.set_trace()
         # copy all links from the above invalidated bushfire to the new bushfire
-        if old_linked:
-            for linked in old_linked:
+        if old_invalidated:
+            for linked in old_invalidated:
                 #linked.pk = None # uncomment this for a two-way link
                 #linked.save()
-                obj.linked.add(linked)
+                obj.invalidated.add(linked)
 
         # link the old invalidate bushfire to the new (valid) bushfire - fwd link
         #LinkedBushfire.objects.create(bushfire_id=old_id, creator=user, modifier=user, linked_id=obj.pk, linked_fire_number=obj.fire_number)
-        LinkedBushfire.objects.create(bushfire=old_obj, linked_bushfire=obj, creator=user, modifier=user)
+        #LinkedBushfire.objects.create(bushfire=old_obj, linked_bushfire=obj, creator=user, modifier=user)
+        #LinkedBushfire.objects.create(bushfire=old_obj, creator=user, modifier=user)
+        old_obj.valid_bushfire = obj
+        old_obj.save()
 
         #for linked in LinkedBushfire.objects.filter(bushfire=obj):
         #    linked.update(linked_bushfire=obj)
