@@ -40,7 +40,7 @@ def date_fmt(dt):
         ...
         {% endif %}
     """
-    return dt.strftime('%Y-%m-%d %H:%M:%S')
+    return dt.strftime('%Y-%m-%d %H:%M:%S') if dt else None
 
 @register.filter
 def can_readonly(user):

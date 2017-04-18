@@ -72,9 +72,9 @@
 </form>
 {% endcomment %}
 
+{% comment %}
 <input type="hidden" id="gokart_url" value="{{sss_url}}" name="gokart_url" type="text">
 <input type="hidden" id="gokart_module" value="bfrs" name="gokart_module" type="text">
-{% comment %}
 <!-- http://static.dpaw.wa.gov.au/pages/test-gokartclient.html?debug=true -->
 <input type="hidden" id="gokart_module" value="bfrs" name="gokart_module" type="text">
 <input type="hidden" id="open_options" value='{"region":7,"district":13,"bushfireid":5}' name="gokart_url" type="text">
@@ -123,14 +123,7 @@
          {% if bushfire.report_status == bushfire.STATUS_FINAL_AUTHORISED %}
             <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=create_review');" title="Create review report"><i class="icon-plus icon-white"></i></a>
          {% elif bushfire.report_status == bushfire.STATUS_REVIEW_DRAFT %}
-            <input type="hidden" id="open_options" value='{"region":{{bushfire.region.id}},"district":{{bushfire.district.id}},"bushfireid":{{bushfire.id}}}' name="gokart_url" type="text">
-            <a href="#" onclick="gokart = loadGokart(); openGokart()" title="Open report in SSS"><i class="icon-link icon-white"></i></a>
-
-            {% comment %}
-            <a href="{% url 'sss_home' %}" title="Open report in SSS" target="_blank"><i class="icon-link icon-white"></i></a>
-            <a href="#" id="id_open_sss" title="Open report in SSS 3"><i class="icon-link icon-white"></i></a>
-            <input onclick="gokart = loadGokart(); openGokart()" name="button" value="Open" type="button">
-            {% endcomment %}
+            <a href="#" onclick='openGokart({"region":{{bushfire.region.id}},"district":{{bushfire.district.id}},"bushfireid":{{bushfire.id}} });' title="Open report in SSS"><i class="icon-link icon-white"></i></a>
 
          {% elif bushfire.report_status == bushfire.STATUS_REVIEWED %}
             <a href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Final fire report reviewed on {{bushfire.reviewed_date}} by {{bushfire.reviewed_by}}"><i class="icon-ok icon-white"></i></a>
@@ -232,11 +225,12 @@
     <p>No Bushfires are available.</p>
 {% endif %}
 
+<script src="{{sss_url}}/dist/static/js/gokart.js"></script>
 <script>
 
-$("#id_open_sss").on('click', function() {
-   gokart = loadGokart(); openGokart();
-});
+//$("#id_open_sss").on('click', function() {
+//   gokart = loadGokart(); openGokart();
+//});
 
     //var spatial_data = {"area":5068734.39165385, "origin_point":[117.30008118682615,-30.849007786590157]};
     var spatial_data = {
@@ -397,47 +391,13 @@ $(function(){
 
 
 /* GoKart section */
-    var gokartScript = null
-    var gokart = null
+	gokart = Gokart.get('bfrs','{{sss_url}}');
 
-    function loadGokart() {
-        var url = document.getElementById('gokart_url').value || "https://sss.dpaw.wa.gov.au";
-        var module = document.getElementById('gokart_module').value || "bfrs"
-        var app = "sss"
-
-        var scriptUrl = url + "/dist/static/js/gokart.js";
-        if (gokartScript && true) {//gokartScript.src !== scriptUrl) {
-            console.log("gokart script is removed");
-            if (gokart) gokart.close()
-            gokartScript.parentNode.removeChild(gokartScript);
-            gokartScript = null;
-        }
-        if (!gokartScript) {
-            console.log("gokart script is added to the document");
-            gokartScript = document.createElement("script");
-            gokartScript.setAttribute('type','text/javascript');
-            gokartScript.setAttribute('src',scriptUrl)
-            gokartScript.onload = function() {
-                console.log("gokart script is loaded");
-                gokart = Gokart.get(module,url,app);
-            }
-            document.body.appendChild(gokartScript);
-        } else {
-            gokart = Gokart.get(module,url,app);
-        }
+    function openGokart(open_options) {
+		console.log(open_options);
+        gokart.call("open", open_options);
     }
-
-    function openGokart() {
-        var func = function() {
-            if (gokart) {
-                console.log('open_options: ' + document.getElementById('open_options').value)
-                gokart.open(JSON.parse(document.getElementById('open_options').value));
-            } else {
-                setTimeout(func,500)
-            }
-        }
-        func()
-    }
+	gokart.call("open", {"region":7, "district":13, "refresh":true});
 /* END - GoKart section */
 
 

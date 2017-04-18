@@ -75,7 +75,7 @@
     </div>
 {% endif %}
 
-{% if object.report_status == object.STATUS_INVALIDATED %}
+{% if object.report_status and object.report_status == object.STATUS_INVALIDATED %}
 <h1>Bushfire Detail
     <h2>
 		<font color="red"> Report invalidated on {{object.modified|date_fmt}} by {{object.modifier}}</font>
