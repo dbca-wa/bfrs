@@ -80,7 +80,6 @@
 <input type="hidden" id="open_options" value='{"region":7,"district":13,"bushfireid":5}' name="gokart_url" type="text">
 <input onclick="gokart = loadGokart(); openGokart()" name="button" value="Open" type="button">
 {% endcomment %}
-
 {% if object_list %}
 <table id="table" class="tablesorter table table-striped table-bordered table-hover table-condensed">
   <thead>
@@ -394,10 +393,13 @@ $(function(){
 	gokart = Gokart.get('bfrs','{{sss_url}}');
 
     function openGokart(open_options) {
-		console.log(open_options);
         gokart.call("open", open_options);
     }
-	gokart.call("open", {"region":7, "district":13, "refresh":true});
+
+	if ({{request.session.refreshGokart|yesno:"true,false"}}) {
+		//console.log("region " + {{request.session.region}} + " - district " + {{request.session.district}});
+		gokart.call("open", {"region":{{request.session.region}}, "district":{{request.session.district}}, "refresh":true});
+    }
 /* END - GoKart section */
 
 

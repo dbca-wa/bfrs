@@ -411,7 +411,7 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
         #import ipdb; ipdb.set_trace()
         #if form.is_valid() and area_burnt_formset.is_valid():
 	if form.is_valid() and fire_behaviour_formset.is_valid(): # No need to check area_burnt_formset since the fs is hidden on the initial form
-            return self.form_valid(request, form, area_burnt_formset, fire_behaviour_formset)
+            return self.form_valid(request, form, area_burnt_formset, fire_behaviour_formset, kwargs)
         else:
             return self.form_invalid(request, form, area_burnt_formset, fire_behaviour_formset, kwargs)
 
@@ -422,7 +422,7 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
         context.update({'fire_behaviour_formset': fire_behaviour_formset})
         return self.render_to_response(context)
 
-    def form_valid(self, request, form, area_burnt_formset, fire_behaviour_formset):
+    def form_valid(self, request, form, area_burnt_formset, fire_behaviour_formset, kwargs):
         self.object = form.save(commit=False)
         self.object.creator = request.user #1 #User.objects.all()[0] #request.user
         self.object.modifier = request.user #1 #User.objects.all()[0] #request.user
@@ -442,7 +442,10 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
             messages.error(request, 'There was an error saving Fuel Behaviour.')
             return redirect_referrer
 
-        return HttpResponseRedirect(self.get_success_url())
+	request.session['refreshGokart'] = True
+	request.session['region'] = self.object.region.id
+	request.session['district'] = self.object.district.id
+	return HttpResponseRedirect(self.get_success_url())
 
     def get_context_data(self, **kwargs):
         try:
