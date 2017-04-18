@@ -271,28 +271,6 @@ class Bushfire(Audit):
         ids = map(int, [i.fire_number.split(' ')[-1] for i in Bushfire.objects.filter(district=district, year=self.year)])
         return max(ids) + 1 if ids else 1
 
-#    @property
-#    def linked_display(self):
-#        for i in self.linked.all():
-#            try:
-#                b=Bushfire.objects.get(id=i.linked_id)
-#                print '{}\t{}\t{}\tinvalid={}'.format(b.id, b.fire_number, b.district, b.invalid)
-#            except:
-#                print 'Missing Bushfire: {}'.format(i.linked_id)
-#
-#    @property
-#    def linked_fire_numbers(self):
-#        return [Bushfire.objects.get(id=i.linked_id) for i in self.linked.all()]
-
-#    @property
-#    def linked_bushfire(self):
-#		# check forwards - current valid bushfire, what are its invalidated linked bushfires
-#        objs = LinkedBushfire.objects.filter(linked_bushfire=self)
-#        if objs:
-#            return objs[0]
-#        return LinkedBushfire.objects.none()
-
-
     @property
     def linked_valid_bushfire(self):
 		# check forwards
@@ -339,6 +317,11 @@ class Bushfire(Audit):
 #        self.fire_number = ' '.join(['BF', self.district.code, str(self.year), '{0:03d}'.format(next_id)])
 #
 #        super(Bushfire, self).save()
+
+    @property
+    def finyear_display():
+        return '/'.join([str(year), str(year+1)])
+
 
     def missing_initial(self):
         missing_fields = check_mandatory_fields(self, SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS)
