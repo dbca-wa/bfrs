@@ -457,6 +457,14 @@ def test_view():
     cursor.execute('''select fire_number, year, district_id from bfrs_bushfire_v''')
     return cursor.fetchall()
 
+def drop_view():
+    from django.db import connection
+    cursor=connection.cursor()
+    cursor.execute('''drop view bfrs_bushfire_v''')
+    cursor.execute('''drop view bfrs_bushfire_final_v''')
+    return cursor.fetchall()
+
+
 def export_final_csv(request, queryset):
     #import csv
     filename = 'export_final-' + datetime.now().strftime('%Y-%m-%dT%H%M%S') + '.csv'
