@@ -184,7 +184,7 @@ class Bushfire(Audit):
     other_tenure = models.CharField(verbose_name='Other Tenure', max_length=64, null=True, blank=True)
 
     dfes_incident_no = models.PositiveIntegerField(verbose_name="DFES Fire Number", null=True, blank=True)
-    job_code = models.PositiveIntegerField(verbose_name="job Code", null=True, blank=True)
+    job_code = models.CharField(verbose_name="Job Code", max_length=12, null=True, blank=True)
     fire_position = models.CharField(verbose_name="Position of Fire", max_length=100, null=True, blank=True)
     fire_position_override = models.BooleanField(verbose_name="SSS override", default=False)
 
@@ -289,7 +289,7 @@ class Bushfire(Audit):
         # create the bushfire fire number
         if not self.id or self.district != Bushfire.objects.get(id=self.id).district:
             try:
-                self.fire_number = ' '.join(['BF', self.district.code, str(self.year), '{0:03d}'.format(self.next_id(self.district))])
+                self.fire_number = ' '.join(['BF', str(self.year), self.district.code, '{0:03d}'.format(self.next_id(self.district))])
             except:
                 raise ValidationError('Could not create unique fire number')
 

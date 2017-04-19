@@ -116,7 +116,7 @@ def invalidate_bushfire(obj, new_district, user):
             linked_bushfire.delete() # to avoid integrity constraint
         else:
             # create new fire_number
-            obj.fire_number = ' '.join(['BF', new_district.code, str(obj.year), '{0:03d}'.format(obj.next_id(new_district))])
+            obj.fire_number = ' '.join(['BF', str(obj.year), new_district.code, '{0:03d}'.format(obj.next_id(new_district))])
 
         #obj.pk = None
         #obj.invalid = False

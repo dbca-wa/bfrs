@@ -16,6 +16,7 @@ from django import forms
 from django.contrib.gis.db import models
 from django.forms.models import inlineformset_factory
 from django.conf import settings
+from django.db.models import Q
 
 from bfrs.models import (Profile, Bushfire,
         Region, District,
@@ -71,11 +72,18 @@ class BushfireFilter(django_filters.FilterSet):
     year = django_filters.ChoiceFilter(choices=YEAR_CHOICES, label='Year')
     reporting_year = django_filters.ChoiceFilter(choices=RPT_YEAR_CHOICES, label='Reporting Year')
     report_status = django_filters.ChoiceFilter(choices=Bushfire.REPORT_STATUS_CHOICES, label='Report Status', name='report_status', method='filter_report_status')
+    #fire_number = django_filters.CharFilter(lookup_expr='icontains', label='Search')
+    fire_number = django_filters.CharFilter(name='fire_number', label='Search', method='filter_fire_number')
 
     def filter_report_status(self, queryset, name, value):
         if int(value) == Bushfire.STATUS_MISSING_FINAL:
             return queryset.filter(report_status__in=[Bushfire.STATUS_INITIAL_AUTHORISED, Bushfire.STATUS_FINAL_DRAFT])
         return queryset.filter(report_status=value)
+
+    def filter_fire_number(self, queryset, name, value):
+        """ Works because 'fire_number' present in self.data (from <input> field in base.html) """
+        return queryset.filter(Q(fire_number__icontains=value) | Q(name=value))
+
 
     class Meta:
         model = Bushfire
@@ -85,6 +93,7 @@ class BushfireFilter(django_filters.FilterSet):
             'year',
             'reporting_year',
             'report_status',
+            'fire_number',
         ]
         order_by = (
             ('region_id', 'Region'),
@@ -92,6 +101,7 @@ class BushfireFilter(django_filters.FilterSet):
             ('year', 'Year'),
             ('reporting_year', 'Reporting Year'),
             ('report_status', 'Report Status'),
+            ('fire_number', 'Search'),
         )
     def __init__(self, *args, **kwargs):
         super(BushfireFilter, self).__init__(*args, **kwargs)

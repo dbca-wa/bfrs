@@ -166,10 +166,10 @@
             <th class="cbas">Media Alert Required *</th>
             <td colspan="2" class="cbas">
                 {% if is_authorised %}
-                {{snapshot.media_alert_req|yesno:"Yes,No"}} {% if snapshot.media_alert_req %}<br> <span>send email notification to PICA</span>{% endif %}
+                {{snapshot.media_alert_req|yesno:"Yes,No"}} {% if snapshot.media_alert_req %}<br> <span>call PICA on ...</span>{% endif %}
 
                 {% else %}
-                {{form.media_alert_req}} <br> <span class="div_pica" style="display: none;">Send email notification to PICA</span>
+                {{form.media_alert_req}} <br> <span class="div_pica" style="display: none;">call PICA on ...</span>
                 {% endif %}
             </td>
 
