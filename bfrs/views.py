@@ -669,7 +669,8 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
             self.object.invalid_details = self.request.POST.get('invalid_details')
             self.object.save()
             self.object = invalidate_bushfire(self.object, district, request.user)
-            url_name = 'bushfire_initial' if self.object.report_status <= Bushfire.STATUS_INITIAL_AUTHORISED else 'bushfire_final'
+            #url_name = 'bushfire_initial' if self.object.report_status <= Bushfire.STATUS_INITIAL_AUTHORISED else 'bushfire_final'
+            url_name = 'bushfire_final'
             return  HttpResponseRedirect(reverse('bushfire:' + url_name, kwargs={'pk': self.object.id}))
 
         elif district != cur_obj.district and not self.request.POST.has_key('fire_not_found'):
