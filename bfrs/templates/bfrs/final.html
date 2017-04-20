@@ -96,6 +96,8 @@
                 {% if is_authorised %} {{snapshot.fire_not_found|yesno:"Yes,No"}}<br> Details: {{snapshot.invalid_details}} {% else %} {{form.fire_not_found}} {% endif %}
                 <span class="div_invalid_details" style="display: none; margin: 20px;">{% if not is_authorised %} Details{{form.invalid_details}} {% endif %}</span>
             </td>
+	    {{form.region.as_hidden}}
+	    {{form.district.as_hidden}}
         </tr>
 
   </tbody>

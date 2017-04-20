@@ -111,18 +111,29 @@
 
 		<td align="center">
             {% if bushfire.report_status == bushfire.STATUS_INITIAL_AUTHORISED %}
+              <a href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Edit final fire report"><i class="icon-edit icon-white"></i></a>
+
+			{% comment %}
+            {% if bushfire.report_status == bushfire.STATUS_INITIAL_AUTHORISED %}
 		      <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=create_final');" title="Create final fire report"><i class="icon-plus icon-white"></i></a>
             {% elif bushfire.report_status == bushfire.STATUS_FINAL_DRAFT %}
               <a href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Edit final fire report"><i class="icon-edit icon-white"></i></a>
+			{% endcomment %}
             {% elif bushfire.report_status >= bushfire.STATUS_FINAL_AUTHORISED and bushfire.report_status != bushfire.STATUS_INVALIDATED%}
               <a href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Final fire report authorised on {{bushfire.authorised_date}} by {{bushfire.authorised_by}}"><i class="icon-ok icon-white"></i></a>
 		    {% endif %}
 		</td>
         <td align="center">
          {% if bushfire.report_status == bushfire.STATUS_FINAL_AUTHORISED %}
+            <a href="#" onclick='openGokart({"region":{{bushfire.region.id}},"district":{{bushfire.district.id}},"bushfireid":{{bushfire.id}} });' title="Open report in SSS"><i class="icon-link icon-white"></i></a>
+		 {% comment %}
+         {% if bushfire.report_status == bushfire.STATUS_REVIEW_DRAFT %}
+            <a href="#" onclick='openGokart({"region":{{bushfire.region.id}},"district":{{bushfire.district.id}},"bushfireid":{{bushfire.id}} });' title="Open report in SSS"><i class="icon-link icon-white"></i></a>
+         {% if bushfire.report_status == bushfire.STATUS_FINAL_AUTHORISED %}
             <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=create_review');" title="Create review report"><i class="icon-plus icon-white"></i></a>
          {% elif bushfire.report_status == bushfire.STATUS_REVIEW_DRAFT %}
             <a href="#" onclick='openGokart({"region":{{bushfire.region.id}},"district":{{bushfire.district.id}},"bushfireid":{{bushfire.id}} });' title="Open report in SSS"><i class="icon-link icon-white"></i></a>
+		 {% endcomment %}
 
          {% elif bushfire.report_status == bushfire.STATUS_REVIEWED %}
             <a href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Final fire report reviewed on {{bushfire.reviewed_date}} by {{bushfire.reviewed_by}}"><i class="icon-ok icon-white"></i></a>
@@ -133,13 +144,21 @@
 
          {% if bushfire.report_status == bushfire.STATUS_INITIAL %}
          <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=submit_initial');" title="submit initial"><font color="red"><i class="icon-warning-sign"></i></font></a></td>
-
-         {% elif bushfire.report_status == bushfire.STATUS_FINAL_DRAFT %}
+         {% elif bushfire.report_status == bushfire.STATUS_INITIAL_AUTHORISED %}
          <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=authorise_final');" title="Authorise final report"><font color="red"><i class="icon-warning-sign"></i></font></a></td>
          {% elif bushfire.report_status == bushfire.STATUS_FINAL_AUTHORISED %}
-         <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=delete_final_authorisation');" title="Delete authorisation"><i class="icon-trash icon-white"></i></a></td>
+         <td>
+			 <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=mark_reviewed');" title="Mark Final report as Reviewed"><font color="red"><i class="icon-warning-sign"></i></font></a>
+             <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=delete_final_authorisation');" title="Delete authorisation"><i class="icon-trash icon-white"></i></a>
+		 </td>
+
+		 {% comment %}
+         {% elif bushfire.report_status == bushfire.STATUS_FINAL_DRAFT %}
+         <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=authorise_final');" title="Authorise final report"><font color="red"><i class="icon-warning-sign"></i></font></a></td>
          {% elif bushfire.report_status == bushfire.STATUS_REVIEW_DRAFT %}
          <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=mark_reviewed');" title="Mark Final report as Reviewed"><font color="red"><i class="icon-warning-sign"></i></font></a></td>
+		 {% endcomment %}
+
          {% elif bushfire.report_status == bushfire.STATUS_REVIEWED %}
            {% if not bushfire.archive %}
              <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=archive');" title="Archive Report"><i class="icon-folder-close"></i></a></td>

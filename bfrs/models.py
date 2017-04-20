@@ -134,22 +134,19 @@ class District(models.Model):
 class Bushfire(Audit):
     STATUS_INITIAL            = 1
     STATUS_INITIAL_AUTHORISED = 2
-    STATUS_FINAL_DRAFT        = 3 # allows for CREATE of FINAL DRAFT REPORT
-    STATUS_FINAL_AUTHORISED   = 4
-    STATUS_REVIEW_DRAFT       = 5 # allows for CREATE of REVIEW DRAFT REPORT
-    STATUS_REVIEWED           = 6
-    STATUS_INVALIDATED        = 7
-    STATUS_MISSING_FINAL      = 8 # This is not really a status, and is never set - used for filtering qs only
+    STATUS_FINAL_AUTHORISED   = 3
+    STATUS_REVIEWED           = 4
+    STATUS_INVALIDATED        = 5
+    STATUS_MISSING_FINAL      = 6 # This is not really a status, and is never set - used for filtering qs only
     REPORT_STATUS_CHOICES = (
         (STATUS_INITIAL, 'Initial'),
         (STATUS_INITIAL_AUTHORISED, 'Initial Authorised'),
-        (STATUS_FINAL_DRAFT, 'Draft Final'),
         (STATUS_FINAL_AUTHORISED, 'Final Authorised'),
-        (STATUS_REVIEW_DRAFT, 'Draft Review'),
         (STATUS_REVIEWED, 'Reviewed'),
         (STATUS_INVALIDATED, 'Invalidated'),
         (STATUS_MISSING_FINAL, 'Missing Final'), # This is not really a status, and is never set - used for filtering qs only
     )
+
 
     FIRE_LEVEL_CHOICES = (
         (1, 1),
@@ -347,7 +344,7 @@ class Bushfire(Audit):
 
     @property
     def can_authorise(self):
-        if not self.missing_final() and self.report_status == self.STATUS_FINAL_DRAFT:
+        if not self.missing_final() and self.report_status == self.STATUS_INITIAL_AUTHORISED:
             return True
         return False
 

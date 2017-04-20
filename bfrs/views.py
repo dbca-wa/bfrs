@@ -77,7 +77,8 @@ class BushfireFilter(django_filters.FilterSet):
 
     def filter_report_status(self, queryset, name, value):
         if int(value) == Bushfire.STATUS_MISSING_FINAL:
-            return queryset.filter(report_status__in=[Bushfire.STATUS_INITIAL_AUTHORISED, Bushfire.STATUS_FINAL_DRAFT])
+            #return queryset.filter(report_status__in=[Bushfire.STATUS_INITIAL_AUTHORISED, Bushfire.STATUS_FINAL_DRAFT])
+            return queryset.filter(report_status__in=[Bushfire.STATUS_INITIAL_AUTHORISED])
         return queryset.filter(report_status=value)
 
     def filter_fire_number(self, queryset, name, value):
@@ -242,11 +243,11 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
                     police_email(bushfire, self.mail_url(bushfire))
 
             # CREATE the FINAL DRAFT report
-            if action == 'create_final' and bushfire.report_status==Bushfire.STATUS_INITIAL_AUTHORISED:
-                bushfire.report_status = Bushfire.STATUS_FINAL_DRAFT
+#            if action == 'create_final' and bushfire.report_status==Bushfire.STATUS_INITIAL_AUTHORISED:
+#                bushfire.report_status = Bushfire.STATUS_FINAL_DRAFT
 
             # Authorise the FINAL report
-            if action == 'authorise_final' and bushfire.report_status==Bushfire.STATUS_FINAL_DRAFT:
+            if action == 'authorise_final' and bushfire.report_status==Bushfire.STATUS_INITIAL_AUTHORISED:
                 bushfire.authorised_by = self.request.user
                 bushfire.authorised_date = datetime.now(tz=pytz.utc)
                 bushfire.report_status = Bushfire.STATUS_FINAL_AUTHORISED
@@ -256,11 +257,11 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
                 fssdrs_email(bushfire, self.mail_url(bushfire, status='final'))
 
             # CREATE the REVIEWABLE DRAFT report
-            if action == 'create_review' and bushfire.report_status==Bushfire.STATUS_FINAL_AUTHORISED:
-                bushfire.report_status = Bushfire.STATUS_REVIEW_DRAFT
+#            if action == 'create_review' and bushfire.report_status==Bushfire.STATUS_FINAL_AUTHORISED:
+#                bushfire.report_status = Bushfire.STATUS_REVIEW_DRAFT
 
             # Authorise the REVIEW DRAFT report
-            if action == 'mark_reviewed' and bushfire.report_status==Bushfire.STATUS_REVIEW_DRAFT:
+            if action == 'mark_reviewed' and bushfire.report_status==Bushfire.STATUS_FINAL_AUTHORISED:
                 bushfire.reviewed_by = self.request.user
                 bushfire.reviewed_date = datetime.now(tz=pytz.utc)
                 bushfire.report_status = Bushfire.STATUS_REVIEWED
@@ -275,7 +276,7 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
             if action == 'delete_final_authorisation' and bushfire.report_status==Bushfire.STATUS_FINAL_AUTHORISED:
                 bushfire.authorised_by = None
                 bushfire.authorised_date = None
-                bushfire.report_status = Bushfire.STATUS_FINAL_DRAFT
+                bushfire.report_status = Bushfire.STATUS_INITIAL_AUTHORISED
 
             # Archive
             if action == 'archive' and bushfire.report_status==Bushfire.STATUS_REVIEWED:
@@ -661,15 +662,17 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
         cur_obj = Bushfire.objects.get(id=self.object.id)
         district = District.objects.get(id=request.POST['district']) if request.POST.has_key('district') else None # get the district from the form
         #if self.request.POST.has_key('action') and self.request.POST.get('action')=='invalidate' and not cur_obj.invalid:
+        #import ipdb; ipdb.set_trace()
+
         if self.request.POST.has_key('action') and self.request.POST.get('action')=='invalidate' and cur_obj.report_status!=Bushfire.STATUS_INVALIDATED:
-            import ipdb; ipdb.set_trace()
+            #import ipdb; ipdb.set_trace()
             self.object.invalid_details = self.request.POST.get('invalid_details')
             self.object.save()
             self.object = invalidate_bushfire(self.object, district, request.user)
             url_name = 'bushfire_initial' if self.object.report_status <= Bushfire.STATUS_INITIAL_AUTHORISED else 'bushfire_final'
             return  HttpResponseRedirect(reverse('bushfire:' + url_name, kwargs={'pk': self.object.id}))
 
-        elif district != cur_obj.district:
+        elif district != cur_obj.district and not self.request.POST.has_key('fire_not_found'):
             message = 'District has changed (from {} to {}). This action will invalidate the existing bushfire and create  a new bushfire with the new district, and a new fire number.'.format(
                 cur_obj.district.name,
                 district.name
@@ -696,6 +699,7 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
 
 
         #if form.is_valid() and area_burnt_formset.is_valid() and injury_formset.is_valid() and damage_formset.is_valid():
+        #import ipdb; ipdb.set_trace()
         if form.is_valid():
             #import ipdb; ipdb.set_trace()
             if form.cleaned_data['fire_not_found']:
