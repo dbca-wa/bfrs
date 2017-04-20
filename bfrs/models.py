@@ -56,12 +56,12 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
         return []
 
     missing = [field for field in fields if getattr(obj, field) is None or getattr(obj, field)=='']
-    #import ipdb; ipdb.set_trace()
 
     for field, dep_set in dep_fields.iteritems():
         if getattr(obj, field) and getattr(obj, field)==dep_set[0] and getattr(obj, dep_set[1]) is None:
             missing.append(dep_set[1])
 
+    #import ipdb; ipdb.set_trace()
     for fs in formsets:
         if getattr(obj, fs) is None or not getattr(obj, fs).all():
             missing.append(fs)

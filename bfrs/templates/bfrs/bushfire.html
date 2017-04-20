@@ -125,9 +125,11 @@
 		</td>
 
 
+		{% comment %}
          {% if bushfire.report_status == bushfire.STATUS_INITIAL %}
          <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=submit_initial');" title="submit initial"><font color="red"><i class="icon-warning-sign"></i></font></a></td>
-         {% elif bushfire.report_status == bushfire.STATUS_INITIAL_AUTHORISED %}
+		{% endcomment %}
+         {% if bushfire.report_status == bushfire.STATUS_INITIAL_AUTHORISED %}
          <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=authorise_final');" title="Authorise final report"><font color="red"><i class="icon-warning-sign"></i></font></a></td>
          {% elif bushfire.report_status == bushfire.STATUS_FINAL_AUTHORISED %}
          <td>

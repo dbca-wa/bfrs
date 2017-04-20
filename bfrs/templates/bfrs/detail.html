@@ -333,6 +333,11 @@
         {% else %}
           <input type="submit" value="Save" class="btn btn-primary btn-success" name="_save" {% if is_authorised %}title="Initial Report cannot be edited" disabled{% endif %} />
           {% if not is_authorised %}<input type="submit" value="Save and continue" class="btn btn-primary btn-success" name="_save_continue" />{% endif %}
+
+          <input type="submit" value="Submit" class="btn btn-primary btn-success" name="submit_initial" {% if is_authorised %}title="Initial Report already submitted" disabled{% endif %} />
+		  {% comment %}
+          <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=submit_initial');" class="btn btn-primary btn-success" title="submit initial">Submit</a>
+		  {% endcomment %}
         {% endif %}
       {% endif %}
 

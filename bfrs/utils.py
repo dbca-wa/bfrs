@@ -16,6 +16,7 @@ from itertools import count
 from django.forms.models import inlineformset_factory
 from collections import defaultdict
 from copy import deepcopy
+from django.core.urlresolvers import reverse
 
 
 def breadcrumbs_li(links):
@@ -314,6 +315,60 @@ def update_fire_behaviour_fs(bushfire, fire_behaviour_formset):
         return 0
 
     return 1
+
+def mail_url(request, bushfire, status='initial'):
+    if status == 'initial':
+        return "http://" + request.get_host() + reverse('bushfire:bushfire_initial', kwargs={'pk':bushfire.id})
+    if status == 'final':
+        return "http://" + request.get_host() + reverse('bushfire:bushfire_final', kwargs={'pk':bushfire.id})
+
+
+def update_status(request, bushfire, action):
+    notification = {}
+    if action == 'Submit' and bushfire.report_status==Bushfire.STATUS_INITIAL:
+        bushfire.init_authorised_by = request.user
+        bushfire.init_authorised_date = datetime.now(tz=pytz.utc)
+        bushfire.report_status = Bushfire.STATUS_INITIAL_AUTHORISED
+        serialize_bushfire('initial', bushfire)
+
+        # send emails
+        resp = rdo_email(bushfire, mail_url(request, bushfire))
+        notification['RDO'] = 'Email Sent' if resp else 'Email failed'
+
+        resp = dfes_email(bushfire, mail_url(request, bushfire))
+        notification['DFES'] = 'Email Sent' if resp else 'Email failed'
+
+        if bushfire.park_trail_impacted:
+            resp = pvs_email(bushfire, mail_url(request, bushfire))
+            notification['PVS'] = 'Email Sent' if resp else 'Email failed'
+
+        if bushfire.media_alert_req:
+            resp = pica_email(bushfire, mail_url(request, bushfire))
+            notification['PICA'] = 'Email Sent' if resp else 'Email failed'
+
+            resp = pica_sms(bushfire, mail_url(request, bushfire))
+            notification['PICA SMS'] = 'SMS Sent' if resp else 'SMS failed'
+
+        if bushfire.investigation_req:
+            resp = police_email(bushfire, mail_url(request, bushfire))
+            notification['POLICE'] = 'Email Sent' if resp else 'Email failed'
+
+        bushfire.save()
+
+    if action == 'Authorise' and bushfire.report_status==Bushfire.STATUS_INITIAL_AUTHORISED:
+        bushfire.authorised_by = request.user
+        bushfire.authorised_date = datetime.now(tz=pytz.utc)
+        bushfire.report_status = Bushfire.STATUS_FINAL_AUTHORISED
+        serialize_bushfire('final', bushfire)
+
+        # send emails
+        resp = fssdrs_email(bushfire, mail_url(bushfire, status='final'))
+        notification['FSSDRS'] = 'Email Sent' if resp else 'Email failed'
+
+        bushfire.save()
+
+    return notification
+
 
 
 def rdo_email(bushfire, url):
