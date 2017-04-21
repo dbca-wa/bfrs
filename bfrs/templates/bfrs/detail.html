@@ -331,10 +331,10 @@
         {% if request.user|can_readonly and not request.user.is_superuser %}
           <input type="submit" value="Save" class="btn btn-primary btn-success" name="_save" title="You do not have 'Update' permissions" disabled />
         {% else %}
-          <input type="submit" value="Save" class="btn btn-primary btn-success" name="_save" {% if is_authorised %}title="Initial Report cannot be edited" disabled{% endif %} />
+          <input type="submit" value="Save" class="btn btn-primary btn-success" name="_save" {% if is_authorised %}title="Submitted initial report cannot be edited" disabled{% endif %} />
           {% if not is_authorised %}<input type="submit" value="Save and continue" class="btn btn-primary btn-success" name="_save_continue" />{% endif %}
 
-          <input type="submit" value="Submit" class="btn btn-primary btn-success" name="submit_initial" {% if is_authorised %}title="Initial Report already submitted" disabled{% endif %} />
+		  <input type="submit" value="Submit" class="btn btn-primary btn-success" name="submit_initial" {% if is_authorised %}title="Initial Report already submitted" disabled{% else %}title="Save and submit"{% endif %} />
 		  {% comment %}
           <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=submit_initial');" class="btn btn-primary btn-success" title="submit initial">Submit</a>
 		  {% endcomment %}

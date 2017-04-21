@@ -188,29 +188,21 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
         if self.request.GET.has_key('confirm_action'):
             bushfire = Bushfire.objects.get(id=self.request.GET.get('bushfire_id'))
             action = self.request.GET.get('confirm_action')
-            if action == 'submit_initial' or action == 'authorise_final':
+            if action == 'mark_reviewed':
                 context = self.get_context_data()
                 context['action'] = action
                 context['is_authorised'] = True
                 context['snapshot'] = bushfire
                 context['object'] = bushfire
-                if action == 'submit_initial':
-                    context['initial'] = True
-                    mandatory_fields = SUBMIT_MANDATORY_FIELDS
-                    mandatory_dep_fields = SUBMIT_MANDATORY_DEP_FIELDS
-                    mandatory_formsets = SUBMIT_MANDATORY_FORMSETS
-                    template_preview = template_initial
-                else:
-                    context['final'] = True
-                    mandatory_fields = AUTH_MANDATORY_FIELDS
-                    mandatory_dep_fields = AUTH_MANDATORY_DEP_FIELDS
-                    mandatory_formsets = AUTH_MANDATORY_FORMSETS
-                    template_preview = template_final
-                context['mandatory_fields'] = check_mandatory_fields(bushfire, mandatory_fields, mandatory_dep_fields, mandatory_formsets)
+                context['review'] = True
+
+                context['mandatory_fields'] = check_mandatory_fields(bushfire, AUTH_MANDATORY_FIELDS, AUTH_MANDATORY_DEP_FIELDS, AUTH_MANDATORY_FORMSETS)
+
                 if context['mandatory_fields']:
                     return TemplateResponse(request, template_mandatory, context=context)
 
-                return TemplateResponse(request, template_preview, context=context)
+                return TemplateResponse(request, template_final, context=context) # --> redirects to review the final report for confirmation
+
 
             return TemplateResponse(request, template_confirm, context={'action': action, 'bushfire_id': bushfire.id})
 
@@ -308,8 +300,6 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
             initial.update({'include_archived': self.request.GET['include_archived']})
 
         # update context with form - filter is already in the context
-        #context['initial_mandatory_fields'] = check_mandatory_fields(bushfire, SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS)
-        #context['initial_mandatory_fields'] = check_mandatory_fields(bushfire, SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS)
         context['form'] = BushfireFilterForm(initial=initial)
         context['object_list'] = self.object_list.order_by('id') # passed by default, but we are (possibly) updating, if profile exists!
         context['sss_url'] = settings.SSS_URL
@@ -364,18 +354,6 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
 
     from django.http import JsonResponse
     def get(self, request, *args, **kwargs):
-#        import ipdb; ipdb.set_trace()
-#        fire_number = None
-#        if self.request.GET.has_key('fire_number'):
-#            district = json.loads(self.request.GET['fire_number'])['district']
-#            year = json.loads(self.request.GET['fire_number'])['year'].split('/')[0]
-#
-#            num = Bushfire.objects.filter(district_id=district, year=year)
-#
-#            fire_number = ' '.join(['BF', District.objects.get(id=district).code, year, '010'])
-#            data = {'fire_number': fire_number}
-#            return self.JsonResponse(data)
-
 #        area = None
 #	if self.request.GET.has_key('area'): # and eval(self.request.GET.get('area')) > 0:
 #            #area = round(eval(self.request.GET.get('area')), 1)
@@ -391,6 +369,17 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
 
         form_class = self.get_form_class()
         form = self.get_form(form_class)
+
+        #import ipdb; ipdb.set_trace()
+        if self.request.POST.has_key('action') and self.request.POST.has_key('bushfire_id'):
+            # the 'initial_submit' already cleaned and saved the form, no need to save again
+            # we are here because the redirected page confirmed this action
+            #import ipdb; ipdb.set_trace()
+            action = self.request.POST.get('action')
+            bushfire = Bushfire.objects.get(id=self.request.POST.get('bushfire_id'))
+            update_status(self.request, bushfire, action)
+            return HttpResponseRedirect(self.get_success_url())
+
 
         if not self.request.POST.has_key('sss_create'):
             # FOR Testing outide SSS
@@ -433,6 +422,26 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
             messages.error(request, 'There was an error saving Fuel Behaviour.')
             return redirect_referrer
 
+        #import ipdb; ipdb.set_trace()
+        # This section to Submit initial report, placed here to allow any changes to be cleaned and saved first - effectively the 'Submit' btn is a 'save and submit'
+        if self.request.POST.has_key('submit_initial'):
+            action = self.request.POST.get('submit_initial')
+            if action == 'Submit':
+                context = self.get_context_data()
+                context['action'] = action
+                context['is_authorised'] = True
+                context['snapshot'] = self.object
+                context['object'] = self.object
+                context['initial'] = True
+
+                context['mandatory_fields'] = check_mandatory_fields(self.object, SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS, SUBMIT_MANDATORY_FORMSETS)
+
+                if context['mandatory_fields']:
+                    return TemplateResponse(request, 'bfrs/mandatory_fields.html', context=context)
+
+                return TemplateResponse(request, self.template_name, context=context)
+
+
 	request.session['refreshGokart'] = True
 	request.session['region'] = self.object.region.id
 	request.session['district'] = self.object.district.id
@@ -453,16 +462,6 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
             sss = json.loads( self.request.POST['sss_create'] )
             if sss.has_key('tenure_area') and sss['tenure_area']:
                 area_burnt_formset = create_areas_burnt(None, sss['tenure_area'])
-
-#        import ipdb; ipdb.set_trace()
-#        t=Tenure.objects.all()[0]
-#        initial = [{'tenure': t, 'area':0.0, 'name':'ABC', 'other':'Other'}]
-#
-#        from django.forms.models import inlineformset_factory
-#        AreaBurntFormset = inlineformset_factory(Bushfire, AreaBurnt, extra=len(initial), can_delete=False, exclude=())
-#        fs = AreaBurntFormset(instance=self.object, prefix='area_burnt_fs')
-#        for subform, data in zip(fs.forms, initial):
-#            subform.initial = data
 
         if not area_burnt_formset:
             area_burnt_formset      = AreaBurntFormSet(instance=self.object if hasattr(self, 'object') else None, prefix='area_burnt_fs')
@@ -494,29 +493,6 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
     def get(self, request, *args, **kwargs):
         #import ipdb; ipdb.set_trace()
 
-#        template_mandatory = 'bfrs/mandatory_fields.html'
-#        if self.request.GET.has_key('confirm_action'):
-#            action = self.request.GET.get('confirm_action')
-#            if action == 'submit_initial':
-#                context = self.get_context_data()
-#                context['action'] = action
-#                context['is_authorised'] = True
-#                context['snapshot'] = self.object
-#                context['object'] = self.object
-#                context['initial'] = True
-#
-#                mandatory_fields = SUBMIT_MANDATORY_FIELDS
-#                mandatory_dep_fields = SUBMIT_MANDATORY_DEP_FIELDS
-#                mandatory_formsets = SUBMIT_MANDATORY_FORMSETS
-#                template_preview = template_initial
-#
-#                context['mandatory_fields'] = check_mandatory_fields(self.object, SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS, SUBMIT_MANDATORY_FORMSETS)
-#
-#                if context['mandatory_fields']:
-#                    return TemplateResponse(request, template_mandatory, context=context)
-#
-#                return TemplateResponse(request, template_name, context=context)
-
         return super(BushfireInitUpdateView, self).get(request, *args, **kwargs)
 
 
@@ -525,24 +501,20 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
         form_class = self.get_form_class()
         form = self.get_form(form_class)
 
-
-        """ _________________________________________________________________________________________________________________
-
-        This Section used if district is changed from within the bushfire reporting system
-        However, actual use case is to update the district from SSS, which then executes the equiv code below from bfrs/api.py
-        """
         #import ipdb; ipdb.set_trace()
-
         if self.request.POST.has_key('action'):
-            # the 'confirm_action' already cleaned and saved the form, no need to save again
+            # the 'initial_submit' already cleaned and saved the form, no need to save again
+            # we are here because the redirected page confirmed this action
             action = self.request.POST.get('action')
             update_status(self.request, self.object, action)
             return HttpResponseRedirect(self.get_success_url())
 
-        # Check if district is has changed and whether the record needs to be invalidated
+        """ _________________________________________________________________________________________________________________
+        This Section used if district is changed from within the bushfire reporting system
+        However, actual use case is to update the district from SSS, which then executes the equiv code below from bfrs/api.py
+        """
         cur_obj = Bushfire.objects.get(id=self.object.id)
         district = District.objects.get(id=request.POST['district']) if request.POST.has_key('district') else None # get the district from the form
-        #if self.request.POST.has_key('action') and self.request.POST.get('action')=='invalidate' and not cur_obj.invalid:
         if self.request.POST.has_key('action') and self.request.POST.get('action')=='invalidate' and cur_obj.report_status!=Bushfire.STATUS_INVALIDATED:
             self.object.invalid_details = self.request.POST.get('invalid_details')
             self.object.save()
@@ -614,8 +586,7 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
 #            self.object.save()
 
         #import ipdb; ipdb.set_trace()
-        #if self.request.GET.has_key('confirm_action'):
-        #    action = self.request.GET.get('confirm_action')
+        # This section to Submit initial report, placed here to allow any changes to be cleaned and saved first - effectively the 'Submit' btn is a 'save and submit'
         if self.request.POST.has_key('submit_initial'):
             action = self.request.POST.get('submit_initial')
             if action == 'Submit':
@@ -687,6 +658,15 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
         self.object = self.get_object() # needed for update
         form_class = self.get_form_class()
         form = self.get_form(form_class)
+
+        #import ipdb; ipdb.set_trace()
+        if self.request.POST.has_key('action'):
+            # the 'final_authorise' already cleaned and saved the form, no need to save again
+            # we are here because the redirected page confirmed this action
+            action = self.request.POST.get('action')
+            update_status(self.request, self.object, action)
+            return HttpResponseRedirect(self.get_success_url())
+
 
         """ _________________________________________________________________________________________________________________
 
@@ -805,8 +785,27 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
                 messages.error(request, 'There was an error saving Damage.')
                 return redirect_referrer
 
-        if self.request.POST.has_key('_save_continue'):
-            return redirect_referrer
+        #import ipdb; ipdb.set_trace()
+        # This section to Authorise Final report, placed here to allow any changes to be cleaned and saved first - effectively the 'Authorise' btn is a 'save and submit'
+        if self.request.POST.has_key('authorise_final'):
+            action = self.request.POST.get('authorise_final')
+            if action == 'Authorise':
+                context = self.get_context_data()
+                context['action'] = action
+                context['is_authorised'] = True
+                context['snapshot'] = self.object
+                context['object'] = self.object
+                context['final'] = True
+
+                context['mandatory_fields'] = check_mandatory_fields(self.object, AUTH_MANDATORY_FIELDS, AUTH_MANDATORY_DEP_FIELDS, AUTH_MANDATORY_FORMSETS)
+
+                if context['mandatory_fields']:
+                    return TemplateResponse(request, 'bfrs/mandatory_fields.html', context=context)
+
+                return TemplateResponse(request, self.template_name, context=context)
+
+        #if self.request.POST.has_key('_save_continue'):
+        #    return redirect_referrer
         return HttpResponseRedirect(self.get_success_url())
 
 
@@ -844,7 +843,7 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
 class BushfireReviewUpdateView(BushfireFinalUpdateView):
     model = Bushfire
     form_class = BushfireForm
-    template_name = 'bfrs/detail.html'
+    template_name = 'bfrs/final.html'
 
     def get_context_data(self, **kwargs):
         context = super(BushfireReviewUpdateView, self).get_context_data(**kwargs)

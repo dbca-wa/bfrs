@@ -211,10 +211,13 @@
         <input type="submit" value="Save" class="btn btn-primary btn-success" name="_save" title="You do not have 'Update' permissions" disabled />
       {% else %}
         <input type="submit" value="Save" class="btn btn-primary btn-success" name="_save" {% if is_authorised %}title="Initial Report cannot be edited" disabled{% endif %} />
-        {% if not is_authorised %}<input type="submit" value="Save and continue" class="btn btn-primary btn-success" name="_save_continue" />{% endif %}
       {% endif %}
 
+      <input type="submit" value="Authorise" class="btn btn-primary btn-success" name="authorise_final" {% if is_authorised %}title="Final Report already authorised" disabled{% else %}title="Save and authorise"{% endif %} />
+
     {% comment %}
+      {% if not is_authorised %}<input type="submit" value="Save and continue" class="btn btn-primary btn-success" name="_save_continue" />{% endif %}
+
       {% if object.is_authorised %} 
         <input type="submit" value="Authorise" class="btn btn-primary btn-success" name="init_authorise" title="Authorised by {{object.init_authorised_by}} on {{object.init_authorised_date|date_fmt}}" disabled/>
       {% else %}

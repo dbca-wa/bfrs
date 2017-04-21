@@ -362,7 +362,7 @@ def update_status(request, bushfire, action):
         serialize_bushfire('final', bushfire)
 
         # send emails
-        resp = fssdrs_email(bushfire, mail_url(bushfire, status='final'))
+        resp = fssdrs_email(bushfire, mail_url(request, bushfire, status='final'))
         notification['FSSDRS'] = 'Email Sent' if resp else 'Email failed'
 
         bushfire.save()
