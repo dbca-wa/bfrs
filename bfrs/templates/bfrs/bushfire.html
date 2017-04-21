@@ -90,6 +90,7 @@
     <th>Initial</th>
     <th>Final</th>
     <th>Review</th>
+    <th></th>
 
   </thead>
   <tbody>
@@ -125,11 +126,8 @@
 		</td>
 
 
-         {% if bushfire.report_status == bushfire.STATUS_INITIAL_AUTHORISED %}
-         <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=authorise_final');" title="Authorise final report"><font color="red"><i class="icon-warning-sign"></i></font></a></td>
-         {% elif bushfire.report_status == bushfire.STATUS_FINAL_AUTHORISED %}
+         {% if bushfire.report_status == bushfire.STATUS_FINAL_AUTHORISED %}
          <td>
-
 			 <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=mark_reviewed');" title="Mark Final report as Reviewed"><font color="red"><i class="icon-warning-sign"></i></font></a>
              <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=delete_final_authorisation');" title="Delete authorisation"><i class="icon-trash icon-white"></i></a>
 		 </td>
@@ -140,6 +138,8 @@
            {% else %}
              <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=unarchive');" title="Unarchive Report"><i class="icon-folder-open"></i></a></td>
            {% endif %}
+         {% else %}
+	     <td></td>
          {% endif %}
 
       </tr>

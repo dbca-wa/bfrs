@@ -26,33 +26,10 @@
   <link rel="stylesheet" type="text/css" href="{% static 'css/jquery.datetimepicker.css' %}"/ >
 
   {% endblock %}
-  {% comment %}
-  <link rel="stylesheet" href="{% static "css/bootstrap.css" %}">
-  <link rel="stylesheet" href="http://static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/twitter-bootstrap/3.3.6/css/bootstrap.min.css">
-  http://static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/twitter-bootstrap/3.3.7/css/
-  <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
-  <link rel="stylesheet" href="{% static "twitter-bootstrap/3.3.7/css/bootstrap.min.css" %}">
-  {% endcomment %}
-
-
-
-  {% comment %}
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
-
-  <link rel="stylesheet" href="{% static "css/jquery-ui-1.11.4.min.css" %}">
-  <script src="{% static 'js/jquery-1.9.1.min.js' %}"></script>
-  <script src="{% static 'js/jquery-ui-1.11.4.min.js' %}"></script>
-  {% endcomment %}
 
   {% block extra_js %}
   {{ block.super }}
   <script src="{% static 'js/jquery.formset.js' %}"></script>
-  {% comment %}
-  <script src="{% static 'js/bootstrap.min.js' %}"></script>
-  <script href="http://static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/twitter-bootstrap/3.3.6/css/bootstrap.min.js"></script>
-  <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
-  <script src="{% static 'twitter-bootstrap/3.3.7/js/bootstrap.min.js' %}"></script>
-  {% endcomment %}
 
   <!-- http://xdsoft.net/jqplugins/datetimepicker/ -->
   <script src="{% static 'js/jquery.datetimepicker.full.min.js' %}"></script>
@@ -96,8 +73,10 @@
                 {% if is_authorised %} {{snapshot.fire_not_found|yesno:"Yes,No"}}<br> Details: {{snapshot.invalid_details}} {% else %} {{form.fire_not_found}} {% endif %}
                 <span class="div_invalid_details" style="display: none; margin: 20px;">{% if not is_authorised %} Details{{form.invalid_details}} {% endif %}</span>
             </td>
-	    {{form.region.as_hidden}}
-	    {{form.district.as_hidden}}
+	    <div class=div_fire_not_found style="display: none;">
+	      {{form.region.as_hidden}}
+	      {{form.district.as_hidden}}
+	    </div>
         </tr>
 
   </tbody>
@@ -377,9 +356,12 @@ function fire_not_found() {
   if($("#id_fire_not_found").is(':checked') || {{snapshot.fire_not_found|yesno:"true,false"}}) {
       $(".div_form_invalidate *").prop('disabled',true).css({ opacity: 0.8  });
       $(".div_invalid_details").show();
+      $(".div_fire_not_found *").prop('disabled',false)
+
   } else {
       $(".div_form_invalidate *").prop('disabled',false).css({ opacity: 1  });
       $(".div_invalid_details").hide();
+      $(".div_fire_not_found *").prop('disabled',true)
   }
 }
 

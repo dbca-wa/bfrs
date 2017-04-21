@@ -213,6 +213,7 @@ class Bushfire(Audit):
     # we serialise/snapshot the initial and final reports when authorised
     initial_snapshot = models.TextField(null=True, blank=True)
     final_snapshot = models.TextField(null=True, blank=True)
+    review_snapshot = models.TextField(null=True, blank=True)
 
     # FINAL Fire Report Fields
     fire_contained_date = models.DateTimeField(verbose_name='Fire Contained', null=True, blank=True)

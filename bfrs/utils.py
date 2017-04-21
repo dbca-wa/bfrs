@@ -37,17 +37,21 @@ def breadcrumbs_li(links):
 def serialize_bushfire(auth_type, obj):
     "Serializes a Bushfire object"
     if auth_type == 'initial':
-            obj.initial_snapshot = serializers.serialize('json', [obj])
+        obj.initial_snapshot = serializers.serialize('json', [obj])
     if auth_type == 'final':
-            obj.final_snapshot = serializers.serialize('json', [obj])
+        obj.final_snapshot = serializers.serialize('json', [obj])
+    if auth_type == 'review':
+        obj.review_snapshot = serializers.serialize('json', [obj])
     obj.save()
 
 def deserialize_bushfire(auth_type, obj):
     "Returns a deserialized Bushfire object"
     if auth_type == 'initial':
-            return serializers.deserialize("json", obj.initial_snapshot).next().object
+        return serializers.deserialize("json", obj.initial_snapshot).next().object
     if auth_type == 'final':
-            return serializers.deserialize("json", obj.final_snapshot).next().object
+        return serializers.deserialize("json", obj.final_snapshot).next().object
+    if auth_type == 'review':
+        return serializers.deserialize("json", obj.review_snapshot).next().object
 
 
 def calc_coords(obj):
@@ -319,7 +323,7 @@ def update_fire_behaviour_fs(bushfire, fire_behaviour_formset):
 def mail_url(request, bushfire, status='initial'):
     if status == 'initial':
         return "http://" + request.get_host() + reverse('bushfire:bushfire_initial', kwargs={'pk':bushfire.id})
-    if status == 'final':
+    if status == 'final' or status == 'review':
         return "http://" + request.get_host() + reverse('bushfire:bushfire_final', kwargs={'pk':bushfire.id})
 
 
@@ -355,21 +359,31 @@ def update_status(request, bushfire, action):
 
         bushfire.save()
 
-    if action == 'Authorise' and bushfire.report_status==Bushfire.STATUS_INITIAL_AUTHORISED:
+    elif action == 'Authorise' and bushfire.report_status==Bushfire.STATUS_INITIAL_AUTHORISED:
         bushfire.authorised_by = request.user
         bushfire.authorised_date = datetime.now(tz=pytz.utc)
         bushfire.report_status = Bushfire.STATUS_FINAL_AUTHORISED
         serialize_bushfire('final', bushfire)
 
         # send emails
-        resp = fssdrs_email(bushfire, mail_url(request, bushfire, status='final'))
-        notification['FSSDRS'] = 'Email Sent' if resp else 'Email failed'
+        resp = fssdrs_email(bushfire, mail_url(request, bushfire, status='final'), status='final')
+        notification['FSSDRS-Auth'] = 'Email Sent' if resp else 'Email failed'
+
+        bushfire.save()
+
+    elif action == 'mark_reviewed' and bushfire.report_status==Bushfire.STATUS_FINAL_AUTHORISED:
+        bushfire.reviewed_by = request.user
+        bushfire.reviewed_date = datetime.now(tz=pytz.utc)
+        bushfire.report_status = Bushfire.STATUS_REVIEWED
+        serialize_bushfire('review', bushfire)
+
+        # send emails
+        resp = fssdrs_email(bushfire, mail_url(request, bushfire, status='review'), status='review')
+        notification['FSSDRS-Review'] = 'Email Sent' if resp else 'Email failed'
 
         bushfire.save()
 
     return notification
-
-
 
 def rdo_email(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION:
@@ -414,7 +428,7 @@ def dfes_email(bushfire, url):
     subject = 'DFES Email - Initial report submitted - {}'.format(bushfire.fire_number)
     message = 'DFES Email - {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.fire_number, url)
 
-    return send_mail(subject, message, settings.FROM_EMAIL, settings.POLICE_EMAIL)
+    return send_mail(subject, message, settings.FROM_EMAIL, settings.DFES_EMAIL)
 
 def police_email(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION:
@@ -423,18 +437,24 @@ def police_email(bushfire, url):
     subject = 'POLICE Email - Initial report submitted and an investigation is required- {}'.format(bushfire.fire_number)
     message = 'POLICE Email - {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.fire_number, url)
 
-    return send_mail(subject, message, settings.FROM_EMAIL, settings.FSSDRS_EMAIL)
+    return send_mail(subject, message, settings.FROM_EMAIL, settings.POLICE_EMAIL)
 
-def fssdrs_email(bushfire, url):
+def fssdrs_email(bushfire, url, status='final'):
     if not settings.ALLOW_EMAIL_NOTIFICATION:
        return
 
-    subject = 'FSSDRS Email - Final Fire report has been authorised - {}'.format(bushfire.fire_number)
-    message = 'FSSDRS Email - {}\n\nFinal Fire report has been authorised. User {}, at {}.\n\nThe report is located at {}'.format(
-        bushfire.fire_number, bushfire.authorised_by, bushfire.authorised_date, url
-    )
+    if status == 'final':
+        subject = 'FSSDRS Email - Final Fire report has been authorised - {}'.format(bushfire.fire_number)
+        message = 'FSSDRS Email - {}\n\nreport has been authorised. User {}, at {}.\n\nThe report is located at {}'.format(
+            bushfire.fire_number, bushfire.authorised_by, bushfire.authorised_date, url
+        )
+    else:
+        subject = 'FSSDRS Email - Final Fire report has been reviewed - {}'.format(bushfire.fire_number)
+        message = 'FSSDRS Email - {}\n\nreport has been reviewed. User {}, at {}.\n\nThe report is located at {}'.format(
+            bushfire.fire_number, bushfire.reviewed_by, bushfire.reviewed_date, url
+        )
 
-    return send_mail(subject, message, settings.FROM_EMAIL, settings.POLICE_EMAIL)
+    return send_mail(subject, message, settings.FROM_EMAIL, settings.FSSDRS_EMAIL)
 
 def create_view():
     """

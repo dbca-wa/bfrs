@@ -21,6 +21,7 @@ from confy import env, database, cache
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880 # 5.0MB
 
 EMAIL_HOST = env('EMAIL_HOST', 'email.host')
 EMAIL_PORT = env('EMAIL_PORT', 25)

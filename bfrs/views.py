@@ -217,6 +217,11 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
         if self.request.POST.has_key('action'):
             action = self.request.POST.get('action')
 
+            import ipdb; ipdb.set_trace()
+            if action == 'mark_reviewed' and bushfire.report_status==Bushfire.STATUS_FINAL_AUTHORISED:
+                update_status(self.request, bushfire, action)
+                return HttpResponseRedirect(self.get_success_url())
+
 #            if action == 'submit_initial' and bushfire.report_status==Bushfire.STATUS_INITIAL:
 #                bushfire.init_authorised_by = self.request.user
 #                bushfire.init_authorised_date = datetime.now(tz=pytz.utc)
@@ -660,12 +665,14 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
         form = self.get_form(form_class)
 
         #import ipdb; ipdb.set_trace()
-        if self.request.POST.has_key('action'):
+        if self.request.POST.has_key('action') and self.request.POST.get('action')=='mark_reviewed':
+            #import ipdb; ipdb.set_trace()
             # the 'final_authorise' already cleaned and saved the form, no need to save again
             # we are here because the redirected page confirmed this action
             action = self.request.POST.get('action')
-            update_status(self.request, self.object, action)
-            return HttpResponseRedirect(self.get_success_url())
+            if action == 'mark_reviewed':
+                update_status(self.request, self.object, action)
+                return HttpResponseRedirect(self.get_success_url())
 
 
         """ _________________________________________________________________________________________________________________
