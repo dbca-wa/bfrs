@@ -169,6 +169,7 @@ class BushfireForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super(BushfireForm, self).clean()
 
+        #import ipdb; ipdb.set_trace();
         # FINAL Form
         if self.cleaned_data['fire_not_found']:
             self.cleaned_data['fire_level'] = None
@@ -188,9 +189,18 @@ class BushfireForm(forms.ModelForm):
             self.cleaned_data['offence_no'] = None
             self.cleaned_data['job_code'] = None
             self.cleaned_data['reporting_year'] = current_finyear()
+            #self.cleaned_data['region'] = Region.objects.get(id=self.initial['region'])
+            #self.cleaned_data['district'] = District.objects.get(id=self.initial['district'])
+            self.cleaned_data['region_id'] = self.initial['region']
+            self.cleaned_data['district_id'] = self.initial['district']
+            #self.cleaned_data['region'] = None
+            #self.cleaned_data['district'] = None
+	    self.errors.pop('region') # since these are required fields
+	    self.errors.pop('district')
             return cleaned_data
         else:
             self.cleaned_data['invalid_details'] = None
+            #self.cleaned_data['fire_not_found'] = False
 
         if not self.cleaned_data['fire_level']:
             self.add_error('fire_level', 'Must specify fire level.')

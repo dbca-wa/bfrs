@@ -129,6 +129,7 @@ def invalidate_bushfire(obj, new_district, user):
         obj.district = new_district
         obj.region = new_district.region
         obj.valid_bushfire = None
+        obj.fire_not_found = False
         #obj.fire_number = ' '.join(['BF', obj.district.code, str(obj.year), '{0:03d}'.format(obj.next_id)])
         obj.save()
 

@@ -688,26 +688,39 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
         #if self.request.POST.has_key('action') and self.request.POST.get('action')=='invalidate' and not cur_obj.invalid:
         #import ipdb; ipdb.set_trace()
 
+	#if not cur_obj.fire_not_found:
         if self.request.POST.has_key('action') and self.request.POST.get('action')=='invalidate' and cur_obj.report_status!=Bushfire.STATUS_INVALIDATED:
-            #import ipdb; ipdb.set_trace()
-            self.object.invalid_details = self.request.POST.get('invalid_details')
-            self.object.save()
-            self.object = invalidate_bushfire(self.object, district, request.user)
-            #url_name = 'bushfire_initial' if self.object.report_status <= Bushfire.STATUS_INITIAL_AUTHORISED else 'bushfire_final'
-            url_name = 'bushfire_final'
-            return  HttpResponseRedirect(reverse('bushfire:' + url_name, kwargs={'pk': self.object.id}))
+
+                #import ipdb; ipdb.set_trace()
+                self.object.invalid_details = self.request.POST.get('invalid_details')
+                self.object.save()
+                self.object = invalidate_bushfire(self.object, district, request.user)
+                #url_name = 'bushfire_initial' if self.object.report_status <= Bushfire.STATUS_INITIAL_AUTHORISED else 'bushfire_final'
+                url_name = 'bushfire_final'
+                return  HttpResponseRedirect(reverse('bushfire:' + url_name, kwargs={'pk': self.object.id}))
 
         elif district != cur_obj.district and not self.request.POST.has_key('fire_not_found'):
-            message = 'District has changed (from {} to {}). This action will invalidate the existing bushfire and create  a new bushfire with the new district, and a new fire number.'.format(
-                cur_obj.district.name,
-                district.name
-            )
-            context={
-               'action': 'invalidate',
-               'district': district.id,
-               'message': message,
-            }
-            return TemplateResponse(request, 'bfrs/confirm.html', context=context)
+
+                #import ipdb; ipdb.set_trace()
+	        if cur_obj.fire_not_found and form.is_valid():
+		    # logic below to save object, present to allow final form change from fire_not_found=True --> to fire_not_found=False. Will allow correct fire_number invalidation
+		    self.object = form.save(commit=False)
+                    self.object.modifier = request.user
+                    self.object.region = cur_obj.region # this will allow invalidate_bushfire() to invalidate and crete the links as necessary
+                    self.object.district = cur_obj.district
+                    self.object.fire_number = cur_obj.fire_number
+                    self.object.save()
+
+		    message = 'District has changed (from {} to {}). This action will invalidate the existing bushfire and create  a new bushfire with the new district, and a new fire number.'.format(
+			cur_obj.district.name,
+			district.name
+		    )
+		    context={
+		    'action': 'invalidate',
+		    'district': district.id,
+		    'message': message,
+		    }
+		    return TemplateResponse(request, 'bfrs/confirm.html', context=context)
         """ _________________________________________________________________________________________________________________ """
 
 
