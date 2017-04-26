@@ -717,7 +717,7 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
 		    # logic below to save object, present to allow final form change from fire_not_found=True --> to fire_not_found=False. Will allow correct fire_number invalidation
 		    self.object = form.save(commit=False)
                     self.object.modifier = request.user
-                    self.object.region = cur_obj.region # this will allow invalidate_bushfire() to invalidate and crete the links as necessary
+                    self.object.region = cur_obj.region # this will allow invalidate_bushfire() to invalidate and create the links as necessary
                     self.object.district = cur_obj.district
                     self.object.fire_number = cur_obj.fire_number
                     self.object.save()

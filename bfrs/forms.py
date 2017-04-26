@@ -197,7 +197,7 @@ class BushfireForm(forms.ModelForm):
             self.cleaned_data['arson_squad_notified'] = False
             self.cleaned_data['offence_no'] = None
             self.cleaned_data['job_code'] = None
-            self.cleaned_data['reporting_year'] = current_finyear()
+            self.cleaned_data['reporting_year'] = None #current_finyear()
             #self.cleaned_data['region'] = Region.objects.get(id=self.initial['region'])
             #self.cleaned_data['district'] = District.objects.get(id=self.initial['district'])
             self.cleaned_data['region_id'] = self.initial['region']
@@ -211,7 +211,7 @@ class BushfireForm(forms.ModelForm):
             self.cleaned_data['invalid_details'] = None
             #self.cleaned_data['fire_not_found'] = False
 
-        if int(self.cleaned_data['reporting_year']) < int(self.cleaned_data['year']):
+        if self.cleaned_data.has_key('year') and int(self.cleaned_data['reporting_year']) < int(self.cleaned_data['year']):
             self.add_error('reporting_year', 'Cannot be before report financial year, {}/{}.'.format(self.cleaned_data['year'], int(self.cleaned_data['year'])+1))
 
         if not self.cleaned_data['fire_level']:

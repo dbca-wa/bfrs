@@ -49,7 +49,7 @@ def fin_year(year):
 
         {{ object.year|fin_year }}
     """
-    return str(year) + '/' + str(year+1) if year else None
+    return str(year) + '/' + str(int(year)+1) if year else None
 
 
 @register.filter
