@@ -77,6 +77,7 @@
                 {% if is_authorised %} {{snapshot.fire_not_found|yesno:"Yes,No"}}<br> Details: {{snapshot.invalid_details}} {% else %} {{form.fire_not_found}} {% endif %}
                 <span class="div_invalid_details" style="display: none; margin: 20px;">{% if not is_authorised %} Details{{form.invalid_details}} {% endif %}</span>
             </td>
+	    {{form.year.as_hidden}}
         </tr>
 
   </tbody>
@@ -365,27 +366,24 @@ $('#id_area_limit').on('change', function() {
 }).change();
 
 /* Fire not Found */
-var html = '<input id="id_region" name="region" value="6" type="hidden"><input id="id_district" name="district" value="11" style="" type="hidden">';
-//var html = '<input id="id_region" name="region" value="6"><input id="id_district" name="district" value="11" style="">';
+$('#id_fire_not_found').on('change', function() {
+    fire_not_found();
+}).change();
+
 function fire_not_found() {
   if($("#id_fire_not_found").is(':checked') || {{snapshot.fire_not_found|yesno:"true,false"}}) {
       $(".div_form_invalidate *").prop('disabled',true).css({ opacity: 0.8  });
       $(".div_invalid_details").show();
       $(".div_fire_not_found").hide();
-      //$(".div_fire_not_found").empty().append(html);
 
   } else {
       $(".div_form_invalidate *").prop('disabled',false).css({ opacity: 1  });
       $(".div_invalid_details").hide();
       $(".div_fire_not_found").show();
-      //$(".div_fire_not_found").empty();
   }
 }
 
-fire_not_found();
-$('#id_fire_not_found').on('change', function() {
-    fire_not_found();
-}).change();
+//fire_not_found();
 /* END - Fire not Found */
 
 

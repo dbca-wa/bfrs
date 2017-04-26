@@ -259,12 +259,14 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
             if action == 'delete_final_authorisation' and bushfire.report_status==Bushfire.STATUS_FINAL_AUTHORISED:
                 bushfire.authorised_by = None
                 bushfire.authorised_date = None
+                bushfire.final_snapshot = None
                 bushfire.report_status = Bushfire.STATUS_INITIAL_AUTHORISED
 
             # Delete Reviewed
             if action == 'delete_reviewed' and bushfire.report_status==Bushfire.STATUS_REVIEWED:
                 bushfire.reviewed_by = None
                 bushfire.reviewed_date = None
+                bushfire.review_snapshot = None
                 bushfire.report_status = Bushfire.STATUS_FINAL_AUTHORISED
 
             # Archive
@@ -672,7 +674,7 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
 
         #import ipdb; ipdb.set_trace()
         # Authorise the FINAL report
-        if self.request.POST.has_key('action') and bushfire.report_status==Bushfire.STATUS_INITIAL_AUTHORISED:
+        if self.request.POST.has_key('action') and self.object.report_status==Bushfire.STATUS_INITIAL_AUTHORISED:
             action = self.request.POST.get('action')
             if action == 'Authorise':
                 update_status(self.request, self.object, action)
