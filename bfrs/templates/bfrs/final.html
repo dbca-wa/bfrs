@@ -170,7 +170,8 @@
 
         <tr>
             <th class="cbas" style="font-weight:normal;">Reporting Year</th>
-            <td colspan="3" class="cbas">{% if is_authorised %} {{snapshot.reporting_year}} {% else %} {{form.reporting_year}} {% endif %}</td>
+            <td colspan="3" class="cbas">{% if is_authorised %} {{snapshot.reporting_year|fin_year}} {% else %} {{form.reporting_year}} {% endif %}</td>
+	    {{form.year.as_hidden}}
         </tr>
 
 
@@ -201,24 +202,14 @@
     <div class="container">
       <p class="pull-right">
       {% if request.user|can_readonly and not request.user.is_superuser %}
-        <input type="submit" value="Save" class="btn btn-primary btn-success" name="_save" title="You do not have 'Update' permissions" disabled />
+        <input type="submit" value="Save draft" class="btn btn-primary btn-success" name="_save" title="You do not have 'Update' permissions" disabled />
       {% else %}
-        <input type="submit" value="Save" class="btn btn-primary btn-success" name="_save" {% if is_authorised %}title="Initial Report cannot be edited" disabled{% endif %} />
+        <input type="submit" value="Save draft" class="btn btn-primary btn-success" name="_save" {% if is_authorised %}title="Initial Report cannot be edited" disabled{% endif %} />
       {% endif %}
 
       <input type="submit" value="Authorise" class="btn btn-primary btn-success" name="authorise_final" {% if is_authorised %}title="Final Report already authorised" disabled{% else %}title="Save and authorise"{% endif %} />
 
-    {% comment %}
-      {% if not is_authorised %}<input type="submit" value="Save and continue" class="btn btn-primary btn-success" name="_save_continue" />{% endif %}
-
-      {% if object.is_authorised %} 
-        <input type="submit" value="Authorise" class="btn btn-primary btn-success" name="init_authorise" title="Authorised by {{object.init_authorised_by}} on {{object.init_authorised_date|date_fmt}}" disabled/>
-      {% else %}
-        <input type="submit" value="Authorise" class="btn btn-primary btn-success" name="init_authorise" {% if object.can_authorise %}title="Initial Report cannot be Authorised. Some required fields are missing." disabled{% endif %} />
-      {% endif %}
-    {% endcomment %}
-
-    <a id="id_cancel_btn" href="{% url 'main' %}" class="btn btn-primary btn-danger">Cancel</a>
+      <a id="id_cancel_btn" href="{% url 'main' %}" class="btn btn-primary btn-danger">Cancel</a>
       </p>
     </div>
   </div>

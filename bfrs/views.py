@@ -108,8 +108,8 @@ class BushfireFilter(django_filters.FilterSet):
         super(BushfireFilter, self).__init__(*args, **kwargs)
 
         # allows dynamic update of the filter set, on page refresh
-        self.filters['year'].extra['choices'] = [[None, '---------']] + [[i['year'], i['year']] for i in Bushfire.objects.all().values('year').distinct().order_by('year')]
-        self.filters['reporting_year'].extra['choices'] = [[None, '---------']] + [[i['reporting_year'], i['reporting_year']] for i in Bushfire.objects.all().values('reporting_year').distinct().order_by('reporting_year')]
+        self.filters['year'].extra['choices'] = [[None, '---------']] + [[i['year'], str(i['year']) + '/' + str(i['year']+1)] for i in Bushfire.objects.all().values('year').distinct().order_by('year')]
+        self.filters['reporting_year'].extra['choices'] = [[None, '---------']] + [[i['reporting_year'], str(i['reporting_year']) + '/' + str(i['reporting_year']+1)] for i in Bushfire.objects.all().values('reporting_year').distinct().order_by('reporting_year')]
 
 
 class ProfileView(LoginRequiredMixin, generic.FormView):
@@ -217,7 +217,7 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
         if self.request.POST.has_key('action'):
             action = self.request.POST.get('action')
 
-            import ipdb; ipdb.set_trace()
+            #import ipdb; ipdb.set_trace()
             if action == 'mark_reviewed' and bushfire.report_status==Bushfire.STATUS_FINAL_AUTHORISED:
                 update_status(self.request, bushfire, action)
                 return HttpResponseRedirect(self.get_success_url())
@@ -260,6 +260,12 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
                 bushfire.authorised_by = None
                 bushfire.authorised_date = None
                 bushfire.report_status = Bushfire.STATUS_INITIAL_AUTHORISED
+
+            # Delete Reviewed
+            if action == 'delete_reviewed' and bushfire.report_status==Bushfire.STATUS_REVIEWED:
+                bushfire.reviewed_by = None
+                bushfire.reviewed_date = None
+                bushfire.report_status = Bushfire.STATUS_FINAL_AUTHORISED
 
             # Archive
             if action == 'archive' and bushfire.report_status==Bushfire.STATUS_REVIEWED:
@@ -665,15 +671,18 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
         form = self.get_form(form_class)
 
         #import ipdb; ipdb.set_trace()
-        if self.request.POST.has_key('action') and self.request.POST.get('action')=='mark_reviewed':
-            #import ipdb; ipdb.set_trace()
-            # the 'final_authorise' already cleaned and saved the form, no need to save again
-            # we are here because the redirected page confirmed this action
+        # Authorise the FINAL report
+        if self.request.POST.has_key('action') and bushfire.report_status==Bushfire.STATUS_INITIAL_AUTHORISED:
             action = self.request.POST.get('action')
-            if action == 'mark_reviewed':
+            if action == 'Authorise':
                 update_status(self.request, self.object, action)
                 return HttpResponseRedirect(self.get_success_url())
 
+#            if action == 'mark_reviewed':
+#                # the 'final_authorise' already cleaned and saved the form, no need to save again
+#                # we are here because the redirected page confirmed this action
+#                update_status(self.request, self.object, action)
+#                return HttpResponseRedirect(self.get_success_url())
 
         """ _________________________________________________________________________________________________________________
 

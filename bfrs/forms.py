@@ -22,6 +22,12 @@ YESNO_CHOICES = (
     (False, 'No')
 )
 
+REPORTING_YEAR_CHOICES = (
+    (current_finyear()-1, str(current_finyear()-1) + '/' + str(current_finyear())),
+    (current_finyear(), str(current_finyear()) + '/' + str(current_finyear() + 1)),
+    (current_finyear() + 1, str(current_finyear() + 1) + '/' + str(current_finyear() + 2)),
+)
+
 
 class HorizontalRadioRenderer(forms.RadioSelect.renderer):
     def render(self):
@@ -149,6 +155,8 @@ class BushfireForm(forms.ModelForm):
     """
     fire_level = forms.ChoiceField(choices=Bushfire.FIRE_LEVEL_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
     arson_squad_notified = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
+    #reporting_fin_year = forms.ChoiceField(choices=((2015, '2015/2016'), (2016, '2016/2017')), required=False)
+    reporting_year = forms.ChoiceField(choices=REPORTING_YEAR_CHOICES, required=False)
 
     class Meta:
         model = Bushfire
@@ -157,7 +165,7 @@ class BushfireForm(forms.ModelForm):
                   'fire_contained_date', 'fire_controlled_date', 'fire_safe_date',
                   'first_attack', 'initial_control', 'final_control',
                   'other_first_attack', 'other_initial_control', 'other_final_control',
-                  'area', 'area_limit', 'fire_level', 'arson_squad_notified', 'offence_no', 'job_code', 'reporting_year',
+                  'area', 'area_limit', 'fire_level', 'arson_squad_notified', 'offence_no', 'job_code', 'reporting_year', 'year',
         )
         #exclude = ('initial_snapshot', 'init_authorised_by', 'init_authorised_date',
         #   )
@@ -201,6 +209,9 @@ class BushfireForm(forms.ModelForm):
         else:
             self.cleaned_data['invalid_details'] = None
             #self.cleaned_data['fire_not_found'] = False
+
+        if int(self.cleaned_data['reporting_year']) < int(self.cleaned_data['year']):
+            self.add_error('reporting_year', 'Cannot be before report financial year, {}/{}.'.format(self.cleaned_data['year'], int(self.cleaned_data['year'])+1))
 
         if not self.cleaned_data['fire_level']:
             self.add_error('fire_level', 'Must specify fire level.')

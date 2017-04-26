@@ -43,6 +43,16 @@ def date_fmt(dt):
     return dt.strftime('%Y-%m-%d %H:%M:%S') if dt else None
 
 @register.filter
+def fin_year(year):
+    """
+    Usage::
+
+        {{ object.year|fin_year }}
+    """
+    return str(year) + '/' + str(year+1) if year else None
+
+
+@register.filter
 def can_readonly(user):
     """
     Usage::

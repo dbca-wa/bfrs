@@ -85,7 +85,10 @@
             </td>
 
             <th class="cbas">Financial Year *</th>
+            {% comment %}
             <td colspan="2" class="cbas">{% if object %} {{object.year}} {{form.year.as_hidden}} {% else %} {{form.year}} {% endif %}</td>
+            {% endcomment %}
+            <td colspan="2" class="cbas">{{object.year|fin_year}} {{form.year.as_hidden}}</td>
         </tr>
 
         <tr>

@@ -134,7 +134,10 @@
 
          {% elif bushfire.report_status == bushfire.STATUS_REVIEWED %}
            {% if not bushfire.archive %}
-             <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=archive');" title="Archive Report"><i class="icon-folder-close"></i></a></td>
+             <td>
+				 <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=archive');" title="Archive Report"><i class="icon-folder-close"></i></a>
+                 <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=delete_reviewed');" title="Delete reviewed"><i class="icon-trash icon-white"></i></a>
+			 </td>
            {% else %}
              <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=unarchive');" title="Unarchive Report"><i class="icon-folder-open"></i></a></td>
            {% endif %}
