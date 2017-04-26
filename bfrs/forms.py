@@ -165,7 +165,8 @@ class BushfireForm(forms.ModelForm):
                   'fire_contained_date', 'fire_controlled_date', 'fire_safe_date',
                   'first_attack', 'initial_control', 'final_control',
                   'other_first_attack', 'other_initial_control', 'other_final_control',
-                  'area', 'area_limit', 'fire_level', 'arson_squad_notified', 'offence_no', 'job_code', 'reporting_year', 'year',
+                  'area', 'area_limit', 'fire_level', 'arson_squad_notified', 'offence_no', 'job_code', 'reporting_year',
+		  'year', 'fire_boundary', # these are hidden fields on the form
         )
         #exclude = ('initial_snapshot', 'init_authorised_by', 'init_authorised_date',
         #   )

@@ -153,8 +153,9 @@
             <th class="cbas">Final fire size (ha) *</th>
             <td colspan="2" class="cbas">
                 {% if is_authorised %} {{snapshot.area}} {% else %} {{form.area}} {% endif %}
-		<span style="margin: 20px;">{% if is_authorised %} Is area < 2ha? {{snapshot.area_limit|yesno:"Yes,No"}} {% else %} {{form.area_limit}} Area < 2ha{% endif %}</span>
+		<span id="div_area_limit" style="margin: 20px;">{% if is_authorised %} Is area < 2ha? {{snapshot.area_limit|yesno:"Yes,No"}} {% else %} {{form.area_limit}} Area < 2ha{% endif %}</span>
             </td>
+	    {{form.fire_boundary.as_hidden}}
         </tr>
 
         <tr>
@@ -346,6 +347,13 @@ if($("#id_area_limit").is(':checked')) {
 } else {
     $("#id_area").attr('readonly','readonly').css('background-color' , '#DEDEDE');
 }o*/
+
+
+if( !{{snapshot.fire_boundary|yesno:"true,false"}} ) { 
+    $("#div_area_limit").show()
+} else {
+    $("#div_area_limit").hide()
+}
 
 $('#id_area_limit').on('change', function() {
     if($("#id_area_limit").is(':checked')) { 
