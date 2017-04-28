@@ -10,6 +10,7 @@ from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point, GEOSGeometry, Polygon, MultiPolygon, GEOSException
 from tastypie.http import HttpBadRequest
 from tastypie.exceptions import ImmediateHttpResponse
+import json
 
 """
 The two helper methods below allow to replace class like:
@@ -136,6 +137,10 @@ class BushfireResource(APIResource):
         #fields = ['origin_point', 'fire_boundary', 'area', 'fire_position']
         fields = ['origin_point', 'fire_boundary']
 
+#    def hydrate_sss_data(self, bundle):
+#        #import ipdb; ipdb.set_trace()
+#        bundle.data['sss_data'] = json.dumps(bundle.data)
+
     def hydrate_origin_point(self, bundle):
         """
         Converts the json string format to the one required by tastypie's full_hydrate() method
@@ -153,7 +158,10 @@ class BushfireResource(APIResource):
 
     def obj_update(self, bundle, **kwargs):
         #import ipdb; ipdb.set_trace()
+
         self.full_hydrate(bundle)
+        bundle.obj.sss_data = json.dumps(bundle.data)
+
         if bundle.data.has_key('tenure_ignition_point') and bundle.data['tenure_ignition_point'] and \
             bundle.data['tenure_ignition_point'].has_key('category') and bundle.data['tenure_ignition_point']['category']:
             try:
@@ -163,13 +171,13 @@ class BushfireResource(APIResource):
         else:
             bundle.obj.tenure = Tenure.objects.get(name__istartswith='other')
 
-        if bundle.data.has_key('tenure_area') and bundle.data['tenure_area']:
-            update_areas_burnt(bundle.obj, bundle.data['tenure_area'])
+        if bundle.data['area'].has_key('tenure_area') and bundle.data['area']['tenure_area'].has_key('areas') and bundle.data['area']['tenure_area']['areas']:
+            update_areas_burnt(bundle.obj, bundle.data['area']['tenure_area']['areas'])
 
-        if bundle.data.has_key('area') and bundle.data['area']:
-            if float(bundle.data['area']) > 2.0:
+        if bundle.data['area'].has_key('total_area') and bundle.data['area']['total_area']:
+            if float(bundle.data['area']['total_area']) > 2.0:
                 bundle.obj.area_limit = False
-                bundle.obj.area = float(bundle.data['area'])
+                bundle.obj.area = float(bundle.data['area']['total_area'])
 
         if bundle.data.has_key('fire_position') and bundle.data['fire_position']:
             # only update if user has not over-ridden

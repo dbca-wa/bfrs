@@ -201,6 +201,9 @@ def create_areas_burnt(bushfire, area_burnt_list):
     for subform, data in zip(area_burnt_formset.forms, new_area_burnt_list):
         subform.initial = data
 
+#    import ipdb; ipdb.set_trace()
+#    if bushfire:
+#        update_areas_burnt_fs(bushfire, area_burnt_formset)
     return area_burnt_formset
 
 def update_areas_burnt(bushfire, area_burnt_list):
@@ -232,6 +235,8 @@ def update_areas_burnt(bushfire, area_burnt_list):
             AreaBurnt.objects.bulk_create(new_area_burnt_object)
     except IntegrityError:
         return 0
+
+    return 1
 
 def update_areas_burnt_fs(bushfire, area_burnt_formset):
     """

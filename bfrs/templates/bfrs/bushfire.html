@@ -119,7 +119,7 @@
 		</td>
         <td align="center">
          {% if bushfire.report_status == bushfire.STATUS_FINAL_AUTHORISED %}
-            <a href="#" onclick='openGokart({"region":{{bushfire.region.id}},"district":{{bushfire.district.id}},"bushfireid":{{bushfire.id}} });' title="Open report in SSS"><i class="icon-link icon-white"></i></a>
+            <a href="#" onclick='openGokart({"region":{{bushfire.region.id}},"district":{{bushfire.district.id}},"bushfireid":{{bushfire.fire_number}} });' title="Open report in SSS"><i class="icon-link icon-white"></i></a>
          {% elif bushfire.report_status == bushfire.STATUS_REVIEWED %}
 		 <a href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Final fire report reviewed on {{bushfire.reviewed_date}} by {{bushfire.reviewed_by}}"><font color="green"><i class="icon-ok icon-white"></i></font></a>
          {% endif %}

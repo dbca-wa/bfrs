@@ -67,6 +67,7 @@
 
 <form action="" method="post">{% csrf_token %}
 
+{{ form.sss_data.as_hidden }}
 <table class="table table-bordered table-striped table-condensed">
     <tbody>
         <tr>
@@ -98,7 +99,6 @@
             <th class="cbas">Date and time fire detected *</th>
             <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.fire_detected_date}} {% else %} {{form.fire_detected_date}} {% endif %}</td>
         </tr>
-
 
         <tr>
             <th class="cbas">P&W Fire no. *</th>

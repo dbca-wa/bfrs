@@ -247,6 +247,7 @@ class Bushfire(Audit):
 
     report_status = models.PositiveSmallIntegerField(choices=REPORT_STATUS_CHOICES, editable=False, default=1)
     #sss_id = models.CharField(verbose_name="Spatial Support System ID", max_length=64, null=True, blank=True)
+    sss_data = models.TextField(verbose_name="SSS REST Api Dict", null=True, blank=True)
 
     archive = models.BooleanField(verbose_name="Archive report", default=False)
     invalid_details = models.CharField(verbose_name="Reason for invalidating", max_length=64, null=True, blank=True)
@@ -317,7 +318,11 @@ class Bushfire(Audit):
 #        super(Bushfire, self).save()
 
     @property
-    def finyear_display():
+    def sss_data_to_dict(self):
+        return json.loads(self.sss_data)
+
+    @property
+    def finyear_display(self):
         return '/'.join([str(year), str(year+1)])
 
 

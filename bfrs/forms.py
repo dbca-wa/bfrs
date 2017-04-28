@@ -194,7 +194,7 @@ class BushfireForm(forms.ModelForm):
             self.cleaned_data['other_final_control'] = None
             self.cleaned_data['area'] = None
             self.cleaned_data['area_limit'] = False
-            self.cleaned_data['arson_squad_notified'] = False
+            self.cleaned_data['arson_squad_notified'] = None
             self.cleaned_data['offence_no'] = None
             self.cleaned_data['job_code'] = None
             self.cleaned_data['reporting_year'] = None #current_finyear()
@@ -210,6 +210,12 @@ class BushfireForm(forms.ModelForm):
         else:
             self.cleaned_data['invalid_details'] = None
             #self.cleaned_data['fire_not_found'] = False
+
+        #import ipdb; ipdb.set_trace()
+        if self.cleaned_data['arson_squad_notified'] == '':
+            self.cleaned_data['arson_squad_notified'] = None
+        else:
+            self.cleaned_data['arson_squad_notified'] = eval(self.cleaned_data['arson_squad_notified'])
 
         if self.cleaned_data.has_key('year') and int(self.cleaned_data['reporting_year']) < int(self.cleaned_data['year']):
             self.add_error('reporting_year', 'Cannot be before report financial year, {}/{}.'.format(self.cleaned_data['year'], int(self.cleaned_data['year'])+1))
@@ -255,8 +261,8 @@ class BushfireCreateBaseForm(forms.ModelForm):
 
     class Meta:
         model = Bushfire
-        fields = ('region', 'district', 'dfes_incident_no',
-        #fields = ('region', 'district', 'fire_number', 'job_code', 'dfes_incident_no',
+        fields = ('sss_data',
+                  'region', 'district', 'dfes_incident_no',
                   'name', 'year', 'fire_level', 'field_officer', 'duty_officer', 'init_authorised_by', 'init_authorised_date',
                   'media_alert_req', 'park_trail_impacted', 'fire_position', 'fire_position_override',
                   'fire_detected_date', 'dispatch_pw_date', 'dispatch_aerial_date',

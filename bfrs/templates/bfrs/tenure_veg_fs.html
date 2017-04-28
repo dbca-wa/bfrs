@@ -83,6 +83,11 @@
         deleteCssClass: 'delete-row' + '-' + '{{ area_burnt_formset.prefix  }}',
     });
 
+
+$('[id^="id_area_burnt"][id$="tenure"]').css('background-color' , '#DEDEDE'); // starts with and ends with
+$('[id^="id_area_burnt"][id$="area"]').css('background-color' , '#DEDEDE');
+$("#id_areas_burnt").mousedown(function(e){ e.preventDefault(); });
+
 </script>
 
 
