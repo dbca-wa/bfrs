@@ -457,7 +457,7 @@ class FuelType(models.Model):
     name = models.CharField(max_length=200)
 
     class Meta:
-        ordering = ['name']
+        ordering = ['id']
         default_permissions = ('add', 'change', 'delete', 'view')
 
     def __str__(self):

@@ -333,57 +333,191 @@
     "pk": 1,
     "model": "bfrs.fueltype",
     "fields": {
-        "name": "Forest Northern Jarrah"
+        "name": "Northern Jarrah"
     }
 },
 {
     "pk": 2,
     "model": "bfrs.fueltype",
     "fields": {
-        "name": "Forest Southern Jarrah"
+        "name": "Southern Jarrah"
     }
 },
 {
     "pk": 3,
     "model": "bfrs.fueltype",
     "fields": {
-        "name": "Forest Mixed Karri"
+        "name": "Pure Marri"
     }
 },
 {
     "pk": 4,
     "model": "bfrs.fueltype",
     "fields": {
-        "name": "Forest Karri 4&5"
+        "name": "Karri/Marri"
     }
 },
 {
     "pk": 5,
     "model": "bfrs.fueltype",
     "fields": {
-        "name": "Woodland Wandoo"
+        "name": "Wandoo"
     }
 },
 {
     "pk": 6,
     "model": "bfrs.fueltype",
     "fields": {
-        "name": "Forest Tuart"
+        "name": "Tuart"
     }
 },
 {
     "pk": 7,
     "model": "bfrs.fueltype",
     "fields": {
-        "name": "Forest Tingle"
+        "name": "Sandlewood"
     }
 },
 {
     "pk": 8,
     "model": "bfrs.fueltype",
     "fields": {
-        "name": "Plantation Conifer radiata needle bed"
+        "name": "Tingle"
+    }
+},
+{
+    "pk": 9,
+    "model": "bfrs.fueltype",
+    "fields": {
+        "name": "Mallet"
+    }
+},
+{
+    "pk": 10,
+    "model": "bfrs.fueltype",
+    "fields": {
+        "name": "Pinus radiata"
+    }
+},
+{
+    "pk": 11,
+    "model": "bfrs.fueltype",
+    "fields": {
+        "name": "Pinus pinaster"
+    }
+},
+{
+    "pk": 12,
+    "model": "bfrs.fueltype",
+    "fields": {
+        "name": "Pinus (Other species)"
+    }
+},
+{
+    "pk": 13,
+    "model": "bfrs.fueltype",
+    "fields": {
+        "name": "Banksia Woodland"
+    }
+},
+{
+    "pk": 14,
+    "model": "bfrs.fueltype",
+    "fields": {
+        "name": "Low open wooodlands"
+    }
+},
+{
+    "pk": 15,
+    "model": "bfrs.fueltype",
+    "fields": {
+        "name": "Unforested flats or swamps"
+    }
+},
+{
+    "pk": 16,
+    "model": "bfrs.fueltype",
+    "fields": {
+        "name": "Crops"
+    }
+},
+{
+    "pk": 17,
+    "model": "bfrs.fueltype",
+    "fields": {
+        "name": "Acacia scrub"
+    }
+},
+{
+    "pk": 18,
+    "model": "bfrs.fueltype",
+    "fields": {
+        "name": "Mulga scrub"
+    }
+},
+{
+    "pk": 19,
+    "model": "bfrs.fueltype",
+    "fields": {
+        "name": "Savanna woodland"
+    }
+},
+{
+    "pk": 20,
+    "model": "bfrs.fueltype",
+    "fields": {
+        "name": "Pindan woodland"
+    }
+},
+{
+    "pk": 21,
+    "model": "bfrs.fueltype",
+    "fields": {
+        "name": "Mallee"
+    }
+},
+{
+    "pk": 22,
+    "model": "bfrs.fueltype",
+    "fields": {
+        "name": "Heathland"
+    }
+},
+{
+    "pk": 23,
+    "model": "bfrs.fueltype",
+    "fields": {
+        "name": "Spinifex"
+    }
+},
+{
+    "pk": 24,
+    "model": "bfrs.fueltype",
+    "fields": {
+        "name": "Saltbush or Bluebush"
+    }
+},
+{
+    "pk": 25,
+    "model": "bfrs.fueltype",
+    "fields": {
+        "name": "Rainforest"
+    }
+},
+{
+    "pk": 26,
+    "model": "bfrs.fueltype",
+    "fields": {
+        "name": "Other forest type"
+    }
+},
+{
+    "pk": 27,
+    "model": "bfrs.fueltype",
+    "fields": {
+        "name": "Other"
     }
 }
+
 
 ]
