@@ -175,9 +175,11 @@
             <th class="cbas" style="font-weight:normal;">Point of origin</th>
             <td colspan="5" class="cbas">
 				{% if is_authorised %} 
-					{{snapshot.origin_point|is_none}} 
+					{{snapshot.origin_coords|is_none}} <br>
+					{{snapshot.origin_geo|is_none}} 
 				{% else %} 
-					{% if object.origin_point %} {{object.origin_coords}} {% else %} {{form.origin_point_str}} {% endif %}
+					{{object.origin_coords}} <br>
+                    {{object.origin_geo}}
 				{% endif %}
 			</td>
             {% if not is_authorised %} {{form.origin_point.as_hidden}} {% endif %}

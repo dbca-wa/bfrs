@@ -9,6 +9,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 #from smart_selects.db_fields import ChainedForeignKey
 from bfrs.base import Audit
 from django.core.exceptions import (ValidationError)
+import LatLon
 
 import sys
 import json
@@ -317,6 +318,7 @@ class Bushfire(Audit):
 #
 #        super(Bushfire, self).save()
 
+
     @property
     def sss_data_to_dict(self):
         return json.loads(self.sss_data)
@@ -382,7 +384,12 @@ class Bushfire(Audit):
 
     @property
     def origin_coords(self):
-        return 'Lat/Lon {}'.format(self.origin_point.get_coords()) if self.origin_point else None
+        return 'Lat/Lon ({}, {})'.format(round(self.origin_point.get_x(), 2), round(self.origin_point.get_y(), 2)) if self.origin_point else None
+
+    @property
+    def origin_geo(self):
+        c=LatLon.LatLon(LatLon.Latitude(round(self.origin_point.get_y(), 2)), LatLon.Longitude(round(self.origin_point.get_y(), 2)))
+        return 'Deg/Min/Sec ' + str(c.to_string('D% %M% %S% %H')) if self.origin_point else None
 
     @property
     def time_to_control_str(self):
