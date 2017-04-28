@@ -249,7 +249,7 @@ class BushfireForm(forms.ModelForm):
 class BushfireCreateBaseForm(forms.ModelForm):
     days = forms.IntegerField(label='Days', required=False)
     hours = forms.IntegerField(label='Hours', required=False)
-    dispatch_pw = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
+    #dispatch_pw = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
     dispatch_aerial = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
     fire_level = forms.ChoiceField(choices=Bushfire.FIRE_LEVEL_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
     investigation_req = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
@@ -257,7 +257,10 @@ class BushfireCreateBaseForm(forms.ModelForm):
     origin_point_str = forms.CharField(required=False, widget=DisplayOnlyField())#, widget=forms.TextInput(attrs={'readonly':'readonly'}))
     media_alert_req = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
     park_trail_impacted = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
-    assistance_req = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
+    #assistance_req = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
+    dispatch_pw = forms.ChoiceField(choices=Bushfire.DISPATCH_PW_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
+    assistance_req = forms.ChoiceField(choices=Bushfire.ASSISTANCE_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
+    other_tenure = forms.ChoiceField(choices=Bushfire.IGNITION_POINT_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
 
     class Meta:
         model = Bushfire
@@ -271,7 +274,8 @@ class BushfireCreateBaseForm(forms.ModelForm):
                   'days','hours',
                   'dispatch_pw', 'dispatch_aerial',
                   'investigation_req',
-		  'area', 'area_unknown', 'origin_point_str', 'origin_point', 'fire_boundary',
+		          'area', 'area_unknown', 'origin_point_str', 'origin_point', 'fire_boundary',
+                  'other_tenure',
                  )
 
 #    def clean_investigation_req(self):
@@ -295,6 +299,7 @@ class BushfireCreateBaseForm(forms.ModelForm):
         if not self.cleaned_data['media_alert_req']: self.cleaned_data['media_alert_req'] = None
         if not self.cleaned_data['park_trail_impacted']: self.cleaned_data['park_trail_impacted'] = None
         if not self.cleaned_data['assistance_req']: self.cleaned_data['assistance_req'] = None
+        if not self.cleaned_data['other_tenure']: self.cleaned_data['other_tenure'] = None
 
 
         if self.cleaned_data['dispatch_pw'] and eval(self.cleaned_data['dispatch_pw']):

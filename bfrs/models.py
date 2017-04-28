@@ -148,16 +148,35 @@ class Bushfire(Audit):
         (STATUS_MISSING_FINAL, 'Missing Final'), # This is not really a status, and is never set - used for filtering qs only
     )
 
-
     FIRE_LEVEL_CHOICES = (
         (1, 1),
         (2, 2),
         (3, 3),
     )
+
     CAUSE_STATE_CHOICES = (
         (1, 'Known'),
         (2, 'Possible'),
     )
+
+    DISPATCH_PW_CHOICES = (
+        (1, 'Yes'),
+        (2, 'No'),
+        (3, 'Monitoring only'),
+    )
+
+    ASSISTANCE_CHOICES = (
+        (1, 'Yes'),
+        (2, 'No'),
+        (3, 'Unknown'),
+    )
+
+    IGNITION_POINT_CHOICES = (
+        (1, 'Private'),
+        (2, 'Crown'),
+    )
+
+
 
     # Common Fields
     region = models.ForeignKey(Region)
@@ -179,7 +198,8 @@ class Bushfire(Audit):
     cause_state = models.PositiveSmallIntegerField(choices=CAUSE_STATE_CHOICES, null=True, blank=True)
     other_cause = models.CharField(verbose_name='Other Cause', max_length=64, null=True, blank=True)
     tenure = models.ForeignKey('Tenure', null=True, blank=True)
-    other_tenure = models.CharField(verbose_name='Other Tenure', max_length=64, null=True, blank=True)
+    #other_tenure = models.CharField(verbose_name='Other Tenure', max_length=64, null=True, blank=True)
+    other_tenure = models.PositiveSmallIntegerField(choices=IGNITION_POINT_CHOICES, null=True, blank=True)
 
     dfes_incident_no = models.PositiveIntegerField(verbose_name="DFES Fire Number", null=True, blank=True)
     job_code = models.CharField(verbose_name="Job Code", max_length=12, null=True, blank=True)
@@ -196,7 +216,8 @@ class Bushfire(Audit):
     # FireBehaviour FS here
     #tenure = models.ForeignKey('Tenure', null=True, blank=True)
     #fuel = models.CharField(max_length=50, null=True, blank=True)
-    assistance_req = models.NullBooleanField(null=True)
+    #assistance_req = models.NullBooleanField(null=True)
+    assistance_req = models.PositiveSmallIntegerField(choices=ASSISTANCE_CHOICES, null=True, blank=True)
     assistance_details = models.CharField(max_length=64, null=True, blank=True)
     communications = models.CharField(verbose_name='Communication', max_length=50, null=True, blank=True)
     other_info = models.CharField(verbose_name='Other Information', max_length=100, null=True, blank=True)
@@ -206,7 +227,8 @@ class Bushfire(Audit):
     init_authorised_by = models.ForeignKey(User, verbose_name="Authorised By", null=True, blank=True, related_name='init_authorised_by')
     init_authorised_date = models.DateTimeField(verbose_name='Authorised Date', null=True, blank=True)
 
-    dispatch_pw = models.NullBooleanField(null=True)
+    #dispatch_pw = models.NullBooleanField(null=True)
+    dispatch_pw = models.PositiveSmallIntegerField(choices=DISPATCH_PW_CHOICES, null=True, blank=True)
     dispatch_aerial = models.NullBooleanField(null=True)
     dispatch_pw_date = models.DateTimeField(verbose_name='P&W Resource dispatched', null=True, blank=True)
     dispatch_aerial_date = models.DateTimeField(verbose_name='Aerial support dispatched', null=True, blank=True)
