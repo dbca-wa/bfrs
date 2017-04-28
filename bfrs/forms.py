@@ -301,8 +301,8 @@ class BushfireCreateBaseForm(forms.ModelForm):
         if not self.cleaned_data['assistance_req']: self.cleaned_data['assistance_req'] = None
         if not self.cleaned_data['other_tenure']: self.cleaned_data['other_tenure'] = None
 
-
-        if self.cleaned_data['dispatch_pw'] and eval(self.cleaned_data['dispatch_pw']):
+        #import ipdb; ipdb.set_trace()
+        if self.cleaned_data['dispatch_pw'] and eval(self.cleaned_data['dispatch_pw'])==Bushfire.DISPATCH_PW_YES:
             if not self.cleaned_data['dispatch_pw_date']:
                 self.add_error('dispatch_pw_date', 'Must specify Date and Time of dispatch, if resource is dispatched.')
             if not self.cleaned_data['field_officer']:

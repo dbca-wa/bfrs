@@ -203,7 +203,7 @@
         <tr>
 		    <th class="cbas">Assistance Required *<br><br><div class=div_assist style="display: none; font-weight:normal;">Details</div></th>
             <td colspan="2" class="cbas">
-                {% if is_authorised %} {{snapshot.assistance_req|yesno:"Yes,No"}} {% if snapshot.assistance_req %}<br>{{snapshot.assistance_details}} {% endif %}{% else %} {{form.assistance_req}} {% endif %}<br>
+                {% if is_authorised %} {{ snapshot.get_assistance_req_display }} {% if snapshot.assistance_req %}<br>{{snapshot.assistance_details}} {% endif %}{% else %} {{form.assistance_req}} {% endif %}<br>
 		        <div class=div_assist style="display: none;">{% if is_authorised %}  {% else %} {{form.assistance_details}} {% endif %}</div>
 		    </td>
             

@@ -22,8 +22,8 @@ SUBMIT_MANDATORY_FIELDS= [
 ]
 SUBMIT_MANDATORY_DEP_FIELDS= {
     # field : [field value, dep_field] - if field==field_value, then dep_field is mandatory
-    'dispatch_pw': [True, 'dispatch_pw_date'],
-    'dispatch_pw': [True, 'field_officer'],
+    'dispatch_pw': [1, 'dispatch_pw_date'],
+    'dispatch_pw': [1, 'field_officer'],
     'dispatch_aerial': [True, 'dispatch_aerial_date'],
     'cause': ['Other (specify)', 'other_cause'],
     'tenure': ['Other (specify)', 'other_tenure'],
@@ -59,6 +59,7 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
     missing = [field for field in fields if getattr(obj, field) is None or getattr(obj, field)=='']
 
     for field, dep_set in dep_fields.iteritems():
+        #import ipdb; ipdb.set_trace()
         if getattr(obj, field) and getattr(obj, field)==dep_set[0] and getattr(obj, dep_set[1]) is None:
             missing.append(dep_set[1])
 
@@ -159,10 +160,13 @@ class Bushfire(Audit):
         (2, 'Possible'),
     )
 
+    DISPATCH_PW_YES        = 1
+    DISPATCH_PW_NO         = 2
+    DISPATCH_PW_MONITORING = 3
     DISPATCH_PW_CHOICES = (
-        (1, 'Yes'),
-        (2, 'No'),
-        (3, 'Monitoring only'),
+        (DISPATCH_PW_YES, 'Yes'),
+        (DISPATCH_PW_NO, 'No'),
+        (DISPATCH_PW_MONITORING, 'Monitoring only'),
     )
 
     ASSISTANCE_CHOICES = (
