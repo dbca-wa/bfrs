@@ -77,12 +77,13 @@
         <tr>
             <th class="cbas">District *</th>
             <td colspan="2" class="cbas">
-            {% comment %}
-                {% if object %} {{object.region}} {{form.region.as_hidden}} {% else %} {{form.region}} {% endif %}<span style="margin:20;"></span>
-                {% if object %} {{object.district}} {{form.district.as_hidden}} {% else %} {{form.district}} {% endif %}
-            {% endcomment %}
-                {{form.region}}<span style="margin:20;"></span>
-                {{form.district}}
+				{% if request.user.is_superuser and not is_authorised %}
+                  {{form.region}}<span style="margin:20;"></span>
+                  {{form.district}}
+				{% else %}
+                  {% if object %} {{object.region}} {{form.region.as_hidden}} {% else %} {{form.region}} {% endif %}<span style="margin:20;"></span>
+                  {% if object %} {{object.district}} {{form.district.as_hidden}} {% else %} {{form.district}} {% endif %}
+				{% endif %}
             </td>
 
             <th class="cbas">Financial Year *</th>
