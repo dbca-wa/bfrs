@@ -85,7 +85,7 @@
 {% if object_list %}
 <table id="table" class="tablesorter table table-striped table-bordered table-hover table-condensed">
   <thead>
-    <td><input type="checkbox" name ="check_all" onClick=toggle(this) /></td>
+	  {%comment%}<td><input type="checkbox" name ="check_all" onClick=toggle(this) /></td>{%endcomment%}
     <th>Fire Number</th>
     {% comment %}<th>Report Status</th> {% endcomment %}
     <th>Name</th>
@@ -98,50 +98,50 @@
   <tbody>
     {% for bushfire in object_list %}
       <tr class="row-vm" data-toggle="myCollapse" data-target="#{{bushfire.id}}">
-        <td><input type="checkbox" name="chkbox" value={{ bushfire.id }}  /></td>
+		  {%comment%}<td><input type="checkbox" name="chkbox" value={{ bushfire.id }}  /></td>{%endcomment%}
         <td>{{ bushfire.fire_number }}</td>
         {% comment %}<td>{{ bushfire.get_report_status_display }}</td> {% endcomment %}
         <td>{{ bushfire.name }}</td>
 		<td align="center">
             {% if bushfire.report_status == bushfire.STATUS_INITIAL %}
-			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="Edit initial fire report"><font color="red"><i class="icon-edit icon-white"></i></font></a>
+			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="Edit initial fire report"><font color="red"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-edit icon-white"></i></font></a>
             {% elif bushfire.report_status == bushfire.STATUS_INVALIDATED %}
-              <a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="View the invalidated initial fire report"><i class="icon-ban-circle icon-white"></i></a>
+			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="View the invalidated initial fire report"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-ban-circle icon-white"></i></a>
 		    {% else %}
-			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="Initial fire report submitted on {{bushfire.init_authorised_date|date_fmt}} by {{bushfire.init_authorised_by}}"><font color="green"><i class="icon-ok icon-white"></i></font></a>
+			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="Initial fire report submitted on {{bushfire.init_authorised_date|date_fmt}} by {{bushfire.init_authorised_by}}"><span style="display:none">{{bushfire.report_status}}</span><font color="green"><i class="icon-ok icon-white"></i></font></a>
 		    {% endif %}
 		</td>
 
 		<td align="center">
             {% if bushfire.report_status == bushfire.STATUS_INITIAL_AUTHORISED %}
-			<a href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Edit final fire report"><font color="red"><i class="icon-edit icon-white"></i></red></a>
+			<a href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Edit final fire report"><span style="display:none">{{bushfire.report_status}}</span><font color="red"><i class="icon-edit icon-white"></i></red></a>
             {% elif bushfire.report_status >= bushfire.STATUS_FINAL_AUTHORISED and bushfire.report_status != bushfire.STATUS_INVALIDATED%}
-			<a href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Final fire report authorised on {{bushfire.authorised_date}} by {{bushfire.authorised_by}}"><font color="green"><i class="icon-ok icon-white"></i></font></a>
+			<a href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Final fire report authorised on {{bushfire.authorised_date}} by {{bushfire.authorised_by}}"><span style="display:none">{{bushfire.report_status}}</span><font color="green"><i class="icon-ok icon-white"></i></font></a>
 		    {% endif %}
 		</td>
         <td align="center">
          {% if bushfire.report_status == bushfire.STATUS_FINAL_AUTHORISED %}
-            <a href="#" onclick='openGokart({"region":{{bushfire.region.id}},"district":{{bushfire.district.id}},"bushfireid":"{{bushfire.fire_number}}" });' title="Open report in SSS"><i class="icon-link icon-white"></i></a>
+		 <a href="#" onclick='openGokart({"region":{{bushfire.region.id}},"district":{{bushfire.district.id}},"bushfireid":"{{bushfire.fire_number}}" });' title="Open report in SSS"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-link icon-white"></i></a>
          {% elif bushfire.report_status == bushfire.STATUS_REVIEWED %}
-		 <a href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Final fire report reviewed on {{bushfire.reviewed_date}} by {{bushfire.reviewed_by}}"><font color="green"><i class="icon-ok icon-white"></i></font></a>
+		 <a href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Final fire report reviewed on {{bushfire.reviewed_date}} by {{bushfire.reviewed_by}}"><span style="display:none">{{bushfire.report_status}}</span<font color="green"><i class="icon-ok icon-white"></i></font></a>
          {% endif %}
 		</td>
 
 
          {% if bushfire.report_status == bushfire.STATUS_FINAL_AUTHORISED %}
          <td>
-			 <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=mark_reviewed');" title="Mark Final report as Reviewed"><font color="red"><i class="icon-warning-sign"></i></font></a>
-             <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=delete_final_authorisation');" title="Delete authorisation"><i class="icon-trash icon-white"></i></a>
+			 <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=mark_reviewed');" title="Mark Final report as Reviewed"><span style="display:none">{{bushfire.report_status}}</span><font color="red"><i class="icon-warning-sign"></i></font></a>
+			 <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=delete_final_authorisation');" title="Delete authorisation"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-trash icon-white"></i></a>
 		 </td>
 
          {% elif bushfire.report_status == bushfire.STATUS_REVIEWED %}
            {% if not bushfire.archive %}
              <td>
-				 <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=archive');" title="Archive Report"><i class="icon-folder-close"></i></a>
-                 <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=delete_reviewed');" title="Delete reviewed"><i class="icon-trash icon-white"></i></a>
+				 <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=archive');" title="Archive Report"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-folder-close"></i></a>
+				 <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=delete_reviewed');" title="Delete reviewed"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-trash icon-white"></i></a>
 			 </td>
            {% else %}
-             <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=unarchive');" title="Unarchive Report"><i class="icon-folder-open"></i></a></td>
+		   <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=unarchive');" title="Unarchive Report"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-folder-open"></i></a></td>
            {% endif %}
          {% else %}
 	     <td></td>
@@ -221,6 +221,8 @@
 
 <script src="{{sss_url}}/dist/static/js/gokart.js"></script>
 <script>
+
+$("#table").tablesorter();
 
 //$("#id_open_sss").on('click', function() {
 //   gokart = loadGokart(); openGokart();

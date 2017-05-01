@@ -352,8 +352,9 @@ def update_status(request, bushfire, action):
             resp = pvs_email(bushfire, mail_url(request, bushfire))
             notification['PVS'] = 'Email Sent' if resp else 'Email failed'
 
-            resp = fpc_email(bushfire, mail_url(request, bushfire))
-            notification['FPC'] = 'Email Sent' if resp else 'Email failed'
+	# TODO awaiting item notification in SSS dictionary
+#            resp = fpc_email(bushfire, mail_url(request, bushfire))
+#            notification['FPC'] = 'Email Sent' if resp else 'Email failed'
 
         if bushfire.media_alert_req:
             resp = pica_email(bushfire, mail_url(request, bushfire))
