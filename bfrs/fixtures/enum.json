@@ -77,36 +77,20 @@
     "pk": 3,
     "model": "bfrs.agency",
     "fields": {
-        "name": "FESA FIRE SERVICES (FIRE BRIGADES ACT)",
-        "code": "FESA FB"
+        "name": "POLICE",
+        "code": "POLICE"
     }
 },
 {
     "pk": 4,
     "model": "bfrs.agency",
     "fields": {
-        "name": "POLICE",
-        "code": "POLICE"
-    }
-},
-{
-    "pk": 5,
-    "model": "bfrs.agency",
-    "fields": {
-        "name": "FESA SES",
+        "name": "DFES SES",
         "code": "SES"
     }
 },
 {
-    "pk": 6,
-    "model": "bfrs.agency",
-    "fields": {
-        "name": "FESA FIRE SERVICES (BUSH BRIGADES ACT)",
-        "code": "FESA BB"
-    }
-},
-{
-    "pk": 7,
+    "pk": 5,
     "model": "bfrs.agency",
     "fields": {
         "name": "OTHER",

@@ -263,6 +263,7 @@ class Bushfire(Audit):
     area_limit = models.BooleanField(verbose_name="Area < 2ha", default=False)
     area_unknown = models.BooleanField(default=False)
     time_to_control = models.DurationField(verbose_name="Time to Control", null=True, blank=True)
+    fire_behaviour_unknown = models.BooleanField(default=False)
     # Private Damage FS here
     # Public Damage FS here
 
@@ -517,7 +518,7 @@ class DamageType(models.Model):
 class AreaBurnt(models.Model):
     tenure = models.ForeignKey(Tenure, related_name='tenures')
     area = models.DecimalField(verbose_name="Area (ha)", max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], null=True, blank=True)
-    #other = models.CharField(max_length=50, verbose_name="Other tenure", null=True, blank=True)
+    #oeher = models.CharField(max_length=50, verbose_name="Other tenure", null=True, blank=True)
     bushfire = models.ForeignKey(Bushfire, related_name='tenures_burnt')
 
 #    def clean(self):
