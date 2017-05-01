@@ -153,7 +153,7 @@ class BushfireResource(APIResource):
     def hydrate_fire_boundary(self, bundle):
         #import ipdb; ipdb.set_trace()
         if bundle.data.has_key('fire_boundary') and isinstance(bundle.data['fire_boundary'], list):
-            bundle.data['fire_boundary'] = MultiPolygon([Polygon(p[0]) for p in bundle.data['fire_boundary']]).__str__()
+            bundle.data['fire_boundary'] = MultiPolygon([Polygon(*p) for p in bundle.data['fire_boundary']]).__str__()
         return bundle
 
     def obj_update(self, bundle, **kwargs):

@@ -32,7 +32,7 @@ from bfrs.utils import (breadcrumbs_li,
         update_areas_burnt, update_areas_burnt_fs, create_areas_burnt, update_damage_fs, update_injury_fs, update_fire_behaviour_fs,
         export_final_csv, export_excel,
         update_status, serialize_bushfire, deserialize_bushfire,
-        rdo_email, pvs_email, pica_email, pica_sms, police_email, dfes_email, fssdrs_email,
+        rdo_email, pvs_email, fpc_email, pica_email, pica_sms, police_email, dfes_email, fssdrs_email,
         invalidate_bushfire,
         #calc_coords,
     )
@@ -338,7 +338,7 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
             sss = json.loads(self.request.POST.get('sss_create'))
             initial['sss_data'] = self.request.POST.get('sss_create')
 
-            if sss['area'].has_key('total_area') and sss['area'].get('total_area'):
+            if sss.has_key('area') and sss['area'].has_key('total_area') and sss['area'].get('total_area'):
                 initial['area'] = float(sss['area']['total_area'])
 
             if sss.has_key('origin_point') and isinstance(sss['origin_point'], list):
@@ -346,7 +346,7 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
                 initial['origin_point'] = Point(sss['origin_point'])
 
             if sss.has_key('fire_boundary') and isinstance(sss['fire_boundary'], list):
-                initial['fire_boundary'] = MultiPolygon([Polygon(p[0]) for p in sss['fire_boundary']])
+                initial['fire_boundary'] = MultiPolygon([Polygon(*p) for p in sss['fire_boundary']])
 
             if sss.has_key('fire_position') and sss.get('fire_position'):
                 initial['fire_position'] = sss['fire_position']
@@ -397,7 +397,7 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
 
         #import ipdb; ipdb.set_trace()
         # No need to check area_burnt_formset since the fs is hidden on the initial form and is created directly by the update_areas_burnt() method
-        if form.is_valid() and fire_behaviour_formset.is_valid(): 
+        if form.is_valid() and fire_behaviour_formset.is_valid():
             return self.form_valid(request, form, fire_behaviour_formset, kwargs)
         else:
             return self.form_invalid(request, form, fire_behaviour_formset, kwargs)

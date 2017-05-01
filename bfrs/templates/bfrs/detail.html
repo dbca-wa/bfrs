@@ -312,10 +312,12 @@
       <p class="pull-right">
       {% if object.report_status != object.STATUS_INVALIDATED or not object.report_status %}
         {% if request.user|can_readonly and not request.user.is_superuser %}
-          <input type="submit" value="Save" class="btn btn-primary btn-success" name="_save" title="You do not have 'Update' permissions" disabled />
+          <input type="submit" value="Save draft" class="btn btn-primary btn-success" name="_save" title="You do not have 'Update' permissions" disabled />
         {% else %}
-          <input type="submit" value="Save" class="btn btn-primary btn-success" name="_save" {% if is_authorised %}title="Submitted initial report cannot be edited" disabled{% endif %} />
+          <input type="submit" value="Save draft" class="btn btn-primary btn-success" name="_save" {% if is_authorised %}title="Submitted initial report cannot be edited" disabled{% endif %} />
+		  {% comment %}
           {% if not is_authorised %}<input type="submit" value="Save and continue" class="btn btn-primary btn-success" name="_save_continue" />{% endif %}
+		  {% endcomment %}
 
 		  <input type="submit" value="Submit" class="btn btn-primary btn-success" name="submit_initial" {% if is_authorised %}title="Initial Report already submitted" disabled{% else %}title="Save and submit"{% endif %} />
 		  {% comment %}

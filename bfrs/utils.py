@@ -352,6 +352,9 @@ def update_status(request, bushfire, action):
             resp = pvs_email(bushfire, mail_url(request, bushfire))
             notification['PVS'] = 'Email Sent' if resp else 'Email failed'
 
+            resp = fpc_email(bushfire, mail_url(request, bushfire))
+            notification['FPC'] = 'Email Sent' if resp else 'Email failed'
+
         if bushfire.media_alert_req:
             resp = pica_email(bushfire, mail_url(request, bushfire))
             notification['PICA'] = 'Email Sent' if resp else 'Email failed'
@@ -408,6 +411,15 @@ def pvs_email(bushfire, url):
     message = 'PVS Email - {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.fire_number, url)
 
     return send_mail(subject, message, settings.FROM_EMAIL, settings.PVS_EMAIL)
+
+def fpc_email(bushfire, url):
+    if not settings.ALLOW_EMAIL_NOTIFICATION:
+       return
+
+    subject = 'FPC Email - Initial report submitted - {}'.format(bushfire.fire_number)
+    message = 'FPC Email - {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.fire_number, url)
+
+    return send_mail(subject, message, settings.FROM_EMAIL, settings.FPC_EMAIL)
 
 def pica_email(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION:
@@ -621,6 +633,7 @@ def export_final_csv(request, queryset):
 			smart_str( obj.fire_position),
 			#row.write(col_no(), smart_str( obj.origin_point)),
 			#row.write(col_no(), smart_str( obj.fire_boundary),
+			smart_str( obj.fire_not_found),
 			smart_str( obj.assistance_req),
 			smart_str( obj.communications),
 			smart_str( obj.other_info),
@@ -683,7 +696,7 @@ def export_excel(request, queryset):
     hdr.write(col_no(), "District")
     hdr.write(col_no(), "Name")
     hdr.write(col_no(), "Year")
-    hdr.write(col_no(), "Incident Number")
+    hdr.write(col_no(), "Fire Number")
     hdr.write(col_no(), "DFES Incident No")
     hdr.write(col_no(), "Job Code")
     hdr.write(col_no(), "Fire Level")
@@ -727,6 +740,9 @@ def export_excel(request, queryset):
     hdr.write(col_no(), "Authorised By")
     hdr.write(col_no(), "Authorised Date")
     hdr.write(col_no(), "Report Status")
+    hdr.write(col_no(), "Tenures of Area Burnt")
+    hdr.write(col_no(), "Damage")
+    hdr.write(col_no(), "Injuries and Fatalities")
 
     row_no = lambda c=count(1): next(c)
     for obj in queryset:
@@ -736,22 +752,23 @@ def export_excel(request, queryset):
         row.write(col_no(), obj.id )
         row.write(col_no(), smart_str( obj.region.name) )
         row.write(col_no(), smart_str( obj.district.name) )
-        row.write(col_no(), smart_str( obj.name) )
+        row.write(col_no(), smart_str( obj.name) if obj.name else None)
         row.write(col_no(), smart_str( obj.year) )
         row.write(col_no(), obj.fire_number )
-        row.write(col_no(), obj.dfes_incident_no )
-        row.write(col_no(), obj.job_code )
-        row.write(col_no(), smart_str( obj.get_fire_level_display() ))
-        row.write(col_no(), smart_str( obj.media_alert_req) )
-        row.write(col_no(), smart_str( obj.investigation_req) )
-        row.write(col_no(), smart_str( obj.fire_position) )
+        row.write(col_no(), obj.dfes_incident_no if obj.dfes_incident_no else None)
+        row.write(col_no(), obj.job_code if obj.job_code else None)
+        row.write(col_no(), smart_str( obj.get_fire_level_display() if obj.fire_level else None))
+        row.write(col_no(), smart_str( obj.media_alert_req if obj.media_alert_req else None))
+        row.write(col_no(), smart_str( obj.investigation_req if obj.investigation_req else None))
+        row.write(col_no(), smart_str( obj.fire_position if obj.fire_position else None))
         #row.write(col_no(), smart_str( obj.origin_point) )
         #row.write(col_no(), smart_str( obj.fire_boundary) )
-        row.write(col_no(), smart_str( obj.assistance_req) )
-        row.write(col_no(), smart_str( obj.communications) )
-        row.write(col_no(), smart_str( obj.other_info) )
-        row.write(col_no(), smart_str( obj.cause) )
-        row.write(col_no(), smart_str( obj.other_cause) )
+        row.write(col_no(), smart_str( obj.fire_not_found if obj.fire_not_found else None))
+        row.write(col_no(), smart_str( obj.assistance_req if obj.assistance_req else None))
+        row.write(col_no(), smart_str( obj.communications if obj.communications else None))
+        row.write(col_no(), smart_str( obj.other_info if obj.other_info else None))
+        row.write(col_no(), smart_str( obj.cause if obj.cause else None))
+        row.write(col_no(), smart_str( obj.other_cause if obj.other_cause else None))
         row.write(col_no(), smart_str( obj.field_officer.get_full_name() if obj.field_officer else None ) )
         row.write(col_no(), smart_str( obj.duty_officer.get_full_name() if obj.duty_officer else None ) )
         row.write(col_no(), smart_str( obj.init_authorised_by.get_full_name() if obj.init_authorised_by else None ) )
@@ -766,21 +783,25 @@ def export_excel(request, queryset):
         row.write(col_no(), smart_str( obj.fire_controlled_date.strftime('%Y-%m-%d %H:%M:%S') if obj.fire_controlled_date else None) )
         row.write(col_no(), smart_str( obj.fire_contained_date.strftime('%Y-%m-%d %H:%M:%S') if obj.fire_contained_date else None) )
         row.write(col_no(), smart_str( obj.fire_safe_date.strftime('%Y-%m-%d %H:%M:%S') if obj.fire_safe_date else None) )
-        row.write(col_no(), smart_str( obj.fuel_type) )
+        #row.write(col_no(), smart_str( obj.fuel_type) )
+        row.write(col_no(), smart_str( '; '.join(['(fuel_type={}, ros={}, flame_height={})'.format(i.fuel_type, i.ros, i.flame_height) for i in obj.fire_behaviour.all()])) if obj.fire_behaviour.all() else None )
         #row.write(col_no(), smart_str( obj.initial_snapshot) )
-        row.write(col_no(), smart_str( obj.first_attack) )
-        row.write(col_no(), smart_str( obj.other_first_attack) )
-        row.write(col_no(), smart_str( obj.initial_control) )
-        row.write(col_no(), smart_str( obj.other_initial_control) )
-        row.write(col_no(), smart_str( obj.final_control) )
-        row.write(col_no(), smart_str( obj.other_final_control) )
-        row.write(col_no(), smart_str( obj.arson_squad_notified) )
-        row.write(col_no(), obj.offence_no )
-        row.write(col_no(), obj.area )
-        row.write(col_no(), smart_str( obj.time_to_control) )
+        row.write(col_no(), smart_str( obj.first_attack if obj.first_attack else None))
+        row.write(col_no(), smart_str( obj.other_first_attack if obj.other_first_attack else None))
+        row.write(col_no(), smart_str( obj.initial_control if obj.initial_control else None))
+        row.write(col_no(), smart_str( obj.other_initial_control if obj.other_initial_control else None))
+        row.write(col_no(), smart_str( obj.final_control if obj.final_control else None))
+        row.write(col_no(), smart_str( obj.other_final_control if obj.other_final_control else None))
+        row.write(col_no(), smart_str( obj.arson_squad_notified if obj.arson_squad_notified else None))
+        row.write(col_no(), obj.offence_no if obj.offence_no else None)
+        row.write(col_no(), obj.area if obj.area else none)
+        row.write(col_no(), smart_str( obj.time_to_control if obj.time_to_control else None))
         row.write(col_no(), smart_str( obj.authorised_by.get_full_name() if obj.authorised_by else None ) )
         row.write(col_no(), smart_str( obj.authorised_date.strftime('%Y-%m-%d %H:%M:%S') if obj.authorised_date else None ) )
-        row.write(col_no(), smart_str( obj.get_report_status_display()) )
+        row.write(col_no(), smart_str( obj.get_report_status_display() if obj.report_status else None))
+        row.write(col_no(), smart_str( '; '.join(['(name={}, area={})'.format(i.tenure.name, i.area) for i in obj.tenures_burnt.all()]) ))
+        row.write(col_no(), smart_str( '; '.join(['(name={}, number={})'.format(i.damage_type.name, i.number) for i in obj.damages.all()]) if obj.damages.all() else None))
+        row.write(col_no(), smart_str( '; '.join(['(name={}, number={})'.format(i.injury_type.name, i.number) for i in obj.injuries.all()]) if obj.injuries.all() else None ))
 
     book.save(response)
 

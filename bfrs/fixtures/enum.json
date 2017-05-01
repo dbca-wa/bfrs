@@ -61,32 +61,33 @@
     "pk": 1,
     "model": "bfrs.agency",
     "fields": {
-        "name": "DEPT OF PARKS AND WILDLIFE",
-        "code": "PW"
+        "name": "DPaW",
+        "code": "DPaW"
     }
 },
 {
     "pk": 2,
     "model": "bfrs.agency",
     "fields": {
-        "name": "LGA BUSH FIRE BRIGADE",
-        "code": "LGA BFB"
+        "name": "DFES",
+        "code": "DFES"
     }
 },
+
 {
     "pk": 3,
     "model": "bfrs.agency",
     "fields": {
-        "name": "POLICE",
-        "code": "POLICE"
+        "name": "LGA",
+        "code": "LGA"
     }
 },
 {
     "pk": 4,
     "model": "bfrs.agency",
     "fields": {
-        "name": "DFES SES",
-        "code": "SES"
+        "name": "WA Police",
+        "code": "POLICE"
     }
 },
 {

@@ -30,7 +30,9 @@
     {% endif %}
     <form action="" method="post">{% csrf_token %}
     <div>
+        {% comment %}
         <a id="id_ok_btn" {% if initial %} href="{% url 'bushfire:bushfire_initial' object.id %}" {% elif final %} href="{% url 'bushfire:bushfire_final' object.id %}"{% endif %} class="btn btn-info">Edit bushfire</a>
+        {% endcomment %}
         <a id="id_cancel_btn" href="javascript: history.go(-1)" class="btn btn-info">Return</a>
     </div>
     </form>

@@ -1,5 +1,5 @@
 from django import template
-from bfrs.models import Bushfire
+from bfrs.models import Bushfire, current_finyear
 
 register = template.Library()
 
@@ -49,7 +49,9 @@ def fin_year(year):
 
         {{ object.year|fin_year }}
     """
-    return str(year) + '/' + str(int(year)+1) if year else None
+    if not year:
+        year = current_finyear()
+    return str(year) + '/' + str(int(year)+1)
 
 
 @register.filter
