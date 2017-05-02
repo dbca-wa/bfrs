@@ -427,7 +427,7 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
         area_burnt_updated = None
         sss = self.object.sss_data_to_dict
         #import ipdb; ipdb.set_trace()
-        if sss.has_key('area') and sss['area'].has_key('tenure_area') and sss['area']['tenure_area'].has_key('areas') and sss['area']['tenure_area']['areas']:
+        if sss and sss.has_key('area') and sss['area'].has_key('tenure_area') and sss['area']['tenure_area'].has_key('areas') and sss['area']['tenure_area']['areas']:
             area_burnt_updated = update_areas_burnt(self.object, sss['area']['tenure_area']['areas'])
 
         fire_behaviour_updated = update_fire_behaviour_fs(self.object, fire_behaviour_formset)

@@ -482,68 +482,146 @@ def create_view():
     from django.db import connection
     cursor = connection.cursor()
     cursor.execute('''
-        create or replace view bfrs_bushfire_v as
-        select
-            b.id,
-            b.region_id,
-            b.district_id,
-            b.name,
-            b.fire_number,
-            b.year,
-            b.fire_level,
-            b.media_alert_req,
-            b.park_trail_impacted,
-            b.cause_id,
-            b.cause_state,
-            b.other_cause,
-            b.tenure_id,
-            b.other_tenure,
-            b.dfes_incident_no,
-            b.job_code,
-            b.fire_position,
-            b.fire_position_override,
-            b.origin_point,
-            b.fire_boundary,
-            b.assistance_req,
-            b.assistance_details,
-            b.communications,
-            b.other_info,
-            b.field_officer_id,
-            b.duty_officer_id,
-            b.init_authorised_by_id,
-            b.init_authorised_date,
-            b.dispatch_pw,
-            b.dispatch_aerial,
-            b.dispatch_pw_date,
-            b.dispatch_aerial_date,
-            b.fire_detected_date,
-            b.fire_contained_date,
-            b.fire_controlled_date,
-            b.fire_safe_date,
-            b.first_attack_id,
-            b.other_first_attack,
-            b.initial_control_id,
-            b.other_initial_control,
-            b.final_control_id,
-            b.other_final_control,
-            b.arson_squad_notified,
-            b.investigation_req,
-            b.offence_no,
-            b.area,
-            b.area_limit,
-            b.area_unknown,
-            b.time_to_control,
-            b.authorised_by_id,
-            b.authorised_date,
-            b.reviewed_by_id,
-            b.reviewed_date,
-            b.report_status,
-            b.archive
-	from bfrs_bushfire AS b
-        where
-           b.archive=false AND
-           b.report_status<>{}
+    CREATE OR REPLACE VIEW bfrs_bushfire_v AS
+    SELECT b.id,
+        b.region_id,
+        b.district_id,
+        b.name,
+        b.fire_number,
+        b.year,
+        b.reporting_year,
+        b.fire_level,
+        b.media_alert_req,
+        b.park_trail_impacted,
+        b.cause_id,
+        b.cause_state,
+        b.other_cause,
+        b.tenure_id,
+        b.other_tenure,
+        b.dfes_incident_no,
+        b.job_code,
+        b.origin_point,
+        b.fire_position,
+        b.fire_position_override,
+        CASE WHEN b.report_status >= 2 THEN st_envelope(b.fire_boundary)
+                 ELSE b.fire_boundary
+        END as fire_boundary,
+        b.fire_not_found,
+        b.assistance_req,
+        b.assistance_details,
+        b.communications,
+        b.other_info,
+        b.field_officer_id,
+        b.duty_officer_id,
+        b.init_authorised_by_id,
+        b.init_authorised_date,
+        b.dispatch_pw,
+        b.dispatch_aerial,
+        b.dispatch_pw_date,
+        b.dispatch_aerial_date,
+        b.fire_detected_date,
+        b.fire_contained_date,
+        b.fire_controlled_date,
+        b.fire_safe_date,
+        b.first_attack_id,
+        b.other_first_attack,
+        b.initial_control_id,
+        b.other_initial_control,
+        b.final_control_id,
+        b.other_final_control,
+        b.arson_squad_notified,
+        b.investigation_req,
+        b.offence_no,
+        b.area,
+        b.area_limit,
+        b.area_unknown,
+        b.time_to_control,
+        b.fire_behaviour_unknown,
+        b.authorised_by_id,
+        b.authorised_date,
+        b.reviewed_by_id,
+        b.reviewed_date,
+        b.report_status,
+        b.sss_data,
+        b.archive,
+        b.invalid_details,
+        b.valid_bushfire_id
+    FROM bfrs_bushfire b
+    WHERE b.archive = false AND b.report_status < {}
     '''.format(Bushfire.STATUS_INVALIDATED))
+
+def create_final_view():
+    """
+    cursor.execute('''drop view bfrs_bushfire_final_fireboundary_v''')
+    """
+    from django.db import connection
+    cursor = connection.cursor()
+    cursor.execute('''
+    CREATE OR REPLACE VIEW bfrs_bushfire_final_fireboundary_v AS
+        SELECT b.id,
+        b.region_id,
+        b.district_id,
+        b.name,
+        b.fire_number,
+        b.year,
+        b.reporting_year,
+        b.fire_level,
+        b.media_alert_req,
+        b.park_trail_impacted,
+        b.cause_id,
+        b.cause_state,
+        b.other_cause,
+        b.tenure_id,
+        b.other_tenure,
+        b.dfes_incident_no,
+        b.job_code,
+        b.fire_position,
+        b.fire_position_override,
+        b.fire_boundary,
+        b.fire_not_found,
+        b.assistance_req,
+        b.assistance_details,
+        b.communications,
+        b.other_info,
+        b.field_officer_id,
+        b.duty_officer_id,
+        b.init_authorised_by_id,
+        b.init_authorised_date,
+        b.dispatch_pw,
+        b.dispatch_aerial,
+        b.dispatch_pw_date,
+        b.dispatch_aerial_date,
+        b.fire_detected_date,
+        b.fire_contained_date,
+        b.fire_controlled_date,
+        b.fire_safe_date,
+        b.first_attack_id,
+        b.other_first_attack,
+        b.initial_control_id,
+        b.other_initial_control,
+        b.final_control_id,
+        b.other_final_control,
+        b.arson_squad_notified,
+        b.investigation_req,
+        b.offence_no,
+        b.area,
+        b.area_limit,
+        b.area_unknown,
+        b.time_to_control,
+        b.fire_behaviour_unknown,
+        b.authorised_by_id,
+        b.authorised_date,
+        b.reviewed_by_id,
+        b.reviewed_date,
+        b.report_status,
+        b.sss_data,
+        b.archive,
+        b.invalid_details,
+        b.valid_bushfire_id
+    FROM bfrs_bushfire b
+    WHERE b.archive = false AND b.report_status >= {} AND b.report_status < {};
+    '''.format(Bushfire.STATUS_INITIAL_AUTHORISED, Bushfire.STATUS_INVALIDATED))
+
 
 def test_view():
     from django.db import connection
@@ -551,13 +629,23 @@ def test_view():
     cursor.execute('''select fire_number, year, district_id from bfrs_bushfire_v''')
     return cursor.fetchall()
 
+def test_final_view():
+    from django.db import connection
+    cursor=connection.cursor()
+    cursor.execute('''select fire_number, year, district_id from bfrs_bushfire_final_fireboundary_v''')
+    return cursor.fetchall()
+
 def drop_view():
     from django.db import connection
     cursor=connection.cursor()
     cursor.execute('''drop view bfrs_bushfire_v''')
-    cursor.execute('''drop view bfrs_bushfire_final_v''')
     return cursor.fetchall()
 
+def drop_final_view():
+    from django.db import connection
+    cursor=connection.cursor()
+    cursor.execute('''drop view bfrs_bushfire_final_fireboundary_v''')
+    return cursor.fetchall()
 
 def export_final_csv(request, queryset):
     #import csv

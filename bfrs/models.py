@@ -69,7 +69,7 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
             missing.append(fs)
 
     # final fire boundary required for fires > 2 ha
-    if not obj.area_limit:
+    if not obj.area_limit and not obj.area_unknown:
         if not obj.area:
             missing.append('Must upload fire boundary for area > 2ha')
 
@@ -348,7 +348,7 @@ class Bushfire(Audit):
 
     @property
     def sss_data_to_dict(self):
-        return json.loads(self.sss_data)
+        return json.loads(self.sss_data) if self.sss_data else None
 
     @property
     def finyear_display(self):
@@ -415,8 +415,11 @@ class Bushfire(Audit):
 
     @property
     def origin_geo(self):
+        if not self.origin_point:
+            return None
+
         c=LatLon.LatLon(LatLon.Latitude(round(self.origin_point.get_y(), 2)), LatLon.Longitude(round(self.origin_point.get_y(), 2)))
-        return 'Deg/Min/Sec ' + str(c.to_string('D% %M% %S% %H')) if self.origin_point else None
+        return 'Deg/Min/Sec ' + str(c.to_string('D% %M% %S% %H'))
 
     @property
     def time_to_control_str(self):
@@ -483,7 +486,7 @@ class Agency(models.Model):
     code = models.CharField(verbose_name="Agency Short Code", max_length=10)
 
     class Meta:
-        ordering = ['name']
+        ordering = ['id']
         default_permissions = ('add', 'change', 'delete', 'view')
 
     def __str__(self):
@@ -495,7 +498,7 @@ class InjuryType(models.Model):
     name = models.CharField(max_length=25, verbose_name="Injury/Fatality Type")
 
     class Meta:
-        ordering = ['name']
+        ordering = ['id']
         default_permissions = ('add', 'change', 'delete', 'view')
 
     def __str__(self):
@@ -507,7 +510,7 @@ class DamageType(models.Model):
     name = models.CharField(max_length=50, verbose_name="Damage Type")
 
     class Meta:
-        ordering = ['name']
+        ordering = ['id']
         default_permissions = ('add', 'change', 'delete', 'view')
 
     def __str__(self):
