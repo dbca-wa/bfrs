@@ -314,7 +314,7 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
 
         # update context with form - filter is already in the context
         context['form'] = BushfireFilterForm(initial=initial)
-        context['object_list'] = self.object_list.order_by('id') # passed by default, but we are (possibly) updating, if profile exists!
+        context['object_list'] = self.object_list.order_by('-modified') # passed by default, but we are (possibly) updating, if profile exists!
         context['sss_url'] = settings.SSS_URL
         return context
 
