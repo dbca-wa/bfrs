@@ -179,8 +179,12 @@
 					{{snapshot.origin_coords|is_none}} <br>
 					{{snapshot.origin_geo|is_none}} 
 				{% else %} 
+			{% comment %}
 					{{object.origin_coords}} <br>
                     {{object.origin_geo}}
+			{% endcomment %}
+                    {{form.origin_point.value|latlon}} <br>
+                    {{form.origin_point.value|deg_min_sec}}
 				{% endif %}
 			</td>
             {% if not is_authorised %} {{form.origin_point.as_hidden}} {% endif %}

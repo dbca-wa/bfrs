@@ -89,8 +89,11 @@ class ProfileResource(APIResource):
 
     def field_values(self, request, **kwargs):
         try:
-            qs = self._meta.queryset.filter(id=request.user.profile.id)
-            data = qs[0].to_dict() if len(qs)>0 else None
+            if hasattr(request.user, 'profile'):
+                qs = self._meta.queryset.filter(id=request.user.profile.id)
+                data = qs[0].to_dict() if len(qs)>0 else None
+            else:
+                data = {'username': request.user.username, 'user_id': request.user.id, 'region_id': None, 'district': None, 'region': None, 'district_id': None}
         except FieldError as e:
             return self.create_response(request, data={'error': str(e)}, response_class=HttpBadRequest)
         return self.create_response(request, data=data)

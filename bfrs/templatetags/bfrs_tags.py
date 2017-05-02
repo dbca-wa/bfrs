@@ -1,5 +1,7 @@
 from django import template
 from bfrs.models import Bushfire, current_finyear
+from django.contrib.gis.geos import Point, GEOSGeometry
+import LatLon
 
 register = template.Library()
 
@@ -41,6 +43,42 @@ def date_fmt(dt):
         {% endif %}
     """
     return dt.strftime('%Y-%m-%d %H:%M:%S') if dt else None
+
+@register.filter
+def deg_min_sec(value):
+    """
+    Usage::
+
+        {{ form.origin_point.value|deg_min_sec }}
+    """
+    #GEOSGeometry('POINT(-95.3385 29.7245)')
+
+    try:
+        point = GEOSGeometry(value)
+        x = round(point.get_x(), 2)
+        y = round(point.get_y(), 2)
+        c=LatLon.LatLon(LatLon.Latitude(x), LatLon.Longitude(y))
+
+        return '(Deg/Min/Sec) {}'.format(str(c.to_string('D% %M% %S% %H')) )
+    except:
+        return None
+
+@register.filter
+def latlon(value):
+    """
+    Usage::
+
+        {{ form.origin_point.value|latlon }}
+    """
+    #GEOSGeometry('POINT(-95.3385 29.7245)')
+
+    try:
+        point = GEOSGeometry(value)
+        x = round(point.get_x(), 2)
+        y = round(point.get_y(), 2)
+        return '(Lat/Lon) {}/{}'.format(x, y)
+    except:
+        return None
 
 @register.filter
 def fin_year(year):
