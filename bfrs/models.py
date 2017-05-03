@@ -166,7 +166,7 @@ class Bushfire(Audit):
     DISPATCH_PW_CHOICES = (
         (DISPATCH_PW_YES, 'Yes'),
         (DISPATCH_PW_NO, 'No'),
-        (DISPATCH_PW_MONITORING, 'Monitoring only'),
+        #(DISPATCH_PW_MONITORING, 'Monitoring only'),
     )
 
     ASSISTANCE_CHOICES = (
