@@ -117,7 +117,7 @@
         </tr>
 
         <tr>
-            <th class="cbas">Date fire contained *</th>
+            <th class="cbas" title=" Fire spread has been halted, though the fire may still be burning freely within the perimeter of the fire control lines">Date fire contained *</th>
             <td class="cbas">{% if is_authorised %} {{snapshot.fire_contained_date}} {% else %} {{form.fire_contained_date}} {% endif %}</td>
 
             <th class="cbas">Initial attack agency *<br><br><div class=div_other_first_attack style="display: none;">Other initial attack agency *</div></th>
@@ -128,7 +128,7 @@
         </tr>
 
         <tr>
-            <th class="cbas">Date fire controlled *</th>
+            <th class="cbas" title="Complete perimeter of fire is saecured and no breakaway is expected">Date fire controlled *</th>
             <td class="cbas">{% if is_authorised %} {{snapshot.fire_controlled_date}} {% else %} {{form.fire_controlled_date}} {% endif %}</td>
 
             <th class="cbas">Initial controlling agency *<br><br><div class=div_other_initial_control style="display: none;">Other initial controlling agency *</div></th>

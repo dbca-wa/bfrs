@@ -83,16 +83,15 @@
 <input onclick="gokart = loadGokart(); openGokart()" name="button" value="Open" type="button">
 {% endcomment %}
 {% if object_list %}
-<table id="table" class="tablesorter table table-striped table-bordered table-hover table-condensed">
+<table id="table" class="tablesorter table table-striped table-bordered table-hover table-condensed" style="cursor:pointer;">
   <thead>
 	  {%comment%}<td><input type="checkbox" name ="check_all" onClick=toggle(this) /></td>{%endcomment%}
-    <th>Fire Number</th>
-    {% comment %}<th>Report Status</th> {% endcomment %}
-    <th>Name</th>
-    <th>Initial</th>
-    <th>Final</th>
-    <th>Review</th>
-    <th></th>
+	  <th><font color="dodgerblue">Fire Number <i class="icon-sort"></i></font></th>
+	  <th><font color="dodgerblue">Name <i class="icon-sort"></i></font></th>
+	  <th><font color="dodgerblue">Initial <i class="icon-sort"></font></i></th>
+	  <th><font color="dodgerblue">Final <i class="icon-sort"></i></font></th>
+	  <th><font color="dodgerblue">Review <i class="icon-sort"></i></font></th>
+	  <th><i class="icon-sort"></i></th>
 
   </thead>
   <tbody>
