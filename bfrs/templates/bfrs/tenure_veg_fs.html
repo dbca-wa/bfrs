@@ -19,10 +19,10 @@
 {% if is_authorised or action %}
     <table class="table_fs" border="0" >
         <tbody>
-            {% if snapshot.areas_burnt.exists %}
+            {% if snapshot.tenures_burnt.exists %}
 				<th>Tenure</th>
 				<th>Area (ha)</th>
-				{% for area in snapshot.areas_burnt.all %}
+				{% for area in snapshot.tenures_burnt.all %}
 				<tr>
 					<td>{{ area.tenure }}</td>
 					<td>{{ area.area }}</td>
@@ -78,8 +78,9 @@
         prefix: '{{ area_burnt_formset.prefix }}',
         formCssClass: 'area_burnt_fs',
         //addText: '<i class="icon-plus"></i> add another tenure',
-        addText: '',
-        deleteText: '<i class="icon-remove"></i>',
+        //deleteText: '<i class="icon-remove"></i>',
+        addText: '',    //prevent add-another
+        deleteText: '', //prevent delete
         deleteCssClass: 'delete-row' + '-' + '{{ area_burnt_formset.prefix  }}',
     });
 
