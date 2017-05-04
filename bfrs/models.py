@@ -10,6 +10,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from bfrs.base import Audit
 from django.core.exceptions import (ValidationError)
 import LatLon
+from django.core import serializers
 
 import sys
 import json
@@ -443,8 +444,17 @@ class Bushfire(Audit):
         default_permissions = ('add', 'change', 'delete', 'view')
 
     def compare(self, obj):
-        #excluded_keys = 'created', '_state', 'timestamp', 'user', 'uid', 'changed' #Example. Modify to your likings.
-        keys = ['assistance_req', 'region_id', 'field_officer_id', '_initial', 'tenure_id', '_state', 'district_id', 'other_tenure', 'fire_not_found', 'other_first_attack', 'invalid_details', 'year', 'other_initial_control', 'fire_boundary', 'id', 'modifier_id', 'time_to_control', 'fire_position_override', 'archive', 'fire_level', 'final_control_id', 'arson_squad_notified', 'assistance_details', 'report_status', 'offence_no', 'fire_controlled_date', 'first_attack_id', 'init_authorised_date', 'init_authorised_by_id', 'dispatch_pw', 'authorised_date', 'area_limit', 'fire_contained_date', 'area', 'initial_control_id', 'investigation_req', 'final_snapshot', 'other_info', 'dispatch_aerial', 'park_trail_impacted', 'other_cause', 'authorised_by_id', 'job_code', 'reporting_year', 'dispatch_pw_date', 'dispatch_aerial_date', '_changed_data', 'sss_data', 'fire_position', 'area_unknown', 'duty_officer_id', 'cause_state', 'reviewed_date', 'name', 'created', 'reviewed_by_id', 'other_final_control', 'dfes_incident_no', 'modified', 'fire_number', 'communications', 'creator_id', 'cause_id', 'fire_safe_date', 'fire_behaviour_unknown', 'fire_detected_date', 'initial_snapshot', 'origin_point', 'media_alert_req', 'valid_bushfire_id']
+        """
+        Returns a dict of fields that have changed between a pair of snpshots (or the diff fields between two model instances)
+
+        Example usage:
+            b=Bushfire.objects.get(id=18)
+            b.snapshot_history.all().order_by('created')
+            s1=b.snapshot_history.all().order_by('created')[0]
+            s2=b.snapshot_history.all().order_by('created')[1]
+            s1.deserialize().compare(s2.deserialize())
+
+        """
         excluded_keys = ['_initial', '_state', 'fire_boundary', 'id', 'modifier_id', 'final_snapshot', '_changed_data', 'sss_data', 'created', 'modified', 'creator_id', 'initial_snapshot', 'origin_point']
         return self._compare(self, obj, excluded_keys)
 
@@ -452,9 +462,7 @@ class Bushfire(Audit):
         d1, d2 = obj1.__dict__, obj2.__dict__
         
         old, new = {}, {}
-        #print d1.items()
         for k,v in d1.items():
-            #import ipdb; ipdb.set_trace()
             if k in excluded_keys:
                 continue
             try:
@@ -631,6 +639,9 @@ class SnapshotHistory(Audit):
     auth_type = models.CharField(verbose_name="Authorisation: Initial/Final/Review", max_length=36)
     action = models.CharField(verbose_name="Action Type", max_length=36)
     bushfire = models.ForeignKey(Bushfire, related_name='snapshot_history')
+
+    def deserialize(self):
+        return serializers.deserialize("json", self.snapshot).next().object
 
     def __str__(self):
         return 'Created {}, Creator {}'.format(self.created, self.creator)
