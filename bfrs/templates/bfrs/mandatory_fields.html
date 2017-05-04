@@ -6,7 +6,7 @@
 {% block breadcrumbs %}
 <ul class="breadcrumb">
   <li><a href="{% url 'main' %}">{% trans 'Bushfire Overview' %}</a> <span class="divider"></span></li>
-  {% if initial %}
+  {% if auth_type == 'initial' %}
     <li><a href="{% url 'bushfire:bushfire_initial' object.id %}">{{object.fire_number}}</a> <span class="divider"></span></li>
   {% elif final %}
     <li><a href="{% url 'bushfire:bushfire_final' object.id %}">{{object.fire_number}}</a> <span class="divider"></span></li>

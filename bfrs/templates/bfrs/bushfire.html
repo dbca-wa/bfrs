@@ -122,7 +122,7 @@
          {% if bushfire.report_status == bushfire.STATUS_FINAL_AUTHORISED %}
 		 <a href="#" onclick='openGokart({"region":{{bushfire.region.id}},"district":{{bushfire.district.id}},"bushfireid":"{{bushfire.fire_number}}" });' title="Open report in SSS"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-link icon-white"></i></a>
          {% elif bushfire.report_status == bushfire.STATUS_REVIEWED %}
-		 <a href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Final fire report reviewed on {{bushfire.reviewed_date}} by {{bushfire.reviewed_by}}"><span style="display:none">{{bushfire.report_status}}</span<font color="green"><i class="icon-ok icon-white"></i></font></a>
+		 <a href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Final fire report reviewed on {{bushfire.reviewed_date}} by {{bushfire.reviewed_by}}"><span style="display:none">{{bushfire.report_status}}</span><font color="green"><i class="icon-ok icon-white"></i></font></a>
          {% endif %}
 		</td>
 
@@ -140,7 +140,7 @@
 				 <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=delete_reviewed');" title="Delete reviewed"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-trash icon-white"></i></a>
 			 </td>
            {% else %}
-		   <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=unarchive');" title="Unarchive Report"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-folder-open"></i></a></td>
+		     <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=unarchive');" title="Unarchive Report"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-folder-open"></i></a></td>
            {% endif %}
          {% else %}
 	     <td></td>
@@ -163,6 +163,10 @@
                 <td>{{ bushfire.field_officer }}</td>
                 <th colspan="1">Duty Officer</th>
                 <td>{{ bushfire.duty_officer }}</td>
+              </tr>
+              <tr>
+                <th colspan="1">No. of Archived Snapshots</th>
+		        <td colspan="3"><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&action=snapshot_history');" title="Snapshot history details">{{ bushfire.snapshot_history.count }}</a></td>
               </tr>
 			  <tr>
                 <th>Linked bushfires</th>

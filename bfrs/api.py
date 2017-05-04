@@ -5,7 +5,7 @@ from tastypie.resources import ModelResource, ALL, ALL_WITH_RELATIONS
 from tastypie.api import Api
 from tastypie import fields
 from bfrs.models import Profile, Region, District, Bushfire, Tenure
-from bfrs.utils import update_areas_burnt, invalidate_bushfire
+from bfrs.utils import update_areas_burnt, invalidate_bushfire, serialize_bushfire
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point, GEOSGeometry, Polygon, MultiPolygon, GEOSException
 from tastypie.http import HttpBadRequest
@@ -174,13 +174,13 @@ class BushfireResource(APIResource):
         else:
             bundle.obj.tenure = Tenure.objects.get(name__istartswith='other')
 
-        if bundle.data['area'].has_key('tenure_area') and bundle.data['area']['tenure_area'].has_key('areas') and bundle.data['area']['tenure_area']['areas']:
+        if bundle.data.has_key('area') and bundle.data['area'].has_key('tenure_area') and bundle.data['area']['tenure_area'].has_key('areas') and bundle.data['area']['tenure_area']['areas']:
             update_areas_burnt(bundle.obj, bundle.data['area']['tenure_area']['areas'])
 
-        if bundle.data['area'].has_key('total_area') and bundle.data['area']['total_area']:
+        if bundle.data.has_key('area') and bundle.data['area'].has_key('total_area') and bundle.data['area']['total_area']:
             if float(bundle.data['area']['total_area']) > 2.0:
                 bundle.obj.area_limit = False
-                bundle.obj.area = float(bundle.data['area']['total_area'])
+                bundle.obj.area = round(float(bundle.data['area']['total_area']), 2)
 
         if bundle.data.has_key('fire_position') and bundle.data['fire_position']:
             # only update if user has not over-ridden
@@ -193,6 +193,11 @@ class BushfireResource(APIResource):
                 invalidate_bushfire(bundle.obj, district, bundle.request.user)
                 #bundle.obj.district = district
                 #bundle.obj.region = district.region
+
+
+        if bundle.obj.report_status >=  Bushfire.STATUS_FINAL_AUTHORISED:
+            # if bushfire has been authorised, update snapshot and archive old snapshot
+            serialize_bushfire('final', 'SSS Update', bundle.obj)
 
         bundle.obj.save()
         return bundle

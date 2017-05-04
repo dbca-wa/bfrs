@@ -240,7 +240,6 @@ class Bushfire(Audit):
     # we serialise/snapshot the initial and final reports when authorised
     initial_snapshot = models.TextField(null=True, blank=True)
     final_snapshot = models.TextField(null=True, blank=True)
-    review_snapshot = models.TextField(null=True, blank=True)
 
     # FINAL Fire Report Fields
     fire_contained_date = models.DateTimeField(verbose_name='Fire Contained', null=True, blank=True)
@@ -443,6 +442,29 @@ class Bushfire(Audit):
         unique_together = ('district', 'year', 'fire_number')
         default_permissions = ('add', 'change', 'delete', 'view')
 
+    def compare(self, obj):
+        #excluded_keys = 'created', '_state', 'timestamp', 'user', 'uid', 'changed' #Example. Modify to your likings.
+        keys = ['assistance_req', 'region_id', 'field_officer_id', '_initial', 'tenure_id', '_state', 'district_id', 'other_tenure', 'fire_not_found', 'other_first_attack', 'invalid_details', 'year', 'other_initial_control', 'fire_boundary', 'id', 'modifier_id', 'time_to_control', 'fire_position_override', 'archive', 'fire_level', 'final_control_id', 'arson_squad_notified', 'assistance_details', 'report_status', 'offence_no', 'fire_controlled_date', 'first_attack_id', 'init_authorised_date', 'init_authorised_by_id', 'dispatch_pw', 'authorised_date', 'area_limit', 'fire_contained_date', 'area', 'initial_control_id', 'investigation_req', 'final_snapshot', 'other_info', 'dispatch_aerial', 'park_trail_impacted', 'other_cause', 'authorised_by_id', 'job_code', 'reporting_year', 'dispatch_pw_date', 'dispatch_aerial_date', '_changed_data', 'sss_data', 'fire_position', 'area_unknown', 'duty_officer_id', 'cause_state', 'reviewed_date', 'name', 'created', 'reviewed_by_id', 'other_final_control', 'dfes_incident_no', 'modified', 'fire_number', 'communications', 'creator_id', 'cause_id', 'fire_safe_date', 'fire_behaviour_unknown', 'fire_detected_date', 'initial_snapshot', 'origin_point', 'media_alert_req', 'valid_bushfire_id']
+        excluded_keys = ['_initial', '_state', 'fire_boundary', 'id', 'modifier_id', 'final_snapshot', '_changed_data', 'sss_data', 'created', 'modified', 'creator_id', 'initial_snapshot', 'origin_point']
+        return self._compare(self, obj, excluded_keys)
+
+    def _compare(self, obj1, obj2, excluded_keys):
+        d1, d2 = obj1.__dict__, obj2.__dict__
+        
+        old, new = {}, {}
+        #print d1.items()
+        for k,v in d1.items():
+            #import ipdb; ipdb.set_trace()
+            if k in excluded_keys:
+                continue
+            try:
+                if v != d2[k]:
+                    old.update({k: v})
+                    new.update({k: d2[k]})
+            except KeyError:
+                old.update({k: v})
+        
+        return old, new  
 
 @python_2_unicode_compatible
 class Tenure(models.Model):
@@ -580,8 +602,8 @@ class Damage(models.Model):
 @python_2_unicode_compatible
 class FireBehaviour(models.Model):
     fuel_type = models.ForeignKey(FuelType)
-    ros = models.PositiveSmallIntegerField(verbose_name="ROS (m/h)", validators=[MinValueValidator(0)])
-    flame_height = models.PositiveSmallIntegerField(verbose_name="Flame height (m)", validators=[MinValueValidator(0)])
+    ros = models.DecimalField(verbose_name="ROS (m/h)", max_digits=7, decimal_places=2, validators=[MinValueValidator(0)])
+    flame_height = models.DecimalField(verbose_name="Flame height (m)", max_digits=7, decimal_places=2, validators=[MinValueValidator(0)])
     bushfire = models.ForeignKey(Bushfire, related_name='fire_behaviour')
 
     def __str__(self):
@@ -599,6 +621,16 @@ class SpatialDataHistory(Audit):
     fire_boundary = models.MultiPolygonField(srid=4326, null=True, blank=True, editable=True, help_text='Optional.')
     area_burnt = models.TextField(verbose_name='Area Burnt', null=True, blank=True)
     bushfire = models.ForeignKey(Bushfire, related_name='spatial_data_history')
+
+    def __str__(self):
+        return 'Created {}, Creator {}'.format(self.created, self.creator)
+
+@python_2_unicode_compatible
+class SnapshotHistory(Audit):
+    snapshot = models.TextField()
+    auth_type = models.CharField(verbose_name="Authorisation: Initial/Final/Review", max_length=36)
+    action = models.CharField(verbose_name="Action Type", max_length=36)
+    bushfire = models.ForeignKey(Bushfire, related_name='snapshot_history')
 
     def __str__(self):
         return 'Created {}, Creator {}'.format(self.created, self.creator)

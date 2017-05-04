@@ -1,4 +1,4 @@
-from bfrs.models import (Bushfire, AreaBurnt, Damage, Injury, FireBehaviour, Tenure, SpatialDataHistory) #, LinkedBushfire)
+from bfrs.models import (Bushfire, AreaBurnt, Damage, Injury, FireBehaviour, Tenure, SpatialDataHistory, SnapshotHistory) #, LinkedBushfire)
 #from bfrs.forms import (BaseAreaBurntFormSet)
 from django.db import IntegrityError, transaction
 from django.http import HttpResponse
@@ -34,25 +34,33 @@ def breadcrumbs_li(links):
     crumbs += li_str_last.format(links[-1][1])
     return crumbs
 
-def serialize_bushfire(auth_type, obj):
+def serialize_bushfire(auth_type, action, obj):
     "Serializes a Bushfire object"
     if auth_type == 'initial':
         obj.initial_snapshot = serializers.serialize('json', [obj])
     if auth_type == 'final':
         obj.final_snapshot = serializers.serialize('json', [obj])
-    if auth_type == 'review':
-        obj.review_snapshot = serializers.serialize('json', [obj])
+    archive_snapshot(auth_type, action, obj)
     obj.save()
 
 def deserialize_bushfire(auth_type, obj):
-    "Returns a deserialized Bushfire object"
-    if auth_type == 'initial':
-        return serializers.deserialize("json", obj.initial_snapshot).next().object
-    if auth_type == 'final':
-        return serializers.deserialize("json", obj.final_snapshot).next().object
-    if auth_type == 'review':
-        return serializers.deserialize("json", obj.review_snapshot).next().object
+    """Returns a deserialized Bushfire object
 
+       obj is either:
+         1. bushfire obj, eg.
+            b=Bushfire.objects.get(id=12)
+            deserialize_bushfire('final', b.final_snapshot)
+
+         2. serialized json object (bushfire text string JSONified), eg.
+            snapshop_history_obj=b.snapshot_history.all()[0]
+            deserialize_bushfire(snapshots_history_obj.auth_type, snapshots_history_obj.snapshot)
+    """
+    if auth_type == 'initial':
+        obj = obj.initial_snapshot if hasattr(obj, 'initial_snapshot') else obj
+    if auth_type == 'final':
+        obj = obj.final_snapshot if hasattr(obj, 'final_snapshot') else obj
+
+    return serializers.deserialize("json", obj).next().object
 
 def calc_coords(obj):
     coord_type = obj.coord_type
@@ -86,6 +94,18 @@ def archive_spatial_data(obj):
                     area_burnt = serializers.serialize('json', obj.tenures_burnt.all()),
                     bushfire_id = obj.id
                 )
+
+def archive_snapshot(auth_type, action, obj):
+        """ allows archicing of existing snapshot before overwriting """
+        SnapshotHistory.objects.create(
+            creator = obj.modifier,
+            modifier = obj.modifier,
+            auth_type = auth_type,
+            action = action if action else 'Update',
+            snapshot = obj.initial_snapshot if auth_type =='initial' else obj.final_snapshot if obj.final_snapshot else '{"Deleted": True}',
+            bushfire_id = obj.id
+        )
+
 
 def invalidate_bushfire(obj, new_district, user):
     """ Invalidate the current bushfire, create new bushfire and update links, including historical links """
@@ -339,7 +359,7 @@ def update_status(request, bushfire, action):
         bushfire.init_authorised_by = request.user
         bushfire.init_authorised_date = datetime.now(tz=pytz.utc)
         bushfire.report_status = Bushfire.STATUS_INITIAL_AUTHORISED
-        serialize_bushfire('initial', bushfire)
+        serialize_bushfire('initial', action, bushfire)
 
         # send emails
         resp = rdo_email(bushfire, mail_url(request, bushfire))
@@ -373,7 +393,7 @@ def update_status(request, bushfire, action):
         bushfire.authorised_by = request.user
         bushfire.authorised_date = datetime.now(tz=pytz.utc)
         bushfire.report_status = Bushfire.STATUS_FINAL_AUTHORISED
-        serialize_bushfire('final', bushfire)
+        serialize_bushfire('final', action, bushfire)
 
         # send emails
         resp = fssdrs_email(bushfire, mail_url(request, bushfire, status='final'), status='final')
@@ -385,7 +405,7 @@ def update_status(request, bushfire, action):
         bushfire.reviewed_by = request.user
         bushfire.reviewed_date = datetime.now(tz=pytz.utc)
         bushfire.report_status = Bushfire.STATUS_REVIEWED
-        serialize_bushfire('review', bushfire)
+        serialize_bushfire('final', action, bushfire)
 
         # send emails
         resp = fssdrs_email(bushfire, mail_url(request, bushfire, status='review'), status='review')

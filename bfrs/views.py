@@ -171,6 +171,7 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
         template_mandatory = 'bfrs/mandatory_fields.html'
         template_initial = 'bfrs/detail.html'
         template_final = 'bfrs/final.html'
+        template_snapshot_history = 'bfrs/snapshot_history.html'
 
         if self.request.GET.has_key('export_to_csv'):
             report = self.request.GET.get('export_to_csv')
@@ -183,6 +184,12 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
             if eval(report):
                 qs = self.get_filterset(self.filterset_class).qs
                 return export_excel(self.request, qs)
+
+        if self.request.GET.has_key('action'):
+            action = self.request.GET.get('action')
+            if action == 'snapshot_history':
+                bushfire = Bushfire.objects.get(id=self.request.GET.get('bushfire_id'))
+                return TemplateResponse(request, template_snapshot_history, context={'object': bushfire})
 
         #import ipdb; ipdb.set_trace()
         if self.request.GET.has_key('confirm_action'):
@@ -222,52 +229,20 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
                 update_status(self.request, bushfire, action)
                 return HttpResponseRedirect(self.get_success_url())
 
-#            if action == 'submit_initial' and bushfire.report_status==Bushfire.STATUS_INITIAL:
-#                bushfire.init_authorised_by = self.request.user
-#                bushfire.init_authorised_date = datetime.now(tz=pytz.utc)
-#                bushfire.report_status = Bushfire.STATUS_INITIAL_AUTHORISED
-#                serialize_bushfire('initial', bushfire)
-#
-#                # send emails
-#                rdo_email(bushfire, self.mail_url(bushfire))
-#                dfes_email(bushfire, self.mail_url(bushfire))
-#                if bushfire.park_trail_impacted:
-#                    pvs_email(bushfire, self.mail_url(bushfire))
-#                if bushfire.media_alert_req:
-#                    pica_email(bushfire, self.mail_url(bushfire))
-#                    pica_sms(bushfire, self.mail_url(bushfire))
-#                if bushfire.investigation_req:
-#                    police_email(bushfire, self.mail_url(bushfire))
-
-            # Authorise the FINAL report
-#            if action == 'authorise_final' and bushfire.report_status==Bushfire.STATUS_INITIAL_AUTHORISED:
-#                bushfire.authorised_by = self.request.user
-#                bushfire.authorised_date = datetime.now(tz=pytz.utc)
-#                bushfire.report_status = Bushfire.STATUS_FINAL_AUTHORISED
-#                serialize_bushfire('final', bushfire)
-#
-#                # send emails
-#                fssdrs_email(bushfire, self.mail_url(bushfire, status='final'))
-
-            # Authorise the REVIEW DRAFT report
-            if action == 'mark_reviewed' and bushfire.report_status==Bushfire.STATUS_FINAL_AUTHORISED:
-                bushfire.reviewed_by = self.request.user
-                bushfire.reviewed_date = datetime.now(tz=pytz.utc)
-                bushfire.report_status = Bushfire.STATUS_REVIEWED
-
             # Delete Final Authorisation
             if action == 'delete_final_authorisation' and bushfire.report_status==Bushfire.STATUS_FINAL_AUTHORISED:
                 bushfire.authorised_by = None
                 bushfire.authorised_date = None
                 bushfire.final_snapshot = None
                 bushfire.report_status = Bushfire.STATUS_INITIAL_AUTHORISED
+                serialize_bushfire(action, action, bushfire)
 
             # Delete Reviewed
             if action == 'delete_reviewed' and bushfire.report_status==Bushfire.STATUS_REVIEWED:
                 bushfire.reviewed_by = None
                 bushfire.reviewed_date = None
-                bushfire.review_snapshot = None
                 bushfire.report_status = Bushfire.STATUS_FINAL_AUTHORISED
+                serialize_bushfire(action, action, bushfire)
 
             # Archive
             if action == 'archive' and bushfire.report_status==Bushfire.STATUS_REVIEWED:
@@ -339,7 +314,7 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
             initial['sss_data'] = self.request.POST.get('sss_create')
 
             if sss.has_key('area') and sss['area'].has_key('total_area') and sss['area'].get('total_area'):
-                initial['area'] = float(sss['area']['total_area'])
+                initial['area'] = round(float(sss['area']['total_area']), 2)
 
             if sss.has_key('origin_point') and isinstance(sss['origin_point'], list):
                 initial['origin_point_str'] = Point(sss['origin_point']).get_coords()
@@ -755,6 +730,7 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
         self.object = form.save(commit=False)
         self.object.modifier = request.user #1 #User.objects.all()[0] #request.user
         self.object.save()
+        action = None
 
         if area_burnt_formset:
             areas_burnt_updated = update_areas_burnt_fs(self.object, area_burnt_formset)
@@ -781,7 +757,7 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
             if action == 'Authorise':
                 context = self.get_context_data()
                 context['action'] = action
-                context['is_authorised'] = True
+                context['is_authorised'] = True # False if request.user.is_superuser else True
                 context['snapshot'] = self.object
                 context['object'] = self.object
                 context['final'] = True
@@ -792,6 +768,11 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
                     return TemplateResponse(request, 'bfrs/mandatory_fields.html', context=context)
 
                 return TemplateResponse(request, self.template_name, context=context)
+
+        if self.object.report_status >=  Bushfire.STATUS_FINAL_AUTHORISED:
+            # if bushfire has been authorised, update snapshot and archive old snapshot
+            # That is, if FSSDRS group update the final report after it has been authorised, we archive the existing data
+            serialize_bushfire('final', action, self.object)
 
         #if self.request.POST.has_key('_save_continue'):
         #    return redirect_referrer
@@ -823,7 +804,7 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
                         'area_burnt_formset': area_burnt_formset,
                         'injury_formset': injury_formset,
                         'damage_formset': damage_formset,
-                        'is_authorised': self.object.is_final_authorised,
+                        'is_authorised': False if self.request.user.is_superuser else self.object.is_final_authorised,
                         'snapshot': deserialize_bushfire('final', self.object) if self.object.final_snapshot else None, #bushfire.snapshot,
                         'final': True,
             })

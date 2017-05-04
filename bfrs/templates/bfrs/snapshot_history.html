@@ -1,0 +1,53 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+{% load staticfiles %}
+{% load bfrs_tags %}
+
+{% block breadcrumbs %}
+<ul class="breadcrumb">
+  <li><a href="{% url 'main' %}">{% trans 'Bushfire Overview' %}</a> <span class="divider"></span></li>
+  {% if object.report_status >= Bushfire.STATUS_INITIAL_SUBMITTED %}
+    <li><a href="{% url 'bushfire:bushfire_final' object.id %}">{{object.fire_number}}</a> <span class="divider"></span></li>
+  {% endif %}
+  <li>Snapshot History</li>
+</ul>
+{% endblock %}
+
+{% block content_title %}
+    <h1>Snapshot change history - {{object.fire_number}}</h1>
+{% endblock %}
+
+{% block content %}
+
+
+{% if object.report_status >= Bushfire.STATUS_INITIAL_SUBMITTED %}
+<table id="table" class="tablesorter table table-striped table-bordered table-hover table-condensed">
+  <thead>
+	  <th>Action</th>
+	  <th>Modified</th>
+	  <th>Modifier</th>
+  </thead>
+  <tbody>
+    {% for snapshot in object.snapshot_history.all %}
+      <tr class="row-vm">
+        <td>{{ snapshot.action|split_capitalize }}</td>
+        <td>{{ snapshot.modified }}</td>
+        <td>{{ snapshot.modifier }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+
+{% else %}
+  <p>Initial Report has not yet been 'Submitted'</p>
+{% endif %}
+{% if object.report_status >= object.STATUS_INITIAL_AUTHORISED %}
+  <a id="id_ok_btn" href="{% url 'bushfire:bushfire_final' object.id %}" class="btn btn-info">Bushfire Details</a>
+{% else %}
+  <a id="id_ok_btn" href="{% url 'bushfire:bushfire_initial' object.id %}" class="btn btn-info">Bushfire Details</a>
+{% endif %}
+<a id="id_cancel_btn" href="{% url 'main' %}" class="btn btn-info">Return</a>
+
+{% endblock %}
+
