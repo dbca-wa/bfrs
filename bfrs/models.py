@@ -455,24 +455,42 @@ class Bushfire(Audit):
             s1.deserialize().compare(s2.deserialize())
 
         """
-        excluded_keys = ['_initial', '_state', 'fire_boundary', 'id', 'modifier_id', 'final_snapshot', '_changed_data', 'sss_data', 'created', 'modified', 'creator_id', 'initial_snapshot', 'origin_point']
+#        excluded_keys = ['_initial', '_state', 'fire_boundary', 'id', 'modifier_id', 'final_snapshot', '_changed_data', 'sss_data', 'created', 'modified', 'creator_id', 'initial_snapshot', 'origin_point']
+        excluded_keys = [
+            '_initial', '_state', '_changed_data', 'id',
+            'creator_id', 'modifier_id', 'created', 'modified',
+            'init_authorised_date', 'authorised_date', 'reviewed_date', 'init_authorised_by_id', 'authorised_by_id', 'reviewed_by_id',
+            'sss_data', 'initial_snapshot', 'final_snapshot', 'origin_point', 'fire_boundary'
+        ]
+
         return self._compare(self, obj, excluded_keys)
 
     def _compare(self, obj1, obj2, excluded_keys):
         d1, d2 = obj1.__dict__, obj2.__dict__
-        
+
         old, new = {}, {}
         for k,v in d1.items():
             if k in excluded_keys:
                 continue
             try:
                 if v != d2[k]:
-                    old.update({k: v})
-                    new.update({k: d2[k]})
+                    if hasattr(self, 'get_' + k  +'_display'):
+                        #v2 = getattr(obj2, 'get_report_status_display')()
+                        v1 = getattr(obj1, 'get_' + k + '_display')()
+                        v2 = getattr(obj2, 'get_' + k + '_display')()
+                    else:
+                        v1 = v
+                        v2 = d2[k]
+                    field = ' '.join(k.split('_')).capitalize()
+
+                    old.update({field: [v1, v2]})
+                    #old.update({k: [v, d2[k]]})
+                    #new.update({k: d2[k]})
             except KeyError:
                 old.update({k: v})
-        
-        return old, new  
+
+        #return old, new
+        return old
 
 @python_2_unicode_compatible
 class Tenure(models.Model):
@@ -638,57 +656,31 @@ class SnapshotHistory(Audit):
     snapshot = models.TextField()
     auth_type = models.CharField(verbose_name="Authorisation: Initial/Final/Review", max_length=36)
     action = models.CharField(verbose_name="Action Type", max_length=36)
+    prev_snapshot = models.ForeignKey('SnapshotHistory', null=True, blank=True)
     bushfire = models.ForeignKey(Bushfire, related_name='snapshot_history')
 
     def deserialize(self):
         return serializers.deserialize("json", self.snapshot).next().object
 
+    def diff(self):
+        """
+        Returns the difference between two consecutive snapshots (given a snapshot, compares it with the last one)
+
+        b=Bushfire.objects.get(pk=3)
+        s=b.snapshot_history.all().latest('created')
+
+        s.diff()
+            {
+              'report_status': [4, 3],
+              'reviewed_date': [datetime.datetime(2017, 5, 5, 2, 14, 30, 502000, tzinfo=<UTC>), None]
+            }
+        """
+        if self.prev_snapshot and self.action not in ['Submit', 'Authorise', 'Delete Final Authorisation', 'Delete Reviewed']:
+            return self.deserialize().compare(self.prev_snapshot.deserialize())
+        return None
+
     def __str__(self):
         return 'Created {}, Creator {}'.format(self.created, self.creator)
-
-
-#@python_2_unicode_compatible
-#class LinkedBushfire(Audit):
-#    #linked_id = models.PositiveSmallIntegerField(validators=[MinValueValidator(0)])
-#    #linked_fire_number = models.CharField(max_length=15, verbose_name="Linked fire Number")
-#    #linked_bushfire = models.OneToOneField(Bushfire)
-#    bushfire = models.ForeignKey(Bushfire, related_name='linked')
-#
-#    def __str__(self):
-#		return 'Created {}, Linked Rpt ID {}'.format(self.created.strftime('%Y-%m-%d %H:%M:%S'), self.linked_bushfire.id)
-
-
-class BushfireTest(models.Model):
-    region = models.ForeignKey(Region)
-    district = ChainedForeignKey(
-        District, chained_field="region", chained_model_field="region",
-        show_all=False, auto_choose=True)
-
-
-#class BushfireTest2(Audit):
-class BushfireTest2(models.Model):
-
-    FIRE_LEVEL_CHOICES = (
-        (1, 1),
-        (2, 2),
-        (3, 3),
-    )
-
-    region = models.ForeignKey(Region)
-    district = ChainedForeignKey(
-        District, chained_field="region", chained_model_field="region",
-        show_all=False, auto_choose=True)
-
-    name = models.CharField(max_length=100, verbose_name="Fire Name")
-    incident_no = models.CharField(verbose_name="Fire Incident No.", max_length=10)
-    season = models.CharField(max_length=9)
-    dfes_incident_no = models.CharField(verbose_name="DFES Incident No.", max_length=10)
-    job_code = models.CharField(verbose_name="Job Code", max_length=10, null=True, blank=True)
-    fire_level = models.PositiveSmallIntegerField(choices=FIRE_LEVEL_CHOICES)
-
-    init_authorised_by = models.ForeignKey(User, verbose_name="Authorised By", blank=True, null=True)
-    init_authorised_date = models.DateTimeField(verbose_name='Authorised Date', default=timezone.now, null=True, blank=True)
-
 
 
 

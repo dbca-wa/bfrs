@@ -21,19 +21,49 @@
 
 
 {% if object.report_status >= Bushfire.STATUS_INITIAL_SUBMITTED %}
+<p>Click on row to expand/collapse the change details</p>
 <table id="table" class="tablesorter table table-striped table-bordered table-hover table-condensed">
   <thead>
+	  <th></th>
 	  <th>Action</th>
 	  <th>Modified</th>
 	  <th>Modifier</th>
   </thead>
   <tbody>
     {% for snapshot in object.snapshot_history.all %}
-      <tr class="row-vm">
+      <tr class="row-vm" data-toggle="myCollapse" data-target="#{{snapshot.id}}">
+        <td>{{ forloop.counter  }}</td>
         <td>{{ snapshot.action|split_capitalize }}</td>
         <td>{{ snapshot.modified }}</td>
         <td>{{ snapshot.modifier }}</td>
       </tr>
+
+      <tr class="myCollapse row-details expand-child" id="{{snapshot.id}}">
+        <td colspan="4">
+          <table class="table table-bordered table-striped table-condensed">
+            <thead>
+              <th></th>
+              <th>Field Name</th>
+              <th>New Value</th>
+              <th>Old Value</th>
+            </thead>
+
+            <tbody>
+              {% for key, values in snapshot.diff.items %}
+              <tr>
+                <td>{{ forloop.counter  }}</td>
+                <td>{{ key }}</td>
+                <td>{{ values.0 }}</td>
+                <td>{{ values.1 }}</td>
+              </tr>
+              {% empty %}
+                <td colspan="3">Changes are not available for this Action</td>
+              {% endfor %}
+            </tbody>
+          </table>
+        </td>
+      </tr>
+
     {% endfor %}
   </tbody>
 </table>
@@ -49,5 +79,21 @@
 {% endif %}
 <a id="id_cancel_btn" href="{% url 'main' %}" class="btn btn-info">Return</a>
 
+<script>
+
+    $("[data-toggle=myCollapse]").click(function( ev ) {
+      ev.preventDefault();
+      var target;
+      if (this.hasAttribute('data-target')) {
+    target = $(this.getAttribute('data-target'));
+      } else {
+    target = $(this.getAttribute('href'));
+      };
+      target.toggleClass("in");
+    });
+
+    $("#table td a").on('click', function (e) { e.stopPropagation(); })
+
+</script>
 {% endblock %}
 

@@ -97,12 +97,14 @@ def archive_spatial_data(obj):
 
 def archive_snapshot(auth_type, action, obj):
         """ allows archicing of existing snapshot before overwriting """
+        cur_snapshot_history = obj.snapshot_history.all()
         SnapshotHistory.objects.create(
             creator = obj.modifier,
             modifier = obj.modifier,
             auth_type = auth_type,
             action = action if action else 'Update',
             snapshot = obj.initial_snapshot if auth_type =='initial' else obj.final_snapshot if obj.final_snapshot else '{"Deleted": True}',
+            prev_snapshot = cur_snapshot_history.latest('created') if cur_snapshot_history else None,
             bushfire_id = obj.id
         )
 

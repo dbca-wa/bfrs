@@ -187,9 +187,13 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
 
         if self.request.GET.has_key('action'):
             action = self.request.GET.get('action')
+            bushfire = Bushfire.objects.get(id=self.request.GET.get('bushfire_id'))
             if action == 'snapshot_history':
-                bushfire = Bushfire.objects.get(id=self.request.GET.get('bushfire_id'))
-                return TemplateResponse(request, template_snapshot_history, context={'object': bushfire})
+                context = {
+                    'object': bushfire,
+                }
+                return TemplateResponse(request, template_snapshot_history, context=context)
+
 
         #import ipdb; ipdb.set_trace()
         if self.request.GET.has_key('confirm_action'):
@@ -824,19 +828,5 @@ class BushfireReviewUpdateView(BushfireFinalUpdateView):
         return context
 
 
-
-"""
-NEXT - For Testing ONLY
-"""
-from bfrs.forms import (BushfireTestForm)
-from bfrs.models import (BushfireTest)
-class BushfireCreateTestView(LoginRequiredMixin, generic.CreateView):
-    model = BushfireTest
-    form_class = BushfireTestForm
-    template_name = 'bfrs/create_tmp.html'
-
-    def get_success_url(self):
-        #return reverse("bushfire:index")
-        return reverse("home")
 
 
