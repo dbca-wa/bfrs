@@ -45,8 +45,6 @@
 
         {% if form.non_field_errors %}
             {{ form.non_field_errors  }}
-        {% else %}
-            <p>**********</p>
         {% endif %}
 
     </div>
@@ -87,9 +85,6 @@
             </td>
 
             <th class="cbas">Financial Year *</th>
-            {% comment %}
-            <td colspan="2" class="cbas">{% if object %} {{object.year}} {{form.year.as_hidden}} {% else %} {{form.year}} {% endif %}</td>
-            {% endcomment %}
             <td colspan="2" class="cbas">{{object.year|fin_year}} {{form.year.as_hidden}}</td>
         </tr>
 
@@ -166,9 +161,6 @@
 
         <tr>
             <th class="cbas">Fuel and fire behaviour *</th>
-			{% comment %}
-            <td colspan="5" class="cbas">{% if is_authorised %} {{snapshot.fuel_type}} {% else %} {{form.fuel_type}} {% endif %}</td>
-			{% endcomment %}
 			<td colspan="5" class="cbas" >{% include "bfrs/fire_behaviour_fs.html" %}</td>
         </tr>
 
@@ -179,10 +171,6 @@
 					{{snapshot.origin_coords|is_none}} <br>
 					{{snapshot.origin_geo|is_none}} 
 				{% else %} 
-			{% comment %}
-					{{object.origin_coords}} <br>
-                    {{object.origin_geo}}
-			{% endcomment %}
                     {{form.origin_point.value|latlon}} <br>
                     {{form.origin_point.value|deg_min_sec}}
 				{% endif %}
@@ -211,7 +199,7 @@
                 {% if is_authorised %} {{ snapshot.get_assistance_req_display }} {% if snapshot.assistance_req %}<br>{{snapshot.assistance_details}} {% endif %}{% else %} {{form.assistance_req}} {% endif %}<br>
 		        <div class=div_assist style="display: none;">{% if is_authorised %}  {% else %} {{form.assistance_details}} {% endif %}</div>
 		    </td>
-            
+
             <th class="cbas" style="font-weight:normal;">Estimated Time to Control</th>
 			<td colspan="2" class="cbas">
 				{% if is_authorised %}
@@ -277,20 +265,6 @@
   </tbody>
 </table>
 
-{% comment %}
-<table class="table table-bordered table-striped table-condensed cbas">
-    <thead>
-		<th class="cbas">Fuel and fire behaviour *</th>
-    </thead>
-    <tbody>
-        <tr>
-			<td class="cbas" >{% include "bfrs/fire_behaviour_fs.html" %}</td>
-        </tr>
-
-  </tbody>
-</table>
-{% endcomment %}
-
 <div class="hidden">
 <table class="table table-bordered table-striped table-condensed cbas">
     <thead>
@@ -319,14 +293,7 @@
           <input type="submit" value="Save draft" class="btn btn-primary btn-success" name="_save" title="You do not have 'Update' permissions" disabled />
         {% else %}
           <input type="submit" value="Save draft" class="btn btn-primary btn-success" name="_save" {% if is_authorised %}title="Submitted initial report cannot be edited" disabled{% endif %} />
-		  {% comment %}
-          {% if not is_authorised %}<input type="submit" value="Save and continue" class="btn btn-primary btn-success" name="_save_continue" />{% endif %}
-		  {% endcomment %}
-
 		  <input type="submit" value="Submit" class="btn btn-primary btn-success" name="submit_initial" {% if is_authorised %}title="Initial Report already submitted" disabled{% else %}title="Save and submit"{% endif %} />
-		  {% comment %}
-          <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=submit_initial');" class="btn btn-primary btn-success" title="submit initial">Submit</a>
-		  {% endcomment %}
         {% endif %}
       {% endif %}
 
@@ -348,6 +315,7 @@
     <input type="hidden" name="confirm_action" value="yes" />
     <input type="submit" class="btn" value="{% trans "Yes, I'm sure" %}" />
 	{% comment %}
+	<!-- Below line causes an error in the Django Formset -->
     <a href="javascript: history.go(-1)" class="btn btn-danger">Cancel</a>
 	{% endcomment %}
     <a id="id_cancel_btn" href="{% url 'bushfire:bushfire_initial' bushfire.id %}" class="btn btn-primary btn-danger">Cancel</a>
@@ -374,18 +342,6 @@ $('.selectpicker').selectpicker({
 
 
 /* dispatch PW */
-/*
-if($('#id_dispatch_pw_0').is(':checked')) { 
-	$('.div_dispatch_pw_date').show(); 
-	$('#id_th_field_officer').css("font-weight", "bold");
-	$("#id_th_field_officer").html("Field Officer *");
-}
-if($('#id_dispatch_pw_1').is(':checked')) { 
-	$('.div_dispatch_pw_date').hide(); 
-	$('#id_th_field_officer').css("font-weight", "normal");
-	$("#id_th_field_officer").html("Field Officer");
-}
-*/
 $('#id_dispatch_pw_0').on('change', function() {
 	if($('#id_dispatch_pw_0').is(':checked')) { $('.div_dispatch_pw_date').show(); }
 	$('#id_th_field_officer').css("font-weight", "bold");
@@ -398,10 +354,6 @@ $('#id_dispatch_pw_1').on('change', function() {
 }).change();
 
 /* dispatch Aerial */
-/*
-if($('#id_dispatch_aerial_0').is(':checked')) { $('.div_dispatch_aerial_date').show(); }
-if($('#id_dispatch_aerial_1').is(':checked')) { $('.div_dispatch_aerial_date').hide(); }
-*/
 $('#id_dispatch_aerial_0').on('change', function() {
 	if($('#id_dispatch_aerial_0').is(':checked')) { $('.div_dispatch_aerial_date').show(); }
 }).change();
@@ -410,10 +362,6 @@ $('#id_dispatch_aerial_1').on('change', function() {
 }).change();
 
 /* PICA Text */
-/*
-if($('#id_media_alert_req_0').is(':checked')) { $('.div_pica').show(); }
-if($('#id_media_alert_req_1').is(':checked')) { $('.div_pica').hide(); }
-*/
 $('#id_media_alert_req_0').on('change', function() {
 	if($('#id_media_alert_req_0').is(':checked')) { $('.div_pica').show(); }
 }).change();
@@ -422,10 +370,6 @@ $('#id_media_alert_req_1').on('change', function() {
 }).change();
 
 /* Parks and Trails Text */
-/*
-if($('#id_park_trail_impacted_0').is(':checked')) { $('.div_pvs').show(); }
-if($('#id_park_trail_impacted_1').is(':checked')) { $('.div_pvs').hide(); }
-*/
 $('#id_park_trail_impacted_0').on('change', function() {
 	if($('#id_park_trail_impacted_0').is(':checked')) { $('.div_pvs').show(); }
 }).change();
@@ -434,14 +378,6 @@ $('#id_park_trail_impacted_1').on('change', function() {
 }).change();
 
 /* Assistance Required */
-/*
-if($('#id_assistance_req_0').is(':checked')) { 
-	$('.div_assist').show(); 
-}
-if($('#id_assistance_req_1').is(':checked')) { 
-	$('.div_assist').hide(); 
-}
-*/
 $('#id_assistance_req_0').on('change', function() {
 	if($('#id_assistance_req_0').is(':checked')) { $('.div_assist').show(); }
 }).change();
@@ -449,18 +385,7 @@ $('#id_assistance_req_1').on('change', function() {
 	if($('#id_assistance_req_1').is(':checked')) { $('.div_assist').hide(); }
 }).change();
 
-
-
 /* Fire Cause */
-/*
-var cause = $('#id_cause :selected').text();
-//console.log('Cause Type: ' + cause);
-if (cause.indexOf('Other') > -1) {
-	$('.div_cause').css('visibility','visible');
-} else {
-	$('.div_cause').css('visibility','hidden');
-}
-*/
 $('#id_cause').on('change', function() {
 	var cause = $('#id_cause :selected').text();
 	//console.log('Cause Type: ' + cause);
@@ -472,14 +397,6 @@ $('#id_cause').on('change', function() {
 }).change();
 
 /* Tenure */
-/*
-var tenure = $('#id_tenure :selected').text();
-if (tenure.indexOf('Other') > -1) {
-	$('.div_tenure').css('visibility','visible');
-} else {
-	$('.div_tenure').css('visibility','hidden');
-}
-*/
 $('#id_tenure').on('change', function() {
 	var tenure = $('#id_tenure :selected').text();
 	if (tenure.indexOf('Other') > -1) {
@@ -506,40 +423,6 @@ $('.open-all').click(function(){
   $(".open-all").hide();
 });
 
-//$("#id_region,#id_district,#id_year").change(function(){
-//  $("#id_fire_number").remove();
-//  $("#id_year").after('<span id="id_fire_number" style="margin: 20;">BF ' + $("#id_district").val() + ' ' + $("#id_year").val()</span>');
-//});
-
-/*
-    $("#id_region,#id_district,#id_year").change(function(){
-        var data = {
-            region: $("#id_region").val(),
-            district: $("#id_district").val(),
-            year: $("#id_year").val(),
-        }
-        $.ajax({
-            type:"GET",
-            url:"{% url 'bushfire:bushfire_create' %}",
-            data: {
-                'fire_number': JSON.stringify(data)
-                //'fire_number': data
-            },
-            success: function(response){
-                console.log("response 1 " + response);
-                console.log("response 2 " + response.fire_number);
-                $("#id_fire_number").val(response.fire_number);
-                //$("#id_fire_number").remove();
-                //$("#id_year").after('<span id="id_fire_number" style="margin: 20;">' + response.fire_number +'</span>');
-                //var response = JSON.parse(response);
-                //console.log("response 2" + response);
-            }
-
-        });
-    });
-*/
-
-
 /* Area Override */
 $('#id_area_unknown').on('change', function() {
     if($("#id_area_unknown").is(':checked')) { 
@@ -554,14 +437,6 @@ $('#id_area_unknown').on('change', function() {
 
 /* Fire Position Override */
 var orig_fire_position = $("#id_fire_position").val();
-/*
-if($("#id_fire_position_override").is(':checked')) { 
-    $("#id_fire_position").removeAttr('readonly').removeAttr('style');
-} else {
-    $("#id_fire_position").attr('readonly','readonly').css('background-color' , '#DEDEDE');
-}
-*/
-
 $('#id_fire_position_override').on('change', function() {
     if($("#id_fire_position_override").is(':checked')) { 
 	    $("#id_fire_position").removeAttr('readonly').removeAttr('style');

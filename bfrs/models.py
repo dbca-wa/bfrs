@@ -6,7 +6,6 @@ from smart_selects.db_fields import ChainedForeignKey
 from django.contrib.auth.models import User
 from django.utils.encoding import python_2_unicode_compatible
 from django.core.validators import MaxValueValidator, MinValueValidator
-#from smart_selects.db_fields import ChainedForeignKey
 from bfrs.base import Audit
 from django.core.exceptions import (ValidationError)
 import LatLon
@@ -16,13 +15,11 @@ import sys
 import json
 
 SUBMIT_MANDATORY_FIELDS= [
-    #'region', 'district', 'year', 'fire_number', 'name', 'fire_detected_date', 'job_code',
     'region', 'district', 'year', 'fire_number', 'name', 'fire_detected_date',
     'dispatch_pw', 'dispatch_aerial', 'fire_level', 'investigation_req', 'park_trail_impacted',
     'assistance_req', 'cause_state', 'cause', 'tenure',
 ]
 SUBMIT_MANDATORY_DEP_FIELDS= {
-    # field : [field value, dep_field] - if field==field_value, then dep_field is mandatory
     'dispatch_pw': [1, 'dispatch_pw_date'],
     'dispatch_pw': [1, 'field_officer'],
     'dispatch_aerial': [True, 'dispatch_aerial_date'],
@@ -47,9 +44,7 @@ AUTH_MANDATORY_DEP_FIELDS= {
 AUTH_MANDATORY_FORMSETS= []
 
 def current_finyear():
-    year = datetime.now().year if datetime.now().month>7 else datetime.now().year-1
-    #return '/'.join([str(year), str(year+1)])
-    return year
+    return datetime.now().year if datetime.now().month>7 else datetime.now().year-1
 
 
 def check_mandatory_fields(obj, fields, dep_fields, formsets):
@@ -60,11 +55,9 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
     missing = [field for field in fields if getattr(obj, field) is None or getattr(obj, field)=='']
 
     for field, dep_set in dep_fields.iteritems():
-        #import ipdb; ipdb.set_trace()
         if getattr(obj, field) and getattr(obj, field)==dep_set[0] and getattr(obj, dep_set[1]) is None:
             missing.append(dep_set[1])
 
-    #import ipdb; ipdb.set_trace()
     for fs in formsets:
         if getattr(obj, fs) is None or not getattr(obj, fs).all():
             missing.append(fs)
@@ -181,8 +174,6 @@ class Bushfire(Audit):
         (2, 'Crown'),
     )
 
-
-
     # Common Fields
     region = models.ForeignKey(Region)
     district = ChainedForeignKey(
@@ -191,19 +182,16 @@ class Bushfire(Audit):
 
     name = models.CharField(max_length=100, verbose_name="Fire Name")
     fire_number = models.CharField(max_length=15, verbose_name="Fire Number")
-    #year = models.CharField(verbose_name="Financial Year", max_length=9, default=current_finyear())
     year = models.PositiveSmallIntegerField(verbose_name="Financial Year", default=current_finyear())
     reporting_year = models.PositiveSmallIntegerField(verbose_name="Reporting Year", default=current_finyear(), blank=True)
 
     fire_level = models.PositiveSmallIntegerField(choices=FIRE_LEVEL_CHOICES, null=True, blank=True)
     media_alert_req = models.NullBooleanField(verbose_name="Media Alert Required", null=True)
     park_trail_impacted = models.NullBooleanField(verbose_name="Park and/or trail potentially impacted", null=True)
-    #fuel_type = models.CharField(verbose_name='Fuel Type', max_length=64, null=True, blank=True)
     cause = models.ForeignKey('Cause', null=True, blank=True)
     cause_state = models.PositiveSmallIntegerField(choices=CAUSE_STATE_CHOICES, null=True, blank=True)
     other_cause = models.CharField(verbose_name='Other Cause', max_length=64, null=True, blank=True)
     tenure = models.ForeignKey('Tenure', null=True, blank=True)
-    #other_tenure = models.CharField(verbose_name='Other Tenure', max_length=64, null=True, blank=True)
     other_tenure = models.PositiveSmallIntegerField(choices=IGNITION_POINT_CHOICES, null=True, blank=True)
 
     dfes_incident_no = models.PositiveIntegerField(verbose_name="DFES Fire Number", null=True, blank=True)
@@ -214,14 +202,8 @@ class Bushfire(Audit):
     # Point of Origin
     origin_point = models.PointField(null=True, blank=True, editable=True, help_text='Optional.')
     fire_boundary = models.MultiPolygonField(srid=4326, null=True, blank=True, editable=True, help_text='Optional.')
-    #grid = models.CharField(verbose_name="Lat/Long, MGA, FD Grid", max_length=100, null=True, blank=True)
     fire_not_found = models.BooleanField(default=False)
 
-
-    # FireBehaviour FS here
-    #tenure = models.ForeignKey('Tenure', null=True, blank=True)
-    #fuel = models.CharField(max_length=50, null=True, blank=True)
-    #assistance_req = models.NullBooleanField(null=True)
     assistance_req = models.PositiveSmallIntegerField(choices=ASSISTANCE_CHOICES, null=True, blank=True)
     assistance_details = models.CharField(max_length=64, null=True, blank=True)
     communications = models.CharField(verbose_name='Communication', max_length=50, null=True, blank=True)
@@ -232,7 +214,6 @@ class Bushfire(Audit):
     init_authorised_by = models.ForeignKey(User, verbose_name="Authorised By", null=True, blank=True, related_name='init_authorised_by')
     init_authorised_date = models.DateTimeField(verbose_name='Authorised Date', null=True, blank=True)
 
-    #dispatch_pw = models.NullBooleanField(null=True)
     dispatch_pw = models.PositiveSmallIntegerField(choices=DISPATCH_PW_CHOICES, null=True, blank=True)
     dispatch_aerial = models.NullBooleanField(null=True)
     dispatch_pw_date = models.DateTimeField(verbose_name='P&W Resource dispatched', null=True, blank=True)
@@ -254,18 +235,14 @@ class Bushfire(Audit):
     final_control = models.ForeignKey('Agency', verbose_name="Final Controlling Agency", null=True, blank=True, related_name='final_control')
     other_final_control = models.CharField(verbose_name="Other Final Control Agency", max_length=50, null=True, blank=True)
 
-    #max_fire_level = models.PositiveSmallIntegerField(choices=FIRE_LEVEL_CHOICES, null=True, blank=True)
     arson_squad_notified = models.NullBooleanField(verbose_name="Arson Squad Notified", null=True)
     investigation_req = models.NullBooleanField(verbose_name="Investigation Required", null=True)
     offence_no = models.CharField(verbose_name="Police Offence No.", max_length=10, null=True, blank=True)
-    #area = models.DecimalField(verbose_name="Final Fire Area (ha)", max_digits=12, decimal_places=1, validators=[MinValueValidator(0)], null=True, blank=True)
     area = models.FloatField(verbose_name="Final Fire Area (ha)", validators=[MinValueValidator(0)], null=True, blank=True)
     area_limit = models.BooleanField(verbose_name="Area < 2ha", default=False)
     area_unknown = models.BooleanField(default=False)
     time_to_control = models.DurationField(verbose_name="Time to Control", null=True, blank=True)
     fire_behaviour_unknown = models.BooleanField(default=False)
-    # Private Damage FS here
-    # Public Damage FS here
 
     authorised_by = models.ForeignKey(User, verbose_name="Authorised By", null=True, blank=True, related_name='authorised_by')
     authorised_date = models.DateTimeField(verbose_name="Authorised Date", null=True, blank=True)
@@ -274,13 +251,10 @@ class Bushfire(Audit):
     reviewed_date = models.DateTimeField(verbose_name="Reviewed Date", null=True, blank=True)
 
     report_status = models.PositiveSmallIntegerField(choices=REPORT_STATUS_CHOICES, editable=False, default=1)
-    #sss_id = models.CharField(verbose_name="Spatial Support System ID", max_length=64, null=True, blank=True)
     sss_data = models.TextField(verbose_name="SSS REST Api Dict", null=True, blank=True)
 
     archive = models.BooleanField(verbose_name="Archive report", default=False)
     invalid_details = models.CharField(verbose_name="Reason for invalidating", max_length=64, null=True, blank=True)
-
-    #linked_bushfire = models.ForeignKey('Bushfire')
 
     # recursive relationship - an object that has a many-to-many relationship with itself
     valid_bushfire = models.ForeignKey('self', null=True, related_name='invalidated')
@@ -294,25 +268,22 @@ class Bushfire(Audit):
 #        super(Bushfire, self).save()
 
     def next_id(self, district):
-        #import ipdb; ipdb.set_trace()
         ids = map(int, [i.fire_number.split(' ')[-1] for i in Bushfire.objects.filter(district=district, year=self.year)])
         return max(ids) + 1 if ids else 1
 
     @property
     def linked_valid_bushfire(self):
-		# check forwards
+        # check forwards
         for linked in self.linked.all():
             if linked.linked_bushfire.report_status != Bushfire.STATUS_INVALIDATED:
                 return linked.linked_bushfire
 
-		# check backwards
+        # check backwards
         for linked in self.linkedbushfire_set.all():
             if linked.linked_bushfire.report_status != Bushfire.STATUS_INVALIDATED:
                 return linked.linked_bushfire
 
-
     def clean(self):
-        #import ipdb; ipdb.set_trace()
         # create the bushfire fire number
         if not self.id or self.district != Bushfire.objects.get(id=self.id).district:
             try:
@@ -326,25 +297,6 @@ class Bushfire(Audit):
     def save(self, *args, **kwargs):
         self.full_clean(*args, **kwargs)
         super(Bushfire, self).save(*args, **kwargs)
-
-#    def save(self, *args, **kwargs):
-#        #import ipdb; ipdb.set_trace()
-#        #if self.district.code!=district_code or self.year!=year:
-#		if self.district and self.year and not self.fire_number:
-#            try:
-#                self.fire_number = ' '.join(['BF', self.district.code, str(self.year), '{0:03d}'.format(self.next_id)])
-#            except:
-#                raise ValidationError('Could not create unique fire number')
-#        super(Bushfire, self).save()
-
-#    def save(self, *args, **kwargs):
-#        import ipdb; ipdb.set_trace()
-#        ids = map(int, [i.fire_number.split(' ')[-1] for i in Bushfire.objects.filter(district=self.district, year=self.year)])
-#        next_id = max(ids) + 1 if ids else 1
-#        self.fire_number = ' '.join(['BF', self.district.code, str(self.year), '{0:03d}'.format(next_id)])
-#
-#        super(Bushfire, self).save()
-
 
     @property
     def sss_data_to_dict(self):
@@ -393,7 +345,6 @@ class Bushfire(Audit):
 
     @property
     def is_reviewed(self):
-        #return True if self.reviewed_by and self.reviewed_date else False
         return False # no need to lock down Review report
 
     @property
@@ -455,7 +406,6 @@ class Bushfire(Audit):
             s1.deserialize().compare(s2.deserialize())
 
         """
-#        excluded_keys = ['_initial', '_state', 'fire_boundary', 'id', 'modifier_id', 'final_snapshot', '_changed_data', 'sss_data', 'created', 'modified', 'creator_id', 'initial_snapshot', 'origin_point']
         excluded_keys = [
             '_initial', '_state', '_changed_data', 'id',
             'creator_id', 'modifier_id', 'created', 'modified',
@@ -569,29 +519,16 @@ class DamageType(models.Model):
 class AreaBurnt(models.Model):
     tenure = models.ForeignKey(Tenure, related_name='tenures')
     area = models.DecimalField(verbose_name="Area (ha)", max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], null=True, blank=True)
-    #oeher = models.CharField(max_length=50, verbose_name="Other tenure", null=True, blank=True)
     bushfire = models.ForeignKey(Bushfire, related_name='tenures_burnt')
-
-#    def clean(self):
-#        if self.bushfire.areas_burnt.all().count() == 0:
-#            raise ValidationError("You must enter one Area Burnt record")
 
     def to_json(self):
         return json.dumps(self.to_dict)
 
     def to_dict(self):
-        #return dict(tenure=self.tenure.name, area=round(self.area,2), other=self.other)
         return dict(tenure=self.tenure.name, area=round(self.area,2))
 
-#    def description(self):
-#        """ description is a combination of tenure category and tenure name (if name exists) """
-#        if self.name:
-#            return '{} ({} - {})'.format(self.tenure.name, self.name, self.other)
-#        return '{}'.format(self.tenure.name)
-
     def __str__(self):
-		#return 'Tenure: {}, Area: {}, Other: {}'.format(self.tenure.name, self.area, self.other)
-		return 'Tenure: {}, Area: {}'.format(self.tenure.name, self.area)
+        return 'Tenure: {}, Area: {}'.format(self.tenure.name, self.area)
 
     class Meta:
         unique_together = ('bushfire', 'tenure',)
@@ -639,17 +576,6 @@ class FireBehaviour(models.Model):
         unique_together = ('bushfire', 'fuel_type',)
         default_permissions = ('add', 'change', 'delete', 'view')
 
-
-@python_2_unicode_compatible
-class SpatialDataHistory(Audit):
-    origin_point = models.PointField(null=True, blank=True, editable=True, help_text='Optional.')
-    tenure = models.ForeignKey(Tenure, related_name='tenure_history')
-    fire_boundary = models.MultiPolygonField(srid=4326, null=True, blank=True, editable=True, help_text='Optional.')
-    area_burnt = models.TextField(verbose_name='Area Burnt', null=True, blank=True)
-    bushfire = models.ForeignKey(Bushfire, related_name='spatial_data_history')
-
-    def __str__(self):
-        return 'Created {}, Creator {}'.format(self.created, self.creator)
 
 @python_2_unicode_compatible
 class SnapshotHistory(Audit):

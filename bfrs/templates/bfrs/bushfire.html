@@ -10,20 +10,7 @@
     </div>
     <br>
 
-{% comment %}
-    <div style="float: right;">
-      {% if request.user|can_readonly and not request.user.is_superuser %}
-        <a href="{% url 'bushfire:bushfire_create' %}"><button disabled style="color:Grey;" title="You do not have 'Create' permissions"><i class="icon-plus icon-white"></i> Add Bushfire</button></a>
-      {% else %}
-        <a href="{% url 'bushfire:bushfire_create' %}"><button><i class="icon-plus icon-white"></i> Add Bushfire</button></a>
-      {% endif %}
-    </div>
-{% endcomment %}
 </div>
-
-{% comment %}
-<button id="my-btn" type="button">My Test</button>
-{% endcomment %}
 
 {% comment %}
 <form id="bushfire_create" name="bushfire_create" action="{% url 'bushfire:bushfire_create' %}" method="post" target="_blank">
@@ -33,15 +20,6 @@
 {% endcomment %}
 
 <br>
-{% comment %}
-<p>perms: {{perms}}</p>
-<p>perms.app_label: {{perms.app_label}}</p>
-<p>perms.bfrs.view_bushfire: {{perms.bfrs.view_bushfire}}</p>
-<p>user: {{user}}</p>
-<p>user.groups 1: {{user.groups.all}}</p>
-<p>user.groups 2: {% if request.user|can_readonly %} True jm 2 {% endif %}</p>
-{% endcomment %}
-
 <br>
 
 <div class="dropdown btn btn-medium" style="float: right">
@@ -74,14 +52,6 @@
 </form>
 {% endcomment %}
 
-{% comment %}
-<input type="hidden" id="gokart_url" value="{{sss_url}}" name="gokart_url" type="text">
-<input type="hidden" id="gokart_module" value="bfrs" name="gokart_module" type="text">
-<!-- http://static.dpaw.wa.gov.au/pages/test-gokartclient.html?debug=true -->
-<input type="hidden" id="gokart_module" value="bfrs" name="gokart_module" type="text">
-<input type="hidden" id="open_options" value='{"region":7,"district":13,"bushfireid":5}' name="gokart_url" type="text">
-<input onclick="gokart = loadGokart(); openGokart()" name="button" value="Open" type="button">
-{% endcomment %}
 {% if object_list %}
 <table id="table" class="tablesorter table table-striped table-bordered table-hover table-condensed" style="cursor:pointer;">
   <thead>
@@ -99,7 +69,6 @@
       <tr class="row-vm" data-toggle="myCollapse" data-target="#{{bushfire.id}}">
 		  {%comment%}<td><input type="checkbox" name="chkbox" value={{ bushfire.id }}  /></td>{%endcomment%}
         <td>{{ bushfire.fire_number }}</td>
-        {% comment %}<td>{{ bushfire.get_report_status_display }}</td> {% endcomment %}
         <td>{{ bushfire.name }}</td>
 		<td align="center">
             {% if bushfire.report_status == bushfire.STATUS_INITIAL %}
@@ -125,7 +94,6 @@
 		 <a href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Final fire report reviewed on {{bushfire.reviewed_date}} by {{bushfire.reviewed_by}}"><span style="display:none">{{bushfire.report_status}}</span><font color="green"><i class="icon-ok icon-white"></i></font></a>
          {% endif %}
 		</td>
-
 
          {% if bushfire.report_status == bushfire.STATUS_FINAL_AUTHORISED %}
          <td>
@@ -225,13 +193,84 @@
 <script src="{{sss_url}}/dist/static/js/gokart.js"></script>
 <script>
 
-$("#table").tablesorter();
+    $("#table").tablesorter();
 
-//$("#id_open_sss").on('click', function() {
-//   gokart = loadGokart(); openGokart();
-//});
+    $("[data-toggle=myCollapse]").click(function( ev ) {
+      ev.preventDefault();
+      var target;
+      if (this.hasAttribute('data-target')) {
+    target = $(this.getAttribute('data-target'));
+      } else {
+    target = $(this.getAttribute('href'));
+      };
+      target.toggleClass("in");
+    });
 
-    //var spatial_data = {"area":5068734.39165385, "origin_point":[117.30008118682615,-30.849007786590157]};
+    $("#table td a").on('click', function (e) { e.stopPropagation(); })
+
+/* Filter Args Section - This appends the required filter args to the GET URL */
+$(function(){
+
+    bushfire_filter = function(params) {
+        /*
+        Function to append filter fields to the URL, only those that are selected. Default <form action="#"> adds all fields to the url, even if empty
+        */
+
+        profile_field_list = ['region', 'district'];
+        filter_list = [
+			'region', 'district', 'year', 'reporting_year', 'report_status', 
+		];
+
+        var count = 0;
+        var url = "{% url 'main' %}";
+        for (var i = 0; i < filter_list.length; i++) {
+          var field_value = $("#id_" + filter_list[i]).val();
+          if (field_value) {
+            //alert("VAL: " + field_value);
+            var postfix = (count==0 ? "?" : "&");
+            url += postfix + filter_list[i] + "=" + $("#id_" + filter_list[i]).val();
+            count++;
+		  /* Check if string filter_list[i] exists in profile_field_list. This will add the field without a value, allowing Bushfire View to deal an 'All' selection (to distinguish from profile) */
+		  } else if (new RegExp(profile_field_list.join('|')).test(filter_list[i])) {
+            var postfix = (count==0 ? "?" : "&");
+            url += postfix + filter_list[i] + "=";
+            count++;
+		  }
+        }
+
+		if($('#id_include_archived').is(':checked')) {
+            var postfix = (count==0 ? "?" : "&");
+			url += postfix + 'include_archived=True'
+		}
+
+		/* Append the additional parameters such as "export_to_csv=final&stuff=ABC" */
+		if (params) {
+            var postfix = (count==0 ? "?" : "&");
+			url += postfix + params
+		}
+        //alert("URL: " + url);
+
+        location.href = url
+    };
+
+});
+/* END Filter Args Section */
+
+/* GoKart section */
+    gokart = Gokart.get('bfrs','{{sss_url}}');
+
+    function openGokart(open_options) {
+        gokart.call("open", open_options);
+    }
+
+//    if ({{request.session.refreshGokart|yesno:"true,false"}}) {
+//        //console.log("region " + {{request.session.region}} + " - district " + {{request.session.district}});
+//        gokart.call("open", {"region":{{request.session.region}}, "district":{{request.session.district}}, "refresh":true});
+//    }
+/* END - GoKart section */
+
+
+/* SSS Test Section - Use to test SSS functionality */
     var spatial_data = {
 		'area': 3505.852444397427,
 		'fire_boundary': [[[[115.74110902213813, -30.92680264785486],
@@ -296,111 +335,13 @@ $("#table").tablesorter();
 		'fire_position':'38.85km NWbN from KOOLYANOBBING'
 	}
 
-    $('#my-btn').click(function() {
-        $.ajax({
-            type:"POST",
-            url:"{% url 'bushfire:bushfire_create' %}",
-            data: {"sss_create": JSON.stringify(spatial_data)},
-        });
-    });
-
     $('#my-btn2').click(function() {
 		console.log('spatial_data' + spatial_data)
         $("#sss_create").val(JSON.stringify(spatial_data));
         $("#bushfire_create").submit();
     });
+/* END - SSS Test Section */
 
-    $("[data-toggle=myCollapse]").click(function( ev ) {
-      ev.preventDefault();
-      var target;
-      if (this.hasAttribute('data-target')) {
-    target = $(this.getAttribute('data-target'));
-      } else {
-    target = $(this.getAttribute('href'));
-      };
-      target.toggleClass("in");
-    });
-
-    $("#table td a").on('click', function (e) { e.stopPropagation(); })
-
-$(function(){
-
-    bushfire_filter = function(params) {
-        /*
-        Function to append filter fields to the URL, only those that are selected. Default <form action="#"> adds all fields to the url, even if empty
-        */
-
-        profile_field_list = ['region', 'district'];
-        filter_list = [
-			'region', 'district', 'year', 'reporting_year', 'report_status', 
-		];
-
-        var count = 0;
-        var url = "{% url 'main' %}";
-        for (var i = 0; i < filter_list.length; i++) {
-          var field_value = $("#id_" + filter_list[i]).val();
-          if (field_value) {
-            //alert("VAL: " + field_value);
-            var postfix = (count==0 ? "?" : "&");
-            url += postfix + filter_list[i] + "=" + $("#id_" + filter_list[i]).val();
-            count++;
-		  /* Check if string filter_list[i] exists in profile_field_list. This will add the field without a value, allowing Bushfire View to deal an 'All' selection (to distinguish from profile) */
-		  } else if (new RegExp(profile_field_list.join('|')).test(filter_list[i])) {
-            var postfix = (count==0 ? "?" : "&");
-            url += postfix + filter_list[i] + "=";
-            count++;
-		  }
-        }
-
-		if($('#id_include_archived').is(':checked')) {
-            var postfix = (count==0 ? "?" : "&");
-			url += postfix + 'include_archived=True'
-		}
-
-		/* Append the additional parameters such as "export_to_csv=final&stuff=ABC" */
-		if (params) {
-            var postfix = (count==0 ? "?" : "&");
-			url += postfix + params
-		}
-        //alert("URL: " + url);
-
-        location.href = url
-    };
-
-});
-
-
-/*
-    $("#id_region").click(function() {
-        $.ajax({
-            type:"GET",
-            url:"{% url 'bushfire:bushfire_create' %}",
-            data: {
-                "region": $("#id_region").val(),
-                "csrfmiddlewaretoken": "{{ csrf_token }}",
-            },
-            success: function(response){
-                var response = JSON.parse(response);
-                console.log("response " + response);
-            }
-
-        });
-    });
-*/
-
-
-/* GoKart section */
-	gokart = Gokart.get('bfrs','{{sss_url}}');
-
-    function openGokart(open_options) {
-        gokart.call("open", open_options);
-    }
-
-//	if ({{request.session.refreshGokart|yesno:"true,false"}}) {
-//		//console.log("region " + {{request.session.region}} + " - district " + {{request.session.district}});
-//		gokart.call("open", {"region":{{request.session.region}}, "district":{{request.session.district}}, "refresh":true});
-//    }
-/* END - GoKart section */
 
 
 </script>

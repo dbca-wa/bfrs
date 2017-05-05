@@ -65,10 +65,6 @@
 <h1>Bushfire Detail</h1>
 {% endif %}
 
-            {% comment %}
-	      {{form.region.as_hidden}}
-	      {{form.district.as_hidden}}
-            {% endcomment %}
 <form action="" method="post">{% csrf_token %}
 
 <table class="table table-bordered table-striped table-condensed">
@@ -84,27 +80,8 @@
 
   </tbody>
 </table>
-{% comment %}
-<div class="div_fire_not_found" style="display: none;"></div>
-{% endcomment %}
-
-{% comment %}
-<table class="table table-bordered table-striped table-condensed">
-    <tbody>
-        <tr>
-            <th class="cbas">District *</th>
-            <td colspan="5" class="cbas">
-                {% if is_authorised %} {{object.region}} {{form.region.as_hidden}} {% else %} {{form.region}} {% endif %}<span style="margin:20;"></span>
-                {% if is_authorised %} {{object.district}} {{form.district.as_hidden}} {% else %} {{form.district}} {% endif %}
-            </td>
-        </tr>
-
-  </tbody>
-</table>
-{% endcomment %}
 
 <div class="div_form_invalidate">
-    <!--<div class=div_form_invalidate style="display: none;">-->
 <table class="table table-bordered table-striped table-condensed">
     <tbody>
 
@@ -117,7 +94,7 @@
         </tr>
 
         <tr>
-            <th class="cbas" title=" Fire spread has been halted, though the fire may still be burning freely within the perimeter of the fire control lines">Date fire contained *</th>
+	    <th class="cbas" title=" Fire spread has been halted, though the fire may still be burning freely within the perimeter of the fire control lines">Date fire contained <i class="icon-info-sign icon-white"></i> *</th>
             <td class="cbas">{% if is_authorised %} {{snapshot.fire_contained_date}} {% else %} {{form.fire_contained_date}} {% endif %}</td>
 
             <th class="cbas">Initial attack agency *<br><br><div class=div_other_first_attack style="display: none;">Other initial attack agency *</div></th>
@@ -128,7 +105,7 @@
         </tr>
 
         <tr>
-            <th class="cbas" title="Complete perimeter of fire is saecured and no breakaway is expected">Date fire controlled *</th>
+	    <th class="cbas" title="Complete perimeter of fire is saecured and no breakaway is expected">Date fire controlled <i class="icon-info-sign icon-white"></i> *</th>
             <td class="cbas">{% if is_authorised %} {{snapshot.fire_controlled_date}} {% else %} {{form.fire_controlled_date}} {% endif %}</td>
 
             <th class="cbas">Initial controlling agency *<br><br><div class=div_other_initial_control style="display: none;">Other initial controlling agency *</div></th>
@@ -139,7 +116,7 @@
         </tr>
 
         <tr>
-            <th class="cbas">Date fire safe *</th>
+	    <th class="cbas" title='Placeholder ...'>Date fire safe <i class="icon-info-sign icon-white"></i> *</th>
             <td class="cbas">{% if is_authorised %} {{snapshot.fire_safe_date}} {% else %} {{form.fire_safe_date}} {% endif %}</td>
 
             <th class="cbas">Final controlling agency *<br><br><div class=div_other_final_control style="display: none;">Other final controlling agency *</div></th>
@@ -177,8 +154,6 @@
             <td colspan="3" class="cbas">{% if is_authorised %} {{snapshot.reporting_year|fin_year}} {% else %} {{form.reporting_year}} {% endif %}</td>
 	    {{form.year.as_hidden}}
         </tr>
-
-
 
   </tbody>
 </table>
@@ -231,7 +206,8 @@
     <input type="hidden" name="confirm_action" value="yes" />
     <input type="submit" class="btn" value="{% trans "Yes, I'm sure" %}" />
 	{% comment %}
-    <a href="javascript: history.go(-1)" class="btn btn-danger">Cancel</a>
+	<!-- Below line causes an error in the Django Formset -->
+        <a href="javascript: history.go(-1)" class="btn btn-danger">Cancel</a>
 	{% endcomment %}
     <a id="id_cancel_btn" href="{% url 'bushfire:bushfire_final' object.id %}" class="btn btn-primary btn-danger">Cancel</a>
   </div>

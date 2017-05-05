@@ -1,4 +1,4 @@
-from bfrs.models import (Bushfire, AreaBurnt, Damage, Injury, FireBehaviour, Tenure, SpatialDataHistory, SnapshotHistory) #, LinkedBushfire)
+from bfrs.models import (Bushfire, AreaBurnt, Damage, Injury, FireBehaviour, Tenure, SnapshotHistory) #, LinkedBushfire)
 #from bfrs.forms import (BaseAreaBurntFormSet)
 from django.db import IntegrityError, transaction
 from django.http import HttpResponse
@@ -79,22 +79,6 @@ def calc_coords(obj):
         obj.mga_northing = float(obj.lat_decimal) * 2.0
 
 
-def archive_spatial_data(obj):
-        """ if origin point of fire boundary has changed, archive existing """
-        qs_bushfire = Bushfire.objects.filter(pk=obj.id)
-        if qs_bushfire:
-            bushfire = qs_bushfire[0]
-            if bushfire.fire_boundary != obj.fire_boundary or bushfire.origin_point != obj.origin_point:
-                SpatialDataHistory.objects.create(
-                    creator = obj.modifier,
-                    modifier = obj.modifier,
-                    origin_point = obj.origin_point,
-                    tenure = obj.tenure,
-                    fire_boundary = obj.fire_boundary,
-                    area_burnt = serializers.serialize('json', obj.tenures_burnt.all()),
-                    bushfire_id = obj.id
-                )
-
 def archive_snapshot(auth_type, action, obj):
         """ allows archicing of existing snapshot before overwriting """
         cur_snapshot_history = obj.snapshot_history.all()
@@ -111,74 +95,48 @@ def archive_snapshot(auth_type, action, obj):
 
 def invalidate_bushfire(obj, new_district, user):
     """ Invalidate the current bushfire, create new bushfire and update links, including historical links """
-    #cur_obj = Bushfire.objects.get(pk=obj.id)
     if obj.district == new_district:
         return None
 
     with transaction.atomic():
-        #obj.invalid = True
         old_rpt_status = obj.report_status
         obj.report_status = Bushfire.STATUS_INVALIDATED
-#        obj.fire_number = None
         obj.save()
         old_obj = deepcopy(obj)
-        #old_id = obj.pk
-        #old_fire_number = obj.fire_number
         old_invalidated = old_obj.invalidated.all()
 
         # create a new object as a copy of existing
         obj.pk = None
 
-        #import ipdb; ipdb.set_trace()
         # check if we have this district already in the list of invalidated linked bushfires, and re-use fire_number if so
         invalidated_objs = [invalidated_obj for invalidated_obj in old_invalidated if invalidated_obj.district==new_district]
         if invalidated_objs and invalidated_objs[0].report_status==Bushfire.STATUS_INVALIDATED:
             # re-use previous fire_number
-            #import ipdb; ipdb.set_trace()
             linked_bushfire = invalidated_objs[0]
             obj.fire_number = linked_bushfire.fire_number
-            #LinkedBushfire.objects.filter(linked_id=linked_bushfire[0].id).delete()
-            #LinkedBushfire.objects.filter(linked_bushfire=linked_bushfire).delete()
-            #obj.linked_bushfire.filter(bushfire=linked_bushfire).delete()
             linked_bushfire.delete() # to avoid integrity constraint
         else:
             # create new fire_number
             obj.fire_number = ' '.join(['BF', str(obj.year), new_district.code, '{0:03d}'.format(obj.next_id(new_district))])
 
-        #obj.pk = None
-        #obj.invalid = False
         obj.report_status = old_rpt_status
         obj.district = new_district
         obj.region = new_district.region
         obj.valid_bushfire = None
         obj.fire_not_found = False
-        #obj.fire_number = ' '.join(['BF', obj.district.code, str(obj.year), '{0:03d}'.format(obj.next_id)])
         obj.save()
 
         # link the new bushfire to the old invalidated bushfire
         created = datetime.now(tz=pytz.utc)
-        #LinkedBushfire.objects.create(bushfire=obj, linked_bushfire=creator=user, modifier=user, linked_id=old_id, linked_fire_number=old_fire_number)
-        #LinkedBushfire.objects.create(bushfire=obj, linked_bushfire=old_obj, creator=user, modifier=user)
-        #LinkedBushfire.objects.create(bushfire=obj, creator=user, modifier=user)
 
-        #import ipdb; ipdb.set_trace()
         # copy all links from the above invalidated bushfire to the new bushfire
         if old_invalidated:
             for linked in old_invalidated:
-                #linked.pk = None # uncomment this for a two-way link
-                #linked.save()
                 obj.invalidated.add(linked)
 
         # link the old invalidate bushfire to the new (valid) bushfire - fwd link
-        #LinkedBushfire.objects.create(bushfire_id=old_id, creator=user, modifier=user, linked_id=obj.pk, linked_fire_number=obj.fire_number)
-        #LinkedBushfire.objects.create(bushfire=old_obj, linked_bushfire=obj, creator=user, modifier=user)
-        #LinkedBushfire.objects.create(bushfire=old_obj, creator=user, modifier=user)
         old_obj.valid_bushfire = obj
         old_obj.save()
-
-        #for linked in LinkedBushfire.objects.filter(bushfire=obj):
-        #    linked.update(linked_bushfire=obj)
-
 
         return obj
     return False
@@ -205,27 +163,19 @@ def create_areas_burnt(bushfire, area_burnt_list):
             new_area_burnt_list.append({
                 'tenure': tenure_qs[0],
                 'area': round(area, 2)
-                #'other': ''
             })
 
         elif area:
             area_other += area
 
     if area_other > 0:
-        #new_area_burnt_list.append({'tenure': Tenure.objects.get(name__icontains='other'), 'area': round(area_other, 2), 'other': ''})
         new_area_burnt_list.append({'tenure': Tenure.objects.get(name__icontains='other'), 'area': round(area_other, 2)})
 
-#    import ipdb; ipdb.set_trace()
-    #AreaBurntFormSet = inlineformset_factory(Bushfire, AreaBurnt, extra=len(new_area_burnt_list), exclude=())
-    #AreaBurntFormSet = inlineformset_factory(Bushfire, AreaBurnt, formset=BaseAreaBurntFormSet, extra=len(new_area_burnt_list), min_num=1, validate_min=True, exclude=())
     AreaBurntFormSet = inlineformset_factory(Bushfire, AreaBurnt, extra=len(new_area_burnt_list), min_num=1, validate_min=True, exclude=())
     area_burnt_formset = AreaBurntFormSet(instance=bushfire, prefix='area_burnt_fs')
     for subform, data in zip(area_burnt_formset.forms, new_area_burnt_list):
         subform.initial = data
 
-#    import ipdb; ipdb.set_trace()
-#    if bushfire:
-#        update_areas_burnt_fs(bushfire, area_burnt_formset)
     return area_burnt_formset
 
 def update_areas_burnt(bushfire, area_burnt_list):
@@ -249,10 +199,8 @@ def update_areas_burnt(bushfire, area_burnt_list):
     if area_other > 0:
         new_area_burnt_object.append(AreaBurnt(bushfire=bushfire, tenure=Tenure.objects.get(name__icontains='other'), area=round(area, 2)))
 
-    #import ipdb; ipdb.set_trace()
     try:
         with transaction.atomic():
-            archive_spatial_data(bushfire)
             AreaBurnt.objects.filter(bushfire=bushfire).delete()
             AreaBurnt.objects.bulk_create(new_area_burnt_object)
     except IntegrityError:
@@ -265,21 +213,17 @@ def update_areas_burnt_fs(bushfire, area_burnt_formset):
     Updates the AreaBurnt FormSet from BushfireInitUpdateView
     """
     new_fs_object = []
-    #import ipdb; ipdb.set_trace()
     for form in area_burnt_formset:
         if form.is_valid():
             tenure = form.cleaned_data.get('tenure')
             area = form.cleaned_data.get('area')
-            #other = form.cleaned_data.get('other')
             remove = form.cleaned_data.get('DELETE')
 
             if not remove and (tenure):
-                #new_fs_object.append(AreaBurnt(bushfire=bushfire, tenure=tenure, area=area, other=other))
                 new_fs_object.append(AreaBurnt(bushfire=bushfire, tenure=tenure, area=area))
 
     try:
         with transaction.atomic():
-            archive_spatial_data(bushfire)
             AreaBurnt.objects.filter(bushfire=bushfire).delete()
             AreaBurnt.objects.bulk_create(new_fs_object)
     except IntegrityError:
@@ -787,7 +731,6 @@ export_final_csv.short_description = u"Export CSV (Final)"
 def export_excel(request, queryset):
 
     filename = 'export_final-' + datetime.now().strftime('%Y-%m-%dT%H%M%S') + '.xls'
-    #response = HttpResponse(content_type='text/csv')
     response = HttpResponse(content_type='application/vnd.ms-excel; charset=utf-16')
     response['Content-Disposition'] = 'attachment; filename=' + filename
     writer = unicodecsv.writer(response, quoting=unicodecsv.QUOTE_ALL)
@@ -837,7 +780,6 @@ def export_excel(request, queryset):
     hdr.write(col_no(), "Fire Contained")
     hdr.write(col_no(), "Fire Safe")
     hdr.write(col_no(), "Fuel Type")
-    #"Initial Snpshot",
     hdr.write(col_no(), "First Attack")
     hdr.write(col_no(), "Other First Attack")
     hdr.write(col_no(), "Initial Control")
@@ -894,9 +836,7 @@ def export_excel(request, queryset):
         row.write(col_no(), smart_str( obj.fire_controlled_date.strftime('%Y-%m-%d %H:%M:%S') if obj.fire_controlled_date else None) )
         row.write(col_no(), smart_str( obj.fire_contained_date.strftime('%Y-%m-%d %H:%M:%S') if obj.fire_contained_date else None) )
         row.write(col_no(), smart_str( obj.fire_safe_date.strftime('%Y-%m-%d %H:%M:%S') if obj.fire_safe_date else None) )
-        #row.write(col_no(), smart_str( obj.fuel_type) )
         row.write(col_no(), smart_str( '; '.join(['(fuel_type={}, ros={}, flame_height={})'.format(i.fuel_type, i.ros, i.flame_height) for i in obj.fire_behaviour.all()])) if obj.fire_behaviour.all() else None )
-        #row.write(col_no(), smart_str( obj.initial_snapshot) )
         row.write(col_no(), smart_str( obj.first_attack if obj.first_attack else None))
         row.write(col_no(), smart_str( obj.other_first_attack if obj.other_first_attack else None))
         row.write(col_no(), smart_str( obj.initial_control if obj.initial_control else None))
@@ -919,17 +859,4 @@ def export_excel(request, queryset):
     return response
 export_final_csv.short_description = u"Export Excel"
 
-
-#def activity_names():
-#	return [i['name'] for i in ActivityType.objects.all().order_by('id').values()]
-#
-#def activity_map(obj):
-#	bools = []
-#	for activity_name in activity_names():
-#		if len(obj.activities.all().filter(activity__name__contains=activity_name)) > 0:
-#			dt = obj.activities.get(activity__name__contains=activity_name).date.strftime('%Y-%m-%d %H:%M:%S')
-#			bools.append([activity_name, row.write(col_no(), smart_str( dt)])
-#		else:
-#			bools.append([activity_name, row.write(col_no(), smart_str( None)])
-#	return bools
 
