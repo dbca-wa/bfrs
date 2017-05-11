@@ -411,7 +411,7 @@ def dfes_email(bushfire, url):
 
     #import ipdb; ipdb.set_trace()
     subject = 'DFES Email - Initial report submitted - {}'.format(bushfire.fire_number)
-    message = 'DFES Email - {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.fire_number, url)
+    message = 'DFES Email - {}\n\n(Lat/Lon) {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.fire_number, bushfire.origin_point, url)
 
     return send_mail(subject, message, settings.FROM_EMAIL, settings.DFES_EMAIL)
 

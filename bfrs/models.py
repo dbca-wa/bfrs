@@ -149,9 +149,11 @@ class Bushfire(Audit):
         (3, 3),
     )
 
+    CAUSE_STATE_KNOWN    = 1
+    CAUSE_STATE_POSSIBLE = 2
     CAUSE_STATE_CHOICES = (
-        (1, 'Known'),
-        (2, 'Possible'),
+        (CAUSE_STATE_KNOWN, 'Known'),
+        (CAUSE_STATE_POSSIBLE, 'Possible'),
     )
 
     DISPATCH_PW_YES        = 1
@@ -163,15 +165,20 @@ class Bushfire(Audit):
         #(DISPATCH_PW_MONITORING, 'Monitoring only'),
     )
 
+    ASSISTANCE_YES     = 1
+    ASSISTANCE_NO      = 2
+    ASSISTANCE_UNKNOWN = 3
     ASSISTANCE_CHOICES = (
-        (1, 'Yes'),
-        (2, 'No'),
-        (3, 'Unknown'),
+        (ASSISTANCE_YES, 'Yes'),
+        (ASSISTANCE_NO, 'No'),
+        (ASSISTANCE_UNKNOWN, 'Unknown'),
     )
 
+    IGNITION_POINT_PRIVATE = 1
+    IGNITION_POINT_CROWN  = 2
     IGNITION_POINT_CHOICES = (
-        (1, 'Private'),
-        (2, 'Crown'),
+        (IGNITION_POINT_PRIVATE, 'Private'),
+        (IGNITION_POINT_CROWN, 'Crown'),
     )
 
     # Common Fields
@@ -194,7 +201,7 @@ class Bushfire(Audit):
     tenure = models.ForeignKey('Tenure', null=True, blank=True)
     other_tenure = models.PositiveSmallIntegerField(choices=IGNITION_POINT_CHOICES, null=True, blank=True)
 
-    dfes_incident_no = models.PositiveIntegerField(verbose_name="DFES Fire Number", null=True, blank=True)
+    dfes_incident_no = models.CharField(verbose_name='DFES Fire Number', max_length=32, null=True, blank=True)
     job_code = models.CharField(verbose_name="Job Code", max_length=12, null=True, blank=True)
     fire_position = models.CharField(verbose_name="Position of Fire", max_length=100, null=True, blank=True)
     fire_position_override = models.BooleanField(verbose_name="SSS override", default=False)
@@ -378,7 +385,7 @@ class Bushfire(Audit):
         if self.time_to_control:
             s = str(self.time_to_control.days) + ' Days' if self.time_to_control.days>0 else ''
             s += str(self.time_to_control.seconds/3600) + ' Hours' if self.time_to_control.seconds>0 else ''
-        return s
+        return s if s else '-'
 
     def user_unicode_patch(self):
         """ overwrite the User model's __unicode__() method """
@@ -565,8 +572,8 @@ class Damage(models.Model):
 @python_2_unicode_compatible
 class FireBehaviour(models.Model):
     fuel_type = models.ForeignKey(FuelType)
-    ros = models.DecimalField(verbose_name="ROS (m/h)", max_digits=7, decimal_places=2, validators=[MinValueValidator(0)])
-    flame_height = models.DecimalField(verbose_name="Flame height (m)", max_digits=7, decimal_places=2, validators=[MinValueValidator(0)])
+    ros = models.PositiveSmallIntegerField(verbose_name="ROS (m/h)", validators=[MinValueValidator(0)])
+    flame_height = models.DecimalField(verbose_name="Flame height (m)", max_digits=6, decimal_places=1, validators=[MinValueValidator(0)])
     bushfire = models.ForeignKey(Bushfire, related_name='fire_behaviour')
 
     def __str__(self):

@@ -144,14 +144,118 @@ def split_capitalize(string):
 #    """
 #    return 'Yes' if boolean else 'No'
 #
+
+@register.filter(is_safe=False)
+def yesno(value, arg=None):
+    """
+    Overriding the built-in 'yesno' tag
+
+    Given a string mapping values for true, false and (optionally) None,
+    returns one of those strings according to the value:
+
+    ==========  ======================  ==================================
+    Value       Argument                Outputs
+    ==========  ======================  ==================================
+    ``True``    ``"yeah,no,maybe"``     ``yeah``
+    ``False``   ``"yeah,no,maybe"``     ``no``
+    ``None``    ``"yeah,no,maybe"``     ``maybe``
+    ``None``    ``"yeah,no"``           ``"no"`` (converts None to False
+                                        if no mapping for None is given.
+    ==========  ======================  ==================================
+    """
+    if arg is None:
+        arg = ugettext('yes,no,maybe')
+    bits = arg.split(',')
+    if len(bits) < 2:
+        return value  # Invalid arg.
+    try:
+        yes, no, maybe = bits
+    except ValueError:
+        # Unpack list of wrong size (no "maybe" value provided).
+        yes, no, maybe = bits[0], bits[1], bits[1]
+
+    if value == 'True':
+        return yes
+    elif value == 'False':
+        return no
+    elif value == 'None' or value is None:
+        return maybe
+    elif value:
+        return yes
+    else:
+        return no
+
+@register.filter
+def dispatch(value):
+    """
+    Usage::
+
+        {{ value|assistance}}
+    """
+    #import ipdb; ipdb.set_trace()
+    if isinstance(value, (str, unicode)):
+        value = eval(value)
+
+    if Bushfire.DISPATCH_PW_YES==value:
+        return Bushfire.DISPATCH_PW_CHOICES[Bushfire.DISPATCH_PW_YES-1][1]
+    if Bushfire.DISPATCH_PW_NO==value:
+        return Bushfire.DISPATCH_PW_CHOICES[Bushfire.DISPATCH_PW_NO-1][1]
+    return Bushfire.DISPATCH_PW_CHOICES[Bushfire.DISPATCH_PW_MONITORING-1][1]
+
+
+@register.filter
+def assistance(value):
+    """
+    Usage::
+
+        {{ value|assistance}}
+    """
+    if isinstance(value, (str, unicode)):
+        value = eval(value)
+
+    if Bushfire.ASSISTANCE_YES==value:
+        return Bushfire.ASSISTANCE_CHOICES[Bushfire.ASSISTANCE_YES-1][1]
+    if Bushfire.ASSISTANCE_NO==value:
+        return Bushfire.ASSISTANCE_CHOICES[Bushfire.ASSISTANCE_NO-1][1]
+    return Bushfire.ASSISTANCE_CHOICES[Bushfire.ASSISTANCE_UNKNOWN-1][1]
+
+@register.filter
+def ignition(value):
+    """
+    Usage::
+
+        {{ value|ignition}}
+    """
+    if isinstance(value, (str, unicode)):
+        value = eval(value)
+
+    if Bushfire.IGNITION_POINT_PRIVATE==value:
+        return Bushfire.IGNITION_POINT_CHOICES[Bushfire.IGNITION_POINT_PRIVATE-1][1]
+    return Bushfire.IGNITION_POINT_CHOICES[Bushfire.IGNITION_POINT_CROWN-1][1]
+
+@register.filter
+def cause_state(value):
+    """
+    Usage::
+
+        {{ value|cause_state}}
+    """
+    if isinstance(value, (str, unicode)):
+        value = eval(value)
+
+    if Bushfire.CAUSE_STATE_POSSIBLE==value:
+        return Bushfire.CAUSE_STATE_CHOICES[Bushfire.CAUSE_STATE_POSSIBLE-1][1]
+    return Bushfire.CAUSE_STATE_CHOICES[Bushfire.CAUSE_STATE_KNOWN-1][1]
+
 #@register.filter
-#def bool(boolean):
+#def bool(value):
 #    """
 #    Usage::
 #
-#        {{ bool|yesno}}
+#        {{ value|bool}}
 #    """
-#    return True if boolean else False
+#    if
+#    return True if value else False
 
 
 @register.filter

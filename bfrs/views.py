@@ -356,6 +356,7 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
         context.update({'fire_behaviour_formset': fire_behaviour_formset})
         return self.render_to_response(context)
 
+    @transaction.atomic
     def form_valid(self, request, form, fire_behaviour_formset, kwargs):
         self.object = form.save(commit=False)
         self.object.creator = request.user #1 #User.objects.all()[0] #request.user

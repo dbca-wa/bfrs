@@ -119,13 +119,13 @@
         <tr>
 			<th class="cbas">P&W Resource dispatched *<br><br><div class=div_dispatch_pw_date style="display: none;">Date and time of dispatch</div></th>
             <td colspan="2" class="cbas">
-                {% if is_authorised %} {{snapshot.dispatch_pw|yesno:"Yes,No"}}{% if snapshot.dispatch_pw %}<br>{{snapshot.dispatch_pw_date}} {% endif %} {% else %} {{form.dispatch_pw}} {% endif %}<br>
+                {% if is_authorised %} {{snapshot.dispatch_pw|dispatch}}{% if snapshot.dispatch_pw|dispatch == 'Yes' %}<br>{{snapshot.dispatch_pw_date}} {% endif %} {% else %} {{form.dispatch_pw}} {% endif %}<br>
 				<div class=div_dispatch_pw_date style="display: none;">{% if not is_authorised %} {{form.dispatch_pw_date}} {% endif %}</div>
 			</td>
 
 			<th class="cbas">Aerial support dispatched *<br><br><div class=div_dispatch_aerial_date style="display: none;">Date and time of dispatch</div></th>
             <td colspan="2" class="cbas">
-                {% if is_authorised %} {{snapshot.dispatch_aerial|yesno:"Yes,No"}}{% if snapshot.dispatch_aerial %}<br>{{snapshot.dispatch_aerial_date}}{% endif %}{% else %} {{form.dispatch_aerial}} {% endif %}<br>
+                {% if is_authorised %} {{snapshot.dispatch_aerial|yesno:"Yes,No"}}{% if snapshot.dispatch_aerial|yesno:"Yes,No" == 'Yes' %}<br>{{snapshot.dispatch_aerial_date}}{% endif %}{% else %} {{form.dispatch_aerial}} {% endif %}<br>
 				<div class=div_dispatch_aerial_date style="display: none;">{% if not is_authorised %} {{form.dispatch_aerial_date}} {% endif %}</div>
 			</td>
         </tr>
@@ -188,15 +188,30 @@
 
             <th class="cbas" style="font-weight:normal;">Area of fire at arrival (ha)</th>
             <td colspan="2" class="cbas">
+				{% comment %}
 				{% if is_authorised %} Unknown - {{snapshot.area_unknown|yesno:"Yes,No"}} {% else %} {{form.area_unknown}} Unknown{% endif %}<br>
 				<div class="div_area" style="visibility: visible;">{% if is_authorised %} {{snapshot.area}} {% else %} {{form.area}} {% endif %}</div>
+				{% endcomment %}
+
+				{% if not is_authorised %} {{form.area_unknown}} Unknown{% endif %}<br>
+				<div class="div_area" style="visibility: visible;">
+					{% if is_authorised %}
+					  {% if snapshot.area_unknown %}
+					    Unknown
+					  {% else %} 
+					    {{snapshot.area}}
+					  {% endif %}
+					{% else %} 
+					  {{form.area}}
+					{% endif %}
+				</div>
             </td>
         </tr>
 
         <tr>
 		    <th class="cbas">Assistance Required *<br><br><div class=div_assist style="display: none; font-weight:normal;">Details</div></th>
             <td colspan="2" class="cbas">
-                {% if is_authorised %} {{ snapshot.get_assistance_req_display }} {% if snapshot.assistance_req %}<br>{{snapshot.assistance_details}} {% endif %}{% else %} {{form.assistance_req}} {% endif %}<br>
+                {% if is_authorised %} {{ snapshot.assistance_req|assistance }} {% if snapshot.assistance_req %}<br>{{snapshot.assistance_details}} {% endif %}{% else %} {{form.assistance_req}} {% endif %}<br>
 		        <div class=div_assist style="display: none;">{% if is_authorised %}  {% else %} {{form.assistance_details}} {% endif %}</div>
 		    </td>
 
@@ -223,7 +238,7 @@
         <tr>
             <th class="cbas">Fire Cause *<br><br><br><br><div class=div_cause style="visibility: hidden;">Other Cause *</div></th>
 			<td colspan="2" class="cbas">
-				{% if is_authorised %} {{snapshot.get_cause_state_display}} {% else %} {{form.cause_state}} {% endif %}<br>
+				{% if is_authorised %} {{snapshot.cause_state|cause_state}} {% else %} {{form.cause_state}} {% endif %}<br>
                 {% if is_authorised %} {{snapshot.cause}} {% else %} {{form.cause}} {% endif %}<br><br>
 
                 <div class="div_cause" style="visibility: hidden;">

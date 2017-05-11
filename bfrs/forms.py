@@ -280,6 +280,7 @@ class BushfireCreateBaseForm(forms.ModelForm):
                 self.add_error('dispatch_pw_date', 'Must specify Date and Time of dispatch, if resource is dispatched.')
             if not self.cleaned_data['field_officer']:
                 self.add_error('field_officer', 'Must specify Field Officer, if resource is dispatched.')
+        #self.cleaned_data['dispatch_pw'] =True if self.cleaned_data['dispatch_pw']=='1' else False # hack to interpret choices (1,2)
 
         if self.cleaned_data['dispatch_aerial'] and eval(self.cleaned_data['dispatch_aerial']):
             if not self.cleaned_data['dispatch_aerial_date']:

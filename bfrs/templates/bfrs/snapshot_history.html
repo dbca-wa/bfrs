@@ -57,7 +57,11 @@
                 <td>{{ values.1 }}</td>
               </tr>
               {% empty %}
-                <td colspan="3">Changes are not available for this Action</td>
+                {%  if snapshot.action|split_capitalize not in "Submit,Authorise,Delete Final Authorisation,Delete Reviewed"|slice:"," %}
+                  <td colspan="4">Changes are not available (most likely Damages/Injuries/Tenures changed)</td>
+                {% else %}
+                  <td colspan="4">Changes are not available for this Action</td>
+                {% endif %}
               {% endfor %}
             </tbody>
           </table>
