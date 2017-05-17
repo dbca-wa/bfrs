@@ -60,7 +60,7 @@
 	  <th><font color="dodgerblue">Name <i class="icon-sort"></i></font></th>
 	  <th><font color="dodgerblue">Initial <i class="icon-sort"></font></i></th>
 	  <th><font color="dodgerblue">Final <i class="icon-sort"></i></font></th>
-	  <th><font color="dodgerblue">Review <i class="icon-sort"></i></font></th>
+	  {% if can_maintain_data %}<th><font color="dodgerblue">Review <i class="icon-sort"></i></font></th>{% endif %}
 	  <th><font color="dodgerblue"><i class="icon-sort"></i></font></th>
 
   </thead>
@@ -87,25 +87,30 @@
 			<a href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Final fire report authorised on {{bushfire.authorised_date}} by {{bushfire.authorised_by}}"><span style="display:none">{{bushfire.report_status}}</span><font color="green"><i class="icon-ok icon-white"></i></font></a>
 		    {% endif %}
 		</td>
+
+        {% if can_maintain_data %}
         <td align="center">
-         {% if bushfire.report_status == bushfire.STATUS_FINAL_AUTHORISED %}
-		 <a href="#" onclick='openGokart({"region":{{bushfire.region.id}},"district":{{bushfire.district.id}},"bushfireid":"{{bushfire.fire_number}}" });' title="Open report in SSS"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-link icon-white"></i></a>
-         {% elif bushfire.report_status == bushfire.STATUS_REVIEWED %}
-		 <a href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Final fire report reviewed on {{bushfire.reviewed_date}} by {{bushfire.reviewed_by}}"><span style="display:none">{{bushfire.report_status}}</span><font color="green"><i class="icon-ok icon-white"></i></font></a>
-         {% endif %}
+          {% if bushfire.report_status == bushfire.STATUS_FINAL_AUTHORISED %}
+		  <a href="#" onclick='openGokart({"region":{{bushfire.region.id}},"district":{{bushfire.district.id}},"bushfireid":"{{bushfire.fire_number}}" });' title="Open report in SSS"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-link icon-white"></i></a>
+          {% elif bushfire.report_status == bushfire.STATUS_REVIEWED %}
+		  <a href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Final fire report reviewed on {{bushfire.reviewed_date}} by {{bushfire.reviewed_by}}"><span style="display:none">{{bushfire.report_status}}</span><font color="green"><i class="icon-ok icon-white"></i></font></a>
+          {% endif %}
 		</td>
+        {% endif %}
 
          {% if bushfire.report_status == bushfire.STATUS_FINAL_AUTHORISED %}
-         <td>
+           {% if can_maintain_data %}
+           <td>
 			 <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=mark_reviewed');" title="Mark Final report as Reviewed"><span style="display:none">{{bushfire.report_status}}</span><font color="red"><i class="icon-warning-sign"></i></font></a>
 			 <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=delete_final_authorisation');" title="Delete authorisation"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-trash icon-white"></i></a>
-		 </td>
+		   </td>
+           {% endif %}
 
          {% elif bushfire.report_status == bushfire.STATUS_REVIEWED %}
            {% if not bushfire.archive %}
              <td>
 				 <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=archive');" title="Archive Report"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-folder-close"></i></a>
-				 <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=delete_reviewed');" title="Delete reviewed"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-trash icon-white"></i></a>
+				 {% if can_maintain_data %}<a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=delete_reviewed');" title="Delete reviewed"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-trash icon-white"></i></a>{% endif %}
 			 </td>
            {% else %}
 		     <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=unarchive');" title="Unarchive Report"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-folder-open"></i></a></td>

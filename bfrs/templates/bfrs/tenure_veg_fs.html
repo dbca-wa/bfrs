@@ -40,6 +40,7 @@
                 <th>Tenure</th>
                 <th>Area (ha)</th>
                 <th></th>
+                {% if area_burnt_formset.all %}
                 {% for fs in area_burnt_formset %}
                     {% comment %}
                     {% for hidden in fs.hidden_fields %}
@@ -62,10 +63,19 @@
                         {% endfor %}
                 </td>
 
-                </tr>
-                {% empty %}
-                <tr><td> No Tenures</td></tr>
                 {% endfor %}
+                {% endif %}
+                {% comment %}
+                <tr><td> No Tenures</td></tr>
+                {% endcomment %}
+                <tr>
+					<td><input id="id_ucl_tenure" maxlength="24" name="ucl_tenure", type="text" value="Unallocated Crown Land"></td>
+					<td><input id="id_ucl_area" name="ucl_area", type="number"></td>
+                </tr>
+                <tr>
+					<td><input id="id_unalloc_other_tenure" maxlength="24" name="unalloc_other_tenure", type="text" value="Other"></td>
+					<td><input id="id_unalloc_other_area" name="unalloc_other_area", type="number"></td>
+                </tr>
             </tbody>
         </table>
         {{ area_burnt_formset.management_form }}
@@ -88,7 +98,7 @@
 // Make formset records uneditable
 $('[id^="id_area_burnt"][id$="tenure"]').css('background-color' , '#DEDEDE'); // starts with and ends with
 $('[id^="id_area_burnt"][id$="area"]').css('background-color' , '#DEDEDE');
-$("#id_areas_burnt").mousedown(function(e){ e.preventDefault(); });
+$("#id_areas_burnt").not("#id_ucl_area,#id_unalloc_other_area").mousedown(function(e){ e.preventDefault(); });
 
 </script>
 

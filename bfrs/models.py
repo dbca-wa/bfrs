@@ -93,7 +93,7 @@ class Profile(models.Model):
         return 'username: {}, region: {}, district: {}'.format(self.user.username, self.region, self.district)
 
     class Meta:
-        default_permissions = ('add', 'change', 'view')
+        default_permissions = ('add', 'change', 'delete', 'view')
 
 
 @python_2_unicode_compatible
@@ -108,6 +108,7 @@ class Region(models.Model):
 
     class Meta:
         ordering = ['name']
+        default_permissions = ('add', 'change', 'delete', 'view')
 
     def __str__(self):
         return self.name
@@ -122,6 +123,7 @@ class District(models.Model):
 
     class Meta:
         ordering = ['name']
+        default_permissions = ('add', 'change', 'delete', 'view')
 
     def __str__(self):
         return self.name
@@ -615,5 +617,7 @@ class SnapshotHistory(Audit):
     def __str__(self):
         return 'Created {}, Creator {}'.format(self.created, self.creator)
 
+    class Meta:
+        default_permissions = ('add', 'change', 'delete', 'view')
 
 

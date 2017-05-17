@@ -1,273 +1,73 @@
 [
 {
-  "pk": 1,
-  "model": "auth.group",
-  "fields": {
-    "name": "BFRS Application Administrator",
-    "permissions": [
-      ["can_admin", "bfrs", "bushfire"],
-      ["change_user", "auth", "user"],
-      ["delete_bushfire", "bfrs", "bushfire"]
-    ]
-  }
+    "model": "auth.group",
+    "pk": 1,
+    "fields": {
+        "name": "FSS Datasets and Reporting Services",
+        "permissions": [
+            ["add_agency", "bfrs", "agency"],
+            ["change_agency", "bfrs", "agency"],
+            ["delete_agency", "bfrs", "agency"],
+            ["view_agency", "bfrs", "agency"],
+            ["add_areaburnt", "bfrs", "areaburnt"],
+            ["change_areaburnt", "bfrs", "areaburnt"],
+            ["delete_areaburnt", "bfrs", "areaburnt"],
+            ["view_areaburnt", "bfrs", "areaburnt"],
+            ["add_bushfire", "bfrs", "bushfire"],
+            ["change_bushfire", "bfrs", "bushfire"],
+            ["delete_bushfire", "bfrs", "bushfire"],
+            ["view_bushfire", "bfrs", "bushfire"],
+            ["add_cause", "bfrs", "cause"],
+            ["change_cause", "bfrs", "cause"],
+            ["delete_cause", "bfrs", "cause"],
+            ["view_cause", "bfrs", "cause"],
+            ["add_damage", "bfrs", "damage"],
+            ["change_damage", "bfrs", "damage"],
+            ["delete_damage", "bfrs", "damage"],
+            ["view_damage", "bfrs", "damage"],
+            ["add_firebehaviour", "bfrs", "firebehaviour"],
+            ["change_firebehaviour", "bfrs", "firebehaviour"],
+            ["delete_firebehaviour", "bfrs", "firebehaviour"],
+            ["view_firebehaviour", "bfrs", "firebehaviour"],
+            ["add_injury", "bfrs", "injury"],
+            ["change_injury", "bfrs", "injury"],
+            ["delete_injury", "bfrs", "injury"],
+            ["view_injury", "bfrs", "injury"],
+            ["add_profile", "bfrs", "profile"],
+            ["change_profile", "bfrs", "profile"],
+            ["delete_profile", "bfrs", "profile"],
+            ["view_profile", "bfrs", "profile"],
+            ["add_snapshothistory", "bfrs", "snapshothistory"],
+            ["change_snapshothistory", "bfrs", "snapshothistory"],
+            ["delete_snapshothistory", "bfrs", "snapshothistory"],
+            ["view_snapshothistory", "bfrs", "snapshothistory"],
+            ["add_region", "bfrs", "region"],
+            ["change_region", "bfrs", "region"],
+            ["delete_region", "bfrs", "region"],
+            ["view_region", "bfrs", "region"],
+            ["add_district", "bfrs", "district"],
+            ["change_district", "bfrs", "district"],
+            ["delete_district", "bfrs", "district"],
+            ["view_district", "bfrs", "district"]
+        ]
+    }
 },
 {
-  "pk": 2,
-  "model": "auth.group",
-  "fields": {
-    "name": "Users",
-    "permissions": [
-      ["add_profile", "pbs", "profile"],
-      ["change_profile", "pbs", "profile"],
-      ["view_profile", "pbs", "profile"],
-      ["add_approval", "prescription", "approval"],
-      ["change_approval", "prescription", "approval"],
-      ["view_approval", "prescription", "approval"],
-      ["add_prescription", "prescription", "prescription"],
-      ["change_prescription", "prescription", "prescription"],
-      ["view_prescription", "prescription", "prescription"],
-      ["add_district", "prescription", "district"],
-      ["change_district", "prescription", "district"],
-      ["view_district", "prescription", "district"],
-      ["add_endorsement", "prescription", "endorsement"],
-      ["change_endorsement", "prescription", "endorsement"],
-      ["view_endorsement", "prescription", "endorsement"],
-      ["add_endorsingrole", "prescription", "endorsingrole"],
-      ["change_endorsingrole", "prescription", "endorsingrole"],
-      ["view_endorsingrole", "prescription", "endorsingrole"],
-      ["add_forecastarea", "prescription", "forecastarea"],
-      ["change_forecastarea", "prescription", "forecastarea"],
-      ["view_forecastarea", "prescription", "forecastarea"],
-      ["add_objective", "prescription", "objective"],
-      ["change_objective", "prescription", "objective"],
-      ["view_objective", "prescription", "objective"],
-      ["add_priorityjustification", "prescription", "priorityjustification"],
-      ["change_priorityjustification", "prescription", "priorityjustification"],
-      ["view_priorityjustification", "prescription", "priorityjustification"],
-      ["add_briefingchecklist", "prescription", "briefingchecklist"],
-      ["change_briefingchecklist", "prescription", "briefingchecklist"],
-      ["view_briefingchecklist", "prescription", "briefingchecklist"],
-      ["add_purpose", "prescription", "purpose"],
-      ["add_purpose", "prescription", "purpose"],
-      ["change_purpose", "prescription", "purpose"],
-      ["view_purpose", "prescription", "purpose"],
-      ["add_region", "prescription", "region"],
-      ["change_region", "prescription", "region"],
-      ["view_region", "prescription", "region"],
-      ["view_regionalobjective", "prescription", "regionalobjective"],
-      ["add_season", "prescription", "season"],
-      ["change_season", "prescription", "season"],
-      ["view_season", "prescription", "season"],
-      ["add_shire", "prescription", "shire"],
-      ["change_shire", "prescription", "shire"],
-      ["view_shire", "prescription", "shire"],
-      ["add_successcriteria", "prescription", "successcriteria"],
-      ["change_successcriteria", "prescription", "successcriteria"],
-      ["view_successcriteria", "prescription", "successcriteria"],
-      ["add_tenure", "prescription", "tenure"],
-      ["change_tenure", "prescription", "tenure"],
-      ["view_tenure", "prescription", "tenure"],
-      ["add_fueltype", "prescription", "fueltype"],
-      ["change_fueltype", "prescription", "fueltype"],
-      ["view_fueltype", "prescription", "fueltype"],
-      ["add_action", "risk", "action"],
-      ["change_action", "risk", "action"],
-      ["view_action", "risk", "action"],
-      ["add_complexity", "risk", "complexity"],
-      ["change_complexity", "risk", "complexity"],
-      ["view_complexity", "risk", "complexity"],
-      ["add_context", "risk", "context"],
-      ["change_context", "risk", "context"],
-      ["view_context", "risk", "context"],
-      ["add_contextrelevantaction", "risk", "contextrelevantaction"],
-      ["change_contextrelevantaction", "risk", "contextrelevantaction"],
-      ["view_contextrelevantaction", "risk", "contextrelevantaction"],
-      ["add_contingency", "risk", "contingency"],
-      ["change_contingency", "risk", "contingency"],
-      ["view_contingency", "risk", "contingency"],
-      ["add_contingencyaction", "risk", "contingencyaction"],
-      ["change_contingencyaction", "risk", "contingencyaction"],
-      ["delete_contingencyaction", "risk", "contingencyaction"],
-      ["view_contingencyaction", "risk", "contingencyaction"],
-      ["add_contingencynotification", "risk", "contingencynotification"],
-      ["change_contingencynotification", "risk", "contingencynotification"],
-      ["delete_contingencynotification", "risk", "contingencynotification"],
-      ["view_contingencynotification", "risk", "contingencynotification"],
-      ["add_register", "risk", "register"],
-      ["change_register", "risk", "register"],
-      ["view_register", "risk", "register"],
-      ["delete_register", "risk", "register"],
-      ["add_risk", "risk", "risk"],
-      ["change_risk", "risk", "risk"],
-      ["view_risk", "risk", "risk"],
-      ["add_riskcategory", "risk", "riskcategory"],
-      ["change_riskcategory", "risk", "riskcategory"],
-      ["view_riskcategory", "risk", "riskcategory"],
-      ["add_treatment", "risk", "treatment"],
-      ["change_treatment", "risk", "treatment"],
-      ["view_treatment", "risk", "treatment"],
-      ["add_criticalstakeholder", "stakeholder", "criticalstakeholder"],
-      ["change_criticalstakeholder", "stakeholder", "criticalstakeholder"],
-      ["view_criticalstakeholder", "stakeholder", "criticalstakeholder"],
-      ["add_notification", "stakeholder", "notification"],
-      ["change_notification", "stakeholder", "notification"],
-      ["view_notification", "stakeholder", "notification"],
-      ["add_publiccontact", "stakeholder", "publiccontact"],
-      ["change_publiccontact", "stakeholder", "publiccontact"],
-      ["view_publiccontact", "stakeholder", "publiccontact"],
-      ["add_operationaloverview", "implementation", "operationaloverview"],
-      ["change_operationaloverview", "implementation", "operationaloverview"],
-      ["view_operationaloverview", "implementation", "operationaloverview"],
-      ["add_burningprescription", "implementation", "burningprescription"],
-      ["change_burningprescription", "implementation", "burningprescription"],
-      ["view_burningprescription", "implementation", "burningprescription"],
-      ["delete_burningprescription", "implementation", "burningprescription"],
-      ["add_edgingplan", "implementation", "edgingplan"],
-      ["change_edgingplan", "implementation", "edgingplan"],
-      ["view_edgingplan", "implementation", "edgingplan"],
-      ["add_exclusionarea", "implementation", "exclusionarea"],
-      ["change_exclusionarea", "implementation", "exclusionarea"],
-      ["view_exclusionarea", "implementation", "exclusionarea"],
-      ["add_lightingsequence", "implementation", "lightingsequence"],
-      ["change_lightingsequence", "implementation", "lightingsequence"],
-      ["view_lightingsequence", "implementation", "lightingsequence"],
-      ["add_roadsegment", "implementation", "roadsegment"],
-      ["change_roadsegment", "implementation", "roadsegment"],
-      ["view_roadsegment", "implementation", "roadsegment"],
-      ["add_signinspection", "implementation", "signinspection"],
-      ["change_signinspection", "implementation", "signinspection"],
-      ["view_signinspection", "implementation", "signinspection"],
-      ["add_trailsegment", "implementation", "trailsegment"],
-      ["change_trailsegment", "implementation", "trailsegment"],
-      ["view_trailsegment", "implementation", "trailsegment"],
-      ["add_way", "implementation", "way"],
-      ["change_way", "implementation", "way"],
-      ["view_way", "implementation", "way"],
-      ["add_document", "document", "document"],
-      ["change_document", "document", "document"],
-      ["view_document", "document", "document"],
-      ["add_documentcategory", "document", "documentcategory"],
-      ["change_documentcategory", "document", "documentcategory"],
-      ["view_documentcategory", "document", "documentcategory"],
-      ["add_documenttag", "document", "documenttag"],
-      ["change_documenttag", "document", "documenttag"],
-      ["view_documenttag", "document", "documenttag"],
-      ["add_burnclosurestate", "report", "burnclosurestate"],
-      ["change_burnclosurestate", "report", "burnclosurestate"],
-      ["view_burnclosurestate", "report", "burnclosurestate"],
-      ["add_burnimplementationstate", "report", "burnimplementationstate"],
-      ["change_burnimplementationstate", "report", "burnimplementationstate"],
-      ["view_burnimplementationstate", "report", "burnimplementationstate"],
-      ["add_closuredeclaration", "report", "closuredeclaration"],
-      ["change_closuredeclaration", "report", "closuredeclaration"],
-      ["view_closuredeclaration", "report", "closuredeclaration"],
-      ["add_evaluation", "report", "evaluation"],
-      ["change_evaluation", "report", "evaluation"],
-      ["view_evaluation", "report", "evaluation"],
-      ["add_areaachievement", "report", "areaachievement"],
-      ["change_areaachievement", "report", "areaachievement"],
-      ["view_areaachievement", "report", "areaachievement"],
-      ["add_postburnchecklist", "report", "postburnchecklist"],
-      ["change_postburnchecklist", "report", "postburnchecklist"],
-      ["view_postburnchecklist", "report", "postburnchecklist"],
-      ["add_proposedaction", "report", "proposedaction"],
-      ["change_proposedaction", "report", "proposedaction"],
-      ["view_proposedaction", "report", "proposedaction"],
-      ["add_summarycompletionstate", "report", "summarycompletionstate"],
-      ["change_summarycompletionstate", "report", "summarycompletionstate"],
-      ["view_summarycompletionstate", "report", "summarycompletionstate"],
-      ["add_prescribedburn", "review", "prescribedburn"],
-      ["view_prescribedburn", "review", "prescribedburn"],
-      ["change_prescribedburn", "review", "prescribedburn"],
-      ["delete_prescribedburn", "review", "prescribedburn"],
-      ["add_aircraftburn", "review", "aircraftburn"],
-      ["view_aircraftburn", "review", "aircraftburn"],
-      ["change_aircraftburn", "review", "aircraftburn"],
-      ["delete_aircraftburn", "review", "aircraftburn"]
-
-    ]
-  }
-},
-{
-  "pk": 3,
-  "model": "auth.group",
-  "fields": {
-    "name": "Regional Fire Coordinator",
-    "permissions": [
-      ["add_regionalobjective", "prescription", "regionalobjective"],
-      ["change_regionalobjective", "prescription", "regionalobjective"],
-      ["can_carry_over", "prescription", "prescription"],
-      ["delete_document", "document", "document"],
-      ["delete_treatment", "risk", "treatment"],
-      ["delete_burningprescription", "implementation", "burningprescription"],
-      ["delete_regionalobjective", "prescription", "regionalobjective"]
-    ]
-  }
-},
-{
-  "pk": 4,
-  "model": "auth.group",
-  "fields": {
-    "name": "Fire Management Services Branch",
-    "permissions": [
-      ["add_burnstate", "review", "burnstate"],
-      ["view_burnstate", "review", "burnstate"],
-      ["change_burnstate", "review", "burnstate"],
-      ["delete_burnstate", "review", "burnstate"]
-    ]
-  }
-},
-{
-  "pk": 5,
-  "model": "auth.group",
-  "fields": {
-    "name": "Director Fire and Regional Services",
-    "permissions": [
-      ["add_burnstate", "review", "burnstate"],
-      ["view_burnstate", "review", "burnstate"],
-      ["change_burnstate", "review", "burnstate"],
-      ["delete_burnstate", "review", "burnstate"]
-    ]
-  }
-},
-{
-  "pk": 6,
-  "model": "auth.group",
-  "fields": {
-    "name": "Regional Duty Officer",
-    "permissions": [
-      ["can_endorse", "review", "prescribedburn"]
-    ]
-  }
-},
-{
-  "pk": 7,
-  "model": "auth.group",
-  "fields": {
-    "name": "State Duty Officer",
-    "permissions": [
-      ["can_endorse", "review", "prescribedburn"],
-      ["can_approve", "review", "prescribedburn"]
-    ]
-  }
-},
-{
-  "pk": 8,
-  "model": "auth.group",
-  "fields": {
-    "name": "State Duty Officer Assistant",
-    "permissions": [
-    ]
-  }
-},
-{
-  "pk": 9,
-  "model": "auth.group",
-  "fields": {
-    "name": "FMSB GIS",
-    "permissions": [
-    ]
-  }
+    "model": "auth.group",
+    "pk": 2,
+    "fields": {
+        "name": "External Users",
+        "permissions": [
+            ["view_agency", "bfrs", "agency"],
+            ["view_cause", "bfrs", "cause"],
+            ["view_damage", "bfrs", "damage"],
+            ["view_firebehaviour", "bfrs", "firebehaviour"],
+            ["view_injury", "bfrs", "injury"],
+            ["view_profile", "bfrs", "profile"],
+            ["view_snapshothistory", "bfrs", "snapshothistory"],
+            ["view_region", "bfrs", "region"],
+            ["view_district", "bfrs", "district"]
+        ]
+    }
 }
-
 ]

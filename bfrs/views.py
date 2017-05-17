@@ -14,6 +14,7 @@ from django.contrib.gis.db import models
 from django.forms.models import inlineformset_factory
 from django.conf import settings
 from django.db.models import Q
+from django.contrib.auth.models import User, Group
 
 from bfrs.models import (Profile, Bushfire,
         Region, District,
@@ -138,6 +139,23 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
     #model = Bushfire
     filterset_class = BushfireFilter
     template_name = 'bfrs/bushfire.html'
+
+    @property
+    def fssdrs_group(self):
+        return Group.objects.get(name='FSS Datasets and Reporting Services')
+
+    @property
+    def external_user_group(self):
+        return Group.objects.get(name='External Users')
+
+    @property
+    def can_maintain_data(self):
+        return self.fssdrs_group in self.request.user.groups.all()
+
+    @property
+    def is_external_user(self):
+        return self.external_user_group in self.request.user.groups.all()
+
 
     def get_queryset(self):
         if self.request.GET.has_key('report_status') and int(self.request.GET.get('report_status'))==Bushfire.STATUS_INVALIDATED:
@@ -270,6 +288,8 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
         context['form'] = BushfireFilterForm(initial=initial)
         context['object_list'] = self.object_list.order_by('-modified') # passed by default, but we are (possibly) updating, if profile exists!
         context['sss_url'] = settings.SSS_URL
+        context['can_maintain_data'] = self.can_maintain_data
+        context['is_external_user'] = self.is_external_user
         return context
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -580,6 +600,22 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
     form_class = BushfireForm
     template_name = 'bfrs/final.html'
 
+    @property
+    def fssdrs_group(self):
+        return Group.objects.get(name='FSS Datasets and Reporting Services')
+
+    @property
+    def external_user_group(self):
+        return Group.objects.get(name='External Users')
+
+    @property
+    def can_maintain_data(self):
+        return self.fssdrs_group in self.request.user.groups.all()
+
+    @property
+    def is_external_user(self):
+        return self.external_user_group in self.request.user.groups.all()
+
     def get_initial(self):
         if self.object.time_to_control:
             return { 'days': self.object.time_to_control.days, 'hours': self.object.time_to_control.seconds/3600 }
@@ -739,13 +775,22 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
         if not area_burnt_formset:
             area_burnt_formset      = AreaBurntFormSet(instance=self.object, prefix='area_burnt_fs')
 
+        #import ipdb; ipdb.set_trace()
+        if self.can_maintain_data: # or self.request.user.is_superuser:
+            is_authorised = False
+        elif self.is_external_user:
+            is_authorised = True # template will display non-editable text
+        else:
+            is_authorised = self.object.is_final_authorised
+
         context.update({'form': form,
                         'area_burnt_formset': area_burnt_formset,
                         'injury_formset': injury_formset,
                         'damage_formset': damage_formset,
-                        'is_authorised': False if self.request.user.is_superuser else self.object.is_final_authorised,
+                        'is_authorised': is_authorised,
                         'snapshot': deserialize_bushfire('final', self.object) if self.object.final_snapshot else None, #bushfire.snapshot,
                         'final': True,
+                        'can_maintain_data': self.can_maintain_data,
             })
         return context
 

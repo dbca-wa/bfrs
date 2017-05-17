@@ -53,12 +53,14 @@
                   </div>
                 </div>
 
+                {% if can_maintain_data %}
                 <div class="col-sm-2" >
                   <div id="div_id_reporting_year" class="form-group"> 
                     <label class="nowrap" for="{{ filter.form.reporting_year.id_for_label  }}">Reporting Year</label>
                     <div class="controls ">{{ filter.form.reporting_year }}</div>
                   </div>
                 </div>
+                {% endif %}
 
                 <div class="col-sm-2" > 
                   <div id="div_id_report_status" class="form-group"> 
@@ -73,22 +75,6 @@
                     <div class="controls ">{{ form.include_archived }}</div>
                   </div>
                 </div>
-
-				{% comment %}
-                <div class="col-sm-2" > 
-                  <div id="div_id_cause" class="form-group"> 
-                    <label class="nowrap" for="{{ filter.form.cause.id_for_label  }}">Cause</label>
-                    <div class="controls ">{{ filter.form.cause }}</div>
-                  </div>
-                </div>
-
-                <div class="col-sm-2" > 
-                  <div id="div_id_fire_level" class="form-group"> 
-                    <label class="nowrap" for="{{ filter.form.fire_level.id_for_label  }}">Probable Fire Level</label>
-                    <div class="controls ">{{ filter.form.fire_level }}</div>
-                  </div>
-                </div>
-				{% endcomment %}
 
 				{% comment %}
                 <div class="col-sm-2" > 

@@ -257,7 +257,6 @@ class BushfireCreateBaseForm(forms.ModelForm):
                   'dispatch_pw', 'dispatch_aerial',
                   'investigation_req',
                   'area', 'area_unknown', 'origin_point_str', 'origin_point', 'fire_boundary',
-                  'other_tenure',
                  )
 
 
@@ -274,6 +273,11 @@ class BushfireCreateBaseForm(forms.ModelForm):
         if not self.cleaned_data['park_trail_impacted']: self.cleaned_data['park_trail_impacted'] = None
         if not self.cleaned_data['assistance_req']: self.cleaned_data['assistance_req'] = None
         if not self.cleaned_data['other_tenure']: self.cleaned_data['other_tenure'] = None
+
+#        if not self.cleaned_data.has_key('other_tenure'):
+#            self.cleaned_data['other_tenure'] = None
+#        elif not self.cleaned_data['other_tenure']:
+#            self.cleaned_data['other_tenure'] = None
 
         if self.cleaned_data['dispatch_pw'] and eval(self.cleaned_data['dispatch_pw'])==Bushfire.DISPATCH_PW_YES:
             if not self.cleaned_data['dispatch_pw_date']:
@@ -295,7 +299,7 @@ class BushfireCreateBaseForm(forms.ModelForm):
         if self.cleaned_data['tenure']:
             tenure = self.cleaned_data['tenure']
             if tenure.name.upper().startswith('OTHER'):
-                if not self.cleaned_data['other_tenure']:
+                if self.cleaned_data.has_key('other_tenure') and not self.cleaned_data['other_tenure']:
                     self.add_error('other_tenure', 'Must specify, if Tenure of ignition point is Other.')
 
         return cleaned_data

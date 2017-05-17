@@ -12,5 +12,10 @@
 <h1>Manage Groups</h1>
 {% endblock %}
 
-{% block object-tools %}
+{% block pretitle %}
+<ul class="nav nav-tabs">
+  <li><a href="{% url 'admin:auth_user_changelist' %}"><i class="icon-user"></i>Users</a></li>
+  <li class="active"><a href="{% url 'admin:auth_group_changelist' %}"><i class="icon-group"></i>Groups</a></li>
+</ul>
 {% endblock %}
+

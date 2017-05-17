@@ -88,8 +88,8 @@
         <tr>
             <th class="cbas">District *</th>
             <td colspan="5" class="cbas">
-                {% if is_authorised %} {{object.region}} {{form.region.as_hidden}} {% else %} {{form.region}} {% endif %}<span style="margin:20;"></span>
-                {% if is_authorised %} {{object.district}} {{form.district.as_hidden}} {% else %} {{form.district}} {% endif %}
+                {% if is_authorised or not can_maintain_data %} {{object.region}} {{form.region.as_hidden}} {% else %} {{form.region}} {% endif %}<span style="margin:20;"></span>
+                {% if is_authorised or not can_maintain_data %} {{object.district}} {{form.district.as_hidden}} {% else %} {{form.district}} {% endif %}
             </td>
         </tr>
 
@@ -149,11 +149,16 @@
             <td colspan="1" class="cbas">{% if is_authorised %} {{snapshot.job_code}} {% else %} {{form.job_code}} {% endif %}</td>
         </tr>
 
+        {% if can_maintain_data %}
         <tr>
             <th class="cbas" style="font-weight:normal;">Reporting Year</th>
             <td colspan="3" class="cbas">{% if is_authorised %} {{snapshot.reporting_year|fin_year}} {% else %} {{form.reporting_year}} {% endif %}</td>
 	    {{form.year.as_hidden}}
         </tr>
+        {% else %}
+	    {{form.reporting_year.as_hidden}}
+	    {{form.year.as_hidden}}
+        {% endif %}
 
   </tbody>
 </table>
@@ -180,13 +185,9 @@
   <div class="navbar-inner">
     <div class="container">
       <p class="pull-right">
-      {% if request.user|can_readonly and not request.user.is_superuser %}
-        <input type="submit" {% if object.report_status >= object.STATUS_FINAL_AUTHORISED %}value="Save final"{% else %} value="Save draft"{% endif %}class="btn btn-primary btn-success" name="_save" title="You do not have 'Update' permissions" disabled />
-      {% else %}
-        <input type="submit" {% if object.report_status >= object.STATUS_FINAL_AUTHORISED %}value="Save final"{% else %} value="Save draft"{% endif %} class="btn btn-primary btn-success" name="_save" {% if is_authorised %}title="Initial Report cannot be edited" disabled{% endif %} />
-      {% endif %}
+      <input type="submit" {% if object.report_status >= object.STATUS_FINAL_AUTHORISED %}value="Save final"{% else %} value="Save draft"{% endif %} class="btn btn-primary btn-success" name="_save" {% if is_authorised %}title="Initial Report cannot be edited" disabled{% endif %} />
 
-      <input type="submit" value="Authorise" class="btn btn-primary btn-success" name="authorise_final" {% if object.report_status >= object.STATUS_FINAL_AUTHORISED %}title="Final Report already authorised on {{object.authorised_date}} by {{object.authorised_by}}" disabled{% else %}title="Save and authorise"{% endif %} />
+      <input type="submit" value="Authorise" class="btn btn-primary btn-success" name="authorise_final" {% if object.report_status >= object.STATUS_FINAL_AUTHORISED %}title="Final Report already authorised on {{object.authorised_date}} by {{object.authorised_by}}" disabled{% elif is_authorised %}disabled{% else %}title="Save and authorise"{% endif %} />
 
       <a id="id_cancel_btn" href="{% url 'main' %}" class="btn btn-primary btn-danger">Cancel</a>
       </p>

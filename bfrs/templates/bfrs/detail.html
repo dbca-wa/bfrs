@@ -142,7 +142,7 @@
             <th class="cbas">Media Alert Required *</th>
             <td colspan="2" class="cbas">
                 {% if is_authorised %}
-                {{snapshot.media_alert_req|yesno:"Yes,No"}} {% if snapshot.media_alert_req %}<br> <span>call PICA on ...</span>{% endif %}
+                {{snapshot.media_alert_req|yesno:"Yes,No"}} {% if snapshot.media_alert_req|yesno:"Yes,No" == 'Yes' %}<br> <span>call PICA on ...</span>{% endif %}
 
                 {% else %}
                 {{form.media_alert_req}} <br> <span class="div_pica" style="display: none;">call PICA on ...</span>
@@ -152,7 +152,7 @@
             <th class="cbas">Park and/or Trail *<br>potentially impacted</th>
             <td colspan="2" class="cbas">
                 {% if is_authorised %}
-                  {{snapshot.park_trail_impacted|yesno:"Yes,No"}} {% if snapshot.park_trail_impacted %}<br> <span>PVS will be notified by email</span>{% endif %}
+                  {{snapshot.park_trail_impacted|yesno:"Yes,No"}} {% if snapshot.park_trail_impacted|yesno:"Yes,No" == 'Yes' %}<br> <span>PVS will be notified by email</span>{% endif %}
                 {% else %} 
                   {{form.park_trail_impacted}} <br> <span class="div_pvs" style="display: none;">PVS will be notified by email</span>
                 {% endif %}
@@ -304,12 +304,8 @@
     <div class="container">
       <p class="pull-right">
       {% if object.report_status != object.STATUS_INVALIDATED or not object.report_status %}
-        {% if request.user|can_readonly and not request.user.is_superuser %}
-          <input type="submit" value="Save draft" class="btn btn-primary btn-success" name="_save" title="You do not have 'Update' permissions" disabled />
-        {% else %}
           <input type="submit" value="Save draft" class="btn btn-primary btn-success" name="_save" {% if is_authorised %}title="Submitted initial report cannot be edited" disabled{% endif %} />
 		  <input type="submit" value="Submit" class="btn btn-primary btn-success" name="submit_initial" {% if is_authorised %}title="Initial Report already submitted" disabled{% else %}title="Save and submit"{% endif %} />
-        {% endif %}
       {% endif %}
 
       <a id="id_cancel_btn" href="{% url 'main' %}" class="btn btn-primary btn-danger">Cancel</a>
