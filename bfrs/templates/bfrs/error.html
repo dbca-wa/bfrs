@@ -1,0 +1,23 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+{% load staticfiles %}
+{% load bfrs_tags %}
+
+{% block breadcrumbs %}
+<ul class="breadcrumb">
+  <li><a href="{% url 'main' %}">{% trans 'Bushfire Overview' %}</a> <span class="divider">/</span></li>
+  <li>{{status}}</li>
+</ul>
+{% endblock %}
+
+{% block content_title %}
+  {% if is_external_user %}
+    <h1 class="errornote">User {{request.user}} not permitted to Create/Update Bushfire. ERROR: {{status}}</h1>
+  {% else %}
+    <h1 class="errornote">Action not permitted - {{status}}</h1>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+{% endblock %}
+

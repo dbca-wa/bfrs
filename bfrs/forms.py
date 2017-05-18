@@ -57,11 +57,11 @@ class UserForm(forms.ModelForm):
         super(UserForm, self).__init__(*args, **kwargs)
         self.fields['is_active'].label = ("Approved User (i.e. enable login for this user?)")
         instance = getattr(self, 'instance', None)
-        if instance and instance.pk:
-            self.fields['username'].widget.attrs['readonly'] = True
-            self.fields['email'].widget.attrs['readonly'] = True
-            self.fields['first_name'].widget.attrs['readonly'] = True
-            self.fields['last_name'].widget.attrs['readonly'] = True
+#        if instance and instance.pk:
+#            self.fields['username'].widget.attrs['readonly'] = True
+#            self.fields['email'].widget.attrs['readonly'] = True
+#            self.fields['first_name'].widget.attrs['readonly'] = True
+#            self.fields['last_name'].widget.attrs['readonly'] = True
 
     class Meta:
         model = User

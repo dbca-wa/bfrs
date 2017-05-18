@@ -34,6 +34,12 @@ def breadcrumbs_li(links):
     crumbs += li_str_last.format(links[-1][1])
     return crumbs
 
+def is_external_user(user):
+    try:
+        return user.email.split('@')[1].lower() != settings.INTERNAL_EMAIL #'dpaw.wa.gov.au'
+    except:
+        return True
+
 def serialize_bushfire(auth_type, action, obj):
     "Serializes a Bushfire object"
     if auth_type == 'initial':
