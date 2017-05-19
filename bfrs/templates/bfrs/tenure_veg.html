@@ -6,7 +6,7 @@
             {% if snapshot.tenures_burnt.exists %}
 		<th>Tenure</th>
 		<th>Area (ha)</th>
-		{% for area in snapshot.tenures_burnt.all %}
+		{% for area in snapshot.tenures_burnt.all|qs_order_by:"id" %}
 		<tr>
 			<td>{{ area.tenure }}</td>
 			<td>{{ area.area }}</td>
@@ -34,13 +34,13 @@
 
                 <tr>
 			<td><input id="id_tenure_1" name="ucl_tenure" type="text" value="Unallocated Crown Land"></td>
-                        <td><input id="id_area_1" name="ucl_area" type="number" min="0" max="1000" style="width:50%;" value="{{ object.tenures_burnt.all|tenures_burnt:"Unallocated Crown Land" }}"></td>
-			<td><input id="id_area_perc_1" type="number" min="0" max="100" step="0.1" style="width:50%;"></td>
+                        <td><input id="id_area_1" name="ucl_area" type="number" min="0" max="{{ object.sss_data_to_dict.area.other_area|floatformat:"0" }}" value="{{ object.tenures_burnt.all|tenures_burnt:"Unallocated Crown Land" }}"></td>
+			<td><input id="id_area_perc_1" type="number" min="0" max="100" step="0.1"></td>
                 </tr>
                 <tr>
 			<td><input id="id_tenure_2" name="unalloc_other_tenure" type="text" value="Other"></td>
-                        <td><input id="id_area_2" name="unalloc_other_area" type="number" min="0" max="1000" style="width:50%;" value="{{ object.tenures_burnt.all|tenures_burnt:"Other" }}"></td>
-			<td><input id="id_area_perc_2" name="unalloc_other_area_perc" type="number" min="0" max="100" step="0.1" style="width:50%;"></td>
+                        <td><input id="id_area_2" name="unalloc_other_area" type="number" min="0" max="{{ object.sss_data_to_dict.area.other_area|floatformat:"0" }}" value="{{ object.tenures_burnt.all|tenures_burnt:"Other" }}"></td>
+			<td><input id="id_area_perc_2" name="unalloc_other_area_perc" type="number" min="0" max="100" step="0.1"></td>
                 </tr>
             </tbody>
         </table>
@@ -55,7 +55,7 @@ $("#id_tenure_1,#id_tenure_2").mousedown(function(e){ e.preventDefault(); });
 
 //$("#id_ucl_area").prop('disabled', true);
 
-var total_other_area = {{ object.sss_data_to_dict.area.other_area }};
+var total_other_area = {{ object.sss_data_to_dict.area.other_area|floatformat:"0" }};
 //var total_other_area = 1000.0;
 //$("#id_area_1").val(total_other_area);
 

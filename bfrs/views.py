@@ -803,8 +803,10 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
             area_burnt_formset      = AreaBurntFormSet(instance=self.object, prefix='area_burnt_fs')
 
         #import ipdb; ipdb.set_trace()
+        snapshot = deserialize_bushfire('final', self.object) if self.object.final_snapshot else None
         if is_external_user(self.request.user):
             is_authorised = True # template will display non-editable text
+            snapshot = self.object
         elif self.can_maintain_data: # or self.request.user.is_superuser:
             is_authorised = False
         else:
@@ -815,7 +817,7 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
                         'injury_formset': injury_formset,
                         'damage_formset': damage_formset,
                         'is_authorised': is_authorised,
-                        'snapshot': deserialize_bushfire('final', self.object) if self.object.final_snapshot else None, #bushfire.snapshot,
+                        'snapshot': self.object,
                         'final': True,
                         'can_maintain_data': self.can_maintain_data,
             })
