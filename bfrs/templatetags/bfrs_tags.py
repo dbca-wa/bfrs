@@ -186,38 +186,23 @@ def yesno(value, arg=None):
         return no
 
 @register.filter
-def dispatch(value):
-    """
-    Usage::
-
-        {{ value|assistance}}
-    """
-    #import ipdb; ipdb.set_trace()
-    if isinstance(value, (str, unicode)):
-        value = eval(value)
-
-    if Bushfire.DISPATCH_PW_YES==value:
-        return Bushfire.DISPATCH_PW_CHOICES[Bushfire.DISPATCH_PW_YES-1][1]
-    if Bushfire.DISPATCH_PW_NO==value:
-        return Bushfire.DISPATCH_PW_CHOICES[Bushfire.DISPATCH_PW_NO-1][1]
-    return Bushfire.DISPATCH_PW_CHOICES[Bushfire.DISPATCH_PW_MONITORING-1][1]
-
-
-@register.filter
 def assistance(value):
     """
     Usage::
 
         {{ value|assistance}}
     """
-    if isinstance(value, (str, unicode)):
-        value = eval(value)
+    try:
+        if isinstance(value, (str, unicode)):
+            value = eval(value)
 
-    if Bushfire.ASSISTANCE_YES==value:
-        return Bushfire.ASSISTANCE_CHOICES[Bushfire.ASSISTANCE_YES-1][1]
-    if Bushfire.ASSISTANCE_NO==value:
-        return Bushfire.ASSISTANCE_CHOICES[Bushfire.ASSISTANCE_NO-1][1]
-    return Bushfire.ASSISTANCE_CHOICES[Bushfire.ASSISTANCE_UNKNOWN-1][1]
+        if Bushfire.ASSISTANCE_YES==value:
+            return Bushfire.ASSISTANCE_CHOICES[Bushfire.ASSISTANCE_YES-1][1]
+        if Bushfire.ASSISTANCE_NO==value:
+            return Bushfire.ASSISTANCE_CHOICES[Bushfire.ASSISTANCE_NO-1][1]
+        return Bushfire.ASSISTANCE_CHOICES[Bushfire.ASSISTANCE_UNKNOWN-1][1]
+    except:
+        return None
 
 @register.filter
 def ignition(value):
@@ -226,12 +211,15 @@ def ignition(value):
 
         {{ value|ignition}}
     """
-    if isinstance(value, (str, unicode)):
-        value = eval(value)
+    try:
+        if isinstance(value, (str, unicode)):
+            value = eval(value)
 
-    if Bushfire.IGNITION_POINT_PRIVATE==value:
-        return Bushfire.IGNITION_POINT_CHOICES[Bushfire.IGNITION_POINT_PRIVATE-1][1]
-    return Bushfire.IGNITION_POINT_CHOICES[Bushfire.IGNITION_POINT_CROWN-1][1]
+        if Bushfire.IGNITION_POINT_PRIVATE==value:
+            return Bushfire.IGNITION_POINT_CHOICES[Bushfire.IGNITION_POINT_PRIVATE-1][1]
+        return Bushfire.IGNITION_POINT_CHOICES[Bushfire.IGNITION_POINT_CROWN-1][1]
+    except:
+        return None
 
 @register.filter
 def cause_state(value):
@@ -240,12 +228,15 @@ def cause_state(value):
 
         {{ value|cause_state}}
     """
-    if isinstance(value, (str, unicode)):
-        value = eval(value)
+    try:
+        if isinstance(value, (str, unicode)):
+            value = eval(value)
 
-    if Bushfire.CAUSE_STATE_POSSIBLE==value:
-        return Bushfire.CAUSE_STATE_CHOICES[Bushfire.CAUSE_STATE_POSSIBLE-1][1]
-    return Bushfire.CAUSE_STATE_CHOICES[Bushfire.CAUSE_STATE_KNOWN-1][1]
+        if Bushfire.CAUSE_STATE_POSSIBLE==value:
+            return Bushfire.CAUSE_STATE_CHOICES[Bushfire.CAUSE_STATE_POSSIBLE-1][1]
+        return Bushfire.CAUSE_STATE_CHOICES[Bushfire.CAUSE_STATE_KNOWN-1][1]
+    except:
+        return None
 
 #@register.filter
 #def bool(value):

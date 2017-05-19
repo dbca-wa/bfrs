@@ -146,7 +146,7 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
 
     @property
     def can_maintain_data(self):
-        return self.fssdrs_group in self.request.user.groups.all()
+        return self.fssdrs_group in self.request.user.groups.all() and not is_external_user(self.request.user)
 
     def get_queryset(self):
         if self.request.GET.has_key('report_status') and int(self.request.GET.get('report_status'))==Bushfire.STATUS_INVALIDATED:
@@ -594,11 +594,20 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
         else:
             is_authorised = bushfire.is_init_authorised
 
+        if bushfire.initial_snapshot:
+            snapshot = deserialize_bushfire('initial', bushfire)
+#        elif is_external_user(self.request.user):
+#            # no initial snapshot exists, view whatever is saved
+#            snapshot = bushfire
+        else:
+            snapshot = None
+
         context.update({'form': form,
                         'area_burnt_formset': area_burnt_formset,
                         'fire_behaviour_formset': fire_behaviour_formset,
                         'is_authorised': is_authorised,
-                        'snapshot': deserialize_bushfire('initial', bushfire) if bushfire.initial_snapshot else None,
+                        #'snapshot': deserialize_bushfire('initial', bushfire) if bushfire.initial_snapshot else None,
+                        'snapshot': snapshot,
                         'initial': True,
                         'is_external_user': is_external_user(self.request.user),
             })
@@ -616,7 +625,7 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
 
     @property
     def can_maintain_data(self):
-        return self.fssdrs_group in self.request.user.groups.all()
+        return self.fssdrs_group in self.request.user.groups.all() and not is_external_user(self.request.user)
 
     def get_initial(self):
         if self.object.time_to_control:

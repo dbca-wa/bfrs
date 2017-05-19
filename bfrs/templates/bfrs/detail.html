@@ -119,7 +119,7 @@
         <tr>
 			<th class="cbas">P&W Resource dispatched *<br><br><div class=div_dispatch_pw_date style="display: none;">Date and time of dispatch</div></th>
             <td colspan="2" class="cbas">
-                {% if is_authorised %} {{snapshot.dispatch_pw|dispatch}}{% if snapshot.dispatch_pw|dispatch == 'Yes' %}<br>{{snapshot.dispatch_pw_date}} {% endif %} {% else %} {{form.dispatch_pw}} {% endif %}<br>
+                {% if is_authorised %} {{snapshot.dispatch_pw|yesno:"Yes,No"}}{% if snapshot.dispatch_pw|yesno:"YesNo" == 'Yes' %}<br>{{snapshot.dispatch_pw_date}} {% endif %} {% else %} {{form.dispatch_pw}} {% endif %}<br>
 				<div class=div_dispatch_pw_date style="display: none;">{% if not is_authorised %} {{form.dispatch_pw_date}} {% endif %}</div>
 			</td>
 
