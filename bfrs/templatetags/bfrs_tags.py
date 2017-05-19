@@ -258,4 +258,26 @@ def is_none(string):
     """
     return '---' if string is None else string
 
+@register.filter(is_safe=False)
+def filter_tenures_burnt(qs, arg=None):
+    """
+    Usage::
+
+        {{ qs|filter_tenures_burnt }}
+    """
+    #import ipdb; ipdb.set_trace()
+    #return qs.exclude(tenure__name__in=['Unallocated Crown Land', 'Other'])
+    return qs.exclude(tenure__name__in=arg.split(','))
+
+@register.filter(is_safe=False)
+def tenures_burnt(qs, arg=None):
+    """
+    Usage::
+
+        {{ qs|filter_tenures_burnt }}
+    """
+    #import ipdb; ipdb.set_trace()
+    qs = qs.filter(tenure__name=arg)
+    return round(qs[0].area, 0) if qs else 0
+
 

@@ -1,0 +1,102 @@
+{% load bfrs_tags %}
+
+{% if is_authorised or action %}
+    <table class="table_fs" border="0" >
+        <tbody>
+            {% if snapshot.tenures_burnt.exists %}
+		<th>Tenure</th>
+		<th>Area (ha)</th>
+		{% for area in snapshot.tenures_burnt.all %}
+		<tr>
+			<td>{{ area.tenure }}</td>
+			<td>{{ area.area }}</td>
+		</tr>
+		{% endfor %}
+            {% else %}
+                <p> No Tenures</p>
+            {% endif %}
+        </tbody>
+    </table>
+{% else %}
+    <div id="id_areas_burnt" class="row formset area-burnt-formset">
+        <table class="table_fs" border="0">
+            <tbody>
+                <th>Tenure</th>
+                <th>Area (ha)</th>
+                <th>% Area</th>
+
+                {% for fs in object.tenures_burnt.all|filter_tenures_burnt:"Unallocated Crown Land,Other" %}
+                <tr>
+                  <td>{{ fs.tenure }}</td>
+                  <td>{{ fs.area }}</td>
+                </tr>
+                {% endfor %}
+
+                <tr>
+			<td><input id="id_tenure_1" name="ucl_tenure" type="text" value="Unallocated Crown Land"></td>
+                        <td><input id="id_area_1" name="ucl_area" type="number" min="0" max="1000" style="width:50%;" value="{{ object.tenures_burnt.all|tenures_burnt:"Unallocated Crown Land" }}"></td>
+			<td><input id="id_area_perc_1" type="number" min="0" max="100" step="0.1" style="width:50%;"></td>
+                </tr>
+                <tr>
+			<td><input id="id_tenure_2" name="unalloc_other_tenure" type="text" value="Other"></td>
+                        <td><input id="id_area_2" name="unalloc_other_area" type="number" min="0" max="1000" style="width:50%;" value="{{ object.tenures_burnt.all|tenures_burnt:"Other" }}"></td>
+			<td><input id="id_area_perc_2" name="unalloc_other_area_perc" type="number" min="0" max="100" step="0.1" style="width:50%;"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+{% endif %}
+
+<script>
+
+// Make formset records uneditable
+//$("#id_areas_burnt").not("#id_ucl_area,#id_unalloc_other_area").mousedown(function(e){ e.preventDefault(); });
+$("#id_tenure_1,#id_tenure_2").mousedown(function(e){ e.preventDefault(); });
+
+//$("#id_ucl_area").prop('disabled', true);
+
+var total_other_area = {{ object.sss_data_to_dict.area.other_area }};
+//var total_other_area = 1000.0;
+//$("#id_area_1").val(total_other_area);
+
+
+$('#id_area_1').on('change', function() {
+    var area = $("#id_area_1").val() || 0;
+    var area_perc = 100.0 * area/total_other_area
+    $("#id_area_perc_1").val( (area_perc).toFixed(1) );
+
+    $("#id_area_2").val( ((100.0 - area_perc)/100.0 * total_other_area).toFixed(0) );
+    $("#id_area_perc_2").val( (100.0 - area_perc).toFixed(1) );
+}).change();
+
+$('#id_area_2').on('change', function() {
+    var area = $("#id_area_2").val() || 0;
+    var area_perc = 100.0 * area/total_other_area
+    $("#id_area_perc_2").val((area_perc).toFixed(1));
+
+    $("#id_area_1").val( ((100.0 - area_perc)/100.0 * total_other_area).toFixed(0) );
+    $("#id_area_perc_1").val( (100.0 - area_perc).toFixed(1) );
+}).change();
+
+$('#id_area_perc_1').on('change', function() {
+    var area_perc = $("#id_area_perc_1").val() || 100.0 * $("#id_area_1").val()/total_other_area;
+    var area = area_perc * total_other_area / 100.0
+    $("#id_area_1").val( (area).toFixed(0) );
+
+    $("#id_area_2").val( ((100.0 - area_perc)/100.0 * total_other_area).toFixed(0) );
+    $("#id_area_perc_2").val( (100.0 - area_perc).toFixed(1) );
+}).change();
+
+$('#id_area_perc_2').on('change', function() {
+    var area_perc = $("#id_area_perc_2").val() || 100.0 * $("#id_area_2").val()/total_other_area;
+    var area = area_perc * total_other_area / 100.0
+    $("#id_area_2").val( (area).toFixed(0) );
+
+    $("#id_area_1").val( ((100.0 - area_perc)/100.0 * total_other_area).toFixed(0) );
+    $("#id_area_perc_1").val( (100.0 - area_perc).toFixed(1) );
+}).change();
+
+
+</script>
+
+

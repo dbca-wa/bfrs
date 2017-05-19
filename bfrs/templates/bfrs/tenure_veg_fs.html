@@ -40,13 +40,8 @@
                 <th>Tenure</th>
                 <th>Area (ha)</th>
                 <th></th>
-                {% if area_burnt_formset.all %}
+                {% if area_burnt_formset %}
                 {% for fs in area_burnt_formset %}
-                    {% comment %}
-                    {% for hidden in fs.hidden_fields %}
-                        {{ hidden }}
-                    {% endfor %}
-                    {% endcomment %}
                 <tr>
                 <fieldset disabled="disabled">
                 <td>{{ fs.tenure }}</td>

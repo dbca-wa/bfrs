@@ -27,7 +27,7 @@ from bfrs.forms import (ProfileForm, BushfireFilterForm, BushfireForm, BushfireC
         AreaBurntFormSet, InjuryFormSet, DamageFormSet, FireBehaviourFormSet,
     )
 from bfrs.utils import (breadcrumbs_li,
-        update_areas_burnt, update_areas_burnt_fs, create_areas_burnt, update_damage_fs, update_injury_fs, update_fire_behaviour_fs,
+        update_areas_burnt, create_areas_burnt, update_damage_fs, update_injury_fs, update_fire_behaviour_fs,
         export_final_csv, export_excel,
         update_status, serialize_bushfire, deserialize_bushfire,
         rdo_email, pvs_email, fpc_email, pica_email, pica_sms, police_email, dfes_email, fssdrs_email,
@@ -639,6 +639,7 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
         form_class = self.get_form_class()
         form = self.get_form(form_class)
 
+	#import ipdb; ipdb.set_trace()
         # Authorise the FINAL report
         if self.request.POST.has_key('action') and self.object.report_status==Bushfire.STATUS_INITIAL_AUTHORISED:
             action = self.request.POST.get('action')
@@ -731,21 +732,32 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
         action = None
 
         if area_burnt_formset:
-            areas_burnt_updated = update_areas_burnt_fs(self.object, area_burnt_formset)
+            #areas_burnt_updated = update_areas_burnt_fs(self.object, area_burnt_formset)
             injury_updated = update_injury_fs(self.object, injury_formset)
             damage_updated = update_damage_fs(self.object, damage_formset)
 
-            if not areas_burnt_updated:
-                messages.error(request, 'There was an error saving Areas Burnt.')
-                return redirect_referrer
+            #if not areas_burnt_updated:
+            #    messages.error(request, 'There was an error saving Areas Burnt.')
+            #    return redirect_referrer
 
-            elif not injury_updated:
+            if not injury_updated:
                 messages.error(request, 'There was an error saving Injury.')
                 return redirect_referrer
 
             elif not damage_updated:
                 messages.error(request, 'There was an error saving Damage.')
                 return redirect_referrer
+
+	#import ipdb; ipdb.set_trace()
+        # append/update 'Other' areas_burnt
+        if self.request.POST.has_key('ucl_area') and self.request.POST.has_key('unalloc_other_area'):
+            ucl_tenure = self.request.POST.get('ucl_tenure')
+            ucl_area = self.request.POST.get('ucl_area')
+            self.object.tenures_burnt.update_or_create(tenure=Tenure.objects.get(name=ucl_tenure), defaults={"area": ucl_area})
+
+            unalloc_other_tenure = self.request.POST.get('unalloc_other_tenure')
+            unalloc_other_area = self.request.POST.get('unalloc_other_area')
+            self.object.tenures_burnt.update_or_create(tenure=Tenure.objects.get(name=unalloc_other_tenure), defaults={"area": unalloc_other_area})
 
         # This section to Authorise Final report, placed here to allow any changes to be cleaned and saved first - effectively the 'Authorise' btn is a 'save and submit'
         if self.request.POST.has_key('authorise_final'):
