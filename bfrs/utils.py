@@ -4,6 +4,7 @@ from django.db import IntegrityError, transaction
 from django.http import HttpResponse
 from django.core.mail import send_mail
 from django.conf import settings
+from django.contrib.auth.models import User, Group
 import json
 import pytz
 
@@ -33,6 +34,13 @@ def breadcrumbs_li(links):
     # Add the last item.
     crumbs += li_str_last.format(links[-1][1])
     return crumbs
+
+def fssdrs_group():
+    return Group.objects.get(name='FSS Datasets and Reporting Services')
+
+def can_maintain_data(user):
+    return fssdrs_group() in user.groups.all() and not is_external_user(user)
+
 
 def is_external_user(user):
     try:

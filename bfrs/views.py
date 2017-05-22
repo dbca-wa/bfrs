@@ -31,7 +31,7 @@ from bfrs.utils import (breadcrumbs_li,
         export_final_csv, export_excel,
         update_status, serialize_bushfire, deserialize_bushfire,
         rdo_email, pvs_email, fpc_email, pica_email, pica_sms, police_email, dfes_email, fssdrs_email,
-        invalidate_bushfire, is_external_user,
+        invalidate_bushfire, is_external_user, can_maintain_data,
     )
 from django.db import IntegrityError, transaction
 from django.contrib import messages
@@ -140,13 +140,13 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
     filterset_class = BushfireFilter
     template_name = 'bfrs/bushfire.html'
 
-    @property
-    def fssdrs_group(self):
-        return Group.objects.get(name='FSS Datasets and Reporting Services')
-
-    @property
-    def can_maintain_data(self):
-        return self.fssdrs_group in self.request.user.groups.all() and not is_external_user(self.request.user)
+#    @property
+#    def fssdrs_group(self):
+#        return Group.objects.get(name='FSS Datasets and Reporting Services')
+#
+#    @property
+#    def can_maintain_data(self):
+#        return self.fssdrs_group in self.request.user.groups.all() and not is_external_user(self.request.user)
 
     def get_queryset(self):
         if self.request.GET.has_key('report_status') and int(self.request.GET.get('report_status'))==Bushfire.STATUS_INVALIDATED:
@@ -279,7 +279,7 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
         context['form'] = BushfireFilterForm(initial=initial)
         context['object_list'] = self.object_list.order_by('-modified') # passed by default, but we are (possibly) updating, if profile exists!
         context['sss_url'] = settings.SSS_URL
-        context['can_maintain_data'] = self.can_maintain_data
+        context['can_maintain_data'] = can_maintain_data(self.request.user)
         context['is_external_user'] = is_external_user(self.request.user)
         return context
 
@@ -341,7 +341,7 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
     def post(self, request, *args, **kwargs):
 
         if is_external_user(self.request.user):
-            return TemplateResponse(request, 'bfrs/error.html', context={'is_external_user': True, 'status':405}, status=405)
+            return TemplateResponse(request, 'bfrs/error.html', context={'is_external_user': True, 'status':401}, status=401)
 
         if self.request.POST.has_key('sss_create'):
             return self.render_to_response(self.get_context_data())
@@ -375,7 +375,7 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
     def form_valid(self, request, form, fire_behaviour_formset, kwargs):
 
         if is_external_user(self.request.user):
-            return TemplateResponse(request, 'bfrs/error.html', context={'is_external_user': True, 'status':405}, status=405)
+            return TemplateResponse(request, 'bfrs/error.html', context={'is_external_user': True, 'status':401}, status=401)
 
         self.object = form.save(commit=False)
         self.object.creator = request.user #1 #User.objects.all()[0] #request.user
@@ -525,7 +525,7 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
     def form_valid(self, request, form, area_burnt_formset, fire_behaviour_formset):
 
         if is_external_user(self.request.user):
-            return TemplateResponse(request, 'bfrs/error.html', context={'is_external_user': True, 'status':405}, status=405)
+            return TemplateResponse(request, 'bfrs/error.html', context={'is_external_user': True, 'status':401}, status=401)
 
         self.object = form.save(commit=False)
         if not self.object.creator:
@@ -533,13 +533,13 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
         self.object.modifier = request.user
 
         self.object.save()
-        areas_burnt_updated = update_areas_burnt_fs(self.object, area_burnt_formset)
+        #areas_burnt_updated = update_areas_burnt_fs(self.object, area_burnt_formset)
         fire_behaviour_updated = update_fire_behaviour_fs(self.object, fire_behaviour_formset)
 
         redirect_referrer =  HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-        if not areas_burnt_updated:
-            messages.error(request, 'There was an error saving Areas Burnt.')
-            return redirect_referrer
+#        if not areas_burnt_updated:
+#            messages.error(request, 'There was an error saving Areas Burnt.')
+#            return redirect_referrer
 
         if not fire_behaviour_updated:
             messages.error(request, 'There was an error saving Fuel Behaviour.')
@@ -619,13 +619,13 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
     form_class = BushfireForm
     template_name = 'bfrs/final.html'
 
-    @property
-    def fssdrs_group(self):
-        return Group.objects.get(name='FSS Datasets and Reporting Services')
-
-    @property
-    def can_maintain_data(self):
-        return self.fssdrs_group in self.request.user.groups.all() and not is_external_user(self.request.user)
+#    @property
+#    def fssdrs_group(self):
+#        return Group.objects.get(name='FSS Datasets and Reporting Services')
+#
+#    @property
+#    def can_maintain_data(self):
+#        return self.fssdrs_group in self.request.user.groups.all() and not is_external_user(self.request.user)
 
     def get_initial(self):
         if self.object.time_to_control:
@@ -723,7 +723,7 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
     def form_valid(self, request, form, area_burnt_formset=None, injury_formset=None, damage_formset=None):
 
         if is_external_user(self.request.user):
-            return TemplateResponse(request, 'bfrs/error.html', context={'is_external_user': True, 'status':405}, status=405)
+            return TemplateResponse(request, 'bfrs/error.html', context={'is_external_user': True, 'status':401}, status=401)
 
         redirect_referrer =  HttpResponseRedirect(request.META.get('HTTP_REFERER'))
         self.object = form.save(commit=False)
@@ -807,7 +807,7 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
         if is_external_user(self.request.user):
             is_authorised = True # template will display non-editable text
             snapshot = self.object
-        elif self.can_maintain_data: # or self.request.user.is_superuser:
+        elif can_maintain_data(self.request.user): # or self.request.user.is_superuser:
             is_authorised = False
         else:
             is_authorised = self.object.is_final_authorised
@@ -819,7 +819,7 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
                         'is_authorised': is_authorised,
                         'snapshot': self.object,
                         'final': True,
-                        'can_maintain_data': self.can_maintain_data,
+                        'can_maintain_data': can_maintain_data(self.request.user),
             })
         return context
 

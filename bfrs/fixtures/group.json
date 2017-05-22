@@ -51,5 +51,25 @@
             ["view_district", "bfrs", "district"]
         ]
     }
+},
+{
+    "model": "auth.group",
+    "pk": 2,
+    "fields": {
+        "name": "External User",
+        "permissions": [
+            ["view_agency", "bfrs", "agency"],
+            ["view_areaburnt", "bfrs", "areaburnt"],
+            ["view_bushfire", "bfrs", "bushfire"],
+            ["view_cause", "bfrs", "cause"],
+            ["view_damage", "bfrs", "damage"],
+            ["view_firebehaviour", "bfrs", "firebehaviour"],
+            ["view_injury", "bfrs", "injury"],
+            ["view_profile", "bfrs", "profile"],
+            ["view_snapshothistory", "bfrs", "snapshothistory"],
+            ["view_region", "bfrs", "region"],
+            ["view_district", "bfrs", "district"]
+        ]
+    }
 }
 ]
