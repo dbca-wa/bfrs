@@ -10,7 +10,7 @@ from bfrs.utils import update_areas_burnt, invalidate_bushfire, serialize_bushfi
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point, GEOSGeometry, Polygon, MultiPolygon, GEOSException
 from tastypie.http import HttpBadRequest
-from tastypie.exceptions import ImmediateHttpResponse
+from tastypie.exceptions import ImmediateHttpResponse, Unauthorized
 import json
 
 """
@@ -52,6 +52,26 @@ def generate_meta(klass):
         'authorization': Authorization(),
         'always_return_data': True
     })
+
+#class BFRSUserAuthorization(Authorization):
+#    def create_detail(self, object_list, bundle):
+#        import ipdb; ipdb.set_trace()
+#        if is_external_user(bundle.request.user):
+#            raise Unauthorized("Create Not Permitted.")
+#        return True
+#
+#    def update_detail(self, object_list, bundle):
+#        import ipdb; ipdb.set_trace()
+#        if is_external_user(bundle.request.user):
+#            raise Unauthorized("Update Not Permitted.")
+#        return True
+#
+#    def delete_list(self, object_list, bundle):
+#        # Sorry user, no deletes for you!
+#        raise Unauthorized("Delete Not Permitted.")
+#
+#    def delete_detail(self, object_list, bundle):
+#        raise Unauthorized("Delete Not Permitted.")
 
 
 class APIResource(ModelResource):
@@ -138,6 +158,7 @@ class BushfireResource(APIResource):
         queryset = Bushfire.objects.all()
         resource_name = 'bushfire'
         authorization= Authorization()
+        #authorization= BFRSUserAuthorization()
         #fields = ['origin_point', 'fire_boundary', 'area', 'fire_position']
         fields = ['origin_point', 'fire_boundary']
 
@@ -150,18 +171,27 @@ class BushfireResource(APIResource):
         Converts the json string format to the one required by tastypie's full_hydrate() method
         converts the string: [11,-12] --> POINT (11 -12)
         """
+        if is_external_user(bundle.request.user):
+            return bundle
+
         if bundle.data.has_key('origin_point') and isinstance(bundle.data['origin_point'], list):
             bundle.data['origin_point'] = Point(bundle.data['origin_point']).__str__()
         return bundle
 
     def hydrate_fire_boundary(self, bundle):
         #import ipdb; ipdb.set_trace()
+        if is_external_user(bundle.request.user):
+            return bundle
+
         if bundle.data.has_key('fire_boundary') and isinstance(bundle.data['fire_boundary'], list):
             bundle.data['fire_boundary'] = MultiPolygon([Polygon(*p) for p in bundle.data['fire_boundary']]).__str__()
         return bundle
 
     def obj_update(self, bundle, **kwargs):
         #import ipdb; ipdb.set_trace()
+
+        if is_external_user(bundle.request.user):
+            return bundle
 
         self.full_hydrate(bundle)
         bundle.obj.sss_data = json.dumps(bundle.data)
@@ -202,7 +232,6 @@ class BushfireResource(APIResource):
 
         bundle.obj.save()
         return bundle
-
 
 
 

@@ -449,6 +449,7 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
                         'create': True,
                         'initial': True,
                         'is_external_user': is_external_user(self.request.user),
+                        'is_authorised': True if is_external_user(self.request.user) else False, # make template read-only
             })
         return context
 
@@ -590,7 +591,7 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
         fire_behaviour_formset = FireBehaviourFormSet(instance=self.object, prefix='fire_behaviour_fs')
 
         if is_external_user(self.request.user):
-            is_authorised = True # template will display non-editable text
+            is_authorised = True # will make template read-only
         else:
             is_authorised = bushfire.is_init_authorised
 
@@ -605,7 +606,7 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
         context.update({'form': form,
                         'area_burnt_formset': area_burnt_formset,
                         'fire_behaviour_formset': fire_behaviour_formset,
-                        'is_authorised': is_authorised,
+                        'is_authorised': is_authorised, # If True, will make template read-only
                         #'snapshot': deserialize_bushfire('initial', bushfire) if bushfire.initial_snapshot else None,
                         'snapshot': snapshot,
                         'initial': True,
@@ -805,7 +806,7 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
         #import ipdb; ipdb.set_trace()
         snapshot = deserialize_bushfire('final', self.object) if self.object.final_snapshot else None
         if is_external_user(self.request.user):
-            is_authorised = True # template will display non-editable text
+            is_authorised = True # will make template read-only
             snapshot = self.object
         elif can_maintain_data(self.request.user): # or self.request.user.is_superuser:
             is_authorised = False
