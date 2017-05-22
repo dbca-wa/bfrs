@@ -92,8 +92,8 @@ class Profile(models.Model):
     def __str__(self):
         return 'username: {}, region: {}, district: {}'.format(self.user.username, self.region, self.district)
 
-    class Meta:
-        default_permissions = ('add', 'change', 'delete', 'view')
+#    class Meta:
+#        default_permissions = ('add', 'change', 'delete', 'view')
 
 
 @python_2_unicode_compatible
@@ -108,7 +108,7 @@ class Region(models.Model):
 
     class Meta:
         ordering = ['name']
-        default_permissions = ('add', 'change', 'delete', 'view')
+#        default_permissions = ('add', 'change', 'delete', 'view')
 
     def __str__(self):
         return self.name
@@ -123,7 +123,7 @@ class District(models.Model):
 
     class Meta:
         ordering = ['name']
-        default_permissions = ('add', 'change', 'delete', 'view')
+#        default_permissions = ('add', 'change', 'delete', 'view')
 
     def __str__(self):
         return self.name
@@ -401,7 +401,7 @@ class Bushfire(Audit):
 
     class Meta:
         unique_together = ('district', 'year', 'fire_number')
-        default_permissions = ('add', 'change', 'delete', 'view')
+#        default_permissions = ('add', 'change', 'delete', 'view')
 
     def compare(self, obj):
         """
@@ -457,7 +457,7 @@ class Tenure(models.Model):
 
     class Meta:
         ordering = ['id']
-        default_permissions = ('add', 'change', 'delete', 'view')
+#        default_permissions = ('add', 'change', 'delete', 'view')
 
     def __str__(self):
         return self.name
@@ -469,7 +469,7 @@ class FuelType(models.Model):
 
     class Meta:
         ordering = ['id']
-        default_permissions = ('add', 'change', 'delete', 'view')
+#        default_permissions = ('add', 'change', 'delete', 'view')
 
     def __str__(self):
         return self.name
@@ -481,7 +481,7 @@ class Cause(models.Model):
 
     class Meta:
         ordering = ['id']
-        default_permissions = ('add', 'change', 'delete', 'view')
+#        default_permissions = ('add', 'change', 'delete', 'view')
 
     def __str__(self):
         return self.name
@@ -494,7 +494,7 @@ class Agency(models.Model):
 
     class Meta:
         ordering = ['id']
-        default_permissions = ('add', 'change', 'delete', 'view')
+#        default_permissions = ('add', 'change', 'delete', 'view')
 
     def __str__(self):
         return self.name
@@ -506,7 +506,7 @@ class InjuryType(models.Model):
 
     class Meta:
         ordering = ['id']
-        default_permissions = ('add', 'change', 'delete', 'view')
+#        default_permissions = ('add', 'change', 'delete', 'view')
 
     def __str__(self):
         return self.name
@@ -518,7 +518,7 @@ class DamageType(models.Model):
 
     class Meta:
         ordering = ['id']
-        default_permissions = ('add', 'change', 'delete', 'view')
+#        default_permissions = ('add', 'change', 'delete', 'view')
 
     def __str__(self):
         return self.name
@@ -541,7 +541,7 @@ class AreaBurnt(models.Model):
 
     class Meta:
         unique_together = ('bushfire', 'tenure',)
-        default_permissions = ('add', 'change', 'delete', 'view')
+#        default_permissions = ('add', 'change', 'delete', 'view')
 
 
 @python_2_unicode_compatible
@@ -555,7 +555,7 @@ class Injury(models.Model):
 
     class Meta:
         unique_together = ('bushfire', 'injury_type',)
-        default_permissions = ('add', 'change', 'delete', 'view')
+#        default_permissions = ('add', 'change', 'delete', 'view')
 
 
 @python_2_unicode_compatible
@@ -569,7 +569,7 @@ class Damage(models.Model):
 
     class Meta:
         unique_together = ('bushfire', 'damage_type',)
-        default_permissions = ('add', 'change', 'delete', 'view')
+#        default_permissions = ('add', 'change', 'delete', 'view')
 
 @python_2_unicode_compatible
 class FireBehaviour(models.Model):
@@ -583,7 +583,7 @@ class FireBehaviour(models.Model):
 
     class Meta:
         unique_together = ('bushfire', 'fuel_type',)
-        default_permissions = ('add', 'change', 'delete', 'view')
+#        default_permissions = ('add', 'change', 'delete', 'view')
 
 
 @python_2_unicode_compatible
@@ -617,7 +617,7 @@ class SnapshotHistory(Audit):
     def __str__(self):
         return 'Created {}, Creator {}'.format(self.created, self.creator)
 
-    class Meta:
-        default_permissions = ('add', 'change', 'delete', 'view')
+#    class Meta:
+#        default_permissions = ('add', 'change', 'delete', 'view')
 
 
