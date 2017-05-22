@@ -76,6 +76,8 @@
                 <span class="div_invalid_details" style="display: none; margin: 20px;">{% if not is_authorised %} Details{{form.invalid_details}} {% endif %}</span>
             </td>
 	    {{form.year.as_hidden}}
+            <th class="cbas" style="font-weight:normal;" width='17%'>Fire monitored only</th>
+	    <td colspan="1" class="cbas" >{% if is_authorised %} {{snapshot.fire_monitored_only|yesno:"Yes,No"}}{% else %} {{form.fire_monitored_only}} {% endif %}</td>
         </tr>
 
   </tbody>
@@ -97,7 +99,7 @@
 	    <th class="cbas" title=" Fire spread has been halted, though the fire may still be burning freely within the perimeter of the fire control lines">Date fire contained <i class="icon-info-sign icon-white"></i> *</th>
             <td class="cbas">{% if is_authorised %} {{snapshot.fire_contained_date}} {% else %} {{form.fire_contained_date}} {% endif %}</td>
 
-            <th class="cbas">Initial attack agency *<br><br><div class=div_other_first_attack style="display: none;">Other initial attack agency *</div></th>
+            <th class="cbas" id="id_th_initial_attack_agency">Initial attack agency *<br><br><div class=div_other_first_attack style="display: none;">Other initial attack agency *</div></th>
             <td colspan="1" class="cbas">
 		{% if is_authorised %} {{snapshot.first_attack}}<br>{% if snapshot.other_first_attack %} {{snapshot.other_first_attack}} {% endif %}{% else %} {{form.first_attack}} {% endif %}<br>
                 <div class=div_other_first_attack style="display: none;">{% if is_authorised %} {{snapshot.other_first_attack}} {% else %} {{form.other_first_attack}} {% endif %}</div>
@@ -108,7 +110,7 @@
 	    <th class="cbas" title="Complete perimeter of fire is saecured and no breakaway is expected">Date fire controlled <i class="icon-info-sign icon-white"></i> *</th>
             <td class="cbas">{% if is_authorised %} {{snapshot.fire_controlled_date}} {% else %} {{form.fire_controlled_date}} {% endif %}</td>
 
-            <th class="cbas">Initial controlling agency *<br><br><div class=div_other_initial_control style="display: none;">Other initial controlling agency *</div></th>
+            <th class="cbas" id="id_th_initial_controlling_agency">Initial controlling agency *<br><br><div class=div_other_initial_control style="display: none;">Other initial controlling agency *</div></th>
             <td colspan="1" class="cbas">
                 {% if is_authorised %} {{snapshot.initial_control}} <br>{% if snapshot.other_initial_control %} {{snapshot.other_initial_control}} {% endif %} {% else %} {{form.initial_control}} {% endif %}<br>
                 <div class=div_other_initial_control style="display: none;">{% if is_authorised %} {{snapshot.other_initial_control}} {% else %} {{form.other_initial_control}} {% endif %}</div>
@@ -119,7 +121,7 @@
 	    <th class="cbas" title='Placeholder ...'>Date fire safe <i class="icon-info-sign icon-white"></i> *</th>
             <td class="cbas">{% if is_authorised %} {{snapshot.fire_safe_date}} {% else %} {{form.fire_safe_date}} {% endif %}</td>
 
-            <th class="cbas">Final controlling agency *<br><br><div class=div_other_final_control style="display: none;">Other final controlling agency *</div></th>
+            <th class="cbas" id="id_th_final_controlling_agency">Final controlling agency *<br><br><div class=div_other_final_control style="display: none;">Other final controlling agency *</div></th>
             <td colspan="1" class="cbas">
                 {% if is_authorised %} {{snapshot.final_control}} <br>{% if snapshot.other_final_control %} {{snapshot.other_final_control}} {% endif %} {% else %} {{form.final_control}} {% endif %}<br>
                 <div class=div_other_final_control style="display: none;">{% if is_authorised %} {{snapshot.other_final_control}} {% else %} {{form.other_final_control}} {% endif %}</div>
@@ -304,6 +306,31 @@ $('#id_area_limit').on('change', function() {
 	    $("#id_area").attr('readonly','readonly').css('background-color' , '#DEDEDE');
 	}
 }).change();
+
+/* Fire monitored Only Labels*/
+$('#id_fire_monitored_only').on('change', function() {
+    if($("#id_fire_monitored_only").is(':checked')) { 
+        $('#id_th_initial_attack_agency').css("font-weight", "normal");
+        $("#id_th_initial_attack_agency").html("Initial attack agency");
+        $('#id_th_initial_controlling_agency').css("font-weight", "normal");
+        $("#id_th_initial_controlling_agency").html("Initial controlling agency");
+        $('#id_th_final_controlling_agency').css("font-weight", "normal");
+        $("#id_th_final_controlling_agency").html("Final controlling agency");
+    } else {
+        $('#id_th_initial_attack_agency').css("font-weight", "bold");
+        $("#id_th_initial_attack_agency").html("Initial attack agency *");
+        $('#id_th_initial_controlling_agency').css("font-weight", "bold");
+        $("#id_th_initial_controlling_agency").html("Initial controlling agency *");
+        $('#id_th_final_controlling_agency').css("font-weight", "bold");
+        $("#id_th_final_controlling_agency").html("Final controlling agency *");
+    }
+}).change();
+
+/* Fire not Found */
+$('#id_fire_not_found').on('change', function() {
+    fire_not_found();
+}).change();
+
 
 /* Fire not Found */
 $('#id_fire_not_found').on('change', function() {

@@ -33,13 +33,13 @@ SUBMIT_MANDATORY_FORMSETS= [
 
 AUTH_MANDATORY_FIELDS= [
     'fire_contained_date', 'fire_controlled_date', 'fire_safe_date',
-    'first_attack', 'initial_control', 'final_control',
+    #'first_attack', 'initial_control', 'final_control',
     'fire_level', 'arson_squad_notified', 'job_code',
 ]
 AUTH_MANDATORY_DEP_FIELDS= {
-    'first_attack': [True, 'other_first_attack'],
-    'initial_control': [True, 'other_initial_control'],
-    'final_control': [True, 'other_final_control'],
+    #'first_attack': [True, 'other_first_attack'],
+    #'initial_control': [True, 'other_initial_control'],
+    #'final_control': [True, 'other_final_control'],
     'area_limit': [True, 'area'],
 }
 AUTH_MANDATORY_FORMSETS= []
@@ -218,6 +218,7 @@ class Bushfire(Audit):
     origin_point = models.PointField(null=True, blank=True, editable=True, help_text='Optional.')
     fire_boundary = models.MultiPolygonField(srid=4326, null=True, blank=True, editable=True, help_text='Optional.')
     fire_not_found = models.BooleanField(default=False)
+    fire_monitored_only = models.BooleanField(default=False)
 
     assistance_req = models.PositiveSmallIntegerField(choices=ASSISTANCE_CHOICES, null=True, blank=True)
     assistance_details = models.CharField(max_length=64, null=True, blank=True)
