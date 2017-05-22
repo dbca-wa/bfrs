@@ -161,7 +161,10 @@
 
         <tr>
             <th class="cbas">Fuel and fire behaviour *</th>
-			<td colspan="5" class="cbas" >{% include "bfrs/fire_behaviour_fs.html" %}</td>
+			<td colspan="5" class="cbas" > 
+				{{form.fire_behaviour_unknown}} Unknown 
+				<div class="div_fire_behaviour_unknown" style="display: true;">{% include "bfrs/fire_behaviour_fs.html" %}</div>
+			</td>
         </tr>
 
         <tr>
@@ -236,13 +239,20 @@
         </tr>
 
         <tr>
-            <th class="cbas">Fire Cause *<br><br><br><br><div class=div_cause style="visibility: hidden;">Other Cause *</div></th>
+            <th class="cbas">Fire Cause *<br><br><br><br>
+				<div class=div_cause style="display: none;">Other Cause *</div>
+				<div class=div_cause_escape style="display: none;">Prescribed Burn ID *</div>
+			</th>
 			<td colspan="2" class="cbas">
 				{% if is_authorised %} {{snapshot.cause_state|cause_state}} {% else %} {{form.cause_state}} {% endif %}<br>
                 {% if is_authorised %} {{snapshot.cause}} {% else %} {{form.cause}} {% endif %}<br><br>
 
-                <div class="div_cause" style="visibility: hidden;">
+                <div class="div_cause" style="display: none;">
                     {% if is_authorised %} {{snapshot.other_cause|is_none}} {% else %} {{form.other_cause}} {% endif %}
+				</div>
+
+                <div class="div_cause_escape" style="display: none;">
+                    {% if is_authorised %} {{snapshot.prescribed_burn_id|is_none}} {% else %} {{form.prescribed_burn_id}} {% endif %}
 				</div>
 
 			</td>
@@ -388,6 +398,16 @@ $('#id_park_trail_impacted_1').on('change', function() {
 	if($('#id_park_trail_impacted_1').is(':checked')) { $('.div_pvs').hide(); }
 }).change();
 
+/* Fire Behaviour Unknown */
+$('#id_fire_behaviour_unknown').on('change', function() {
+	if($('#id_fire_behaviour_unknown').is(':checked')) { 
+	    $('.div_fire_behaviour_unknown').hide(); 
+	} else {
+	    $('.div_fire_behaviour_unknown').show(); 
+	}
+}).change();
+
+
 /* Assistance Required */
 $('#id_assistance_req_0').on('change', function() {
 	if($('#id_assistance_req_0').is(':checked')) { $('.div_assist').show(); }
@@ -401,9 +421,20 @@ $('#id_cause').on('change', function() {
 	var cause = $('#id_cause :selected').text();
 	//console.log('Cause Type: ' + cause);
 	if (cause.indexOf('Other') > -1) {
-		$('.div_cause').css('visibility','visible');
+		$('.div_cause').show();
 	} else {
-		$('.div_cause').css('visibility','hidden');
+		$('.div_cause').hide();
+	}
+}).change();
+
+/* Fire Cause Escape */
+$('#id_cause').on('change', function() {
+	var cause = $('#id_cause :selected').text();
+	//console.log('Cause Type: ' + cause);
+	if (cause.indexOf('Escape P&W') > -1) {
+		$('.div_cause_escape').show();
+	} else {
+		$('.div_cause_escape').hide();
 	}
 }).change();
 

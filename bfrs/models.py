@@ -20,11 +20,12 @@ SUBMIT_MANDATORY_FIELDS= [
     'assistance_req', 'cause_state', 'cause', 'tenure',
 ]
 SUBMIT_MANDATORY_DEP_FIELDS= {
-    'dispatch_pw': [1, 'dispatch_pw_date'],
-    'dispatch_pw': [1, 'field_officer'],
-    'dispatch_aerial': [True, 'dispatch_aerial_date'],
-    'cause': ['Other (specify)', 'other_cause'],
-    'tenure': ['Other (specify)', 'other_tenure'],
+    'dispatch_pw': [[1, 'dispatch_pw_date'], [1, 'field_officer']],
+    #'dispatch_pw': [[1, 'field_officer']],
+    'dispatch_aerial': [[True, 'dispatch_aerial_date']],
+    'cause': [['Other (specify)', 'other_cause'], ['Escape P&W burning', 'prescribed_burn_id']],
+    #'cause': [['Escape P&W burning', 'prescribed_burn_id']],
+    'tenure': [['Other (specify)', 'other_tenure']],
 }
 SUBMIT_MANDATORY_FORMSETS= [
     'fire_behaviour'
@@ -54,11 +55,15 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
 
     missing = [field for field in fields if getattr(obj, field) is None or getattr(obj, field)=='']
 
-    for field, dep_set in dep_fields.iteritems():
-        if getattr(obj, field) and getattr(obj, field)==dep_set[0] and getattr(obj, dep_set[1]) is None:
-            missing.append(dep_set[1])
+    for field, dep_sets in dep_fields.iteritems():
+        for dep_set in dep_sets:
+            if getattr(obj, field) and getattr(obj, field)==dep_set[0] and getattr(obj, dep_set[1]) is None:
+                missing.append(dep_set[1])
 
     for fs in formsets:
+        if fs == 'fire_behaviour' and obj.fire_behaviour_unknown:
+            continue
+
         if getattr(obj, fs) is None or not getattr(obj, fs).all():
             missing.append(fs)
 
@@ -200,6 +205,7 @@ class Bushfire(Audit):
     cause = models.ForeignKey('Cause', null=True, blank=True)
     cause_state = models.PositiveSmallIntegerField(choices=CAUSE_STATE_CHOICES, null=True, blank=True)
     other_cause = models.CharField(verbose_name='Other Cause', max_length=64, null=True, blank=True)
+    prescribed_burn_id = models.CharField(verbose_name='Prescribed Burn ID', max_length=7, null=True, blank=True)
     tenure = models.ForeignKey('Tenure', null=True, blank=True)
     other_tenure = models.PositiveSmallIntegerField(choices=IGNITION_POINT_CHOICES, null=True, blank=True)
 

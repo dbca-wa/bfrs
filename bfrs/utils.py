@@ -300,7 +300,8 @@ def update_fire_behaviour_fs(bushfire, fire_behaviour_formset):
     try:
         with transaction.atomic():
             FireBehaviour.objects.filter(bushfire=bushfire).delete()
-            FireBehaviour.objects.bulk_create(new_fs_object)
+            if not bushfire.fire_behaviour_unknown:
+                FireBehaviour.objects.bulk_create(new_fs_object)
     except IntegrityError:
         return 0
 

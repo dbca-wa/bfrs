@@ -252,10 +252,10 @@ class BushfireCreateBaseForm(forms.ModelForm):
                   'media_alert_req', 'park_trail_impacted', 'fire_position', 'fire_position_override',
                   'fire_detected_date', 'dispatch_pw_date', 'dispatch_aerial_date',
                   'assistance_req', 'assistance_details', 'communications', 'other_info',
-                  'cause', 'cause_state', 'other_cause', 'tenure', 'other_tenure',
+                  'cause', 'cause_state', 'other_cause', 'prescribed_burn_id', 'tenure', 'other_tenure',
                   'days','hours',
                   'dispatch_pw', 'dispatch_aerial',
-                  'investigation_req',
+                  'investigation_req', 'fire_behaviour_unknown',
                   'area', 'area_unknown', 'origin_point_str', 'origin_point', 'fire_boundary',
                  )
 
@@ -295,6 +295,10 @@ class BushfireCreateBaseForm(forms.ModelForm):
             if cause.name.upper().startswith('OTHER'):
                 if not self.cleaned_data['other_cause']:
                     self.add_error('other_cause', 'Must specify, if Fire Cause is Other.')
+            if cause.name.upper().startswith('ESCAPE P&W'):
+                if not self.cleaned_data['prescribed_burn_id']:
+                    self.add_error('prescribed_burn_id', 'Must specify, if Fire Cause is Escape P&W burning.')
+
 
         if self.cleaned_data['tenure']:
             tenure = self.cleaned_data['tenure']
