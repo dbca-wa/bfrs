@@ -15,6 +15,7 @@ from django.forms.models import inlineformset_factory
 from django.conf import settings
 from django.db.models import Q
 from django.contrib.auth.models import User, Group
+from django.http import JsonResponse
 
 from bfrs.models import (Profile, Bushfire,
         Region, District,
@@ -328,13 +329,9 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
 
         return initial
 
-    from django.http import JsonResponse
     def get(self, request, *args, **kwargs):
-#        area = None
-#	if self.request.GET.has_key('area'): # and eval(self.request.GET.get('area')) > 0:
-#            #area = round(eval(self.request.GET.get('area')), 1)
-#            data = {'area': 10}
-#            return self.JsonResponse(data)
+        if is_external_user(self.request.user):
+            return TemplateResponse(request, 'bfrs/error.html', context={'is_external_user': True, 'status':401}, status=401)
 
         return super(BushfireCreateView, self).get(request, *args, **kwargs)
 
@@ -461,9 +458,6 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
 
     def get_success_url(self):
         return reverse("home")
-
-#    def get(self, request, *args, **kwargs):
-#        return super(BushfireInitUpdateView, self).get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object() # needed for update
