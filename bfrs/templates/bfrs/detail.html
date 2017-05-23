@@ -318,7 +318,7 @@
       <p class="pull-right">
       {% if object.report_status != object.STATUS_INVALIDATED or not object.report_status %}
           <input type="submit" value="Save draft" class="btn btn-primary btn-success" name="_save" {% if is_authorised %}title="Submitted initial report cannot be edited" disabled{% endif %} />
-		  <input type="submit" value="Submit" class="btn btn-primary btn-success" name="submit_initial" {% if is_authorised %}title="Initial Report already submitted" disabled{% else %}title="Save and submit"{% endif %} />
+          <input type="submit" value="Submit" class="btn btn-primary btn-success" name="submit_initial" {% if is_authorised %}title="Initial Report already submitted" disabled{% else %}title="Save and submit"{% endif %} />
       {% endif %}
 
       <a id="id_cancel_btn" href="{% url 'main' %}" class="btn btn-primary btn-danger">Cancel</a>
@@ -351,7 +351,7 @@
 
 // prevent user from submitting the form multiple times
 $('form').submit(function() {
-  $(this).find("input[type='submit']").prop('disabled',true);
+  $(this).find("input[type='submit']").click(false);
 });
 
 // $('[id^=""]').hide() // starts with 
@@ -366,8 +366,6 @@ $('.selectpicker').selectpicker({
   liveSearch: true,
   dropupAuto: false,
 });
-
-
 
 /* dispatch PW */
 $('#id_dispatch_pw_0').on('change', function() {
