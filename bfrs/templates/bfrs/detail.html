@@ -212,30 +212,33 @@
         </tr>
 
         <tr>
-		    <th class="cbas">Assistance Required *<br><br><div class=div_assist style="display: none; font-weight:normal;">Details</div></th>
-            <td colspan="2" class="cbas">
-                {% if is_authorised %} {{ snapshot.assistance_req|assistance }} {% if snapshot.assistance_req %}<br>{{snapshot.assistance_details}} {% endif %}{% else %} {{form.assistance_req}} {% endif %}<br>
-		        <div class=div_assist style="display: none;">{% if is_authorised %}  {% else %} {{form.assistance_details}} {% endif %}</div>
-		    </td>
-
             <th class="cbas" style="font-weight:normal;">Estimated Time to Control</th>
-			<td colspan="2" class="cbas">
+			<td colspan="5" class="cbas">
 				{% if is_authorised %}
                   <span>{{snapshot.time_to_control_str}}</span>
 				{% else %}
                   <span>{{form.days}} Days<br>{{form.hours}} Hours</span>
 				{% endif %}
 			</td>
+        </tr>
 
+        <tr>
+		    <th class="cbas">Assistance Required *<br><br><div class=div_assist style="display: none; font-weight:normal;">Details</div></th>
+            <td colspan="5" class="cbas">
+                {% if is_authorised %} {{ snapshot.assistance_req|assistance }} {% if snapshot.assistance_req %}<br>{{snapshot.assistance_details}} {% endif %}{% else %} {{form.assistance_req}} {% endif %}<br>
+		        <div class=div_assist style="display: none;">{% if is_authorised %}  {% else %} {{form.assistance_details}} {% endif %}</div>
+		    </td>
         </tr>
 
 
         <tr>
             <th class="cbas" style="font-weight:normal;">Communications</th>
-            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.communications|is_none}} {% else %} {{form.communications}} {% endif %}</td>
+			<td colspan="5" class="cbas">{% if is_authorised %} {{snapshot.communications|is_none}} {% else %} <span>{{form.communications}}</span> {% endif %}</td>
 
+        </tr>
+        <tr>
             <th class="cbas" style="font-weight:normal;">Other information<br>(include Burn ID if cause is escape)</th>
-            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.other_info|is_none}} {% else %} {{form.other_info}} {% endif %}</td>
+            <td colspan="5" class="cbas">{% if is_authorised %} {{snapshot.other_info|is_none}} {% else %} {{form.other_info}} {% endif %}</td>
         </tr>
 
         <tr>
