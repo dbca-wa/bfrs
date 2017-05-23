@@ -349,6 +349,10 @@
 
 <script>
 
+// prevent user from submitting the form multiple times
+$('form').submit(function() {
+  $(this).find("input[type='submit']").prop('disabled',true);
+});
 
 // $('[id^=""]').hide() // starts with 
 $('[id$="_date"]').datetimepicker({ format: "Y-m-d H:i" }); //ends with
