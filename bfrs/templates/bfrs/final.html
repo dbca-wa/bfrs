@@ -292,6 +292,7 @@ $('.open-all').click(function(){
 
 /* Area Override */
 var orig_area = $("#id_area").val();
+$("#id_area").prop('min',0.0);
 if( !{{snapshot.fire_boundary|yesno:"true,false"}} ) { 
     $("#div_area_limit").show()
     $("#id_area").prop('max',2.0);
