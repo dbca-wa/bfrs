@@ -294,8 +294,10 @@ $('.open-all').click(function(){
 var orig_area = $("#id_area").val();
 if( !{{snapshot.fire_boundary|yesno:"true,false"}} ) { 
     $("#div_area_limit").show()
+    $("#id_area").prop('max',2.0);
 } else {
     $("#div_area_limit").hide()
+    $("#id_area").prop('max',null);
 }
 
 $('#id_area_limit').on('change', function() {
