@@ -99,6 +99,7 @@ class BushfireFilter(django_filters.FilterSet):
             ('report_status', 'Report Status'),
             ('fire_number', 'Search'),
         )
+
     def __init__(self, *args, **kwargs):
         super(BushfireFilter, self).__init__(*args, **kwargs)
 

@@ -307,12 +307,18 @@ class BushfireCreateBaseForm(forms.ModelForm):
                 if not self.cleaned_data['prescribed_burn_id']:
                     self.add_error('prescribed_burn_id', 'Must specify, if Fire Cause is Escape P&W burning.')
 
-
         if self.cleaned_data['tenure']:
             tenure = self.cleaned_data['tenure']
             if tenure.name.upper().startswith('OTHER'):
                 if self.cleaned_data.has_key('other_tenure') and not self.cleaned_data['other_tenure']:
                     self.add_error('other_tenure', 'Must specify, if Tenure of ignition point is Other.')
+
+        if self.cleaned_data.has_key('fire_detected_date') and self.cleaned_data['fire_detected_date']:
+            if self.cleaned_data.has_key('dispatch_pw_date') and self.cleaned_data['dispatch_pw_date'] and self.cleaned_data['dispatch_pw_date'] < self.cleaned_data['fire_detected_date']:
+                self.add_error('dispatch_pw_date', 'Datetime must not be before Fire Detected Datetime.')
+            if self.cleaned_data.has_key('dispatch_aerial_date') and self.cleaned_data['dispatch_aerial_date'] and self.cleaned_data['dispatch_aerial_date'] < self.cleaned_data['fire_detected_date']:
+                self.add_error('dispatch_aerial_date', 'Datetime must not be before Fire Detected Datetime.')
+
 
         return cleaned_data
 
