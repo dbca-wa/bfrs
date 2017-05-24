@@ -159,7 +159,7 @@ class BushfireForm(forms.ModelForm):
         model = Bushfire
         fields = ('fire_not_found', 'fire_monitored_only', 'invalid_details',
                   'region', 'district',
-                  'fire_contained_date', 'fire_controlled_date', 'fire_safe_date',
+                  'fire_detected_date', 'fire_contained_date', 'fire_controlled_date', 'fire_safe_date',
                   'first_attack', 'initial_control', 'final_control',
                   'other_first_attack', 'other_initial_control', 'other_final_control',
                   'area', 'area_limit', 'fire_level', 'arson_squad_notified', 'offence_no', 'job_code', 'reporting_year',
@@ -235,6 +235,18 @@ class BushfireForm(forms.ModelForm):
             if final_control and final_control.name.upper().startswith('OTHER'):
                 if not self.cleaned_data['other_final_control']:
                     self.add_error('other_final_control', 'Must specify, if Final control agency is Other.')
+
+        if self.cleaned_data.has_key('fire_detected_date') and self.cleaned_data['fire_detected_date']:
+            if self.cleaned_data.has_key('fire_contained_date') and self.cleaned_data['fire_contained_date'] and self.cleaned_data['fire_contained_date'] < self.cleaned_data['fire_detected_date']:
+                self.add_error('fire_contained_date', 'Datetime must not be before Fire Detected Datetime - {}.'.format(self.cleaned_data['fire_detected_date']))
+
+        if self.cleaned_data.has_key('fire_contained_date') and self.cleaned_data['fire_contained_date']:
+            if self.cleaned_data.has_key('fire_controlled_date') and self.cleaned_data['fire_controlled_date'] and self.cleaned_data['fire_controlled_date'] < self.cleaned_data['fire_contained_date']:
+                self.add_error('fire_controlled_date', 'Datetime must not be before Fire Contained Datetime.')
+
+        if self.cleaned_data.has_key('fire_controlled_date') and self.cleaned_data['fire_controlled_date']:
+            if self.cleaned_data.has_key('fire_safe_date') and self.cleaned_data['fire_safe_date'] and self.cleaned_data['fire_safe_date'] < self.cleaned_data['fire_controlled_date']:
+                self.add_error('fire_safe_date', 'Datetime must not be before Fire Controlled Datetime.')
 
         return cleaned_data
 

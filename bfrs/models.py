@@ -40,6 +40,8 @@ AUTH_MANDATORY_DEP_FIELDS= {
     #'first_attack': [True, 'other_first_attack'],
     #'initial_control': [True, 'other_initial_control'],
     #'final_control': [True, 'other_final_control'],
+    #'fire_contained_date': [[True, 'fire_controlled_date']],
+    #'fire_controlled_date': [[True, 'fire_safe_date']],
     'area_limit': [[True, 'area']],
 }
 AUTH_MANDATORY_FORMSETS= []
