@@ -425,6 +425,8 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
         request.session['refreshGokart'] = True
         request.session['region'] = self.object.region.id
         request.session['district'] = self.object.district.id
+        request.session['id'] = self.object.fire_number
+        request.session['action'] = "create"
         return HttpResponseRedirect(self.get_success_url())
 
     def get_context_data(self, **kwargs):
@@ -562,6 +564,11 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
 
                 return TemplateResponse(request, self.template_name, context=context)
 
+        request.session['refreshGokart'] = True
+        request.session['region'] = self.object.region.id
+        request.session['district'] = self.object.district.id
+        request.session['id'] = self.object.fire_number
+        request.session['action'] = "update"
 
         return HttpResponseRedirect(self.get_success_url())
 
@@ -778,6 +785,11 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
             # That is, if FSSDRS group update the final report after it has been authorised, we archive the existing data
             serialize_bushfire('final', action, self.object)
 
+        request.session['refreshGokart'] = True
+        request.session['region'] = self.object.region.id
+        request.session['district'] = self.object.district.id
+        request.session['id'] = self.object.fire_number
+        request.session['action'] = "update"
         return HttpResponseRedirect(self.get_success_url())
 
 
