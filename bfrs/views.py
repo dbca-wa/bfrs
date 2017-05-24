@@ -421,9 +421,9 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
 
                 return TemplateResponse(request, self.template_name, context=context)
 
-	    request.session['refreshGokart'] = True
-	    request.session['region'] = self.object.region.id
-	    request.session['district'] = self.object.district.id
+        request.session['refreshGokart'] = True
+        request.session['region'] = self.object.region.id
+        request.session['district'] = self.object.district.id
         return HttpResponseRedirect(self.get_success_url())
 
     def get_context_data(self, **kwargs):

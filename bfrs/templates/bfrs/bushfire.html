@@ -91,7 +91,7 @@
         {% if can_maintain_data %}
         <td align="center">
           {% if bushfire.report_status == bushfire.STATUS_FINAL_AUTHORISED %}
-		  <a href="#" onclick='openGokart({"region":{{bushfire.region.id}},"district":{{bushfire.district.id}},"bushfireid":"{{bushfire.fire_number}}" });' title="Open report in SSS"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-link icon-white"></i></a>
+		  <a href="#" onclick='openGokart({"action": "select", "region":{{bushfire.region.id}},"district":{{bushfire.district.id}},"bushfireid":"{{bushfire.fire_number}}" });' title="Open report in SSS"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-link icon-white"></i></a>
           {% elif bushfire.report_status == bushfire.STATUS_REVIEWED %}
 		  <a href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Final fire report reviewed on {{bushfire.reviewed_date}} by {{bushfire.reviewed_by}}"><span style="display:none">{{bushfire.report_status}}</span><font color="green"><i class="icon-ok icon-white"></i></font></a>
           {% endif %}
@@ -270,7 +270,7 @@ $(function(){
 
 //    if ({{request.session.refreshGokart|yesno:"true,false"}}) {
 //        //console.log("region " + {{request.session.region}} + " - district " + {{request.session.district}});
-//        gokart.call("open", {"region":{{request.session.region}}, "district":{{request.session.district}}, "refresh":true});
+//        gokart.call("open", {"action":"update", "region":{{request.session.region}}, "district":{{request.session.district}}, "refresh":true});
 //    }
 /* END - GoKart section */
 
