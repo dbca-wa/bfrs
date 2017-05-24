@@ -32,6 +32,7 @@
                 </tr>
                 {% endfor %}
 
+{% comment %}                
                 <tr>
 			<td><input id="id_tenure_1" name="ucl_tenure" type="text" value="Unallocated Crown Land"></td>
                         <td><input id="id_area_1" name="ucl_area" type="number" min="0" max="{{ object.sss_data_to_dict.area.other_area|floatformat:"0" }}" value="{{ object.tenures_burnt.all|tenures_burnt:"Unallocated Crown Land" }}"></td>
@@ -42,6 +43,7 @@
                         <td><input id="id_area_2" name="unalloc_other_area" type="number" min="0" max="{{ object.sss_data_to_dict.area.other_area|floatformat:"0" }}" value="{{ object.tenures_burnt.all|tenures_burnt:"Other" }}"></td>
 			<td><input id="id_area_perc_2" name="unalloc_other_area_perc" type="number" min="0" max="100" step="0.1"></td>
                 </tr>
+{% endcomment %}                
             </tbody>
         </table>
     </div>
