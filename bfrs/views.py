@@ -708,7 +708,6 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
             AreaBurntFormSet = inlineformset_factory(Bushfire, AreaBurnt, extra=0, min_num=0, validate_min=False, exclude=())
         area_burnt_formset      = AreaBurntFormSet(self.request.POST, prefix='area_burnt_fs')
 
-
         if form.is_valid():
             if form.cleaned_data['fire_not_found']:
                 return self.form_valid(request, form)

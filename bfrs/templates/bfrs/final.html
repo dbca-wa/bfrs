@@ -318,17 +318,21 @@ $('#id_fire_monitored_only').on('change', function() {
     if($("#id_fire_monitored_only").is(':checked')) { 
         $('#id_th_initial_attack_agency').css("font-weight", "normal");
         $("#id_th_initial_attack_agency").html("Initial attack agency");
+        /*
         $('#id_th_initial_controlling_agency').css("font-weight", "normal");
         $("#id_th_initial_controlling_agency").html("Initial controlling agency");
         $('#id_th_final_controlling_agency').css("font-weight", "normal");
         $("#id_th_final_controlling_agency").html("Final controlling agency");
+        */
     } else {
         $('#id_th_initial_attack_agency').css("font-weight", "bold");
         $("#id_th_initial_attack_agency").html("Initial attack agency *");
+        /*
         $('#id_th_initial_controlling_agency').css("font-weight", "bold");
         $("#id_th_initial_controlling_agency").html("Initial controlling agency *");
         $('#id_th_final_controlling_agency').css("font-weight", "bold");
         $("#id_th_final_controlling_agency").html("Final controlling agency *");
+        */
     }
 }).change();
 

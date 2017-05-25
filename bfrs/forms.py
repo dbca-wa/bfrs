@@ -195,11 +195,11 @@ class BushfireForm(forms.ModelForm):
             return cleaned_data
         if self.cleaned_data['fire_monitored_only']:
             self.cleaned_data['first_attack'] = None
-            self.cleaned_data['initial_control'] = None
-            self.cleaned_data['final_control'] = None
+            #self.cleaned_data['initial_control'] = None
+            #self.cleaned_data['final_control'] = None
             self.cleaned_data['other_first_attack'] = None
-            self.cleaned_data['other_initial_control'] = None
-            self.cleaned_data['other_final_control'] = None
+            #self.cleaned_data['other_initial_control'] = None
+            #self.cleaned_data['other_final_control'] = None
         else:
             self.cleaned_data['invalid_details'] = None
 
@@ -214,7 +214,7 @@ class BushfireForm(forms.ModelForm):
         if not self.cleaned_data['fire_level']:
             self.add_error('fire_level', 'Must specify fire level.')
 
-	if not self.cleaned_data['fire_monitored_only']:
+        if not self.cleaned_data['fire_monitored_only']:
             first_attack = self.cleaned_data['first_attack']
             if not first_attack:
                 self.add_error('first_attack', 'Must specify First attack agency.')
@@ -222,19 +222,19 @@ class BushfireForm(forms.ModelForm):
                 if not self.cleaned_data['other_first_attack']:
                     self.add_error('other_first_attack', 'Must specify, if Initial attack agency is Other.')
 
-            initial_control = self.cleaned_data['initial_control']
-            if not initial_control:
-                self.add_error('initial_control', 'Must specify Initial control agency.')
-            if initial_control and initial_control.name.upper().startswith('OTHER'):
-                if not self.cleaned_data['other_initial_control']:
-                    self.add_error('other_initial_control', 'Must specify, if Initial control agency is Other.')
+        initial_control = self.cleaned_data['initial_control']
+        if not initial_control:
+            self.add_error('initial_control', 'Must specify Initial control agency.')
+        if initial_control and initial_control.name.upper().startswith('OTHER'):
+            if not self.cleaned_data['other_initial_control']:
+                self.add_error('other_initial_control', 'Must specify, if Initial control agency is Other.')
 
-            final_control = self.cleaned_data['final_control']
-            if not final_control:
-                self.add_error('final_control', 'Must specify Final control agency.')
-            if final_control and final_control.name.upper().startswith('OTHER'):
-                if not self.cleaned_data['other_final_control']:
-                    self.add_error('other_final_control', 'Must specify, if Final control agency is Other.')
+        final_control = self.cleaned_data['final_control']
+        if not final_control:
+            self.add_error('final_control', 'Must specify Final control agency.')
+        if final_control and final_control.name.upper().startswith('OTHER'):
+            if not self.cleaned_data['other_final_control']:
+                self.add_error('other_final_control', 'Must specify, if Final control agency is Other.')
 
         if self.cleaned_data.has_key('fire_detected_date') and self.cleaned_data['fire_detected_date']:
             if self.cleaned_data.has_key('fire_contained_date') and self.cleaned_data['fire_contained_date'] and self.cleaned_data['fire_contained_date'] < self.cleaned_data['fire_detected_date']:

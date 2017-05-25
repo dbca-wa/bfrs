@@ -34,6 +34,7 @@ SUBMIT_MANDATORY_FORMSETS= [
 AUTH_MANDATORY_FIELDS= [
     'fire_contained_date', 'fire_controlled_date', 'fire_safe_date',
     #'first_attack', 'initial_control', 'final_control',
+    'initial_control', 'final_control',
     'fire_level', 'arson_squad_notified', 'job_code',
 ]
 AUTH_MANDATORY_DEP_FIELDS= {
