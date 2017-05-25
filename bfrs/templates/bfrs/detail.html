@@ -350,6 +350,9 @@
 
 <script>
 
+$("#id_hours").attr('min',0)
+$("#id_days").attr('min',0)
+
 // prevent user from submitting the form multiple times
 $('form').submit(function() {
   $(this).find("input[type='submit']").click(false);
