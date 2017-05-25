@@ -471,11 +471,10 @@ $('.open-all').click(function(){
 });
 
 /* Area Override */
+$('#id_area').val({{object.sss_data_to_dict.area.total_area}});
 $('#id_area_unknown').on('change', function() {
     if($("#id_area_unknown").is(':checked')) { 
 		$('.div_area').css('visibility','hidden');
-		//$('#id_area').val(0);
-		$('#id_area').val({{object.sss_data_to_dict.area.total_area}});
 	} else {
 		$('.div_area').css('visibility','visible');
 	}

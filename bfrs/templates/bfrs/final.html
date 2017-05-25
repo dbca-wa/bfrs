@@ -2,6 +2,7 @@
 {% load i18n %}
 {% load static from staticfiles %}
 {% load bfrs_tags %}
+{% load humanize %}
 
 {% block breadcrumbs %}
 <ul class="breadcrumb">
@@ -292,9 +293,10 @@ $('.open-all').click(function(){
 });
 
 /* Area Override */
+$('#id_area').val({{snapshot.sss_data_to_dict.area.total_area|floatformat:2}});
 var orig_area = $("#id_area").val();
 $("#id_area").prop('min',0.0);
-if( !{{snapshot.fire_boundary|yesno:"true,false"}} ) { 
+if( !{{snapshot.fire_boundary|yesno:"true,false"}} || {{snapshot.area}} < 2.0) { 
     $("#div_area_limit").show()
     $("#id_area").prop('max',2.0);
 } else {
