@@ -583,8 +583,8 @@ class Damage(models.Model):
 @python_2_unicode_compatible
 class FireBehaviour(models.Model):
     fuel_type = models.ForeignKey(FuelType)
-    ros = models.PositiveSmallIntegerField(verbose_name="ROS (m/h)", validators=[MinValueValidator(0)])
-    flame_height = models.DecimalField(verbose_name="Flame height (m)", max_digits=6, decimal_places=1, validators=[MinValueValidator(0)])
+    ros = models.PositiveSmallIntegerField(verbose_name="ROS (m/h)")
+    flame_height = models.DecimalField(verbose_name="Flame height (m)", max_digits=6, decimal_places=1)
     bushfire = models.ForeignKey(Bushfire, related_name='fire_behaviour')
 
     def __str__(self):
