@@ -391,11 +391,19 @@ class Bushfire(Audit):
         return 'Deg/Min/Sec ' + str(c.to_string('D% %M% %S% %H'))
 
     @property
+    def time_to_control_hours_part(self):
+        return self.time_to_control.seconds/3600 if self.time_to_control and self.time_to_control.seconds else 0
+
+    @property
+    def time_to_control_days_part(self):
+        return self.time_to_control.days if self.time_to_control and self.time_to_control.days else 0
+
+    @property
     def time_to_control_str(self):
         s = None
         if self.time_to_control:
             s = str(self.time_to_control.days) + ' Days' if self.time_to_control.days>0 else ''
-            s += str(self.time_to_control.seconds/3600) + ' Hours' if self.time_to_control.seconds>0 else ''
+            s += ' ' + str(self.time_to_control.seconds/3600) + ' Hours' if self.time_to_control.seconds>0 else ''
         return s if s else '-'
 
     def user_unicode_patch(self):

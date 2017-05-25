@@ -273,7 +273,7 @@ class BushfireCreateBaseForm(forms.ModelForm):
                   'fire_detected_date', 'dispatch_pw_date', 'dispatch_aerial_date',
                   'assistance_req', 'assistance_details', 'communications', 'other_info',
                   'cause', 'cause_state', 'other_cause', 'prescribed_burn_id', 'tenure', 'other_tenure',
-                  'days','hours',
+                  'days', 'hours', 'time_to_control',
                   'dispatch_pw', 'dispatch_aerial',
                   'investigation_req', 'fire_behaviour_unknown',
                   'area', 'area_unknown', 'origin_point_str', 'origin_point', 'fire_boundary',
@@ -331,6 +331,9 @@ class BushfireCreateBaseForm(forms.ModelForm):
             if self.cleaned_data.has_key('dispatch_aerial_date') and self.cleaned_data['dispatch_aerial_date'] and self.cleaned_data['dispatch_aerial_date'] < self.cleaned_data['fire_detected_date']:
                 self.add_error('dispatch_aerial_date', 'Datetime must not be before Fire Detected Datetime.')
 
+        hours = self.cleaned_data['hours'] if self.cleaned_data.has_key('hours') and self.cleaned_data['hours'] else 0
+        days = self.cleaned_data['days'] if self.cleaned_data.has_key('days') and self.cleaned_data['days'] else 0
+        self.cleaned_data['time_to_control'] = timedelta(days=days, hours=hours)
 
         return cleaned_data
 

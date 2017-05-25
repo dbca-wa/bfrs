@@ -462,6 +462,13 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
     def get_success_url(self):
         return reverse("home")
 
+    def get_initial(self):
+        initial = {
+            'hours': self.object.time_to_control_hours_part if self.object.time_to_control_hours_part > 0 else '',
+            'days': self.object.time_to_control_days_part if self.object.time_to_control_days_part > 0 else ''
+            }
+        return initial
+
     def post(self, request, *args, **kwargs):
         self.object = self.get_object() # needed for update
         form_class = self.get_form_class()
