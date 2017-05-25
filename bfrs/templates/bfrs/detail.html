@@ -189,7 +189,7 @@
                 {% if is_authorised %} SSS overide - {{snapshot.fire_position_override|yesno:"Yes,No"}} {% else %} {{form.fire_position_override}} SSS override{% endif %}
 			</td>
 
-            <th class="cbas" style="font-weight:normal;">Area of fire at arrival (ha)</th>
+            <th class="cbas">Area of fire at arrival (ha)</th>
             <td colspan="2" class="cbas">
 				{% comment %}
 				{% if is_authorised %} Unknown - {{snapshot.area_unknown|yesno:"Yes,No"}} {% else %} {{form.area_unknown}} Unknown{% endif %}<br>

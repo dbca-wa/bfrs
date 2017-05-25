@@ -72,7 +72,7 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
     # final fire boundary required for fires > 2 ha
     if not obj.area_limit and not obj.area_unknown:
         if not obj.area:
-            missing.append('Must upload fire boundary for area > 2ha')
+            missing.append("Must enter Area of Arrival, if area > 2ha")
 
     return missing
 
