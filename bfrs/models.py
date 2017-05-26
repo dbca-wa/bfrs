@@ -25,7 +25,7 @@ SUBMIT_MANDATORY_DEP_FIELDS= {
     'dispatch_aerial': [[True, 'dispatch_aerial_date']],
     'cause': [['Other (specify)', 'other_cause'], ['Escape P&W burning', 'prescribed_burn_id']],
     #'cause': [['Escape P&W burning', 'prescribed_burn_id']],
-    'tenure': [['Other (specify)', 'other_tenure']],
+    'tenure': [['Other', 'other_tenure']],
 }
 SUBMIT_MANDATORY_FORMSETS= [
     'fire_behaviour'
@@ -52,6 +52,18 @@ def current_finyear():
 
 
 def check_mandatory_fields(obj, fields, dep_fields, formsets):
+    """
+    Method to check all required fields have been fileds before allowing Submit/Authorise of report.
+
+    The report can be saved with missing data - so most fields are non-mandatory (as defined in the Model).
+    Idea is to fill in report over time as and when info becomes available.
+
+    However, the report cannot be Submitted/Authorosed unless a given set of fields have been filled.
+    
+    fields    - basic fields
+    dep_field - dependent fields (if one field has a value, check that the other has been filled)
+    formsets  - fields in formsets
+    """
     # getattr(obj, 'name') ==> obj.name (when property name is available as a string)
     if obj.fire_not_found:
         return []
@@ -60,8 +72,11 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
 
     for field, dep_sets in dep_fields.iteritems():
         for dep_set in dep_sets:
-            if getattr(obj, field) and getattr(obj, field)==dep_set[0] and getattr(obj, dep_set[1]) is None:
-                missing.append(dep_set[1])
+            # next line checks for normal Field or Enumerated list field (i.e. '.name')
+            if getattr(obj, field) and (getattr(obj, field)==dep_set[0] or (hasattr(getattr(obj, field), 'name') and getattr(obj, field).name==dep_set[0])):
+                if getattr(obj, dep_set[1]) is None or (isinstance(getattr(obj, dep_set[1]), (str, unicode)) and not getattr(obj, dep_set[1]).strip()):
+                    # field is unset or empty string
+                    missing.append(dep_set[1])
 
     for fs in formsets:
         if fs == 'fire_behaviour' and obj.fire_behaviour_unknown:
@@ -73,7 +88,7 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
     # final fire boundary required for fires > 2 ha
     if not obj.area_limit and not obj.area_unknown:
         if not obj.area:
-            missing.append("Must enter Area of Arrival, if area > 2ha")
+            missing.append("Must enter Area of Arrival, if area > {}ha".format(settings.AREA_THRESHOLD))
 
     return missing
 

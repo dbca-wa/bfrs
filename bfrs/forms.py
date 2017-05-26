@@ -294,11 +294,6 @@ class BushfireCreateBaseForm(forms.ModelForm):
         if not self.cleaned_data['assistance_req']: self.cleaned_data['assistance_req'] = None
         if not self.cleaned_data['other_tenure']: self.cleaned_data['other_tenure'] = None
 
-#        if not self.cleaned_data.has_key('other_tenure'):
-#            self.cleaned_data['other_tenure'] = None
-#        elif not self.cleaned_data['other_tenure']:
-#            self.cleaned_data['other_tenure'] = None
-
         if self.cleaned_data['dispatch_pw'] and eval(self.cleaned_data['dispatch_pw'])==Bushfire.DISPATCH_PW_YES:
             if not self.cleaned_data['dispatch_pw_date']:
                 self.add_error('dispatch_pw_date', 'Must specify Date and Time of dispatch, if resource is dispatched.')
@@ -309,21 +304,6 @@ class BushfireCreateBaseForm(forms.ModelForm):
         if self.cleaned_data['dispatch_aerial'] and eval(self.cleaned_data['dispatch_aerial']):
             if not self.cleaned_data['dispatch_aerial_date']:
                 self.add_error('dispatch_aerial_date', 'Must specify Date and Time of dispatch, if resource is dispatched.')
-
-        if self.cleaned_data['cause']:
-            cause = self.cleaned_data['cause']
-            if cause.name.upper().startswith('OTHER'):
-                if not self.cleaned_data['other_cause']:
-                    self.add_error('other_cause', 'Must specify, if Fire Cause is Other.')
-            if cause.name.upper().startswith('ESCAPE P&W'):
-                if not self.cleaned_data['prescribed_burn_id']:
-                    self.add_error('prescribed_burn_id', 'Must specify, if Fire Cause is Escape P&W burning.')
-
-        if self.cleaned_data['tenure']:
-            tenure = self.cleaned_data['tenure']
-            if tenure.name.upper().startswith('OTHER'):
-                if self.cleaned_data.has_key('other_tenure') and not self.cleaned_data['other_tenure']:
-                    self.add_error('other_tenure', 'Must specify, if Tenure of ignition point is Other.')
 
         if self.cleaned_data.has_key('fire_detected_date') and self.cleaned_data['fire_detected_date']:
             if self.cleaned_data.has_key('dispatch_pw_date') and self.cleaned_data['dispatch_pw_date'] and self.cleaned_data['dispatch_pw_date'] < self.cleaned_data['fire_detected_date']:
@@ -336,7 +316,6 @@ class BushfireCreateBaseForm(forms.ModelForm):
         self.cleaned_data['time_to_control'] = timedelta(days=days, hours=hours)
 
         return cleaned_data
-
 
 
 class BushfireCreateForm(BushfireCreateBaseForm):

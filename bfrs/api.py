@@ -1,4 +1,5 @@
 from django.conf.urls import url
+from django.conf import settings
 from tastypie.resources import ModelResource, Resource
 from tastypie.authorization import Authorization, ReadOnlyAuthorization, DjangoAuthorization
 from tastypie.resources import ModelResource, ALL, ALL_WITH_RELATIONS
@@ -207,7 +208,7 @@ class BushfireResource(APIResource):
             update_areas_burnt(bundle.obj, bundle.data['area']['tenure_area']['areas'])
 
         if bundle.data.has_key('area') and bundle.data['area'].has_key('total_area') and bundle.data['area']['total_area']:
-            if float(bundle.data['area']['total_area']) > 2.0:
+            if float(bundle.data['area']['total_area']) > settings.AREA_THRESHOLD:
                 bundle.obj.area_limit = False
                 bundle.obj.area = round(float(bundle.data['area']['total_area']), 2)
 
@@ -220,9 +221,6 @@ class BushfireResource(APIResource):
             if bundle.data['district_id'] != bundle.obj.district.id and bundle.obj.report_status == Bushfire.STATUS_INITIAL:
                 district = District.objects.get(id=bundle.data['district_id'])
                 invalidate_bushfire(bundle.obj, district, bundle.request.user)
-                #bundle.obj.district = district
-                #bundle.obj.region = district.region
-
 
         if bundle.obj.report_status >=  Bushfire.STATUS_FINAL_AUTHORISED:
             # if bushfire has been authorised, update snapshot and archive old snapshot

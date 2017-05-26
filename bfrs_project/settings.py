@@ -39,6 +39,7 @@ ALLOW_EMAIL_NOTIFICATION = os.environ.get('ALLOW_EMAIL_NOTIFICATION', None) in [
 
 INTERNAL_EMAIL = env('INTERNAL_EMAIL', 'dpaw.wa.gov.au')
 SSS_URL = env('SSS_URL', 'sss_redirect_url')
+AREA_THRESHOLD = env('AREA_THRESHOLD', 2)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/

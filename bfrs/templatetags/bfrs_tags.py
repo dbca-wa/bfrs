@@ -289,4 +289,11 @@ def qs_order_by(qs, arg=None):
     #import ipdb; ipdb.set_trace()
     return qs.order_by('id')
 
+@register.filter()
+def to_int(value):
+    return int(value)
+
+@register.filter()
+def to_float(value):
+    return round(float(value), 1)
 

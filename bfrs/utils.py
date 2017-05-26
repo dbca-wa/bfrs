@@ -76,23 +76,6 @@ def deserialize_bushfire(auth_type, obj):
 
     return serializers.deserialize("json", obj).next().object
 
-def calc_coords(obj):
-    coord_type = obj.coord_type
-    if coord_type == Bushfire.COORD_TYPE_MGAZONE:
-        obj.lat_decimal = float(obj.mga_zone)/2.0
-        obj.lat_degrees = float(obj.mga_zone)/2.0
-        obj.lat_minutes = float(obj.mga_zone)/2.0
-
-        obj.lon_decimal = float(obj.mga_zone)/2.0
-        obj.lon_degrees = float(obj.mga_zone)/2.0
-        obj.lon_minutes = float(obj.mga_zone)/2.0
-
-    elif coord_type == Bushfire.COORD_TYPE_LATLONG:
-        obj.mga_zone = float(obj.lat_decimal) * 2.0
-        obj.mga_easting = float(obj.lat_decimal) * 2.0
-        obj.mga_northing = float(obj.lat_decimal) * 2.0
-
-
 def archive_snapshot(auth_type, action, obj):
         """ allows archicing of existing snapshot before overwriting """
         cur_snapshot_history = obj.snapshot_history.all()
@@ -105,7 +88,6 @@ def archive_snapshot(auth_type, action, obj):
             prev_snapshot = cur_snapshot_history.latest('created') if cur_snapshot_history else None,
             bushfire_id = obj.id
         )
-
 
 def invalidate_bushfire(obj, new_district, user):
     """ Invalidate the current bushfire, create new bushfire and update links, including historical links """

@@ -376,8 +376,8 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
             return TemplateResponse(request, 'bfrs/error.html', context={'is_external_user': True, 'status':401}, status=401)
 
         self.object = form.save(commit=False)
-        self.object.creator = request.user #1 #User.objects.all()[0] #request.user
-        self.object.modifier = request.user #1 #User.objects.all()[0] #request.user
+        self.object.creator = request.user
+        self.object.modifier = request.user
 
         self.object.save()
 
@@ -396,14 +396,6 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
         fire_behaviour_updated = update_fire_behaviour_fs(self.object, fire_behaviour_formset)
 
         redirect_referrer =  HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-        if area_burnt_updated == 0:
-            messages.error(request, 'There was an error saving Areas Burnt.')
-            return redirect_referrer
-
-        if not fire_behaviour_updated:
-            messages.error(request, 'There was an error saving Fuel Behaviour.')
-            return redirect_referrer
-
         # This section to Submit initial report, placed here to allow any changes to be cleaned and saved first - effectively the 'Submit' btn is a 'save and submit'
         if self.request.POST.has_key('submit_initial'):
             action = self.request.POST.get('submit_initial')
@@ -537,22 +529,19 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
             self.object.creator = request.user
         self.object.modifier = request.user
 
+        # reset fields
+        if self.object.cause.name.startswith('Other'):
+            self.object.other_cause = None 
+        if self.object.cause.name.startswith('Escape P&W'):
+            self.object.prescribed_burn_id = None 
+        if self.object.tenure.name.startswith('Other'):
+            self.object.other_tenure = None 
+
         self.object.save()
         #areas_burnt_updated = update_areas_burnt_fs(self.object, area_burnt_formset)
         fire_behaviour_updated = update_fire_behaviour_fs(self.object, fire_behaviour_formset)
 
         redirect_referrer =  HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-#        if not areas_burnt_updated:
-#            messages.error(request, 'There was an error saving Areas Burnt.')
-#            return redirect_referrer
-
-        if not fire_behaviour_updated:
-            messages.error(request, 'There was an error saving Fuel Behaviour.')
-            return redirect_referrer
-
-        if self.request.POST.has_key('_save_continue'):
-            return redirect_referrer
-
         # This section to Submit initial report, placed here to allow any changes to be cleaned and saved first - effectively the 'Submit' btn is a 'save and submit'
         if self.request.POST.has_key('submit_initial'):
             action = self.request.POST.get('submit_initial')
@@ -606,9 +595,6 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
 
         if bushfire.initial_snapshot:
             snapshot = deserialize_bushfire('initial', bushfire)
-#        elif is_external_user(self.request.user):
-#            # no initial snapshot exists, view whatever is saved
-#            snapshot = bushfire
         else:
             snapshot = None
 
@@ -629,14 +615,6 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
     form_class = BushfireForm
     template_name = 'bfrs/final.html'
 
-#    @property
-#    def fssdrs_group(self):
-#        return Group.objects.get(name='FSS Datasets and Reporting Services')
-#
-#    @property
-#    def can_maintain_data(self):
-#        return self.fssdrs_group in self.request.user.groups.all() and not is_external_user(self.request.user)
-
     def get_initial(self):
         if self.object.time_to_control:
             return { 'days': self.object.time_to_control.days, 'hours': self.object.time_to_control.seconds/3600 }
@@ -649,7 +627,6 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
         form_class = self.get_form_class()
         form = self.get_form(form_class)
 
-	#import ipdb; ipdb.set_trace()
         # Authorise the FINAL report
         if self.request.POST.has_key('action') and self.object.report_status==Bushfire.STATUS_INITIAL_AUTHORISED:
             action = self.request.POST.get('action')
@@ -745,19 +722,6 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
             injury_updated = update_injury_fs(self.object, injury_formset)
             damage_updated = update_damage_fs(self.object, damage_formset)
 
-            #if not areas_burnt_updated:
-            #    messages.error(request, 'There was an error saving Areas Burnt.')
-            #    return redirect_referrer
-
-            if not injury_updated:
-                messages.error(request, 'There was an error saving Injury.')
-                return redirect_referrer
-
-            elif not damage_updated:
-                messages.error(request, 'There was an error saving Damage.')
-                return redirect_referrer
-
-	#import ipdb; ipdb.set_trace()
         # append/update 'Other' areas_burnt
         if self.request.POST.has_key('ucl_area') and self.request.POST.has_key('unalloc_other_area'):
             ucl_tenure = self.request.POST.get('ucl_tenure')
@@ -834,21 +798,22 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
                         'snapshot': self.object,
                         'final': True,
                         'can_maintain_data': can_maintain_data(self.request.user),
+                        'area_threshold': settings.AREA_THRESHOLD,
             })
         return context
 
-class BushfireReviewUpdateView(BushfireFinalUpdateView):
-    model = Bushfire
-    form_class = BushfireForm
-    template_name = 'bfrs/final.html'
-
-    def get_context_data(self, **kwargs):
-        context = super(BushfireReviewUpdateView, self).get_context_data(**kwargs)
-
-        context.update({
-             'review': True,
-        })
-        return context
+#class BushfireReviewUpdateView(BushfireFinalUpdateView):
+#    model = Bushfire
+#    form_class = BushfireForm
+#    template_name = 'bfrs/final.html'
+#
+#    def get_context_data(self, **kwargs):
+#        context = super(BushfireReviewUpdateView, self).get_context_data(**kwargs)
+#
+#        context.update({
+#             'review': True,
+#        })
+#        return context
 
 
 
