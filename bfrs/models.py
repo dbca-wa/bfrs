@@ -89,7 +89,7 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
     # final fire boundary required for fires > 2 ha
     if not obj.area_limit and not obj.area_unknown:
         msg = 'Area of Arrival' if obj.report_status < Bushfire.STATUS_INITIAL_AUTHORISED else 'Final Area'
-        if not obj.area and 
+        if not obj.area:
             missing.append("Must enter {}, if area < {}ha".format(msg, settings.AREA_THRESHOLD))
 
     return missing
