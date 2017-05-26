@@ -180,16 +180,17 @@ class BushfireResource(APIResource):
         return bundle
 
     def hydrate_fire_boundary(self, bundle):
-        #import ipdb; ipdb.set_trace()
         if is_external_user(bundle.request.user):
             return bundle
 
         if bundle.data.has_key('fire_boundary') and isinstance(bundle.data['fire_boundary'], list):
             bundle.data['fire_boundary'] = MultiPolygon([Polygon(*p) for p in bundle.data['fire_boundary']]).__str__()
+        else:
+            bundle.obj.area = None
+            bundle.obj.fire_boundary = None
         return bundle
 
     def obj_update(self, bundle, **kwargs):
-        #import ipdb; ipdb.set_trace()
 
         if is_external_user(bundle.request.user):
             return bundle
@@ -208,8 +209,8 @@ class BushfireResource(APIResource):
             update_areas_burnt(bundle.obj, bundle.data['area']['tenure_area']['areas'])
 
         if bundle.data.has_key('area') and bundle.data['area'].has_key('total_area') and bundle.data['area']['total_area']:
-            #if float(bundle.data['area']['total_area']) > settings.AREA_THRESHOLD:
             bundle.obj.area_limit = False
+            bundle.obj.area_unknown = False
             bundle.obj.area = round(float(bundle.data['area']['total_area']), 2)
 
         if bundle.data.has_key('fire_position') and bundle.data['fire_position']:

@@ -8,6 +8,7 @@ from django.utils.encoding import python_2_unicode_compatible
 from django.core.validators import MaxValueValidator, MinValueValidator
 from bfrs.base import Audit
 from django.core.exceptions import (ValidationError)
+from django.conf import settings
 import LatLon
 from django.core import serializers
 
@@ -87,8 +88,10 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
 
     # final fire boundary required for fires > 2 ha
     if not obj.area_limit and not obj.area_unknown:
-        if not obj.area:
-            missing.append("Must enter Area of Arrival, if area > {}ha".format(settings.AREA_THRESHOLD))
+        if not obj.area and obj.report_status < Bushfire.STATUS_INITIAL_AUTHORISED:
+            missing.append("Must enter Area of Arrival, if area < {}ha".format(settings.AREA_THRESHOLD))
+        else:
+            missing.append("Must enter Final Area, if area < {}ha".format(settings.AREA_THRESHOLD))
 
     return missing
 

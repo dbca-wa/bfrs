@@ -538,8 +538,8 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
             self.object.prescribed_burn_id = None 
         if self.object.tenure and not self.object.tenure.name.startswith('Other'):
             self.object.other_tenure = None 
-
         self.object.save()
+
         #areas_burnt_updated = update_areas_burnt_fs(self.object, area_burnt_formset)
         fire_behaviour_updated = update_fire_behaviour_fs(self.object, fire_behaviour_formset)
 

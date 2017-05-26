@@ -330,7 +330,8 @@ def update_status(request, bushfire, action):
             resp = police_email(bushfire, mail_url(request, bushfire))
             notification['POLICE'] = 'Email Sent' if resp else 'Email failed'
 
-        bushfire.area = 0. # reset bushfire area
+        bushfire.area = None # reset bushfire area
+        bushfire.sss_data = None
         bushfire.save()
 
     elif action == 'Authorise' and bushfire.report_status==Bushfire.STATUS_INITIAL_AUTHORISED:
