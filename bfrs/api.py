@@ -208,9 +208,9 @@ class BushfireResource(APIResource):
             update_areas_burnt(bundle.obj, bundle.data['area']['tenure_area']['areas'])
 
         if bundle.data.has_key('area') and bundle.data['area'].has_key('total_area') and bundle.data['area']['total_area']:
-            if float(bundle.data['area']['total_area']) > settings.AREA_THRESHOLD:
-                bundle.obj.area_limit = False
-                bundle.obj.area = round(float(bundle.data['area']['total_area']), 2)
+            #if float(bundle.data['area']['total_area']) > settings.AREA_THRESHOLD:
+            bundle.obj.area_limit = False
+            bundle.obj.area = round(float(bundle.data['area']['total_area']), 2)
 
         if bundle.data.has_key('fire_position') and bundle.data['fire_position']:
             # only update if user has not over-ridden

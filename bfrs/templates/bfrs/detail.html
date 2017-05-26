@@ -196,7 +196,7 @@
 				<div class="div_area" style="visibility: visible;">{% if is_authorised %} {{snapshot.area}} {% else %} {{form.area}} {% endif %}</div>
 				{% endcomment %}
 
-				{% if not is_authorised %} {{form.area_unknown}} Unknown{% endif %}<br>
+				<span class="div_area_unknown" style="display: none;">{% if not is_authorised %} {{form.area_unknown}} Unknown{% endif %}<br></span>
 				<div class="div_area" style="visibility: visible;">
 					{% if is_authorised %}
 					  {% if snapshot.area_unknown %}
@@ -475,7 +475,18 @@ $('.open-all').click(function(){
 });
 
 /* Area Override */
+// Only allow override if no fire_boundary supllied
+
 $('#id_area').val({{object.sss_data_to_dict.area.total_area}});
+if( {{object.fire_boundary|yesno:"true,false"}} || {{sss_data.area.total_area|yesno:"true,false"}} ) { 
+    $('.div_area_unknown').hide();
+	$("#id_area").attr('readonly','readonly').css('background-color' , '#DEDEDE');
+} else {
+    $('.div_area_unknown').show();
+    $('.div_area').css('visibility','visible');
+	$("#id_area").removeAttr('readonly').removeAttr('style');
+}
+
 $('#id_area_unknown').on('change', function() {
     if($("#id_area_unknown").is(':checked')) { 
 		$('.div_area').css('visibility','hidden');
@@ -484,6 +495,8 @@ $('#id_area_unknown').on('change', function() {
 	}
 }).change();
 
+$("#id_area").prop('min', 0).prop('max',{{area_threshold|to_float}});
+/* END - Area Override */
 
 /* Fire Position Override */
 var orig_fire_position = $("#id_fire_position").val();

@@ -441,7 +441,9 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
                         'create': True,
                         'initial': True,
                         'is_external_user': is_external_user(self.request.user),
-                        'is_authorised': True if is_external_user(self.request.user) else False, # make template read-only
+                        'is_authorised': True if is_external_user(self.request.user) else False,
+                        'area_threshold': settings.AREA_THRESHOLD,
+                        'sss_data': json.loads(self.request.POST.get('sss_create')) if self.request.POST.has_key('sss_create') else None, # needed since no object created yet
             })
         return context
 
@@ -530,11 +532,11 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
         self.object.modifier = request.user
 
         # reset fields
-        if not self.object.cause.name.startswith('Other'):
+        if self.object.cause and not self.object.cause.name.startswith('Other'):
             self.object.other_cause = None 
-        if not self.object.cause.name.startswith('Escape P&W'):
+        if self.object.cause and not self.object.cause.name.startswith('Escape P&W'):
             self.object.prescribed_burn_id = None 
-        if not self.object.tenure.name.startswith('Other'):
+        if self.object.tenure and not self.object.tenure.name.startswith('Other'):
             self.object.other_tenure = None 
 
         self.object.save()
@@ -606,6 +608,7 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
                         'snapshot': snapshot,
                         'initial': True,
                         'is_external_user': is_external_user(self.request.user),
+                        'area_threshold': settings.AREA_THRESHOLD,
             })
         return context
 
