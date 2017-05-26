@@ -530,11 +530,11 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
         self.object.modifier = request.user
 
         # reset fields
-        if self.object.cause.name.startswith('Other'):
+        if not self.object.cause.name.startswith('Other'):
             self.object.other_cause = None 
-        if self.object.cause.name.startswith('Escape P&W'):
+        if not self.object.cause.name.startswith('Escape P&W'):
             self.object.prescribed_burn_id = None 
-        if self.object.tenure.name.startswith('Other'):
+        if not self.object.tenure.name.startswith('Other'):
             self.object.other_tenure = None 
 
         self.object.save()
