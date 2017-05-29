@@ -276,7 +276,7 @@ def update_fire_behaviour_fs(bushfire, fire_behaviour_formset):
             flame_height = form.cleaned_data.get('flame_height')
             remove = form.cleaned_data.get('DELETE')
 
-            if not remove and (fuel_type and ros>=0 and flame_height>0.0):
+            if not remove and (fuel_type and ros>=0 and flame_height>=0.0):
                 new_fs_object.append(FireBehaviour(bushfire=bushfire, fuel_type=fuel_type, ros=ros, flame_height=flame_height))
 
     try:
