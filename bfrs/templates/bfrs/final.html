@@ -296,9 +296,9 @@ $('.open-all').click(function(){
 $('#id_area').val({{snapshot.sss_data_to_dict.area.total_area|floatformat:2}});
 var orig_area = $("#id_area").val();
 $("#id_area").prop('min',0.0);
-if( !{{snapshot.fire_boundary|yesno:"true,false"}} || {{snapshot.area}} < {{area_threshold|to_float}}) { 
+if ($('#id_area').val().length == 0) {
     $("#div_area_limit").show()
-    $("#id_area").prop('max',{{area_threshold|to_float}});
+    $("#id_area").attr('readonly','readonly').css('background-color' , '#DEDEDE');
 } else {
     $("#div_area_limit").hide()
     $("#id_area").prop('max',null);

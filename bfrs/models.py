@@ -91,6 +91,9 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
         msg = 'Area of Arrival' if obj.report_status < Bushfire.STATUS_INITIAL_AUTHORISED else 'Final Area'
         if not obj.area:
             missing.append("Must enter {}, if area < {}ha".format(msg, settings.AREA_THRESHOLD))
+    if obj.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED:
+        if not obj.area_limit and (obj.area < settings.AREA_THRESHOLD or obj.area is None):
+            missing.append("Must enter {}, if area < {}ha".format(msg, settings.AREA_THRESHOLD))
 
     return missing
 
