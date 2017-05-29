@@ -3,7 +3,7 @@
 from __future__ import unicode_literals
 
 from django.db import migrations
-from bfrs.utils import create_view, create_final_view, create_fireboundary_view
+from bfrs.utils import create_view, create_final_view, create_fireboundary_view, update_users
 
 
 class Migration(migrations.Migration):
@@ -13,6 +13,7 @@ class Migration(migrations.Migration):
         create_view()
         create_final_view()
         create_fireboundary_view()
+        update_users()
 
     dependencies = [
         ('bfrs', '0001_initial'),

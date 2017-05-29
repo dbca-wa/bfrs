@@ -74,7 +74,7 @@ class Audit(models.Model):
                 try:
                     user = User.objects.get(pk=_locals.request.user.pk)
                 except Exception:
-                    user = User.objects.get(id=1)
+                    user = User.objects.get(username__icontains='admin')
                 _locals.user = user
         else:
             try:

@@ -41,6 +41,12 @@ INTERNAL_EMAIL = env('INTERNAL_EMAIL', 'dpaw.wa.gov.au')
 SSS_URL = env('SSS_URL', 'sss_redirect_url')
 AREA_THRESHOLD = env('AREA_THRESHOLD', 2)
 
+URL_SSO = env('URL_SSO', 'https://oim.dpaw.wa.gov.au/api/users/')
+USER_SSO = env('USER_SSO')
+PASS_SSO = env('PASS_SSO')
+FSSDRS_USERS = env('FSSDRS_USERS')
+FSSDRS_GROUP = env('FSSDRS_GROUP', 'FSS Datasets and Reporting Services')
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/
 
@@ -204,3 +210,32 @@ STATICFILES_FINDERS = (
 
 )
 
+LOGGING = {
+    'version': 1,
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s: %(message)s'
+        },
+        'simple': {
+            'format': '%(levelname)s %(message)s'
+        },
+    },
+
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'stream': sys.stdout,
+            'formatter': 'verbose',
+        },
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/bfrs.log',
+            'formatter': 'verbose',
+        }
+    },
+    'root': {
+        'handlers': ['console', 'file'],
+        'level': 'INFO'
+    }
+}

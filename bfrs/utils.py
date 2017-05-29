@@ -4,7 +4,7 @@ from django.db import IntegrityError, transaction
 from django.http import HttpResponse
 from django.core.mail import send_mail
 from django.conf import settings
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User, Group, Permission
 import json
 import pytz
 
@@ -18,7 +18,11 @@ from django.forms.models import inlineformset_factory
 from collections import defaultdict
 from copy import deepcopy
 from django.core.urlresolvers import reverse
+import requests
+from requests.auth import HTTPBasicAuth
 
+import logging
+logger = logging.getLogger(__name__)
 
 def breadcrumbs_li(links):
     """Returns HTML: an unordered list of URLs (no surrounding <ul> tags).
@@ -439,6 +443,32 @@ def fssdrs_email(bushfire, url, status='final'):
         )
 
     return send_mail(subject, message, settings.FROM_EMAIL, settings.FSSDRS_EMAIL)
+
+def update_users():
+    resp=requests.get(url=settings.URL_SSO, auth=HTTPBasicAuth(settings.USER_SSO, settings.PASS_SSO))
+
+    fssdrs_group, g_created = Group.objects.get_or_create(name=settings.FSSDRS_GROUP)
+    if g_created:
+        fssdrs_group.permissions = Permission.objects.filter(name__in=['Can add group', 'Can change group', 'Can add permission', 'Can change permission', 'Can add user', 'Can change user'])
+    
+    for user in resp.json()['objects']:
+        if user['email'] and user['email'].split('@')[-1].lower() == settings.INTERNAL_EMAIL:
+            u, created = User.objects.get_or_create(
+                username=user['username'],
+                defaults = {
+                    'first_name': user['given_name'],
+                    'last_name': user['surname'],
+                    'email': user['email']
+                }
+            )
+            
+            if created and u.username in settings.FSSDRS_USERS:
+                u.groups.add(fssdrs_group)
+                u.is_staff = True
+                u.save()
+
+            if created:
+                logger.info('User {}, Created {}'.format(u.get_full_name(), created))
 
 def create_view():
     """
