@@ -106,6 +106,9 @@ class BushfireFilter(django_filters.FilterSet):
         # allows dynamic update of the filter set, on page refresh
         self.filters['year'].extra['choices'] = [[None, '---------']] + [[i['year'], str(i['year']) + '/' + str(i['year']+1)] for i in Bushfire.objects.all().values('year').distinct().order_by('year')]
         self.filters['reporting_year'].extra['choices'] = [[None, '---------']] + [[i['reporting_year'], str(i['reporting_year']) + '/' + str(i['reporting_year']+1)] for i in Bushfire.objects.all().values('reporting_year').distinct().order_by('reporting_year')]
+        if not can_maintain_data(self.request.user):
+            # pop the 'Reviewed' option
+            self.filters['report_status'].extra['choices'] = [(u'', '---------'), (1, 'Initial'), (2, 'Initial Authorised'), (3, 'Final Authorised'), (5, 'Invalidated'), (6, 'Missing Final')] 
 
 
 class ProfileView(LoginRequiredMixin, generic.FormView):
