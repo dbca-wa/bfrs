@@ -244,9 +244,9 @@ class Bushfire(Audit):
     fire_monitored_only = models.BooleanField(default=False)
 
     assistance_req = models.PositiveSmallIntegerField(choices=ASSISTANCE_CHOICES, null=True, blank=True)
-    assistance_details = models.CharField(max_length=64, null=True, blank=True)
-    communications = models.CharField(verbose_name='Communication', max_length=50, null=True, blank=True)
-    other_info = models.CharField(verbose_name='Other Information', max_length=100, null=True, blank=True)
+    assistance_details = models.CharField(max_length=250, null=True, blank=True)
+    communications = models.CharField(verbose_name='Communication', max_length=250, null=True, blank=True)
+    other_info = models.CharField(verbose_name='Other Information', max_length=250, null=True, blank=True)
 
     field_officer = models.ForeignKey(User, verbose_name="Field Officer", null=True, blank=True, related_name='init_field_officer')
     duty_officer = models.ForeignKey(User, verbose_name="Duty Officer", null=True, blank=True, related_name='init_duty_officer')
