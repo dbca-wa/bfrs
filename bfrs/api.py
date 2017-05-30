@@ -10,7 +10,7 @@ from bfrs.utils import update_areas_burnt, invalidate_bushfire, serialize_bushfi
 
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point, GEOSGeometry, Polygon, MultiPolygon, GEOSException
-from tastypie.http import HttpBadRequest
+from tastypie.http import HttpBadRequest, HttpUnauthorized
 from tastypie.exceptions import ImmediateHttpResponse, Unauthorized
 import json
 
@@ -194,6 +194,9 @@ class BushfireResource(APIResource):
 
         if is_external_user(bundle.request.user):
             return bundle
+
+        if not can_maintain_data(bundle.request.user) and bundle.obj.report_status >= Bushfire.STATUS_FINAL_AUTHORISED:
+            raise ImmediateHttpResponse(response=HttpUnauthorized())
 
         self.full_hydrate(bundle)
         bundle.obj.sss_data = json.dumps(bundle.data)

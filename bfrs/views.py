@@ -46,6 +46,21 @@ import django_filters
 from django_filters import views as filter_views
 from django_filters.widgets import BooleanWidget
 
+class BushfireAuthView(LoginRequiredMixin, UpdateView):
+    model = Bushfire
+    form_class = BushfireForm
+    template_name = 'bfrs/final.html'
+
+    def get(self, request, *args, **kwargs):
+        if is_external_user(self.request.user):
+            return TemplateResponse(request, 'bfrs/error.html', context={'is_external_user': True, 'status':401}, status=401)
+
+        bushfire = Bushfire.objects.get(id=kwargs['pk'])
+        if not can_maintain_data(self.request.user) and bushfire.report_status >= Bushfire.STATUS_FINAL_AUTHORISED:
+            return TemplateResponse(request, 'bfrs/error.html', context={'is_normal_user': True, 'status':401}, status=401)
+
+        return super(BushfireCreateView, self).get(request, *args, **kwargs)
+
 
 class BooleanFilter(django_filters.filters.Filter):
     field_class = forms.BooleanField
@@ -466,6 +481,12 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
             }
         return initial
 
+#    def get(self, request, *args, **kwargs):
+#        if is_external_user(self.request.user):
+#            return TemplateResponse(request, 'bfrs/error.html', context={'is_external_user': True, 'status':401}, status=401)
+#
+#        return super(BushfireCreateView, self).get(request, *args, **kwargs)
+
     def post(self, request, *args, **kwargs):
         self.object = self.get_object() # needed for update
         form_class = self.get_form_class()
@@ -628,6 +649,16 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
 
     def get_success_url(self):
         return reverse("home")
+
+#    def get(self, request, *args, **kwargs):
+#        if is_external_user(self.request.user):
+#            return TemplateResponse(request, 'bfrs/error.html', context={'is_external_user': True, 'status':401}, status=401)
+#
+#        bushfire = Bushfire.objects.get(id=kwargs['pk'])
+#        if not can_maintain_data(self.request.user) and bushfire.report_status >= Bushfire.STATUS_FINAL_AUTHORISED:
+#            return TemplateResponse(request, 'bfrs/error.html', context={'is_normal_user': True, 'status':401}, status=401)
+#
+#        return super(BushfireCreateView, self).get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object() # needed for update

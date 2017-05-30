@@ -509,6 +509,9 @@ $('#id_fire_position_override').on('change', function() {
 	}
 }).change();
 
+// Make Tenure of ignition un-editable
+$('#id_tenure').css('background-color' , '#DEDEDE');
+$('#id_tenure').mousedown(function(e){ e.preventDefault(); });
 </script>
 
 {% endblock %}
