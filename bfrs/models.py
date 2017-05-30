@@ -416,7 +416,7 @@ class Bushfire(Audit):
         # need to format float number (seconds) to 1 dp
         lon[2] = str(round(eval(lon[2]), 1))
         lat[2] = str(round(eval(lat[2]), 1))
-        return '(Deg/Min/Sec) ' + str(' '.join(lon)) + ', ' + str(' '.join(lon))
+        return '(Deg/Min/Sec) ' + str(' '.join(lon)) + ', ' + str(' '.join(lat))
 
     @property
     def time_to_control_hours_part(self):
