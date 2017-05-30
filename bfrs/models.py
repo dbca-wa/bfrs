@@ -60,7 +60,7 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
     Idea is to fill in report over time as and when info becomes available.
 
     However, the report cannot be Submitted/Authorosed unless a given set of fields have been filled.
-    
+
     fields    - basic fields
     dep_field - dependent fields (if one field has a value, check that the other has been filled)
     formsets  - fields in formsets
@@ -408,8 +408,15 @@ class Bushfire(Audit):
         if not self.origin_point:
             return None
 
-        c=LatLon.LatLon(LatLon.Latitude(round(self.origin_point.get_y(), 2)), LatLon.Longitude(round(self.origin_point.get_y(), 2)))
-        return 'Deg/Min/Sec ' + str(c.to_string('D% %M% %S% %H'))
+        c=LatLon.LatLon(LatLon.Longitude(round(self.origin_point.get_x(), 2)), LatLon.Latitude(round(self.origin_point.get_y(), 2)))
+        latlon = c.to_string('d% %m% %S% %H')
+        lon = latlon[0].split(' ')
+        lat = latlon[1].split(' ')
+
+        # need to format float number (seconds) to 1 dp
+        lon[2] = str(round(eval(lon[2]), 1))
+        lat[2] = str(round(eval(lat[2]), 1))
+        return '(Deg/Min/Sec) ' + str(' '.join(lon)) + ', ' + str(' '.join(lon))
 
     @property
     def time_to_control_hours_part(self):

@@ -55,11 +55,17 @@ def deg_min_sec(value):
 
     try:
         point = GEOSGeometry(value)
-        x = round(point.get_x(), 2)
-        y = round(point.get_y(), 2)
-        c=LatLon.LatLon(LatLon.Latitude(x), LatLon.Longitude(y))
+        x = point.get_x()
+        y = point.get_y()
+        c=LatLon.LatLon(LatLon.Longitude(x), LatLon.Latitude(y))
+        latlon = c.to_string('d% %m% %S% %H')
+        lon = latlon[0].split(' ')
+        lat = latlon[1].split(' ')
 
-        return '(Deg/Min/Sec) {}'.format(str(c.to_string('D% %M% %S% %H')) )
+        # need to format float number (seconds) to 1 dp
+        lon[2] = str(round(eval(lon[2]), 1))
+        lat[2] = str(round(eval(lat[2]), 1))
+        return '(Deg/Min/Sec) ' + str(' '.join(lon)) + ', ' + str(' '.join(lon))
     except:
         return None
 
