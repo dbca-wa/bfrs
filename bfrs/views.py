@@ -28,7 +28,7 @@ from bfrs.forms import (ProfileForm, BushfireFilterForm, BushfireForm, BushfireC
         AreaBurntFormSet, InjuryFormSet, DamageFormSet, FireBehaviourFormSet,
     )
 from bfrs.utils import (breadcrumbs_li,
-        update_areas_burnt, create_areas_burnt, update_damage_fs, update_injury_fs, update_fire_behaviour_fs,
+        update_areas_burnt, update_damage_fs, update_injury_fs, update_fire_behaviour_fs,
         export_final_csv, export_excel,
         update_status, serialize_bushfire, deserialize_bushfire,
         rdo_email, pvs_email, fpc_email, pica_email, pica_sms, police_email, dfes_email, fssdrs_email,
@@ -323,9 +323,10 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
                 try:
                     initial['tenure'] = Tenure.objects.get(name__istartswith=sss['tenure_ignition_point']['category'])
                 except:
-                    initial['tenure'] = Tenure.objects.get(name__istartswith='other')
+                    #initial['tenure'] = Tenure.objects.get(name__istartswith='other')
+                    initial['tenure'] = Tenure.objects.get(name='Other')
             else:
-                initial['tenure'] = Tenure.objects.get(name__istartswith='other')
+                initial['tenure'] = Tenure.objects.get(name='Other')
 
             if sss.has_key('region_id') and sss.has_key('district_id') and sss.get('district_id'):
                 initial['region'] = Region.objects.get(id=sss['region_id'])
@@ -391,10 +392,9 @@ class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
 #        ]
 #        area_burnt_updated = update_areas_burnt(self.object, tmp_list)
 
-        area_burnt_updated = None
         sss = self.object.sss_data_to_dict
         if sss and sss.has_key('area') and sss['area'].has_key('tenure_area') and sss['area']['tenure_area'].has_key('areas') and sss['area']['tenure_area']['areas']:
-            area_burnt_updated = update_areas_burnt(self.object, sss['area']['tenure_area']['areas'])
+            update_areas_burnt(self.object, sss['area']['tenure_area']['areas'])
 
         fire_behaviour_updated = update_fire_behaviour_fs(self.object, fire_behaviour_formset)
 
@@ -583,14 +583,15 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
         form_class = self.get_form_class()
         form = self.get_form(form_class)
 
-        area_burnt_formset = None
-        if self.request.POST.has_key('sss_create'):
-            sss = json.loads( self.request.POST['sss_create'] )
-            if sss.has_key('tenure_area') and sss['tenure_area']:
-                area_burnt_formset = create_areas_burnt(None, sss['tenure_area'])
+#        area_burnt_formset = None
+#        if self.request.POST.has_key('sss_create'):
+#            sss = json.loads( self.request.POST['sss_create'] )
+#            if sss.has_key('tenure_area') and sss['tenure_area']:
+#                area_burnt_formset = create_areas_burnt(None, sss['tenure_area'])
+#
+#        if not area_burnt_formset:
+#            area_burnt_formset      = AreaBurntFormSet(instance=self.object, prefix='area_burnt_fs')
 
-        if not area_burnt_formset:
-            area_burnt_formset      = AreaBurntFormSet(instance=self.object, prefix='area_burnt_fs')
         fire_behaviour_formset = FireBehaviourFormSet(instance=self.object, prefix='fire_behaviour_fs')
 
         if is_external_user(self.request.user):
@@ -604,7 +605,7 @@ class BushfireInitUpdateView(LoginRequiredMixin, UpdateView):
             snapshot = None
 
         context.update({'form': form,
-                        'area_burnt_formset': area_burnt_formset,
+                        #'area_burnt_formset': area_burnt_formset,
                         'fire_behaviour_formset': fire_behaviour_formset,
                         'is_authorised': is_authorised, # If True, will make template read-only
                         #'snapshot': deserialize_bushfire('initial', bushfire) if bushfire.initial_snapshot else None,
@@ -729,14 +730,14 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
             damage_updated = update_damage_fs(self.object, damage_formset)
 
         # append/update 'Other' areas_burnt
-        if self.request.POST.has_key('ucl_area') and self.request.POST.has_key('unalloc_other_area'):
-            ucl_tenure = self.request.POST.get('ucl_tenure')
-            ucl_area = self.request.POST.get('ucl_area')
-            self.object.tenures_burnt.update_or_create(tenure=Tenure.objects.get(name=ucl_tenure), defaults={"area": ucl_area})
+        if self.request.POST.has_key('private_area') and self.request.POST.has_key('other_crown_area'):
+            private_tenure = self.request.POST.get('private_tenure')
+            private_area = self.request.POST.get('private_area')
+            self.object.tenures_burnt.update_or_create(tenure=Tenure.objects.get(name=private_tenure), defaults={"area": private_area})
 
-            unalloc_other_tenure = self.request.POST.get('unalloc_other_tenure')
-            unalloc_other_area = self.request.POST.get('unalloc_other_area')
-            self.object.tenures_burnt.update_or_create(tenure=Tenure.objects.get(name=unalloc_other_tenure), defaults={"area": unalloc_other_area})
+            other_crown_tenure = self.request.POST.get('other_crown_tenure')
+            other_crown_area = self.request.POST.get('other_crown_area')
+            self.object.tenures_burnt.update_or_create(tenure=Tenure.objects.get(name=other_crown_tenure), defaults={"area": other_crown_area})
 
         # This section to Authorise Final report, placed here to allow any changes to be cleaned and saved first - effectively the 'Authorise' btn is a 'save and submit'
         if self.request.POST.has_key('authorise_final'):
@@ -777,14 +778,14 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
         injury_formset  = InjuryFormSet(instance=self.object, prefix='injury_fs')
         damage_formset   = DamageFormSet(instance=self.object, prefix='damage_fs')
 
-        area_burnt_formset = None
-        if self.request.POST.has_key('sss_create'):
-            sss = json.loads( self.request.POST['sss_create'] )
-            if sss.has_key('tenure_area') and sss['tenure_area']:
-                area_burnt_formset = create_areas_burnt(None, sss['tenure_area'])
-
-        if not area_burnt_formset:
-            area_burnt_formset      = AreaBurntFormSet(instance=self.object, prefix='area_burnt_fs')
+#        area_burnt_formset = None
+#        if self.request.POST.has_key('sss_create'):
+#            sss = json.loads( self.request.POST['sss_create'] )
+#            if sss.has_key('tenure_area') and sss['tenure_area']:
+#                area_burnt_formset = create_areas_burnt(None, sss['tenure_area'])
+#
+#        if not area_burnt_formset:
+#            area_burnt_formset      = AreaBurntFormSet(instance=self.object, prefix='area_burnt_fs')
 
         #import ipdb; ipdb.set_trace()
         snapshot = deserialize_bushfire('final', self.object) if self.object.final_snapshot else None
@@ -797,7 +798,7 @@ class BushfireFinalUpdateView(LoginRequiredMixin, UpdateView):
             is_authorised = self.object.is_final_authorised
 
         context.update({'form': form,
-                        'area_burnt_formset': area_burnt_formset,
+                        #'area_burnt_formset': area_burnt_formset,
                         'injury_formset': injury_formset,
                         'damage_formset': damage_formset,
                         'is_authorised': is_authorised,

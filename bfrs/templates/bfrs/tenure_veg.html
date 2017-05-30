@@ -25,25 +25,28 @@
                 <th>Area (ha)</th>
                 <th>% Area</th>
 
-                {% for fs in object.tenures_burnt.all|filter_tenures_burnt:"Unallocated Crown Land,Other" %}
+                {% for fs in object.tenures_burnt.all|filter_tenures_burnt:"Private Property,Other Crown" %}
                 <tr>
                   <td>{{ fs.tenure }}</td>
                   <td>{{ fs.area }}</td>
                 </tr>
                 {% endfor %}
 
-{% comment %}                
                 <tr>
-			<td><input id="id_tenure_1" name="ucl_tenure" type="text" value="Unallocated Crown Land"></td>
-                        <td><input id="id_area_1" name="ucl_area" type="number" min="0" max="{{ object.sss_data_to_dict.area.other_area|floatformat:"0" }}" value="{{ object.tenures_burnt.all|tenures_burnt:"Unallocated Crown Land" }}"></td>
-			<td><input id="id_area_perc_1" type="number" min="0" max="100" step="0.1"></td>
+                  <td>Other</td>
+                  <td>{{ object.sss_data_to_dict.area.other_area|floatformat:2 }}</td>
                 </tr>
                 <tr>
-			<td><input id="id_tenure_2" name="unalloc_other_tenure" type="text" value="Other"></td>
-                        <td><input id="id_area_2" name="unalloc_other_area" type="number" min="0" max="{{ object.sss_data_to_dict.area.other_area|floatformat:"0" }}" value="{{ object.tenures_burnt.all|tenures_burnt:"Other" }}"></td>
-			<td><input id="id_area_perc_2" name="unalloc_other_area_perc" type="number" min="0" max="100" step="0.1"></td>
+			      <td><input id="id_tenure_1" name="private_tenure" type="text" value="Private Property"></td>
+                  <td><input id="id_area_1" name="private_area" type="number" min="0" max="{{ object.sss_data_to_dict.area.other_area|floatformat:"0" }}" value="{{ object.tenures_burnt.all|tenures_burnt:"Private Property" }}"></td>
+			      <td><input id="id_area_perc_1" type="number" min="0" max="100" step="0.1"></td>
                 </tr>
-{% endcomment %}                
+                <tr>
+			      <td><input id="id_tenure_2" name="other_crown_tenure" type="text" value="Other Crown"></td>
+                  <td><input id="id_area_2" name="other_crown_area" type="number" min="0" max="{{ object.sss_data_to_dict.area.other_area|floatformat:"0" }}" value="{{ object.tenures_burnt.all|tenures_burnt:"Other Crown" }}"></td>
+			      <td><input id="id_area_perc_2" type="number" min="0" max="100" step="0.1"></td>
+                </tr>
+
             </tbody>
         </table>
     </div>
@@ -52,10 +55,8 @@
 <script>
 
 // Make formset records uneditable
-//$("#id_areas_burnt").not("#id_ucl_area,#id_unalloc_other_area").mousedown(function(e){ e.preventDefault(); });
 $("#id_tenure_1,#id_tenure_2").mousedown(function(e){ e.preventDefault(); });
 
-//$("#id_ucl_area").prop('disabled', true);
 
 var total_other_area = {{ object.sss_data_to_dict.area.other_area|floatformat:"0" }};
 //var total_other_area = 1000.0;

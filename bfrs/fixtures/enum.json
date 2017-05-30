@@ -309,11 +309,18 @@
     "pk": 18,
     "model": "bfrs.tenure",
     "fields": {
-        "name": "Unallocated Crown Land"
+        "name": "Private Property"
     }
 },
 {
     "pk": 19,
+    "model": "bfrs.tenure",
+    "fields": {
+        "name": "Other Crown"
+    }
+},
+{
+    "pk": 20,
     "model": "bfrs.tenure",
     "fields": {
         "name": "Other"
