@@ -82,7 +82,7 @@ def latlon(value):
         point = GEOSGeometry(value)
         x = round(point.get_x(), 2)
         y = round(point.get_y(), 2)
-        return '(Lat/Lon) {}/{}'.format(x, y)
+        return '(Lon/Lat) {}/{}'.format(x, y)
     except:
         return None
 

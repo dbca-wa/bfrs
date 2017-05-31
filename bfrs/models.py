@@ -401,7 +401,7 @@ class Bushfire(Audit):
 
     @property
     def origin_coords(self):
-        return 'Lat/Lon ({}, {})'.format(round(self.origin_point.get_x(), 2), round(self.origin_point.get_y(), 2)) if self.origin_point else None
+        return 'Lon/Lat ({}, {})'.format(round(self.origin_point.get_x(), 2), round(self.origin_point.get_y(), 2)) if self.origin_point else None
 
     @property
     def origin_geo(self):
