@@ -46,6 +46,7 @@ import django_filters
 from django_filters import views as filter_views
 from django_filters.widgets import BooleanWidget
 
+
 class BushfireAuthView(LoginRequiredMixin, UpdateView):
     model = Bushfire
     form_class = BushfireForm
