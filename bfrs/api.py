@@ -10,7 +10,7 @@ from bfrs.utils import update_areas_burnt, invalidate_bushfire, serialize_bushfi
 
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point, GEOSGeometry, Polygon, MultiPolygon, GEOSException
-from tastypie.http import HttpBadRequest, HttpUnauthorized
+from tastypie.http import HttpBadRequest, HttpUnauthorized, HttpAccepted
 from tastypie.exceptions import ImmediateHttpResponse, Unauthorized
 import json
 
@@ -153,36 +153,25 @@ class BushfireResource(APIResource):
         curl --dump-header - -H "Content-Type: application/json" -X PATCH --data '{"origin_point":[11,-12], "area":12347, "fire_boundary": [[[[115.6528663436689,-31.177579372720448],[116.20507608972612,-31.386375097597803],[116.36167288338414,-31.009993330384674],[115.77374807912422,-30.999004081706918],[115.6528663436689,-31.177579372720448]]]]}' http://localhost:8000/api/v1/bushfire/1/?format=json
     """
 
-    tenure = fields.ToOneField(TenureResource, 'tenure')
+    tenure = fields.ToOneField(TenureResource, 'tenure', null=True)
 
     class Meta:
         queryset = Bushfire.objects.all()
         resource_name = 'bushfire'
         authorization= Authorization()
-        #authorization= BFRSUserAuthorization()
         #fields = ['origin_point', 'fire_boundary', 'area', 'fire_position']
         fields = ['origin_point', 'fire_boundary']
-
-#    def hydrate_sss_data(self, bundle):
-#        #import ipdb; ipdb.set_trace()
-#        bundle.data['sss_data'] = json.dumps(bundle.data)
 
     def hydrate_origin_point(self, bundle):
         """
         Converts the json string format to the one required by tastypie's full_hydrate() method
         converts the string: [11,-12] --> POINT (11 -12)
         """
-        if is_external_user(bundle.request.user):
-            return bundle
-
         if bundle.data.has_key('origin_point') and isinstance(bundle.data['origin_point'], list):
             bundle.data['origin_point'] = Point(bundle.data['origin_point']).__str__()
         return bundle
 
     def hydrate_fire_boundary(self, bundle):
-        if is_external_user(bundle.request.user):
-            return bundle
-
         if bundle.data.has_key('fire_boundary') and isinstance(bundle.data['fire_boundary'], list):
             bundle.data['fire_boundary'] = MultiPolygon([Polygon(*p) for p in bundle.data['fire_boundary']]).__str__()
         else:
@@ -192,6 +181,15 @@ class BushfireResource(APIResource):
 
     def obj_update(self, bundle, **kwargs):
 
+        if bundle.request.GET.has_key('checkpermission') and bundle.request.GET['checkpermission'] == 'true':
+            # Allows SSS to perform permission check
+            if is_external_user(bundle.request.user) or \
+               (not can_maintain_data(bundle.request.user) and bundle.obj.report_status >= Bushfire.STATUS_FINAL_AUTHORISED):
+                raise ImmediateHttpResponse(response=HttpUnauthorized())
+            else:
+                raise ImmediateHttpResponse(response=HttpAccepted())
+
+        # Allows BFRS and SSS to perform update only if permitted
         if is_external_user(bundle.request.user):
             return bundle
 

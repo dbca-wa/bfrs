@@ -268,10 +268,10 @@ $(function(){
         gokart.call("open", open_options);
     }
 
-    if ({{request.session.refreshGokart|yesno:"true,false"}}) {
-        //console.log("region " + {{request.session.region}} + " - district " + {{request.session.district}});
-        gokart.call("open", {"action":"{{request.session.action}}", "region":{{request.session.region}}, "district":{{request.session.district}}, "bushfireid":"{{request.session.id}}", "refresh":true});
-    }
+    //if ({{request.session.refreshGokart|yesno:"true,false"}}) {
+    //    //console.log("region " + {{request.session.region}} + " - district " + {{request.session.district}});
+    //    gokart.call("open", {"action":"{{request.session.action}}", "region":{{request.session.region}}, "district":{{request.session.district}}, "bushfireid":"{{request.session.id}}", "refresh":true});
+    //}
 /* END - GoKart section */
 
 
