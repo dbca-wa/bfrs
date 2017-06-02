@@ -158,7 +158,7 @@ class BushfireForm(forms.ModelForm):
     class Meta:
         model = Bushfire
         fields = ('fire_not_found', 'fire_monitored_only', 'invalid_details',
-                  'region', 'district', 'dfes_incident_no', 
+                  'region', 'district', 'dfes_incident_no',
                   'fire_detected_date', 'fire_contained_date', 'fire_controlled_date', 'fire_safe_date',
                   'first_attack', 'initial_control', 'final_control',
                   'other_first_attack', 'other_initial_control', 'other_final_control',
@@ -277,6 +277,14 @@ class BushfireCreateBaseForm(forms.ModelForm):
                   'dispatch_pw', 'dispatch_aerial',
                   'investigation_req', 'fire_behaviour_unknown',
                   'area', 'area_unknown', 'origin_point_str', 'origin_point', 'fire_boundary',
+
+		  'fire_not_found', 'fire_monitored_only', 'invalid_details',
+                  'fire_detected_date', 'fire_contained_date', 'fire_controlled_date', 'fire_safe_date',
+                  'first_attack', 'initial_control', 'final_control',
+                  'other_first_attack', 'other_initial_control', 'other_final_control',
+                  'area', 'area_limit', 'fire_level', 'arson_squad_notified', 'offence_no', 'job_code', 'reporting_year',
+                  'year', # these are hidden fields on the form
+
                  )
 
 
@@ -314,6 +322,86 @@ class BushfireCreateBaseForm(forms.ModelForm):
         hours = self.cleaned_data['hours'] if self.cleaned_data.has_key('hours') and self.cleaned_data['hours'] else 0
         days = self.cleaned_data['days'] if self.cleaned_data.has_key('days') and self.cleaned_data['days'] else 0
         self.cleaned_data['time_to_control'] = timedelta(days=days, hours=hours)
+
+        # FINAL Form
+        if self.cleaned_data['fire_not_found']:
+            self.cleaned_data['fire_level'] = None
+            self.cleaned_data['arson_squad_notified'] = None
+            self.cleaned_data['fire_contained_date'] = None
+            self.cleaned_data['fire_controlled_date'] = None
+            self.cleaned_data['fire_safe_date'] = None
+            self.cleaned_data['first_attack'] = None
+            self.cleaned_data['initial_control'] = None
+            self.cleaned_data['final_control'] = None
+            self.cleaned_data['other_first_attack'] = None
+            self.cleaned_data['other_initial_control'] = None
+            self.cleaned_data['other_final_control'] = None
+            self.cleaned_data['area'] = None
+            self.cleaned_data['area_limit'] = False
+            self.cleaned_data['arson_squad_notified'] = None
+            self.cleaned_data['offence_no'] = None
+            self.cleaned_data['job_code'] = None
+            self.cleaned_data['reporting_year'] = None #current_finyear()
+            self.cleaned_data['region_id'] = self.initial['region']
+            self.cleaned_data['district_id'] = self.initial['district']
+            self.errors.pop('region') # since these are required fields
+            self.errors.pop('district')
+            return cleaned_data
+        if self.cleaned_data['fire_monitored_only']:
+            self.cleaned_data['first_attack'] = None
+            #self.cleaned_data['initial_control'] = None
+            #self.cleaned_data['final_control'] = None
+            self.cleaned_data['other_first_attack'] = None
+            #self.cleaned_data['other_initial_control'] = None
+            #self.cleaned_data['other_final_control'] = None
+        else:
+            self.cleaned_data['invalid_details'] = None
+
+        if self.cleaned_data['arson_squad_notified'] == '':
+            self.cleaned_data['arson_squad_notified'] = None
+        else:
+            self.cleaned_data['arson_squad_notified'] = eval(self.cleaned_data['arson_squad_notified'])
+
+        if self.cleaned_data.has_key('year') and int(self.cleaned_data['reporting_year']) < int(self.cleaned_data['year']):
+            self.add_error('reporting_year', 'Cannot be before report financial year, {}/{}.'.format(self.cleaned_data['year'], int(self.cleaned_data['year'])+1))
+
+        if not self.cleaned_data['fire_level']:
+            self.add_error('fire_level', 'Must specify fire level.')
+
+        if not self.cleaned_data['fire_monitored_only']:
+            first_attack = self.cleaned_data['first_attack']
+            if not first_attack:
+                self.add_error('first_attack', 'Must specify First attack agency.')
+            if first_attack and first_attack.name.upper().startswith('OTHER'):
+                if not self.cleaned_data['other_first_attack']:
+                    self.add_error('other_first_attack', 'Must specify, if Initial attack agency is Other.')
+
+        initial_control = self.cleaned_data['initial_control']
+        if not initial_control:
+            self.add_error('initial_control', 'Must specify Initial control agency.')
+        if initial_control and initial_control.name.upper().startswith('OTHER'):
+            if not self.cleaned_data['other_initial_control']:
+                self.add_error('other_initial_control', 'Must specify, if Initial control agency is Other.')
+
+        final_control = self.cleaned_data['final_control']
+        if not final_control:
+            self.add_error('final_control', 'Must specify Final control agency.')
+        if final_control and final_control.name.upper().startswith('OTHER'):
+            if not self.cleaned_data['other_final_control']:
+                self.add_error('other_final_control', 'Must specify, if Final control agency is Other.')
+
+        if self.cleaned_data.has_key('fire_detected_date') and self.cleaned_data['fire_detected_date']:
+            if self.cleaned_data.has_key('fire_contained_date') and self.cleaned_data['fire_contained_date'] and self.cleaned_data['fire_contained_date'] < self.cleaned_data['fire_detected_date']:
+                self.add_error('fire_contained_date', 'Datetime must not be before Fire Detected Datetime - {}.'.format(self.cleaned_data['fire_detected_date']))
+
+        if self.cleaned_data.has_key('fire_contained_date') and self.cleaned_data['fire_contained_date']:
+            if self.cleaned_data.has_key('fire_controlled_date') and self.cleaned_data['fire_controlled_date'] and self.cleaned_data['fire_controlled_date'] < self.cleaned_data['fire_contained_date']:
+                self.add_error('fire_controlled_date', 'Datetime must not be before Fire Contained Datetime.')
+
+        if self.cleaned_data.has_key('fire_controlled_date') and self.cleaned_data['fire_controlled_date']:
+            if self.cleaned_data.has_key('fire_safe_date') and self.cleaned_data['fire_safe_date'] and self.cleaned_data['fire_safe_date'] < self.cleaned_data['fire_controlled_date']:
+                self.add_error('fire_safe_date', 'Datetime must not be before Fire Controlled Datetime.')
+
 
         return cleaned_data
 

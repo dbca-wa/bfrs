@@ -5,7 +5,7 @@ from tastypie.authorization import Authorization, ReadOnlyAuthorization, DjangoA
 from tastypie.resources import ModelResource, ALL, ALL_WITH_RELATIONS
 from tastypie.api import Api
 from tastypie import fields
-from bfrs.models import Profile, Region, District, Bushfire, Tenure
+from bfrs.models import Profile, Region, District, Bushfire, Tenure, current_finyear
 from bfrs.utils import update_areas_burnt, invalidate_bushfire, serialize_bushfire, is_external_user, can_maintain_data
 
 from django.contrib.auth.models import User
@@ -13,6 +13,7 @@ from django.contrib.gis.geos import Point, GEOSGeometry, Polygon, MultiPolygon, 
 from tastypie.http import HttpBadRequest, HttpUnauthorized, HttpAccepted
 from tastypie.exceptions import ImmediateHttpResponse, Unauthorized
 import json
+
 
 """
 The two helper methods below allow to replace class like:
@@ -161,6 +162,15 @@ class BushfireResource(APIResource):
         authorization= Authorization()
         #fields = ['origin_point', 'fire_boundary', 'area', 'fire_position']
         fields = ['origin_point', 'fire_boundary']
+
+    def field_values(self, request, **kwargs):
+        # Get a list of unique values for the field passed in kwargs.
+        if kwargs['field_name'] == 'year':
+            qs = Bushfire.objects.all().distinct().order_by('year').values_list('year', flat=True)[::1]
+            year_list = qs if current_finyear() in qs else qs + [current_finyear()]
+            return self.create_response(request, data=year_list)
+
+        return super(BushfireResource, self).field_values(request, **kwargs)
 
     def hydrate_origin_point(self, bundle):
         """
