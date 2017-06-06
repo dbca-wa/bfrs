@@ -184,16 +184,25 @@
 </div>
 
 {% if not action %}
+<div class="navbar navbar-fixed-bottom">
+  <div class="navbar-inner">
     <div class="container">
       <p class="pull-right">
       {% if object.report_status != object.STATUS_INVALIDATED or not object.report_status %}
+        {% if object.report_status < object.STATUS_INITIAL_AUTHORISED %}
           <input type="submit" value="Save draft" class="btn btn-primary btn-success" name="_save" {% if is_authorised %}title="Submitted initial report cannot be edited" disabled{% endif %} />
           <input type="submit" value="Submit" class="btn btn-primary btn-success" name="submit_initial" {% if is_authorised %}title="Initial Report already submitted" disabled{% else %}title="Save and submit"{% endif %} />
+        {% else %}
+          <input type="submit" {% if object.report_status >= object.STATUS_FINAL_AUTHORISED %}value="Save final"{% else %} value="Save draft"{% endif %} class="btn btn-primary btn-success" name="_save" {% if is_authorised %}title="Initial Report cannot be edited" disabled{% endif %} />
+          <input type="submit" value="Authorise" class="btn btn-primary btn-success" name="authorise_final" {% if object.report_status >= object.STATUS_FINAL_AUTHORISED %}title="Final Report already authorised on {{object.authorised_date}} by {{object.authorised_by}}" disabled{% elif is_authorised %}disabled{% else %}title="Save and authorise"{% endif %} />
+        {% endif %}
       {% endif %}
 
       <a id="id_cancel_btn" href="{% url 'main' %}" class="btn btn-primary btn-danger">Cancel</a>
       </p>
     </div>
+  </div>
+</div>
 {% endif %}
 
 </form>

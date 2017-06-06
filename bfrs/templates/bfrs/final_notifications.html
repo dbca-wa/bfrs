@@ -15,7 +15,6 @@
 {% endcomment %}
 
 {% block content %}
-<form action="" method="post">{% csrf_token %}
 
 <table class="table table-bordered table-striped table-condensed">
     <tbody>
@@ -231,12 +230,9 @@
         <tr>
             <th class="cbas" style="font-weight:normal;">Reporting Year</th>
             <td colspan="3" class="cbas">{% if is_authorised %} {{snapshot.reporting_year|fin_year}} {% else %} {{form.reporting_year}} {% endif %}</td>
-	    {{form.year.as_hidden}}
         </tr>
-        {% else %}
-	    {{form.reporting_year.as_hidden}}
-	    {{form.year.as_hidden}}
         {% endif %}
+	{{form.reporting_year.as_hidden}}
 
   </tbody>
 </table>
@@ -258,6 +254,7 @@
 </table>
 </div> <!-- div_form_invalidate -->
 
+{% comment %}
 {% if not action %}
 <div class="navbar navbar-fixed-bottom">
   <div class="navbar-inner">
@@ -273,9 +270,10 @@
   </div>
 </div>
 {% endif %}
+{% endcomment %}
 
-</form>
 
+{% comment %}
 {% if action %}
 <!-- This section to allow redirect confirmation -->
 <form action="" method="post">{% csrf_token %}
@@ -284,14 +282,11 @@
     <input type="hidden" name="action" value="{{action}}" />
     <input type="hidden" name="confirm_action" value="yes" />
     <input type="submit" class="btn" value="{% trans "Yes, I'm sure" %}" />
-	{% comment %}
-	<!-- Below line causes an error in the Django Formset -->
-        <a href="javascript: history.go(-1)" class="btn btn-danger">Cancel</a>
-	{% endcomment %}
     <a id="id_cancel_btn" href="{% url 'bushfire:bushfire_final' object.id %}" class="btn btn-primary btn-danger">Cancel</a>
   </div>
 </form>
 {% endif %}
+{% endcomment %}
 
 <script>
 

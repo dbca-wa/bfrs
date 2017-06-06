@@ -22,7 +22,7 @@ YESNO_CHOICES = (
 )
 
 REPORTING_YEAR_CHOICES = (
-    (current_finyear()-1, str(current_finyear()-1) + '/' + str(current_finyear())),
+    #(current_finyear()-1, str(current_finyear()-1) + '/' + str(current_finyear())),
     (current_finyear(), str(current_finyear()) + '/' + str(current_finyear() + 1)),
     (current_finyear() + 1, str(current_finyear() + 1) + '/' + str(current_finyear() + 2)),
 )
@@ -263,6 +263,8 @@ class BushfireCreateBaseForm(forms.ModelForm):
     dispatch_pw = forms.ChoiceField(choices=Bushfire.DISPATCH_PW_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
     assistance_req = forms.ChoiceField(choices=Bushfire.ASSISTANCE_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
     other_tenure = forms.ChoiceField(choices=Bushfire.IGNITION_POINT_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
+    arson_squad_notified = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
+    reporting_year = forms.ChoiceField(choices=REPORTING_YEAR_CHOICES, required=False)
 
     class Meta:
         model = Bushfire
@@ -283,7 +285,6 @@ class BushfireCreateBaseForm(forms.ModelForm):
                   'first_attack', 'initial_control', 'final_control',
                   'other_first_attack', 'other_initial_control', 'other_final_control',
                   'area', 'area_limit', 'fire_level', 'arson_squad_notified', 'offence_no', 'job_code', 'reporting_year',
-                  'year', # these are hidden fields on the form
 
                  )
 
@@ -362,7 +363,8 @@ class BushfireCreateBaseForm(forms.ModelForm):
         else:
             self.cleaned_data['arson_squad_notified'] = eval(self.cleaned_data['arson_squad_notified'])
 
-        if self.cleaned_data.has_key('year') and int(self.cleaned_data['reporting_year']) < int(self.cleaned_data['year']):
+        import ipdb; ipdb.set_trace()
+        if self.cleaned_data.has_key('year') and self.cleaned_data.has_key('reporting_year') and int(self.cleaned_data['reporting_year']) < int(self.cleaned_data['year']):
             self.add_error('reporting_year', 'Cannot be before report financial year, {}/{}.'.format(self.cleaned_data['year'], int(self.cleaned_data['year'])+1))
 
         if not self.cleaned_data['fire_level']:
