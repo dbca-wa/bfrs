@@ -267,6 +267,12 @@ class BushfireCreateBaseForm(forms.ModelForm):
     arson_squad_notified = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
     reporting_year = forms.ChoiceField(choices=REPORTING_YEAR_CHOICES, required=False)
 
+    def __init__(self, *args, **kwargs):
+        super (BushfireCreateBaseForm,self ).__init__(*args,**kwargs)
+        active_users = User.objects.filter(is_active=True)
+        self.fields['field_officer'].queryset = active_users
+        self.fields['duty_officer'].queryset = active_users
+
     class Meta:
         model = Bushfire
         fields = ('sss_data',
