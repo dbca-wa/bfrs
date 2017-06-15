@@ -47,6 +47,9 @@ PASS_SSO = env('PASS_SSO')
 FSSDRS_USERS = env('FSSDRS_USERS')
 FSSDRS_GROUP = env('FSSDRS_GROUP', 'FSS Datasets and Reporting Services')
 
+HARVEST_EMAIL_HOST = env('HARVEST_EMAIL_HOST')
+HARVEST_EMAIL_USER = env('HARVEST_EMAIL_USER')
+HARVEST_EMAIL_PASSWORD = env('HARVEST_EMAIL_PASSWORD')
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/
 
@@ -97,6 +100,7 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
 
     #'guardian',
+    'reversion',
     'tastypie',
     'smart_selects',
     'django_extensions',
@@ -108,15 +112,26 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE_CLASSES = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
+#    'django.middleware.security.SecurityMiddleware',
+#    'django.contrib.sessions.middleware.SessionMiddleware',
+#    'django.middleware.common.CommonMiddleware',
+#    'django.middleware.csrf.CsrfViewMiddleware',
+#    'django.contrib.auth.middleware.AuthenticationMiddleware',
+#    'django.contrib.messages.middleware.MessageMiddleware',
+#    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+#    'debug_toolbar.middleware.DebugToolbarMiddleware',
+#    'dpaw_utils.middleware.SSOLoginMiddleware',
+
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'reversion.middleware.RevisionMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
     'dpaw_utils.middleware.SSOLoginMiddleware',
+
 ]
 
 ROOT_URLCONF = 'bfrs_project.urls'

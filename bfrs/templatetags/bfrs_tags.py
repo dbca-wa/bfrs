@@ -273,7 +273,7 @@ def filter_tenures_burnt(qs, arg=None):
     """
     #import ipdb; ipdb.set_trace()
     #return qs.exclude(tenure__name__in=['Unallocated Crown Land', 'Other'])
-    return qs.exclude(tenure__name__in=arg.split(','))
+    return qs.exclude(tenure__name__in=arg.split(',')) if qs else None
 
 @register.filter(is_safe=False)
 def tenures_burnt(qs, arg=None):
@@ -283,7 +283,7 @@ def tenures_burnt(qs, arg=None):
         {{ qs|filter_tenures_burnt:"string" }}
     """
     #import ipdb; ipdb.set_trace()
-    qs = qs.filter(tenure__name=arg)
+    qs = qs.filter(tenure__name=arg) if qs else None
     return round(qs[0].area, 0) if qs else 0
 
 @register.filter(is_safe=False)

@@ -88,6 +88,16 @@
 		    {% endif %}
 		</td>
 
+		{% comment %}
+		<td align="center">
+            {% if bushfire.report_status == bushfire.STATUS_INITIAL_AUTHORISED %}
+			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}?report=final" title="Edit final fire report"><span style="display:none">{{bushfire.report_status}}</span><font color="red"><i class="icon-edit icon-white"></i></red></a>
+            {% elif bushfire.report_status >= bushfire.STATUS_FINAL_AUTHORISED and bushfire.report_status != bushfire.STATUS_INVALIDATED%}
+			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}?report=final" title="Final fire report authorised on {{bushfire.authorised_date}} by {{bushfire.authorised_by}}"><span style="display:none">{{bushfire.report_status}}</span><font color="green"><i class="icon-ok icon-white"></i></font></a>
+		    {% endif %}
+		</td>
+		{% endcomment %}
+
         {% if can_maintain_data %}
         <td align="center">
           {% if bushfire.report_status == bushfire.STATUS_FINAL_AUTHORISED %}
@@ -111,7 +121,7 @@
              <td>
 				 <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=archive');" title="Archive Report"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-folder-close"></i></a>
 				 {% if can_maintain_data %}<a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=delete_reviewed');" title="Delete reviewed"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-trash icon-white"></i></a>{% endif %}
-			 </td>
+             </td>
            {% else %}
 		     <td><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=unarchive');" title="Unarchive Report"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-folder-open"></i></a></td>
            {% endif %}
@@ -155,7 +165,7 @@
                     </thead>
                     <tbody>
                     {% if bushfire.invalidated.all %}
-                      {% for linked_obj in bushfire.invalidated.all %}
+                      {% for linked_obj in bushfire.invalidated.all|dictsortreversed:"modified" %}
                       <tr>
 				        <td><a href="{% url 'bushfire:bushfire_initial' linked_obj.id %}">{{linked_obj.fire_number}}</a></td>
 				        <td>{{linked_obj.modified|date_fmt}}</td>

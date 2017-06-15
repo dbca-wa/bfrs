@@ -101,6 +101,7 @@ def invalidate_bushfire(obj, new_district, user):
     with transaction.atomic():
         old_rpt_status = obj.report_status
         obj.report_status = Bushfire.STATUS_INVALIDATED
+        obj.modifier = user
         obj.save()
         old_obj = deepcopy(obj)
         old_invalidated = old_obj.invalidated.all()
@@ -306,6 +307,7 @@ def update_status(request, bushfire, action):
         bushfire.init_authorised_by = request.user
         bushfire.init_authorised_date = datetime.now(tz=pytz.utc)
         bushfire.report_status = Bushfire.STATUS_INITIAL_AUTHORISED
+        bushfire.save()
         serialize_bushfire('initial', action, bushfire)
 
         # send emails
@@ -334,7 +336,7 @@ def update_status(request, bushfire, action):
             resp = police_email(bushfire, mail_url(request, bushfire))
             notification['POLICE'] = 'Email Sent' if resp else 'Email failed'
 
-        bushfire.area = None # reset bushfire area
+        #bushfire.area = None # reset bushfire area
         #bushfire.sss_data = None
         bushfire.save()
 
@@ -342,6 +344,7 @@ def update_status(request, bushfire, action):
         bushfire.authorised_by = request.user
         bushfire.authorised_date = datetime.now(tz=pytz.utc)
         bushfire.report_status = Bushfire.STATUS_FINAL_AUTHORISED
+        bushfire.save()
         serialize_bushfire('final', action, bushfire)
 
         # send emails
@@ -414,7 +417,7 @@ def dfes_email(bushfire, url):
 
     #import ipdb; ipdb.set_trace()
     subject = 'DFES Email - Initial report submitted - {}'.format(bushfire.fire_number)
-    message = 'DFES Email - {}\n\n(Lat/Lon) {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.fire_number, bushfire.origin_point, url)
+    message = '---- PLEASE REPLY ABOVE THIS LINE ----\n\nDFES Email\n\nFire Number:{}\n\n(Lat/Lon) {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.fire_number, bushfire.origin_point, url)
 
     return send_mail(subject, message, settings.FROM_EMAIL, settings.DFES_EMAIL)
 
@@ -450,7 +453,7 @@ def update_users():
     fssdrs_group, g_created = Group.objects.get_or_create(name=settings.FSSDRS_GROUP)
     if g_created:
         fssdrs_group.permissions = Permission.objects.filter(name__in=['Can add group', 'Can change group', 'Can add permission', 'Can change permission', 'Can add user', 'Can change user'])
-    
+
     for user in resp.json()['objects']:
         if user['email'] and user['email'].split('@')[-1].lower() == settings.INTERNAL_EMAIL:
             u, created = User.objects.get_or_create(
@@ -461,7 +464,7 @@ def update_users():
                     'email': user['email']
                 }
             )
-            
+
             if created and u.username in settings.FSSDRS_USERS:
                 u.groups.add(fssdrs_group)
                 u.is_staff = True

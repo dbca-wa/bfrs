@@ -10,7 +10,7 @@
   {% if create %}
     <li>{% trans 'Create' %}</li>
   {% else %}
-    <li>{% trans 'Initial' %}</li>
+  <li>{% if initial %}{% trans 'Initial' %}{% else %}{% trans 'Final' %}{% endif %}</li>
 	<li>{% if object.report_status == object.STATUS_INVALIDATED %} <font color="red">{{ object.fire_number}} (Invalid)</font>{% else %}{{ object.fire_number }}{% endif %}</li>
   {% endif %}
 </ul>
@@ -108,28 +108,46 @@
 
         <tr>
 			<th class="cbas">P&W Resource dispatched *<br><br><div class=div_dispatch_pw_date style="display: none;">Date and time of dispatch</div></th>
-            <td colspan="1" class="cbas">
+            <td colspan="2" class="cbas">
                 {% if is_authorised %} {{snapshot.dispatch_pw|yesno:"Yes,No"}}{% if snapshot.dispatch_pw|yesno:"YesNo" == 'Yes' %}<br>{{snapshot.dispatch_pw_date}} {% endif %} {% else %} {{form.dispatch_pw}} {% endif %}<br>
 				<div class=div_dispatch_pw_date style="display: none;">{% if not is_authorised %} {{form.dispatch_pw_date}} {% endif %}</div>
 			</td>
 
 			<th class="cbas">Aerial support dispatched *<br><br><div class=div_dispatch_aerial_date style="display: none;">Date and time of dispatch</div></th>
-            <td colspan="1" class="cbas">
+            <td colspan="2" class="cbas">
                 {% if is_authorised %} {{snapshot.dispatch_aerial|yesno:"Yes,No"}}{% if snapshot.dispatch_aerial|yesno:"Yes,No" == 'Yes' %}<br>{{snapshot.dispatch_aerial_date}}{% endif %}{% else %} {{form.dispatch_aerial}} {% endif %}<br>
 				<div class=div_dispatch_aerial_date style="display: none;">{% if not is_authorised %} {{form.dispatch_aerial_date}} {% endif %}</div>
 			</td>
+        </tr>
 
+        <tr>
 			<th class="cbas" id="id_th_initial_controlling_agency">Initial controlling agency *<br><br><div class=div_other_initial_control style="display: none;">Other initial controlling agency *</div></th>
-            <td colspan="1" class="cbas">
+            <td colspan="2" class="cbas">
                 {% if is_authorised %} {{snapshot.initial_control}} <br>{% if snapshot.other_initial_control %} {{snapshot.other_initial_control}} {% endif %} {% else %} {{form.initial_control}} {% endif %}<br>
                 <div class=div_other_initial_control style="display: none;">{% if is_authorised %} {{snapshot.other_initial_control}} {% else %} {{form.other_initial_control}} {% endif %}</div>
+            </td>
+
+            <th class="cbas">Area of fire at arrival (ha) *</th>
+            <td colspan="2" class="cbas">
+				<span class="div_initial_area_unknown" style="display: none;">{% if not is_authorised %} {{form.initial_area_unknown}} Unknown{% endif %}<br></span>
+				<div class="div_initial_area" style="visibility: visible;">
+					{% if is_authorised %}
+					  {% if snapshot.initial_area_unknown %}
+					    Unknown
+					  {% else %} 
+					    {{snapshot.initial_area}}
+					  {% endif %}
+					{% else %} 
+					  {{form.initial_area}}
+					{% endif %}
+				</div>
             </td>
 
         </tr>
 
         <tr>
             <th class="cbas">Probable Fire Level *</th>
-            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.fire_level}} {% else %} {{form.fire_level}} {% endif %}</td>
+            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.prob_fire_level}} {% else %} {{form.prob_fire_level}} {% endif %}</td>
 
             <th class="cbas">Investigation required *</th>
             <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.investigation_req|yesno:"Yes,No"}} {% else %} {{form.investigation_req}} {% endif %}</td>
@@ -183,6 +201,22 @@
 </table>
 </div>
 
+<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+  <div class="panel-default">
+    <div role="tab" id="pn_fire_behaviour">
+      <h4 class="panel-title">
+        <a role="button" data-toggle="collapse" data-parent="#accordion" href="#fire_behaviour" aria-expanded="true" aria-controls="fire_behaviour">
+          <div colspan="6" style="background: black; color: white; text-align: left; font-size: 16px; padding: 12px;" > FIRE REPORT (Click to open)</div>
+        </a>
+      </h4>
+    </div>
+    <div id="fire_behaviour" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pn_fire_behaviour">
+        {% include "bfrs/final_notifications.html" %}
+    </div>
+  </div>
+</div>
+
+
 {% if not action %}
 <div class="navbar navbar-fixed-bottom">
   <div class="navbar-inner">
@@ -223,21 +257,6 @@
   </div>
 </form>
 {% endif %}
-
-<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
-  <div class="panel-default">
-    <div role="tab" id="pn_fire_behaviour">
-      <h4 class="panel-title">
-        <a role="button" data-toggle="collapse" data-parent="#accordion" href="#fire_behaviour" aria-expanded="true" aria-controls="fire_behaviour">
-          <div colspan="6" style="background: black; color: white; text-align: left; font-size: 16px; padding: 12px;" > FIRE REPORT (Click to open)</div>
-        </a>
-      </h4>
-    </div>
-    <div id="fire_behaviour" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pn_fire_behaviour">
-        {% include "bfrs/final_notifications.html" %}
-    </div>
-  </div>
-</div>
 
 
 
@@ -367,28 +386,28 @@ $('.open-all').click(function(){
   $(".open-all").hide();
 });
 
-/* Area Override */
+/* Initial Area Override */
 // Only allow override if no fire_boundary supllied
 
 $('#id_area').val({{object.sss_data_to_dict.area.total_area|floatformat:2}});
 if( {{object.fire_boundary|yesno:"true,false"}} || {{sss_data.area.total_area|yesno:"true,false"}} ) { 
     $('.div_area_unknown').hide();
-	$("#id_area").attr('readonly','readonly').css('background-color' , '#DEDEDE');
+	$("#id_initial_area").attr('readonly','readonly').css('background-color' , '#DEDEDE');
 } else {
-    $('.div_area_unknown').show();
-    $('.div_area').css('visibility','visible');
-	$("#id_area").removeAttr('readonly').removeAttr('style');
+    $('.div_initial_area_unknown').show();
+    $('.div_initial_area').css('visibility','visible');
+	$("#id_initial_area").removeAttr('readonly').removeAttr('style');
 }
 
-$('#id_area_unknown').on('change', function() {
-    if($("#id_area_unknown").is(':checked')) { 
-		$('.div_area').css('visibility','hidden');
+$('#id_initial_area_unknown').on('change', function() {
+    if($("#id_initial_area_unknown").is(':checked')) { 
+		$('.div_initial_area').css('visibility','hidden');
 	} else {
-		$('.div_area').css('visibility','visible');
+		$('.div_initial_area').css('visibility','visible');
 	}
 }).change();
 
-$("#id_area").prop('min', 0).prop('max',{{area_threshold|to_float}});
+$("#id_initial_area").prop('min', 0).prop('max',{{area_threshold|to_float}});
 /* END - Area Override */
 
 /* Fire Position Override */

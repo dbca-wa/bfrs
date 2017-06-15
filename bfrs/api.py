@@ -185,7 +185,10 @@ class BushfireResource(APIResource):
         if bundle.data.has_key('fire_boundary') and isinstance(bundle.data['fire_boundary'], list):
             bundle.data['fire_boundary'] = MultiPolygon([Polygon(*p) for p in bundle.data['fire_boundary']]).__str__()
         else:
-            bundle.obj.area = None
+            if bundle.obj.report_status < Bushfire.STATUS_INITIAL_AUTHORISED:
+                bundle.obj.initial_area = None
+            else:
+                bundle.obj.area = None
             bundle.obj.fire_boundary = None
         return bundle
 
@@ -220,9 +223,12 @@ class BushfireResource(APIResource):
             update_areas_burnt(bundle.obj, bundle.data['area']['tenure_area']['areas'])
 
         if bundle.data.has_key('area') and bundle.data['area'].has_key('total_area') and bundle.data['area']['total_area']:
-            bundle.obj.area_limit = False
-            bundle.obj.area_unknown = False
-            bundle.obj.area = round(float(bundle.data['area']['total_area']), 2)
+            if bundle.obj.report_status < Bushfire.STATUS_INITIAL_AUTHORISED:
+                bundle.obj.area_unknown = False
+                bundle.obj.initial_area = round(float(bundle.data['area']['total_area']), 2)
+            else:
+                bundle.obj.area_limit = False
+                bundle.obj.area = round(float(bundle.data['area']['total_area']), 2)
 
         if bundle.data.has_key('fire_position') and bundle.data['fire_position']:
             # only update if user has not over-ridden

@@ -58,7 +58,7 @@ class Audit(models.Model):
         return self._changed_data
     changed_data = property(get_changed_data)
 
-    def save(self, *args, **kwargs):
+    def _save(self, *args, **kwargs):
 
         '''
         This falls back on using an admin user if a thread request object wasn't found
@@ -82,7 +82,9 @@ class Audit(models.Model):
             try:
                 user = User.objects.get(pk=_locals.request.user.pk)
             except Exception:
-                user = User.objects.get(id=1)
+                user, created = User.objects.get_or_create(username='admin',
+                    defaults={'first_name':'Admin', 'last_name':'Admin', 'email':'admin@{}'.format(settings.INTERNAL_EMAIL) }
+                )
 
         # If saving a new model, set the creator.
         if not self.pk:

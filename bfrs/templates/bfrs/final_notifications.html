@@ -14,7 +14,6 @@
 {% endif %}
 {% endcomment %}
 
-{% block content %}
 
 <table class="table table-bordered table-striped table-condensed">
     <tbody>
@@ -24,7 +23,6 @@
                 {% if is_authorised %} {{snapshot.fire_not_found|yesno:"Yes,No"}}<br> Details: {{snapshot.invalid_details}} {% else %} {{form.fire_not_found}} {% endif %}
                 <span class="div_invalid_details" style="display: none; margin: 20px;">{% if not is_authorised %} Details{{form.invalid_details}} {% endif %}</span>
             </td>
-	    {{form.year.as_hidden}}
             <th class="cbas" style="font-weight:normal;" width='17%'>Fire monitored only</th>
 	    <td colspan="1" class="cbas" >{% if is_authorised %} {{snapshot.fire_monitored_only|yesno:"Yes,No"}}{% else %} {{form.fire_monitored_only}} {% endif %}</td>
         </tr>
@@ -76,38 +74,15 @@
                 {% if is_authorised %} SSS overide - {{snapshot.fire_position_override|yesno:"Yes,No"}} {% else %} {{form.fire_position_override}} SSS override{% endif %}
 			</td>
 
-            <th class="cbas">Area of fire at arrival (ha) *</th>
-            <td colspan="2" class="cbas">
-				{% comment %}
-				{% if is_authorised %} Unknown - {{snapshot.area_unknown|yesno:"Yes,No"}} {% else %} {{form.area_unknown}} Unknown{% endif %}<br>
-				<div class="div_area" style="visibility: visible;">{% if is_authorised %} {{snapshot.area}} {% else %} {{form.area}} {% endif %}</div>
-				{% endcomment %}
-
-				<span class="div_area_unknown" style="display: none;">{% if not is_authorised %} {{form.area_unknown}} Unknown{% endif %}<br></span>
-				<div class="div_area" style="visibility: visible;">
-					{% if is_authorised %}
-					  {% if snapshot.area_unknown %}
-					    Unknown
-					  {% else %} 
-					    {{snapshot.area}}
-					  {% endif %}
-					{% else %} 
-					  {{form.area}}
-					{% endif %}
-				</div>
-            </td>
-        </tr>
-
-        <tr>
             <th class="cbas" style="font-weight:normal;">Estimated Time to Control</th>
-			<td colspan="5" class="cbas">
+	    <td colspan="2" class="cbas">
 				{% if is_authorised %}
                   <span>{{snapshot.time_to_control_str}}</span>
 				{% else %}
                   <span>{{form.days}} Days{{form.hours}} Hours</span>
 				{% endif %}
                 {{time_to_control.as_hidden}}
-			</td>
+	     </td>
         </tr>
 
         <tr>
@@ -174,13 +149,12 @@
         {% endif %}
 
 
-	{{form.fire_detected_date.as_hidden}}
         <tr>
 	    <th class="cbas" title=" Fire spread has been halted, though the fire may still be burning freely within the perimeter of the fire control lines">Date fire contained <i class="icon-info-sign icon-white"></i> *</th>
-            <td class="cbas">{% if is_authorised %} {{snapshot.fire_contained_date}} {% else %} {{form.fire_contained_date}} {% endif %}</td>
+            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.fire_contained_date}} {% else %} {{form.fire_contained_date}} {% endif %}</td>
 
             <th class="cbas" id="id_th_initial_attack_agency">Initial attack agency *<br><br><div class=div_other_first_attack style="display: none;">Other initial attack agency *</div></th>
-            <td colspan="1" class="cbas">
+            <td colspan="2" class="cbas">
 		{% if is_authorised %} {{snapshot.first_attack}}<br>{% if snapshot.other_first_attack %} {{snapshot.other_first_attack}} {% endif %}{% else %} {{form.first_attack}} {% endif %}<br>
                 <div class=div_other_first_attack style="display: none;">{% if is_authorised %} {{snapshot.other_first_attack}} {% else %} {{form.other_first_attack}} {% endif %}</div>
             </td>
@@ -188,24 +162,25 @@
 
         <tr>
 	    <th class="cbas" title="Complete perimeter of fire is secured and no breakaway is expected">Date fire controlled <i class="icon-info-sign icon-white"></i> *</th>
-            <td class="cbas">{% if is_authorised %} {{snapshot.fire_controlled_date}} {% else %} {{form.fire_controlled_date}} {% endif %}</td>
+            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.fire_controlled_date}} {% else %} {{form.fire_controlled_date}} {% endif %}</td>
+
+            <th class="cbas" id="id_th_final_controlling_agency">Final controlling agency *<br><br><div class=div_other_final_control style="display: none;">Other final controlling agency *</div></th>
+            <td colspan="2" class="cbas">
+                {% if is_authorised %} {{snapshot.final_control}} <br>{% if snapshot.other_final_control %} {{snapshot.other_final_control}} {% endif %} {% else %} {{form.final_control}} {% endif %}<br>
+                <div class=div_other_final_control style="display: none;">{% if is_authorised %} {{snapshot.other_final_control}} {% else %} {{form.other_final_control}} {% endif %}</div>
+            </td>
 
         </tr>
 
         <tr>
 	    <th class="cbas" title='Placeholder ...'>Date fire safe <i class="icon-info-sign icon-white"></i> *</th>
-            <td class="cbas">{% if is_authorised %} {{snapshot.fire_safe_date}} {% else %} {{form.fire_safe_date}} {% endif %}</td>
+            <td colspan="5" class="cbas">{% if is_authorised %} {{snapshot.fire_safe_date}} {% else %} {{form.fire_safe_date}} {% endif %}</td>
 
-            <th class="cbas" id="id_th_final_controlling_agency">Final controlling agency *<br><br><div class=div_other_final_control style="display: none;">Other final controlling agency *</div></th>
-            <td colspan="1" class="cbas">
-                {% if is_authorised %} {{snapshot.final_control}} <br>{% if snapshot.other_final_control %} {{snapshot.other_final_control}} {% endif %} {% else %} {{form.final_control}} {% endif %}<br>
-                <div class=div_other_final_control style="display: none;">{% if is_authorised %} {{snapshot.other_final_control}} {% else %} {{form.other_final_control}} {% endif %}</div>
-            </td>
         </tr>
 
         <tr>
             <th class="cbas">Maximum Fire Level *</th>
-            <td colspan="1" class="cbas">{% if is_authorised %} {{snapshot.fire_level}} {% else %} {{form.fire_level}} {% endif %}</td>
+            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.max_fire_level}} {% else %} {{form.max_fire_level}} {% endif %}</td>
 
             <th class="cbas">Final fire size (ha) *</th>
             <td colspan="2" class="cbas">
@@ -217,22 +192,23 @@
 
         <tr>
             <th class="cbas">Arson squad notified *</th>
-            <td colspan="1" class="cbas">
+            <td colspan="2" class="cbas">
 		{% if is_authorised %} {{snapshot.arson_squad_notified|yesno:"Yes,No"}}{% if snapshot.arson_squad_notified|yesno:"Yes,No" == 'Yes' %}<br>Police offence no {{snapshot.offence_no}} {% endif %}{% else %} {{form.arson_squad_notified}} {% endif %}<br>
                 <span class="div_offence_no" style="display: none; margin: 0px;">{% if not is_authorised %} {{form.offence_no}} Police offence no {% endif %}</span>
             </td>
 
             <th class="cbas">Job code *</th>
-            <td colspan="1" class="cbas">{% if is_authorised %} {{snapshot.job_code}} {% else %} {{form.job_code}} {% endif %}</td>
+            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.job_code}} {% else %} {{form.job_code}} {% endif %}</td>
         </tr>
 
         {% if can_maintain_data %}
         <tr>
             <th class="cbas" style="font-weight:normal;">Reporting Year</th>
-            <td colspan="3" class="cbas">{% if is_authorised %} {{snapshot.reporting_year|fin_year}} {% else %} {{form.reporting_year}} {% endif %}</td>
+            <td colspan="5" class="cbas">{% if is_authorised %} {{snapshot.reporting_year|fin_year}} {% else %} {{form.reporting_year}} {% endif %}</td>
         </tr>
+        {% else %}
+	  {{form.reporting_year.as_hidden}}
         {% endif %}
-	{{form.reporting_year.as_hidden}}
 
   </tbody>
 </table>
@@ -434,4 +410,3 @@ function fire_not_found() {
 
 </script>
 
-{% endblock %}

@@ -11,14 +11,14 @@ from django.core.exceptions import (ValidationError)
 from django.conf import settings
 import LatLon
 from django.core import serializers
+import reversion
 
 import sys
 import json
 
 SUBMIT_MANDATORY_FIELDS= [
-    'region', 'district', 'year', 'fire_number', 'name', 'fire_detected_date',
-    'dispatch_pw', 'dispatch_aerial', 'fire_level', 'investigation_req', 'park_trail_impacted',
-    'assistance_req', 'cause_state', 'cause', 'tenure',
+    'region', 'district', 'year', 'fire_number', 'name', 'fire_detected_date', 'prob_fire_level',
+    'dispatch_pw', 'dispatch_aerial', 'investigation_req', 'park_trail_impacted', 'media_alert_req',
 ]
 SUBMIT_MANDATORY_DEP_FIELDS= {
     'dispatch_pw': [[1, 'dispatch_pw_date'], [1, 'field_officer']],
@@ -33,10 +33,11 @@ SUBMIT_MANDATORY_FORMSETS= [
 ]
 
 AUTH_MANDATORY_FIELDS= [
+    'assistance_req', 'cause_state', 'cause',
     'fire_contained_date', 'fire_controlled_date', 'fire_safe_date',
     #'first_attack', 'initial_control', 'final_control',
-    'initial_control', 'final_control',
-    'fire_level', 'arson_squad_notified', 'job_code',
+    #'initial_control', 'final_control',
+    'max_fire_level', 'arson_squad_notified', 'job_code',
 ]
 AUTH_MANDATORY_DEP_FIELDS= {
     #'first_attack': [True, 'other_first_attack'],
@@ -86,14 +87,19 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
         if getattr(obj, fs) is None or not getattr(obj, fs).all():
             missing.append(fs)
 
-    # final fire boundary required for fires > 2 ha
-    if not obj.area_limit and not obj.area_unknown:
-        msg = 'Area of Arrival' if obj.report_status < Bushfire.STATUS_INITIAL_AUTHORISED else 'Final Area'
-        if not obj.area:
-            missing.append("Must enter {}, if area < {}ha".format(msg, settings.AREA_THRESHOLD))
+    # initial fire boundary required for fires > 2 ha
+    if not obj.initial_area_unknown:
+        if not obj.initial_area and obj.report_status < Bushfire.STATUS_INITIAL_AUTHORISED:
+            missing.append("Must enter Area of Arrival, if area < {}ha".format(settings.AREA_THRESHOLD))
+
+#    # final fire boundary required for fires > 2 ha
+#    if not obj.area_limit:
+#        if not obj.area and obj.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED:
+#            missing.append("Must enter Final Area, if area < {}ha".format(settings.AREA_THRESHOLD))
+
     if obj.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED:
         if not obj.area_limit and (obj.area < settings.AREA_THRESHOLD or obj.area is None):
-            missing.append("Must enter {}, if area < {}ha".format(msg, settings.AREA_THRESHOLD))
+            missing.append("Must enter Final Area, if area < {}ha".format(settings.AREA_THRESHOLD))
 
     return missing
 
@@ -157,6 +163,7 @@ class District(models.Model):
         return self.name
 
 
+@reversion.register()
 class Bushfire(Audit):
     STATUS_INITIAL            = 1
     STATUS_INITIAL_AUTHORISED = 2
@@ -222,7 +229,8 @@ class Bushfire(Audit):
     year = models.PositiveSmallIntegerField(verbose_name="Financial Year", default=current_finyear())
     reporting_year = models.PositiveSmallIntegerField(verbose_name="Reporting Year", default=current_finyear(), blank=True)
 
-    fire_level = models.PositiveSmallIntegerField(choices=FIRE_LEVEL_CHOICES, null=True, blank=True)
+    prob_fire_level = models.PositiveSmallIntegerField(verbose_name='Probable fire level', choices=FIRE_LEVEL_CHOICES, null=True, blank=True)
+    max_fire_level = models.PositiveSmallIntegerField(verbose_name='Maximum fire level', choices=FIRE_LEVEL_CHOICES, null=True, blank=True)
     media_alert_req = models.NullBooleanField(verbose_name="Media Alert Required", null=True)
     park_trail_impacted = models.NullBooleanField(verbose_name="Park and/or trail potentially impacted", null=True)
     cause = models.ForeignKey('Cause', null=True, blank=True)
@@ -277,9 +285,10 @@ class Bushfire(Audit):
     arson_squad_notified = models.NullBooleanField(verbose_name="Arson Squad Notified", null=True)
     investigation_req = models.NullBooleanField(verbose_name="Investigation Required", null=True)
     offence_no = models.CharField(verbose_name="Police Offence No.", max_length=10, null=True, blank=True)
+    initial_area = models.FloatField(verbose_name="Area of fire at arrival (ha)", validators=[MinValueValidator(0)], null=True, blank=True)
+    initial_area_unknown = models.BooleanField(default=False)
     area = models.FloatField(verbose_name="Final Fire Area (ha)", validators=[MinValueValidator(0)], null=True, blank=True)
     area_limit = models.BooleanField(verbose_name="Area < 2ha", default=False)
-    area_unknown = models.BooleanField(default=False)
     time_to_control = models.DurationField(verbose_name="Time to Control", null=True, blank=True)
     fire_behaviour_unknown = models.BooleanField(default=False)
 
@@ -376,11 +385,11 @@ class Bushfire(Audit):
 
     @property
     def is_init_authorised(self):
-        return True if self.init_authorised_by and self.init_authorised_date else False
+        return True if self.init_authorised_by and self.init_authorised_date and self.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED else False
 
     @property
     def is_final_authorised(self):
-        return True if self.authorised_by and self.authorised_date else False
+        return True if self.authorised_by and self.authorised_date and self.report_status >= Bushfire.STATUS_FINAL_AUTHORISED else False
 
     @property
     def is_reviewed(self):
@@ -447,6 +456,14 @@ class Bushfire(Audit):
     class Meta:
         unique_together = ('district', 'year', 'fire_number')
 #        default_permissions = ('add', 'change', 'delete', 'view')
+
+    def initial_snapshot_deserialized(self):
+        obj = self.initial_snapshot if hasattr(self, 'initial_snapshot') else None
+        return serializers.deserialize("json", obj).next().object
+
+    def final_snapshot_deserialized(self):
+        obj = self.final_snapshot if hasattr(self, 'final_snapshot') else None
+        return serializers.deserialize("json", obj).next().object
 
     def compare(self, obj):
         """
