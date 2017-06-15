@@ -104,6 +104,7 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
     return missing
 
 
+@reversion.register()
 class Profile(models.Model):
     DEFAULT_GROUP = "Users"
 
@@ -131,6 +132,7 @@ class Profile(models.Model):
 
 
 @python_2_unicode_compatible
+@reversion.register()
 class Region(models.Model):
     name = models.CharField(max_length=64, unique=True)
 
@@ -149,6 +151,7 @@ class Region(models.Model):
 
 
 @python_2_unicode_compatible
+@reversion.register()
 class District(models.Model):
     region = models.ForeignKey(Region)
     name = models.CharField(max_length=200, unique=True)
@@ -258,8 +261,8 @@ class Bushfire(Audit):
 
     field_officer = models.ForeignKey(User, verbose_name="Field Officer", null=True, blank=True, related_name='init_field_officer')
     duty_officer = models.ForeignKey(User, verbose_name="Duty Officer", null=True, blank=True, related_name='init_duty_officer')
-    init_authorised_by = models.ForeignKey(User, verbose_name="Authorised By", null=True, blank=True, related_name='init_authorised_by')
-    init_authorised_date = models.DateTimeField(verbose_name='Authorised Date', null=True, blank=True)
+    init_authorised_by = models.ForeignKey(User, verbose_name="Initial Authorised By", null=True, blank=True, related_name='init_authorised_by')
+    init_authorised_date = models.DateTimeField(verbose_name='Initial Authorised Date', null=True, blank=True)
 
     dispatch_pw = models.PositiveSmallIntegerField(choices=DISPATCH_PW_CHOICES, null=True, blank=True)
     dispatch_aerial = models.NullBooleanField(null=True)
@@ -514,6 +517,7 @@ class Bushfire(Audit):
         return old
 
 @python_2_unicode_compatible
+@reversion.register()
 class Tenure(models.Model):
     name = models.CharField(verbose_name='Tenure category', max_length=200)
 
@@ -526,6 +530,7 @@ class Tenure(models.Model):
 
 
 @python_2_unicode_compatible
+@reversion.register()
 class FuelType(models.Model):
     name = models.CharField(max_length=200)
 
@@ -538,6 +543,7 @@ class FuelType(models.Model):
 
 
 @python_2_unicode_compatible
+@reversion.register()
 class Cause(models.Model):
     name = models.CharField(max_length=50)
 
@@ -549,6 +555,7 @@ class Cause(models.Model):
         return self.name
 
 @python_2_unicode_compatible
+@reversion.register()
 class Agency(models.Model):
 
     name = models.CharField(max_length=50, verbose_name="Agency Name")
@@ -563,6 +570,7 @@ class Agency(models.Model):
 
 
 @python_2_unicode_compatible
+@reversion.register()
 class InjuryType(models.Model):
     name = models.CharField(max_length=25, verbose_name="Injury/Fatality Type")
 
@@ -575,6 +583,7 @@ class InjuryType(models.Model):
 
 
 @python_2_unicode_compatible
+@reversion.register()
 class DamageType(models.Model):
     name = models.CharField(max_length=50, verbose_name="Damage Type")
 
@@ -587,6 +596,7 @@ class DamageType(models.Model):
 
 
 @python_2_unicode_compatible
+@reversion.register()
 class AreaBurnt(models.Model):
     tenure = models.ForeignKey(Tenure, related_name='tenures')
     area = models.DecimalField(verbose_name="Area (ha)", max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], null=True, blank=True)
@@ -607,6 +617,7 @@ class AreaBurnt(models.Model):
 
 
 @python_2_unicode_compatible
+@reversion.register()
 class Injury(models.Model):
     injury_type = models.ForeignKey(InjuryType)
     number = models.PositiveSmallIntegerField(validators=[MinValueValidator(0)])
@@ -621,6 +632,7 @@ class Injury(models.Model):
 
 
 @python_2_unicode_compatible
+@reversion.register()
 class Damage(models.Model):
     damage_type = models.ForeignKey(DamageType)
     number = models.PositiveSmallIntegerField(validators=[MinValueValidator(0)])
@@ -634,6 +646,7 @@ class Damage(models.Model):
 #        default_permissions = ('add', 'change', 'delete', 'view')
 
 @python_2_unicode_compatible
+@reversion.register()
 class FireBehaviour(models.Model):
     fuel_type = models.ForeignKey(FuelType)
     ros = models.PositiveSmallIntegerField(verbose_name="ROS (m/h)")
@@ -649,6 +662,7 @@ class FireBehaviour(models.Model):
 
 
 @python_2_unicode_compatible
+@reversion.register()
 class SnapshotHistory(Audit):
     snapshot = models.TextField()
     auth_type = models.CharField(verbose_name="Authorisation: Initial/Final/Review", max_length=36)

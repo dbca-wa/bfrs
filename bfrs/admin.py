@@ -2,6 +2,8 @@ from django.contrib.auth.models import User, Group
 from django.contrib.auth.admin import UserAdmin as AuthUserAdmin, GroupAdmin
 from django.contrib import admin
 from bfrs.forms import UserForm, GroupForm
+#from bfrs.models import Bushfire
+#from reversion_compare.admin import CompareVersionAdmin
 
 
 class UserAdmin(AuthUserAdmin):
@@ -30,8 +32,14 @@ class GroupAdmin(GroupAdmin):
     form = GroupForm
 
 
+#class BushfireAdmin(CompareVersionAdmin):
+#    pass
+
+
 admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
 
 admin.site.unregister(Group)
 admin.site.register(Group, GroupAdmin)
+
+#admin.site.register(Bushfire, BushfireAdmin)

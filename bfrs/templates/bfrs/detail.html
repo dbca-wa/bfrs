@@ -51,18 +51,27 @@
     </div>
 {% endif %}
 
-{% if object.report_status and object.report_status == object.STATUS_INVALIDATED %}
-<h1>Bushfire Detail
-    <h2>
-		<font color="red"> Report invalidated on {{object.modified|date_fmt}} by {{object.modifier}}</font>
-	(Linked valid bushfire <a href="{% url 'bushfire:bushfire_initial' object.valid_bushfire.id %}">{{object.valid_bushfire.fire_number}}</a>)
-    </h2>
-</h1>
-{% elif action == 'Submit' %}
-<h1>Confirm action 'Mark Initial Report Submitted'</h1>
-{% else %}
-<h1>Bushfire Detail</h1>
-{% endif %}
+<div>
+  <div style='float: left;'>
+    {% if object.report_status and object.report_status == object.STATUS_INVALIDATED %}
+    <h1>Bushfire Detail
+      <h2>
+        <font color="red"> Report invalidated on {{object.modified|date_fmt}} by {{object.modifier}}</font>
+        (Linked valid bushfire <a href="{% url 'bushfire:bushfire_initial' object.valid_bushfire.id %}">{{object.valid_bushfire.fire_number}}</a>)
+      </h2>
+    </h1>
+    {% elif action == 'Submit' %}
+      <h1>Confirm action 'Mark Initial Report Submitted'</h1>
+    {% else %}
+      <h1>Bushfire Detail</h1>
+    {% endif %}
+  </div>
+  <div style='float: right;'>
+    {% if request.user.is_superuser or can_maintain_data %}
+      {% if not create %}<a class="btn btn-default" href="{% url 'bushfire:bushfire_history' bushfire.id %}">History</a>{% endif %}
+    {% endif %}
+  </div>
+</div>
 
 <form action="" method="post">{% csrf_token %}
 

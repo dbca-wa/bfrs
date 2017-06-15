@@ -101,6 +101,7 @@ INSTALLED_APPS = [
 
     #'guardian',
     'reversion',
+    'reversion_compare',
     'tastypie',
     'smart_selects',
     'django_extensions',
@@ -110,6 +111,8 @@ INSTALLED_APPS = [
 
     'bfrs',
 ]
+
+ADD_REVERSION_ADMIN=True
 
 MIDDLEWARE_CLASSES = [
 #    'django.middleware.security.SecurityMiddleware',

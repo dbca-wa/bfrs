@@ -629,6 +629,12 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
             })
         return context
 
+
+from reversion_compare.views import HistoryCompareDetailView
+class BushfireHistoryCompareView(HistoryCompareDetailView):
+    model = Bushfire
+    template_name = 'bfrs/history.html'
+
 #@method_decorator(csrf_exempt, name='dispatch')
 #class BushfireCreateView(LoginRequiredMixin, generic.CreateView):
 #    model = Bushfire
