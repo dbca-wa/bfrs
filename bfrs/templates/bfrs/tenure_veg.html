@@ -25,25 +25,64 @@
                 <th>Area (ha)</th>
                 <th>% Area</th>
 
-                {% for fs in object.tenures_burnt.all|filter_tenures_burnt:"Private Property,Other Crown" %}
-                <tr>
+                {% if object.tenures_burnt.all %}
+
+                  {% for fs in object.tenures_burnt.all|filter_tenures_burnt:"Private Property,Other Crown" %}
+                  <tr>
+                    <td>{{ fs.tenure }}</td>
+                    <td>{{ fs.area }}</td>
+                  </tr>
+                  {% endfor %}
+
+                {% else %}
+
+                  {% for fs in area_burnt_formset %}
+                  <tr>
+                  <fieldset disabled="disabled">
                   <td>{{ fs.tenure }}</td>
                   <td>{{ fs.area }}</td>
-                </tr>
-                {% endfor %}
+                  </fieldset">
+                  <td>
+                        {% if fs.instance.pk %}{{ fs.DELETE }}{% endif %}
+                        {{ fs.id }}
+
+                        {% for field in fs %} 
+                            {% if field.errors %}
+                                <font color="red"><li>{{ field.label }}: {{ field.errors|striptags }}</li></font>
+                            {% endif %}
+                        {% endfor %}
+                  </td>
+                  {% endfor %}
+
+                {% endif %}
 
                 <tr>
                   <td>Other</td>
-                  <td>{{ object.sss_data_to_dict.area.other_area|floatformat:2 }}</td>
+                  {% if object.sss_data_to_dict %}
+                    <!-- Required for viewed snapshots -->
+                    <td>{{ object.sss_data_to_dict.area.other_area|floatformat:2 }}</td>
+                  {% else %}
+                    <td>{{ sss_data.area.other_area|floatformat:2 }}</td>
+                  {% endif %}
                 </tr>
                 <tr>
 			      <td><input id="id_tenure_1" name="private_tenure" type="text" value="Private Property"></td>
-                  <td><input id="id_area_1" name="private_area" type="number" min="0" max="{{ object.sss_data_to_dict.area.other_area|floatformat:"0" }}" value="{{ object.tenures_burnt.all|tenures_burnt:"Private Property" }}"></td>
+                  {% if object.sss_data_to_dict %}
+                    <!-- Required for viewed snapshots -->
+                    <td><input id="id_area_1" name="private_area" type="number" min="0" max="{{ object.sss_data_to_dict.area.other_area|floatformat:"0" }}" value="{{ object.tenures_burnt.all|tenures_burnt:"Private Property" }}"></td>
+                  {% else %}
+                    <td><input id="id_area_1" name="private_area" type="number" min="0" max="{{ sss_data.area.other_area|floatformat:"0" }}" value="{{ sss_data.area.other_area|floatformat:"0" }}"></td>
+                  {% endif %}
 			      <td><input id="id_area_perc_1" type="number" min="0" max="100" step="0.1"></td>
                 </tr>
                 <tr>
 			      <td><input id="id_tenure_2" name="other_crown_tenure" type="text" value="Other Crown"></td>
-                  <td><input id="id_area_2" name="other_crown_area" type="number" min="0" max="{{ object.sss_data_to_dict.area.other_area|floatformat:"0" }}" value="{{ object.tenures_burnt.all|tenures_burnt:"Other Crown" }}"></td>
+                  {% if object.sss_data_to_dict %}
+                    <!-- Required for viewed snapshots -->
+                    <td><input id="id_area_2" name="other_crown_area" type="number" min="0" max="{{ object.sss_data_to_dict.area.other_area|floatformat:"0" }}" value="{{ object.tenures_burnt.all|tenures_burnt:"Other Crown" }}"></td>
+                  {% else %}
+                    <td><input id="id_area_2" name="other_crown_area" type="number" min="0" max="{{ sss_data.area.other_area|floatformat:"0" }}" value="0"></td>
+                  {% endif %}
 			      <td><input id="id_area_perc_2" type="number" min="0" max="100" step="0.1"></td>
                 </tr>
 
@@ -58,7 +97,12 @@
 $("#id_tenure_1,#id_tenure_2").mousedown(function(e){ e.preventDefault(); });
 
 
-var total_other_area = {{ object.sss_data_to_dict.area.other_area|floatformat:"0" }};
+{% if object.sss_data_to_dict %}
+    var total_other_area = {{ object.sss_data_to_dict.area.other_area|floatformat:"0" }};
+{% else %}
+    var total_other_area = {{ sss_data.area.other_area|floatformat:"0" }};
+{% endif %}
+
 //var total_other_area = 1000.0;
 //$("#id_area_1").val(total_other_area);
 
@@ -99,6 +143,10 @@ $('#id_area_perc_2').on('change', function() {
     $("#id_area_perc_1").val( (100.0 - area_perc).toFixed(1) );
 }).change();
 
+// Make formset records uneditable
+$('[id^="id_area_burnt"][id$="tenure"]').css('background-color' , '#DEDEDE'); // starts with and ends with
+$('[id^="id_area_burnt"][id$="area"]').css('background-color' , '#DEDEDE');
+//$("#id_areas_burnt").not("#id_area_1,#id_area_2,#id_area_perc_1,#id_area_perc_2").mousedown(function(e){ e.preventDefault(); });
 
 </script>
 

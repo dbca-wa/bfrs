@@ -230,39 +230,6 @@
 </table>
 </div> <!-- div_form_invalidate -->
 
-{% comment %}
-{% if not action %}
-<div class="navbar navbar-fixed-bottom">
-  <div class="navbar-inner">
-    <div class="container">
-      <p class="pull-right">
-      <input type="submit" {% if object.report_status >= object.STATUS_FINAL_AUTHORISED %}value="Save final"{% else %} value="Save draft"{% endif %} class="btn btn-primary btn-success" name="_save" {% if is_authorised %}title="Initial Report cannot be edited" disabled{% endif %} />
-
-      <input type="submit" value="Authorise" class="btn btn-primary btn-success" name="authorise_final" {% if object.report_status >= object.STATUS_FINAL_AUTHORISED %}title="Final Report already authorised on {{object.authorised_date}} by {{object.authorised_by}}" disabled{% elif is_authorised %}disabled{% else %}title="Save and authorise"{% endif %} />
-
-      <a id="id_cancel_btn" href="{% url 'main' %}" class="btn btn-primary btn-danger">Cancel</a>
-      </p>
-    </div>
-  </div>
-</div>
-{% endif %}
-{% endcomment %}
-
-
-{% comment %}
-{% if action %}
-<!-- This section to allow redirect confirmation -->
-<form action="" method="post">{% csrf_token %}
-  <div>
-    <input type="hidden" name="bushfire_id" value="{{snapshot.id}}" />
-    <input type="hidden" name="action" value="{{action}}" />
-    <input type="hidden" name="confirm_action" value="yes" />
-    <input type="submit" class="btn" value="{% trans "Yes, I'm sure" %}" />
-    <a id="id_cancel_btn" href="{% url 'bushfire:bushfire_final' object.id %}" class="btn btn-primary btn-danger">Cancel</a>
-  </div>
-</form>
-{% endif %}
-{% endcomment %}
 
 <script>
 

@@ -143,41 +143,41 @@ def invalidate_bushfire(obj, new_district, user):
     return False
 
 
-#def create_areas_burnt(bushfire, area_burnt_list):
-#    """
-#    Creates the initial bushfire record together with AreaBurnt FormSet from BushfireCreateView (Operates on data dict from SSS)
-#
-#    """
-#    #t=Tenure.objects.all()[0]
-#    #initial = [{'tenure': t, 'area':0.0, 'name':'ABC', 'other':'Other'}]
-#
-#    # aggregate the area's in like tenure types
-#    aggregated_sums = defaultdict(float)
-#    for d in area_burnt_list:
-#        aggregated_sums[d["category"]] += d["area"]
-#
-#    area_other = 0.0
-#    new_area_burnt_list = []
-#    for category, area in aggregated_sums.iteritems():
-#        tenure_qs = Tenure.objects.filter(name=category)
-#        if tenure_qs:
-#            new_area_burnt_list.append({
-#                'tenure': tenure_qs[0],
-#                'area': round(area, 2)
-#            })
-#
-#        elif area:
-#            area_other += area
-#
-#    if area_other > 0:
-#        new_area_burnt_list.append({'tenure': Tenure.objects.get(name='Other'), 'area': round(area_other, 2)})
-#
-#    AreaBurntFormSet = inlineformset_factory(Bushfire, AreaBurnt, extra=len(new_area_burnt_list), min_num=1, validate_min=True, exclude=())
-#    area_burnt_formset = AreaBurntFormSet(instance=bushfire, prefix='area_burnt_fs')
-#    for subform, data in zip(area_burnt_formset.forms, new_area_burnt_list):
-#        subform.initial = data
-#
-#    return area_burnt_formset
+def create_areas_burnt(bushfire, area_burnt_list):
+    """
+    Creates the initial bushfire record together with AreaBurnt FormSet from BushfireCreateView (Operates on data dict from SSS)
+
+    """
+    #t=Tenure.objects.all()[0]
+    #initial = [{'tenure': t, 'area':0.0, 'name':'ABC', 'other':'Other'}]
+
+    # aggregate the area's in like tenure types
+    aggregated_sums = defaultdict(float)
+    for d in area_burnt_list:
+        aggregated_sums[d["category"]] += d["area"]
+
+    area_other = 0.0
+    new_area_burnt_list = []
+    for category, area in aggregated_sums.iteritems():
+        tenure_qs = Tenure.objects.filter(name=category)
+        if tenure_qs:
+            new_area_burnt_list.append({
+                'tenure': tenure_qs[0],
+                'area': round(area, 2)
+            })
+
+        elif area:
+            area_other += area
+
+    if area_other > 0:
+        new_area_burnt_list.append({'tenure': Tenure.objects.get(name='Other'), 'area': round(area_other, 2)})
+
+    AreaBurntFormSet = inlineformset_factory(Bushfire, AreaBurnt, extra=len(new_area_burnt_list), min_num=0, validate_min=True, exclude=())
+    area_burnt_formset = AreaBurntFormSet(instance=bushfire, prefix='area_burnt_fs')
+    for subform, data in zip(area_burnt_formset.forms, new_area_burnt_list):
+        subform.initial = data
+
+    return area_burnt_formset
 
 def update_areas_burnt(bushfire, area_burnt_list):
     """
@@ -688,7 +688,6 @@ def create_fireboundary_view():
     b.reporting_year,
     b.prob_fire_level,
     b.max_fire_level,
-    b.fire_level,
     CASE WHEN media_alert_req THEN 1
      	 ELSE 0
     END as media_alert_req,
