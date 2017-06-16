@@ -29,7 +29,6 @@ SUBMIT_MANDATORY_DEP_FIELDS= {
     'tenure': [['Other', 'other_tenure']],
 }
 SUBMIT_MANDATORY_FORMSETS= [
-    'fire_behaviour'
 ]
 
 AUTH_MANDATORY_FIELDS= [
@@ -47,7 +46,9 @@ AUTH_MANDATORY_DEP_FIELDS= {
     #'fire_controlled_date': [[True, 'fire_safe_date']],
     'area_limit': [[True, 'area']],
 }
-AUTH_MANDATORY_FORMSETS= []
+AUTH_MANDATORY_FORMSETS= [
+    'fire_behaviour'
+]
 
 def current_finyear():
     return datetime.now().year if datetime.now().month>7 else datetime.now().year-1
@@ -104,7 +105,6 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
     return missing
 
 
-@reversion.register()
 class Profile(models.Model):
     DEFAULT_GROUP = "Users"
 
@@ -132,7 +132,6 @@ class Profile(models.Model):
 
 
 @python_2_unicode_compatible
-@reversion.register()
 class Region(models.Model):
     name = models.CharField(max_length=64, unique=True)
 
@@ -151,7 +150,6 @@ class Region(models.Model):
 
 
 @python_2_unicode_compatible
-@reversion.register()
 class District(models.Model):
     region = models.ForeignKey(Region)
     name = models.CharField(max_length=200, unique=True)
@@ -166,7 +164,6 @@ class District(models.Model):
         return self.name
 
 
-@reversion.register()
 class Bushfire(Audit):
     STATUS_INITIAL            = 1
     STATUS_INITIAL_AUTHORISED = 2
@@ -517,7 +514,6 @@ class Bushfire(Audit):
         return old
 
 @python_2_unicode_compatible
-@reversion.register()
 class Tenure(models.Model):
     name = models.CharField(verbose_name='Tenure category', max_length=200)
 
@@ -530,7 +526,6 @@ class Tenure(models.Model):
 
 
 @python_2_unicode_compatible
-@reversion.register()
 class FuelType(models.Model):
     name = models.CharField(max_length=200)
 
@@ -543,7 +538,6 @@ class FuelType(models.Model):
 
 
 @python_2_unicode_compatible
-@reversion.register()
 class Cause(models.Model):
     name = models.CharField(max_length=50)
 
@@ -555,7 +549,6 @@ class Cause(models.Model):
         return self.name
 
 @python_2_unicode_compatible
-@reversion.register()
 class Agency(models.Model):
 
     name = models.CharField(max_length=50, verbose_name="Agency Name")
@@ -570,7 +563,6 @@ class Agency(models.Model):
 
 
 @python_2_unicode_compatible
-@reversion.register()
 class InjuryType(models.Model):
     name = models.CharField(max_length=25, verbose_name="Injury/Fatality Type")
 
@@ -583,7 +575,6 @@ class InjuryType(models.Model):
 
 
 @python_2_unicode_compatible
-@reversion.register()
 class DamageType(models.Model):
     name = models.CharField(max_length=50, verbose_name="Damage Type")
 
@@ -596,7 +587,6 @@ class DamageType(models.Model):
 
 
 @python_2_unicode_compatible
-@reversion.register()
 class AreaBurnt(models.Model):
     tenure = models.ForeignKey(Tenure, related_name='tenures')
     area = models.DecimalField(verbose_name="Area (ha)", max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], null=True, blank=True)
@@ -617,7 +607,6 @@ class AreaBurnt(models.Model):
 
 
 @python_2_unicode_compatible
-@reversion.register()
 class Injury(models.Model):
     injury_type = models.ForeignKey(InjuryType)
     number = models.PositiveSmallIntegerField(validators=[MinValueValidator(0)])
@@ -632,7 +621,6 @@ class Injury(models.Model):
 
 
 @python_2_unicode_compatible
-@reversion.register()
 class Damage(models.Model):
     damage_type = models.ForeignKey(DamageType)
     number = models.PositiveSmallIntegerField(validators=[MinValueValidator(0)])
@@ -646,7 +634,6 @@ class Damage(models.Model):
 #        default_permissions = ('add', 'change', 'delete', 'view')
 
 @python_2_unicode_compatible
-@reversion.register()
 class FireBehaviour(models.Model):
     fuel_type = models.ForeignKey(FuelType)
     ros = models.PositiveSmallIntegerField(verbose_name="ROS (m/h)")
@@ -662,7 +649,6 @@ class FireBehaviour(models.Model):
 
 
 @python_2_unicode_compatible
-@reversion.register()
 class SnapshotHistory(Audit):
     snapshot = models.TextField()
     auth_type = models.CharField(verbose_name="Authorisation: Initial/Final/Review", max_length=36)
@@ -693,7 +679,20 @@ class SnapshotHistory(Audit):
     def __str__(self):
         return 'Created {}, Creator {}'.format(self.created, self.creator)
 
-#    class Meta:
-#        default_permissions = ('add', 'change', 'delete', 'view')
 
+reversion.register(Bushfire, follow=['fire_behaviour', 'tenures_burnt', 'injuries', 'damages'])
+reversion.register(Profile)
+reversion.register(Region)
+reversion.register(District)
+reversion.register(Tenure)
+reversion.register(FuelType)
+reversion.register(Cause)
+reversion.register(Agency)
+reversion.register(InjuryType)
+reversion.register(DamageType)
+reversion.register(AreaBurnt)       # related_name=tenures_burnt
+reversion.register(Injury)          # related_name=injuries
+reversion.register(Damage)          # related_name=damages
+reversion.register(FireBehaviour)   # related_name=fire_behaviour
+reversion.register(SnapshotHistory) # related_name=snapshot_history
 

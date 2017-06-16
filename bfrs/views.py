@@ -564,6 +564,7 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         request.session['id'] = self.object.fire_number
         request.session['action'] = "update"
 
+        self.object.save()
         return HttpResponseRedirect(self.get_success_url())
 
     def get_context_data(self, **kwargs):
@@ -632,6 +633,9 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
 
 from reversion_compare.views import HistoryCompareDetailView
 class BushfireHistoryCompareView(HistoryCompareDetailView):
+    """
+    View for reversion_compare
+    """
     model = Bushfire
     template_name = 'bfrs/history.html'
 
