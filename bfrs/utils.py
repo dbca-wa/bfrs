@@ -492,7 +492,8 @@ def create_view():
     b.fire_number,
     b.year,
     b.reporting_year,
-    b.fire_level,
+    b.prob_fire_level,
+    b.max_fire_level,
     CASE WHEN media_alert_req THEN 1
      	 ELSE 0
     END as media_alert_req,
@@ -536,13 +537,14 @@ def create_view():
      	 ELSE 0
     END as investigation_req,
     b.offence_no,
+    b.initial_area,
     b.area,
     CASE WHEN area_limit THEN 1
      	 ELSE 0
     END as area_limit,
-    CASE WHEN area_unknown THEN 1
+    CASE WHEN initial_area_unknown THEN 1
      	 ELSE 0
-    END as area_unknown,
+    END as initial_area_unknown,
     b.time_to_control,
     CASE WHEN fire_behaviour_unknown THEN 1
      	 ELSE 0
@@ -587,7 +589,8 @@ def create_final_view():
     b.fire_number,
     b.year,
     b.reporting_year,
-    b.fire_level,
+    b.prob_fire_level,
+    b.max_fire_level,
     CASE WHEN media_alert_req THEN 1
      	 ELSE 0
     END as media_alert_req,
@@ -631,13 +634,14 @@ def create_final_view():
      	 ELSE 0
     END as investigation_req,
     b.offence_no,
+    b.initial_area,
     b.area,
     CASE WHEN area_limit THEN 1
      	 ELSE 0
     END as area_limit,
-    CASE WHEN area_unknown THEN 1
+    CASE WHEN initial_area_unknown THEN 1
      	 ELSE 0
-    END as area_unknown,
+    END as initial_area_unknown,
     b.time_to_control,
     CASE WHEN fire_behaviour_unknown THEN 1
      	 ELSE 0
@@ -682,6 +686,8 @@ def create_fireboundary_view():
     b.fire_number,
     b.year,
     b.reporting_year,
+    b.prob_fire_level,
+    b.max_fire_level,
     b.fire_level,
     CASE WHEN media_alert_req THEN 1
      	 ELSE 0
@@ -726,13 +732,14 @@ def create_fireboundary_view():
      	 ELSE 0
     END as investigation_req,
     b.offence_no,
+    b.initial_area,
     b.area,
     CASE WHEN area_limit THEN 1
      	 ELSE 0
     END as area_limit,
-    CASE WHEN area_unknown THEN 1
+    CASE WHEN initial_area_unknown THEN 1
      	 ELSE 0
-    END as area_unknown,
+    END as initial_area_unknown,
     b.time_to_control,
     CASE WHEN fire_behaviour_unknown THEN 1
      	 ELSE 0
