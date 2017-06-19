@@ -26,7 +26,6 @@ SUBMIT_MANDATORY_DEP_FIELDS= {
     'dispatch_aerial': [[True, 'dispatch_aerial_date']],
     'cause': [['Other (specify)', 'other_cause'], ['Escape P&W burning', 'prescribed_burn_id']],
     #'cause': [['Escape P&W burning', 'prescribed_burn_id']],
-    'tenure': [['Other', 'other_tenure']],
 }
 SUBMIT_MANDATORY_FORMSETS= [
 ]
@@ -45,6 +44,7 @@ AUTH_MANDATORY_DEP_FIELDS= {
     #'fire_contained_date': [[True, 'fire_controlled_date']],
     #'fire_controlled_date': [[True, 'fire_safe_date']],
     'area_limit': [[True, 'area']],
+    'tenure': [['Other', 'other_tenure']],
 }
 AUTH_MANDATORY_FORMSETS= [
     'fire_behaviour'

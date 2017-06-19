@@ -380,7 +380,7 @@ $('.open-all').click(function(){
 /* Initial Area Override */
 // Only allow override if no fire_boundary supllied
 
-$('#id_area').val({{object.sss_data_to_dict.area.total_area|floatformat:2}});
+$('#id_initial_area').val({{object.sss_data_to_dict.area.total_area|floatformat:2}});
 if( {{object.fire_boundary|yesno:"true,false"}} || {{sss_data.area.total_area|yesno:"true,false"}} ) { 
     $('.div_area_unknown').hide();
 	$("#id_initial_area").attr('readonly','readonly').css('background-color' , '#DEDEDE');

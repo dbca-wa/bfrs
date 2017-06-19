@@ -28,7 +28,7 @@ from bfrs.forms import (ProfileForm, BushfireFilterForm, BushfireForm, BushfireC
         AreaBurntFormSet, InjuryFormSet, DamageFormSet, FireBehaviourFormSet,
     )
 from bfrs.utils import (breadcrumbs_li,
-        create_areas_burnt, update_areas_burnt, update_damage_fs, update_injury_fs, update_fire_behaviour_fs,
+        create_areas_burnt, update_areas_burnt, update_areas_burnt_fs, update_damage_fs, update_injury_fs, update_fire_behaviour_fs,
         export_final_csv, export_excel,
         update_status, serialize_bushfire, deserialize_bushfire,
         rdo_email, pvs_email, fpc_email, pica_email, pica_sms, police_email, dfes_email, fssdrs_email,
@@ -337,7 +337,7 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
             #    update_areas_burnt(bundle.obj, bundle.data['area']['tenure_area']['areas'])
 
             if sss.has_key('area') and sss['area'].has_key('total_area') and sss['area'].get('total_area'):
-                initial['area'] = round(float(sss['area']['total_area']), 2)
+                initial['initial_area'] = round(float(sss['area']['total_area']), 2)
 
             if sss.has_key('origin_point') and isinstance(sss['origin_point'], list):
                 initial['origin_point_str'] = Point(sss['origin_point']).get_coords()
@@ -509,7 +509,8 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
             self.object.other_tenure = None
         self.object.save()
 
-        #areas_burnt_updated = update_areas_burnt_fs(self.object, area_burnt_formset)
+        if not self.get_object():
+            areas_burnt_updated = update_areas_burnt_fs(self.object, area_burnt_formset)
         fire_behaviour_updated = update_fire_behaviour_fs(self.object, fire_behaviour_formset)
         injury_updated = update_injury_fs(self.object, injury_formset)
         damage_updated = update_damage_fs(self.object, damage_formset)
@@ -517,13 +518,15 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         #import ipdb; ipdb.set_trace()
         # append/update 'Other' areas_burnt
         if self.request.POST.has_key('private_area') and self.request.POST.has_key('other_crown_area'):
-            private_tenure = self.request.POST.get('private_tenure')
-            private_area = self.request.POST.get('private_area')
-            self.object.tenures_burnt.update_or_create(tenure=Tenure.objects.get(name=private_tenure), defaults={"area": private_area})
+            if self.request.POST.get('private_area'):
+                private_tenure = self.request.POST.get('private_tenure')
+                private_area = self.request.POST.get('private_area')
+                self.object.tenures_burnt.update_or_create(tenure=Tenure.objects.get(name=private_tenure), defaults={"area": private_area})
 
-            other_crown_tenure = self.request.POST.get('other_crown_tenure')
-            other_crown_area = self.request.POST.get('other_crown_area')
-            self.object.tenures_burnt.update_or_create(tenure=Tenure.objects.get(name=other_crown_tenure), defaults={"area": other_crown_area})
+            if self.request.POST.get('other_crown_area'):
+                other_crown_tenure = self.request.POST.get('other_crown_tenure')
+                other_crown_area = self.request.POST.get('other_crown_area')
+                self.object.tenures_burnt.update_or_create(tenure=Tenure.objects.get(name=other_crown_tenure), defaults={"area": other_crown_area})
 
         redirect_referrer =  HttpResponseRedirect(request.META.get('HTTP_REFERER'))
         # This section to Submit initial report, placed here to allow any changes to be cleaned and saved first - effectively the 'Submit' btn is a 'save and submit'

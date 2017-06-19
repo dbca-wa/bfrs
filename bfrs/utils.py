@@ -146,7 +146,7 @@ def invalidate_bushfire(obj, new_district, user):
 def create_areas_burnt(bushfire, area_burnt_list):
     """
     Creates the initial bushfire record together with AreaBurnt FormSet from BushfireCreateView (Operates on data dict from SSS)
-
+    Uses sss_dict - used by get_context_data, to display initial sss_data supplied from SSS system
     """
     #t=Tenure.objects.all()[0]
     #initial = [{'tenure': t, 'area':0.0, 'name':'ABC', 'other':'Other'}]
@@ -169,6 +169,7 @@ def create_areas_burnt(bushfire, area_burnt_list):
         elif area:
             area_other += area
 
+    #import ipdb; ipdb.set_trace()
     if area_other > 0:
         new_area_burnt_list.append({'tenure': Tenure.objects.get(name='Other'), 'area': round(area_other, 2)})
 
@@ -181,7 +182,8 @@ def create_areas_burnt(bushfire, area_burnt_list):
 
 def update_areas_burnt(bushfire, area_burnt_list):
     """
-    Updates the bushfire record from api.py, via REST API (Operates on data dict from SSS)
+    Updates AreaBurnt model attached to the bushfire record from api.py, via REST API (Operates on data dict from SSS)
+    Uses sss_dict
     """
     # aggregate the area's in like tenure types
     aggregated_sums = defaultdict(float)
@@ -209,28 +211,30 @@ def update_areas_burnt(bushfire, area_burnt_list):
 
     return 1
 
-#def update_areas_burnt_fs(bushfire, area_burnt_formset):
-#    """
-#    Updates the AreaBurnt FormSet from BushfireInitUpdateView
-#    """
-#    new_fs_object = []
-#    for form in area_burnt_formset:
-#        if form.is_valid():
-#            tenure = form.cleaned_data.get('tenure')
-#            area = form.cleaned_data.get('area')
-#            remove = form.cleaned_data.get('DELETE')
-#
-#            if not remove and (tenure):
-#                new_fs_object.append(AreaBurnt(bushfire=bushfire, tenure=tenure, area=area))
-#
-#    try:
-#        with transaction.atomic():
-#            AreaBurnt.objects.filter(bushfire=bushfire).delete()
-#            AreaBurnt.objects.bulk_create(new_fs_object)
-#    except IntegrityError:
-#        return 0
-#
-#    return 1
+def update_areas_burnt_fs(bushfire, area_burnt_formset):
+    """
+    Creates the AreaBurnt Model, from the area_burnt_formset
+
+    At first object create time, formset values are saved to the newly created bushfire object
+    """
+    new_fs_object = []
+    for form in area_burnt_formset:
+        if form.is_valid():
+            tenure = form.cleaned_data.get('tenure')
+            area = form.cleaned_data.get('area')
+            remove = form.cleaned_data.get('DELETE')
+
+            if not remove and (tenure):
+                new_fs_object.append(AreaBurnt(bushfire=bushfire, tenure=tenure, area=area))
+
+    try:
+        with transaction.atomic():
+            AreaBurnt.objects.filter(bushfire=bushfire).delete()
+            AreaBurnt.objects.bulk_create(new_fs_object)
+    except IntegrityError:
+        return 0
+
+    return 1
 
 def update_injury_fs(bushfire, injury_formset):
     new_fs_object = []

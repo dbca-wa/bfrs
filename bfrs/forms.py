@@ -285,13 +285,13 @@ class BushfireCreateBaseForm(forms.ModelForm):
                   'days', 'hours', 'time_to_control',
                   'dispatch_pw', 'dispatch_aerial',
                   'investigation_req', 'fire_behaviour_unknown',
-                  'initial_area', 'initial_area_unknown', 'area', 'origin_point_str', 'origin_point', 'fire_boundary',
+                  'initial_area', 'initial_area_unknown', 'area', 'area_limit', 'origin_point_str', 'origin_point', 'fire_boundary',
 
-		  'fire_not_found', 'fire_monitored_only', 'invalid_details',
+                  'fire_not_found', 'fire_monitored_only', 'invalid_details',
                   'fire_contained_date', 'fire_controlled_date', 'fire_safe_date',
                   'first_attack', 'initial_control', 'final_control',
                   'other_first_attack', 'other_initial_control', 'other_final_control',
-                  'area', 'area_limit', 'arson_squad_notified', 'offence_no', 'job_code', 'reporting_year',
+                  'arson_squad_notified', 'offence_no', 'job_code', 'reporting_year',
 
                  )
 

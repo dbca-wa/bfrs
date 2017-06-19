@@ -36,13 +36,12 @@
 
                 {% else %}
 
+                  <!-- Required, since at first create form display, no object exists -->
                   {% for fs in area_burnt_formset %}
                   <tr>
-                  <fieldset disabled="disabled">
-                  <td>{{ fs.tenure }}</td>
-                  <td>{{ fs.area }}</td>
-                  </fieldset">
-                  <td>
+                    <td>{{ fs.tenure }}</td>
+                    <td>{{ fs.area }}</td>
+                    <td>
                         {% if fs.instance.pk %}{{ fs.DELETE }}{% endif %}
                         {{ fs.id }}
 
@@ -51,7 +50,10 @@
                                 <font color="red"><li>{{ field.label }}: {{ field.errors|striptags }}</li></font>
                             {% endif %}
                         {% endfor %}
-                  </td>
+                    </td>
+
+
+                  </tr>
                   {% endfor %}
 
                 {% endif %}
@@ -88,10 +90,22 @@
 
             </tbody>
         </table>
+        {{ area_burnt_formset.management_form }}
     </div>
 {% endif %}
 
 <script>
+
+    $('.area-burnt-formset tbody tr').formset({
+        prefix: '{{ area_burnt_formset.prefix }}',
+        formCssClass: 'area_burnt_fs',
+        //addText: '<i class="icon-plus"></i> add another tenure',
+        //deleteText: '<i class="icon-remove"></i>',
+        addText: '',    //prevent add-another
+        deleteText: '', //prevent delete
+        deleteCssClass: 'delete-row' + '-' + '{{ area_burnt_formset.prefix  }}',
+    });
+
 
 // Make formset records uneditable
 $("#id_tenure_1,#id_tenure_2").mousedown(function(e){ e.preventDefault(); });
