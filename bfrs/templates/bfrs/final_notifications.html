@@ -85,6 +85,7 @@
 	     </td>
         </tr>
 
+        {% comment %}
         <tr>
 		    <th class="cbas">Assistance Required *<br><br><div class=div_assist style="display: none; font-weight:normal;">Details</div></th>
             <td colspan="5" class="cbas">
@@ -92,6 +93,7 @@
 		        <div class=div_assist style="display: none;">{% if is_authorised %}  {% else %} {{form.assistance_details}} {% endif %}</div>
 		    </td>
         </tr>
+        {% endcomment %}
 
 
         <tr>

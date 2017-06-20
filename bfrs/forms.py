@@ -262,7 +262,7 @@ class BushfireCreateBaseForm(forms.ModelForm):
     media_alert_req = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
     park_trail_impacted = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
     dispatch_pw = forms.ChoiceField(choices=Bushfire.DISPATCH_PW_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
-    assistance_req = forms.ChoiceField(choices=Bushfire.ASSISTANCE_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
+    #assistance_req = forms.ChoiceField(choices=Bushfire.ASSISTANCE_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
     other_tenure = forms.ChoiceField(choices=Bushfire.IGNITION_POINT_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
     arson_squad_notified = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
     reporting_year = forms.ChoiceField(choices=REPORTING_YEAR_CHOICES, required=False)
@@ -280,7 +280,8 @@ class BushfireCreateBaseForm(forms.ModelForm):
                   'name', 'year', 'prob_fire_level', 'max_fire_level', 'field_officer', 'duty_officer', #'init_authorised_by', 'init_authorised_date',
                   'media_alert_req', 'park_trail_impacted', 'fire_position', 'fire_position_override',
                   'fire_detected_date', 'dispatch_pw_date', 'dispatch_aerial_date',
-                  'assistance_req', 'assistance_details', 'communications', 'other_info',
+                  #'assistance_req', 'assistance_details', 
+                  'communications', 'other_info',
                   'cause', 'cause_state', 'other_cause', 'prescribed_burn_id', 'tenure', 'other_tenure',
                   'days', 'hours', 'time_to_control',
                   'dispatch_pw', 'dispatch_aerial',

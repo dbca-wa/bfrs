@@ -31,7 +31,8 @@ SUBMIT_MANDATORY_FORMSETS= [
 ]
 
 AUTH_MANDATORY_FIELDS= [
-    'assistance_req', 'cause_state', 'cause',
+    #'assistance_req', 
+    'cause_state', 'cause',
     'fire_contained_date', 'fire_controlled_date', 'fire_safe_date',
     #'first_attack', 'initial_control', 'final_control',
     #'initial_control', 'final_control',
@@ -202,6 +203,7 @@ class Bushfire(Audit):
         #(DISPATCH_PW_MONITORING, 'Monitoring only'),
     )
 
+    # TODO - Comment out Assistance section below also the two model fields - confirm if form no longer requires these (Kanboard #3697)
     ASSISTANCE_YES     = 1
     ASSISTANCE_NO      = 2
     ASSISTANCE_UNKNOWN = 3
