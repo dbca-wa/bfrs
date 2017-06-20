@@ -176,8 +176,10 @@
             <ul class="nav" style="list-style-type: none; font-weight: bold;">
               <li style="display: inline-block;"><a href="{% url 'main' %}"><i class="icon-fire"></i> Bushfire Overview</a></li>
 			  {% if request.user.is_superuser %}<li style="display: inline-block;"><a href="{% url 'bushfire:bushfire_create' %}"><i class="icon-plus"></i> Create Bushfire</a></li>{% endif %}
-			  <li style="display: inline-block;"><a href="{% url 'sss_home' %}" target="_blank"><i class="icon-link"></i> Spatial Support Home</a></li>
+			  <li style="display: inline-block;"><a href="#" onclick='openGokart({ "action": "select", "region":{{request.user.profile.region_id}},"district":{{request.user.profile.district_id}} });' target="_blank"><i class="icon-link"></i> Spatial Support Home</a></li>
 			  {% comment %}
+			  <li style="display: inline-block;"><a href="{% url 'sss_home' %}" target="_blank"><i class="icon-link"></i> Spatial Support Home</a></li>
+
 			  {% if not request.user|can_readonly and not request.user.is_superuser %}<li style="display: inline-block;"><a href="{% url 'bushfire:bushfire_create' %}"><i class="icon-plus"></i> Create Bushfire</a></li>{% endif %}
 			  {% endcomment %}
             </ul>

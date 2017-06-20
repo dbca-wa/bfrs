@@ -568,7 +568,11 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         if self.object.report_status >=  Bushfire.STATUS_FINAL_AUTHORISED:
             # if bushfire has been authorised, update snapshot and archive old snapshot
             # That is, if FSSDRS group update the final report after it has been authorised, we archive the existing data
-            serialize_bushfire('final', action, self.object)
+            try:
+                serialize_bushfire('final', action, self.object)
+            except NameError:
+                # update is occuring after report has already been authorised (action is undefined) - ie. it is being Reviewed by FSSDRS
+                serialize_bushfire('final', 'Review', self.object)
 
         request.session['refreshGokart'] = True
         request.session['region'] = self.object.region.id
@@ -611,18 +615,24 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
 
         #import ipdb; ipdb.set_trace()
         # Determine if form template should be rean-only or editable (is_authorised=True --> read-only)
-        if is_external_user(self.request.user):
+        if is_external_user(self.request.user) or self.request.POST.get('authorise_final') or self.request.POST.has_key('submit_initial'):
+            # Display both reports readonly
             is_authorised = True
+            is_init_authorised = True
         else:
             # which url was clicked - initial or final
             if bushfire:
                 if 'final' in self.request.get_full_path():
-                    is_authorised = bushfire.is_final_authorised
+                    # rpt s/b editable for FSSDRS even after final authorisation
+                    is_authorised = bushfire.is_final_authorised and not can_maintain_data(self.request.user)
+                    is_init_authorised = True
                 else:
-                    is_authorised = bushfire.is_init_authorised
+                    is_authorised = True # display final report read-only
+                    is_init_authorised = bushfire.is_init_authorised
             else:
                 # create new bushfire
                 is_authorised = False
+                is_init_authorised = False
 
         if bushfire:
             if 'final' in self.request.get_full_path():
@@ -642,7 +652,8 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
                         'fire_behaviour_formset': fire_behaviour_formset,
                         'injury_formset': injury_formset,
                         'damage_formset': damage_formset,
-                        'is_authorised': is_authorised, # If True, will make template read-only
+                        'is_authorised': is_authorised, # If True, will make Report section of template read-only
+                        'is_init_authorised': is_init_authorised, # If True, will make Notifications section of template read-only
                         'snapshot': snapshot,
                         'create': True if 'create' in self.request.get_full_path() else False,
                         'initial': True if 'initial' in self.request.get_full_path() else False,

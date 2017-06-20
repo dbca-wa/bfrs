@@ -309,7 +309,7 @@ class BushfireCreateBaseForm(forms.ModelForm):
         if not self.cleaned_data['cause_state']: self.cleaned_data['cause_state'] = None
         if not self.cleaned_data['media_alert_req']: self.cleaned_data['media_alert_req'] = None
         if not self.cleaned_data['park_trail_impacted']: self.cleaned_data['park_trail_impacted'] = None
-        if not self.cleaned_data['assistance_req']: self.cleaned_data['assistance_req'] = None
+        #if not self.cleaned_data['assistance_req']: self.cleaned_data['assistance_req'] = None
         if not self.cleaned_data['other_tenure']: self.cleaned_data['other_tenure'] = None
 
         if self.cleaned_data['dispatch_pw'] and eval(self.cleaned_data['dispatch_pw'])==Bushfire.DISPATCH_PW_YES:
