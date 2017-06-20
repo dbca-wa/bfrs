@@ -33,13 +33,14 @@
 
 {% block content %}
 
-{% if form.errors %}
-    <p>Form Errors</p>
-    <div class="alert alert-error">
+<div class="alert alert-error">
+  {% if form.errors %}
+      <h1 class="errornote">
+        <p>Form Errors</p>
         <button type="button" class="close" data-dismiss="alert">×</button>
         {% for field in form %} 
             {% if field.errors %}
-            <font color="red"><li>{{ field.label }}: {{ field.errors|striptags }}</li></font>
+            <li>{{ field.label }}: {{ field.errors|striptags }}</li>
             {{ field.meta  }}
             {% endif %}
         {% endfor %}
@@ -47,9 +48,69 @@
         {% if form.non_field_errors %}
             {{ form.non_field_errors  }}
         {% endif %}
+      </h1>
+  {% endif %}
 
+  {% if fire_behaviour_formset.errors and fire_behaviour_formset.errors.0 %}
+      <h1 class="errornote">
+        <p>Fire Behaviour formset Errors</p>
+        <button type="button" class="close" data-dismiss="alert">×</button>
+        {% for form in fire_behaviour_formset %} 
+          {% for field in form %} 
+            {% if field.errors %}
+              <li>{{ field.label }}: {{ field.errors|striptags }}</li>
+              {{ field.meta  }}
+            {% endif %}
+          {% endfor %}
+        {% endfor %}
+
+        {% if fire_behaviour_formset.non_field_errors %}
+          {{ fire_behaviour_formset.non_field_errors }}
+        {% endif %}
+      </h1>
+  {% endif %}
+
+  {% if damage_formset.errors and damage_formset.errors.0 %}
+      <h1 class="errornote">
+        <p>Damage formset Errors</p>
+        <button type="button" class="close" data-dismiss="alert">×</button>
+        {% for form in damage_formset %} 
+          {% for field in form %} 
+            {% if field.errors %}
+              <li>{{ field.label }}: {{ field.errors|striptags }}</li>
+              {{ field.meta  }}
+            {% endif %}
+          {% endfor %}
+        {% endfor %}
+
+        {% if damage_formset.non_field_errors %}
+          {{ damage_formset.non_field_errors }}
+        {% endif %}
+      </h1>
+  {% endif %}
+</div>
+
+{% if injury_formset.errors and injury_formset.errors.0 %}
+    <div class="alert alert-error">
+      <h1 class="errornote">
+        <p>Injury formset Errors</p>
+        <button type="button" class="close" data-dismiss="alert">×</button>
+        {% for form in injury_formset %} 
+          {% for field in form %} 
+            {% if field.errors %}
+              <li>{{ field.label }}: {{ field.errors|striptags }}</li>
+              {{ field.meta  }}
+            {% endif %}
+          {% endfor %}
+        {% endfor %}
+
+        {% if injury_formset.non_field_errors %}
+          {{ injury_formset.non_field_errors }}
+        {% endif %}
+      </h1>
     </div>
 {% endif %}
+
 
 <div>
   <div style='float: left;'>

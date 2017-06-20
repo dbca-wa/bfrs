@@ -118,20 +118,6 @@ def get_count(context):
     request = context['request']
     return request.user.groups.filter(name='ReadOnly').count()
 
-@register.simple_tag(takes_context=True)
-def _can_readonly(context):
-    """
-    Usage::
-
-        {% can_readonly as readonly %}
-        {% if readonly %}
-        ...
-        {% endif %}
-    """
-    request = context['request']
-    import ipdb; ipdb.set_trace()
-    return request.user.groups.filter(name='ReadOnly').exists()
-
 @register.filter
 def split_capitalize(string):
     """
@@ -140,16 +126,6 @@ def split_capitalize(string):
         {{ msg|split_capitalize}}
     """
     return ' '.join([i.capitalize() for i in string.split('_')])
-
-#@register.filter
-#def yesno(boolean):
-#    """
-#    Usage::
-#
-#        {{ bool|yesno}}
-#    """
-#    return 'Yes' if boolean else 'No'
-#
 
 @register.filter(is_safe=False)
 def yesno(value, arg=None):
@@ -244,17 +220,6 @@ def cause_state(value):
     except:
         return None
 
-#@register.filter
-#def bool(value):
-#    """
-#    Usage::
-#
-#        {{ value|bool}}
-#    """
-#    if
-#    return True if value else False
-
-
 @register.filter
 def is_none(string):
     """
@@ -271,7 +236,6 @@ def filter_tenures_burnt(qs, arg=None):
 
         {{ qs|filter_tenures_burnt:"string" }}
     """
-    #import ipdb; ipdb.set_trace()
     #return qs.exclude(tenure__name__in=['Unallocated Crown Land', 'Other'])
     return qs.exclude(tenure__name__in=arg.split(',')) if qs else None
 
@@ -282,7 +246,6 @@ def tenures_burnt(qs, arg=None):
 
         {{ qs|filter_tenures_burnt:"string" }}
     """
-    #import ipdb; ipdb.set_trace()
     qs = qs.filter(tenure__name=arg) if qs else None
     return round(qs[0].area, 0) if qs else 0
 
@@ -292,7 +255,6 @@ def qs_order_by(qs, arg=None):
     Usage::
         {{ qs|qs_order_by:"id" }}
     """
-    #import ipdb; ipdb.set_trace()
     return qs.order_by('id')
 
 @register.filter()
@@ -302,4 +264,5 @@ def to_int(value):
 @register.filter()
 def to_float(value):
     return round(float(value), 1)
+
 

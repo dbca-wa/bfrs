@@ -636,6 +636,7 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
             # don't validate the form when initially displaying
             form.is_bound = False
 
+        #import ipdb; ipdb.set_trace()
         context.update({'form': form,
                         'area_burnt_formset': area_burnt_formset,
                         'fire_behaviour_formset': fire_behaviour_formset,
