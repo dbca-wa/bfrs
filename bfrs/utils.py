@@ -151,6 +151,9 @@ def create_areas_burnt(bushfire, area_burnt_list):
     #t=Tenure.objects.all()[0]
     #initial = [{'tenure': t, 'area':0.0, 'name':'ABC', 'other':'Other'}]
 
+    #if not area_burnt_list:
+    #    return 1
+
     # aggregate the area's in like tenure types
     aggregated_sums = defaultdict(float)
     for d in area_burnt_list:
@@ -185,6 +188,9 @@ def update_areas_burnt(bushfire, area_burnt_list):
     Updates AreaBurnt model attached to the bushfire record from api.py, via REST API (Operates on data dict from SSS)
     Uses sss_dict
     """
+    #if not area_burnt_list:
+    #    return 1
+
     # aggregate the area's in like tenure types
     aggregated_sums = defaultdict(float)
     for d in area_burnt_list:
@@ -217,6 +223,9 @@ def update_areas_burnt_fs(bushfire, area_burnt_formset):
 
     At first object create time, formset values are saved to the newly created bushfire object
     """
+    #if not area_burnt_formset:
+    #    return 1
+
     new_fs_object = []
     for form in area_burnt_formset:
         if form.is_valid():
@@ -237,6 +246,9 @@ def update_areas_burnt_fs(bushfire, area_burnt_formset):
     return 1
 
 def update_injury_fs(bushfire, injury_formset):
+    if not injury_formset:
+        return 1
+
     new_fs_object = []
     for form in injury_formset:
         if form.is_valid():
@@ -257,6 +269,9 @@ def update_injury_fs(bushfire, injury_formset):
     return 1
 
 def update_damage_fs(bushfire, damage_formset):
+    if not damage_formset:
+        return 1
+
     new_fs_object = []
     for form in damage_formset:
         if form.is_valid():
@@ -277,6 +292,9 @@ def update_damage_fs(bushfire, damage_formset):
     return 1
 
 def update_fire_behaviour_fs(bushfire, fire_behaviour_formset):
+    if not fire_behaviour_formset:
+        return 1
+
     new_fs_object = []
     for form in fire_behaviour_formset:
         if form.is_valid():

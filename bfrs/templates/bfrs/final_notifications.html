@@ -55,16 +55,20 @@
         <tr>
             <th class="cbas" style="font-weight:normal;">Point of origin</th>
             <td colspan="5" class="cbas">
-				{% if is_authorised %} 
-					{{snapshot.origin_coords|is_none}} <br>
-					{{snapshot.origin_geo|is_none}} 
+				{% if is_init_authorised %} 
+					{{object.origin_coords|is_none}} <br>
+					{{object.origin_geo|is_none}} 
 				{% else %} 
                     {{form.origin_point.value|latlon}} <br>
                     {{form.origin_point.value|deg_min_sec}}
 				{% endif %}
 			</td>
+        {% comment %}
             {% if not is_authorised %} {{form.origin_point.as_hidden}} {% endif %}
             {% if not is_authorised %} {{form.fire_boundary.as_hidden}} {% endif %}
+        {% endcomment %}
+            {{form.origin_point.as_hidden}}
+            {{form.fire_boundary.as_hidden}}
         </tr>
 
         <tr>
@@ -206,10 +210,10 @@
         {% if can_maintain_data %}
         <tr>
             <th class="cbas" style="font-weight:normal;">Reporting Year</th>
-            <td colspan="5" class="cbas">{% if is_authorised %} {{snapshot.reporting_year|fin_year}} {% else %} {{form.reporting_year}} {% endif %}</td>
+            <td colspan="5" class="cbas">{% if is_authorised %} {{snapshot.reporting_year|fin_year}} {{form.reporting_year.as_hidden}} {% else %} {{form.reporting_year}} {% endif %}</td>
         </tr>
         {% else %}
-	  {{form.reporting_year.as_hidden}}
+	        {{form.reporting_year.as_hidden}}
         {% endif %}
 
   </tbody>

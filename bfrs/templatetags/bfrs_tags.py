@@ -1,6 +1,7 @@
 from django import template
 from bfrs.models import Bushfire, current_finyear
 from django.contrib.gis.geos import Point, GEOSGeometry
+from django.conf import settings
 import LatLon
 
 register = template.Library()
@@ -78,6 +79,7 @@ def latlon(value):
     """
     #GEOSGeometry('POINT(-95.3385 29.7245)')
 
+    #import ipdb; ipdb.set_trace()
     try:
         point = GEOSGeometry(value)
         x = round(point.get_x(), 2)
@@ -252,7 +254,7 @@ def tenures_burnt(qs, arg=None):
 @register.filter(is_safe=False)
 def qs_order_by(qs, arg=None):
     """
-    Usage::
+    Usage:
         {{ qs|qs_order_by:"id" }}
     """
     return qs.order_by('id')
@@ -265,4 +267,12 @@ def to_int(value):
 def to_float(value):
     return round(float(value), 1)
 
+
+@register.simple_tag
+def settings_value(name):
+    """
+    Usage:
+        {% settings_value "LANGUAGE_CODE" %}
+    """
+    return getattr(settings, name, "")
 

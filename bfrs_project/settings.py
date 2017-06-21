@@ -230,6 +230,7 @@ STATICFILES_FINDERS = (
 
 LOGGING = {
     'version': 1,
+    'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
             'format': '%(levelname)s %(asctime)s %(module)s: %(message)s'
@@ -241,19 +242,38 @@ LOGGING = {
 
     'handlers': {
         'console': {
+            'level': 'INFO',
             'class': 'logging.StreamHandler',
-            'stream': sys.stdout,
+            #'stream': sys.stdout,
             'formatter': 'verbose',
         },
         'file': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
+            'level': 'INFO',
+            #'class': 'logging.FileHandler',
+            'class': 'logging.handlers.RotatingFileHandler',
             'filename': 'logs/bfrs.log',
             'formatter': 'verbose',
-        }
+            'maxBytes': 1024 * 1024 * 5,
+            'backupCount': 5,
+        },
     },
-    'root': {
-        'handlers': ['console', 'file'],
-        'level': 'INFO'
+    'loggers': {
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'bfrs': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
     }
+
 }
+
+if DEBUG:
+    LOGGING['loggers']['django.request']['level'] = 'DEBUG'
+    LOGGING['loggers']['bfrs']['level'] = 'DEBUG'
+
+

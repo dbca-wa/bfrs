@@ -13,10 +13,11 @@
 		</tr>
 		{% endfor %}
             {% else %}
-                <p> No Tenures</p>
+                <p>AA No Tenures</p>
             {% endif %}
         </tbody>
     </table>
+    {{ area_burnt_formset.management_form }}
 {% else %}
     <div id="id_areas_burnt" class="row formset area-burnt-formset">
         <table class="table_fs" border="0">

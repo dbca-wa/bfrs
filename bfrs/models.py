@@ -248,7 +248,7 @@ class Bushfire(Audit):
     fire_position_override = models.BooleanField(verbose_name="SSS override", default=False)
 
     # Point of Origin
-    origin_point = models.PointField(null=True, blank=True, editable=True, help_text='Optional.')
+    origin_point = models.PointField(editable=True)
     fire_boundary = models.MultiPolygonField(srid=4326, null=True, blank=True, editable=True, help_text='Optional.')
     fire_not_found = models.BooleanField(default=False)
     fire_monitored_only = models.BooleanField(default=False)

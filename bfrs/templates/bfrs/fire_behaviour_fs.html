@@ -1,5 +1,5 @@
 
-{% if is_authorised and initial or action %}
+{% if is_authorised and final or action %}
     <table class="table_fs" border="0" >
         <tbody>
             {% if snapshot.fire_behaviour.exists %}
@@ -18,6 +18,7 @@
             {% endif %}
         </tbody>
     </table>
+    {{ fire_behaviour_formset.management_form }}
 {% else %}
     <div id="id_fire_behaviour" class="row formset fire_behaviour-formset">
         <table class="table_fs" border="0">
