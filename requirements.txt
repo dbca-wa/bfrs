@@ -37,4 +37,3 @@ fabric
 # sudo apt-get update
 # pip install psycopg2 (from virtual env) (NOT sudo apt-get install python-psycopg2)
 # sudo apt-get install libpq-dev
-
