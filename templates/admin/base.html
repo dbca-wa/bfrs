@@ -115,7 +115,10 @@
                       <li><a href="{% url 'admin:auth_user_changelist' %}">Manage Users</a></li>
                     {% endif %}
                     <li><a href="{% url 'profile' %}">{% trans 'User profile' %}</a></li>
+                    {% comment %}
                     <li><a href="{% url 'admin:logout' %}">{% trans 'Log out' %}</a></li>
+                    {% endcomment %}
+                    <li><a href="/logout">{% trans 'Log out' %}</a></li>
                     <li><a href="{% url 'about' %}">{% trans 'About' %}</a></li>
                   {% endblock %}
               </ul>
@@ -175,7 +178,9 @@
           <div id="second-nav" class="nav-collapse navbar-responsive-collapse">
             <ul class="nav" style="list-style-type: none; font-weight: bold;">
               <li style="display: inline-block;"><a href="{% url 'main' %}"><i class="icon-fire"></i> Bushfire Overview</a></li>
+			  {% comment %}
 			  {% if request.user.is_superuser %}<li style="display: inline-block;"><a href="{% url 'bushfire:bushfire_create' %}"><i class="icon-plus"></i> Create Bushfire</a></li>{% endif %}
+			  {% endcomment %}
 			  <li style="display: inline-block;">
                 <a href='#' onclick='openGokart({ 
                   "action": "select", 
@@ -220,5 +225,6 @@
 </div>
 
 {% endblock %}
+{% block extrabody %}{% endblock %}
 </body>
 </html>

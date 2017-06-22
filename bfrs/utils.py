@@ -172,7 +172,6 @@ def create_areas_burnt(bushfire, area_burnt_list):
         elif area:
             area_other += area
 
-    #import ipdb; ipdb.set_trace()
     if area_other > 0:
         new_area_burnt_list.append({'tenure': Tenure.objects.get(name='Other'), 'area': round(area_other, 2)})
 
@@ -437,7 +436,6 @@ def dfes_email(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION:
        return
 
-    #import ipdb; ipdb.set_trace()
     subject = 'DFES Email - Initial report submitted - {}'.format(bushfire.fire_number)
     message = '---- PLEASE REPLY ABOVE THIS LINE ----\n\nDFES Email\n\nFire Number:{}\n\n(Lat/Lon) {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.fire_number, bushfire.origin_point, url)
 

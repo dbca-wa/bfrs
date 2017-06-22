@@ -138,8 +138,6 @@
 
 <form action="" method="post">{% csrf_token %}
 
-{% settings_value "SSS_URL" %}
-
 {{ form.sss_data.as_hidden }}
 <table class="table table-bordered table-striped table-condensed">
     <tbody>
@@ -150,7 +148,7 @@
         <tr>
             <th class="cbas">District *</th>
             <td colspan="2" class="cbas">
-				{% if request.user.is_superuser and not is_init_authorised %}
+				{% if can_maintain_data or not is_init_authorised %}
                   {{form.region}}<span style="margin:20;"></span>
                   {{form.district}}
 				{% else %}
@@ -486,6 +484,55 @@ $('#id_fire_position_override').on('change', function() {
 // Make Tenure of ignition un-editable
 $('#id_tenure').css('background-color' , '#DEDEDE');
 $('#id_tenure').mousedown(function(e){ e.preventDefault(); });
+
+/* Fire monitored Only Labels*/
+$('#id_fire_monitored_only').on('change', function() {
+    if($("#id_fire_monitored_only").is(':checked')) { 
+        $('#id_th_initial_attack_agency').css("font-weight", "normal");
+        $("#id_th_initial_attack_agency").html("Initial attack agency");
+        /*
+        $('#id_th_initial_controlling_agency').css("font-weight", "normal");
+        $("#id_th_initial_controlling_agency").html("Initial controlling agency");
+        $('#id_th_final_controlling_agency').css("font-weight", "normal");
+        $("#id_th_final_controlling_agency").html("Final controlling agency");
+        */
+    } else {
+        $('#id_th_initial_attack_agency').css("font-weight", "bold");
+        $("#id_th_initial_attack_agency").html("Initial attack agency *");
+        /*
+        $('#id_th_initial_controlling_agency').css("font-weight", "bold");
+        $("#id_th_initial_controlling_agency").html("Initial controlling agency *");
+        $('#id_th_final_controlling_agency').css("font-weight", "bold");
+        $("#id_th_final_controlling_agency").html("Final controlling agency *");
+        */
+    }
+}).change();
+
+/* Fire not Found */
+$('#id_fire_not_found').on('change', function() {
+    fire_not_found();
+}).change();
+
+
+/* Fire not Found */
+$('#id_fire_not_found').on('change', function() {
+    fire_not_found();
+}).change();
+
+function fire_not_found() {
+  if($("#id_fire_not_found").is(':checked')) {
+      $(".div_form_invalidate *").prop('disabled',true).css({ opacity: 0.8  });
+      $(".div_invalid_details").show();
+      $(".div_fire_not_found").hide();
+
+  } else {
+      $(".div_form_invalidate *").prop('disabled',false).css({ opacity: 1  });
+      $(".div_invalid_details").hide();
+      $(".div_fire_not_found").show();
+  }
+}
+/* END - Fire not Found */
+
 </script>
 
 {% endblock %}

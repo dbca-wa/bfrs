@@ -162,7 +162,7 @@ class BushfireUpdateForm(forms.ModelForm):
     #assistance_req = forms.ChoiceField(choices=Bushfire.ASSISTANCE_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
     other_tenure = forms.ChoiceField(choices=Bushfire.IGNITION_POINT_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
     arson_squad_notified = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
-    reporting_year = forms.ChoiceField(choices=REPORTING_YEAR_CHOICES, required=False)
+    reporting_year = forms.ChoiceField(choices=REPORTING_YEAR_CHOICES, required=False, initial=REPORTING_YEAR_CHOICES[0][0])
 
     def __init__(self, *args, **kwargs):
         super (BushfireUpdateForm,self ).__init__(*args,**kwargs)
@@ -192,7 +192,6 @@ class BushfireUpdateForm(forms.ModelForm):
                   'arson_squad_notified', 'offence_no', 'job_code', 'reporting_year',
 
                  )
-
 
     def clean(self):
         cleaned_data = super(BushfireUpdateForm, self).clean()
@@ -251,8 +250,8 @@ class BushfireUpdateForm(forms.ModelForm):
             self.cleaned_data['reporting_year'] = None #current_finyear()
             self.cleaned_data['region_id'] = self.initial['region']
             self.cleaned_data['district_id'] = self.initial['district']
-            self.errors.pop('region') # since these are required fields
-            self.errors.pop('district')
+            #self.errors.pop('region') # since these are required fields
+            #self.errors.pop('district')
             return cleaned_data
         if self.cleaned_data['fire_monitored_only']:
             self.cleaned_data['first_attack'] = None

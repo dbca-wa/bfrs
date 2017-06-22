@@ -199,8 +199,6 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
                 }
                 return TemplateResponse(request, template_snapshot_history, context=context)
 
-
-        #import ipdb; ipdb.set_trace()
         if self.request.GET.has_key('confirm_action'):
             bushfire = Bushfire.objects.get(id=self.request.GET.get('bushfire_id'))
             action = self.request.GET.get('confirm_action')
@@ -335,7 +333,6 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
             if sss.has_key('fire_position') and sss.get('fire_position'):
                 initial['fire_position'] = sss['fire_position']
 
-            #import ipdb; ipdb.set_trace()
             if sss.has_key('tenure_ignition_point') and sss['tenure_ignition_point'] and \
                 sss['tenure_ignition_point'].has_key('category') and sss['tenure_ignition_point']['category']:
                 try:
@@ -452,7 +449,6 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
     @transaction.atomic
     def form_valid(self, request, form, fire_behaviour_formset=None, area_burnt_formset=None, injury_formset=None, damage_formset=None):
 
-        #import ipdb; ipdb.set_trace()
         if is_external_user(request.user):
             return TemplateResponse(request, 'bfrs/error.html', context={'is_external_user': True, 'status':401}, status=401)
 

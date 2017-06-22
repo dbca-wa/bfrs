@@ -111,5 +111,22 @@
   <script src="{% settings_value "SSS_URL" %}/dist/static/js/gokart.js"></script>
 {% endblock %}
 
+{% block extrabody %}
+<script>
+    /* GoKart section */
+    gokart = Gokart.get('bfrs','{% settings_value "SSS_URL" %}');
+
+    function openGokart(open_options) {
+        gokart.call("open", open_options);
+    }
+
+    //if ({{request.session.refreshGokart|yesno:"true,false"}}) {
+    //    //console.log("region " + {{request.session.region}} + " - district " + {{request.session.district}});
+    //    gokart.call("open", {"action":"{{request.session.action}}", "region":{{request.session.region}}, "district":{{request.session.district}}, "bushfireid":"{{request.session.id}}", "refresh":true});
+    //}
+   /* END - GoKart section */
+</script>
+
+{% endblock %}
 
 

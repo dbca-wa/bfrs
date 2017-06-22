@@ -30,24 +30,16 @@
   </tbody>
 </table>
 
+{{form.origin_point.as_hidden}}
+{{form.fire_boundary.as_hidden}}
 <div class="div_form_invalidate">
 <table class="table table-bordered table-striped table-condensed">
     <tbody>
 
-        {% comment %}
-        <tr>
-            <th class="cbas">District *</th>
-            <td colspan="1" class="cbas">
-                {% if is_authorised or not can_maintain_data %} {{object.region}} {{form.region.as_hidden}} {% else %} {{form.region}} {% endif %}<span style="margin:20;"></span>
-                {% if is_authorised or not can_maintain_data %} {{object.district}} {{form.district.as_hidden}} {% else %} {{form.district}} {% endif %}
-            </td>
-        </tr>
-        {% endcomment %}
-
         <tr>
             <th class="cbas">Fuel and fire behaviour *</th>
 			<td colspan="5" class="cbas" > 
-				{{form.fire_behaviour_unknown}} Unknown 
+				{% if is_authorised %} {{form.fire_behaviour_unknown|yesno:"Known,Unknown"}} {% else %} {{form.fire_behaviour_unknown}} {% endif %}
 				<div class="div_fire_behaviour_unknown" style="display: true;">{% include "bfrs/fire_behaviour_fs.html" %}</div>
 			</td>
         </tr>
@@ -63,12 +55,6 @@
                     {{form.origin_point.value|deg_min_sec}}
 				{% endif %}
 			</td>
-        {% comment %}
-            {% if not is_authorised %} {{form.origin_point.as_hidden}} {% endif %}
-            {% if not is_authorised %} {{form.fire_boundary.as_hidden}} {% endif %}
-        {% endcomment %}
-            {{form.origin_point.as_hidden}}
-            {{form.fire_boundary.as_hidden}}
         </tr>
 
         <tr>
@@ -125,13 +111,14 @@
 			</td>
 
 
-            <th class="cbas">Tenure of ignition point *<br><br><div class=div_tenure style="visibility: hidden;">Other Tenure *</div></th>
+            <th class="cbas">Tenure of ignition point *<br><br><div class=div_tenure style="visibility: hidden;">Other Tenure *</div>{% if is_authorised %} Other Tenure{% endif %}</th>
             <td colspan="2" class="cbas">
                 {% if is_authorised %} {{snapshot.tenure}} {% else %} {{form.tenure}} {% endif %}<br><br>
 
 				<div class="div_tenure" style="visibility: hidden;">
 				    {% if is_authorised %} {{snapshot.other_tenure}} {% else %} {{form.other_tenure}} {% endif %}
 				</div>
+                {% if is_authorised %} {{snapshot.get_other_tenure_display}} {% endif %} <!-- Used when viewing template after it has been authorised, since js is not available -->
             </td>
         </tr>
 
@@ -193,7 +180,6 @@
                 {% if is_authorised %} {{snapshot.area}} {% else %} {{form.area}} {% endif %}
 		<span id="div_area_limit" style="margin: 20px;">{% if is_authorised %} Is area < {{area_threshold}}ha? {{snapshot.area_limit|yesno:"Yes,No"}} {% else %} {{form.area_limit}} Area < {{area_threshold}}ha{% endif %}</span>
             </td>
-	    {{form.fire_boundary.as_hidden}}
         </tr>
 
         <tr>
@@ -331,54 +317,6 @@ $('#id_area_limit').on('change', function() {
 	    $("#id_area").attr('readonly','readonly').css('background-color' , '#DEDEDE');
 	}
 }).change();
-
-/* Fire monitored Only Labels*/
-$('#id_fire_monitored_only').on('change', function() {
-    if($("#id_fire_monitored_only").is(':checked')) { 
-        $('#id_th_initial_attack_agency').css("font-weight", "normal");
-        $("#id_th_initial_attack_agency").html("Initial attack agency");
-        /*
-        $('#id_th_initial_controlling_agency').css("font-weight", "normal");
-        $("#id_th_initial_controlling_agency").html("Initial controlling agency");
-        $('#id_th_final_controlling_agency').css("font-weight", "normal");
-        $("#id_th_final_controlling_agency").html("Final controlling agency");
-        */
-    } else {
-        $('#id_th_initial_attack_agency').css("font-weight", "bold");
-        $("#id_th_initial_attack_agency").html("Initial attack agency *");
-        /*
-        $('#id_th_initial_controlling_agency').css("font-weight", "bold");
-        $("#id_th_initial_controlling_agency").html("Initial controlling agency *");
-        $('#id_th_final_controlling_agency').css("font-weight", "bold");
-        $("#id_th_final_controlling_agency").html("Final controlling agency *");
-        */
-    }
-}).change();
-
-/* Fire not Found */
-$('#id_fire_not_found').on('change', function() {
-    fire_not_found();
-}).change();
-
-
-/* Fire not Found */
-$('#id_fire_not_found').on('change', function() {
-    fire_not_found();
-}).change();
-
-function fire_not_found() {
-  if($("#id_fire_not_found").is(':checked') || {{snapshot.fire_not_found|yesno:"true,false"}}) {
-      $(".div_form_invalidate *").prop('disabled',true).css({ opacity: 0.8  });
-      $(".div_invalid_details").show();
-      $(".div_fire_not_found").hide();
-
-  } else {
-      $(".div_form_invalidate *").prop('disabled',false).css({ opacity: 1  });
-      $(".div_invalid_details").hide();
-      $(".div_fire_not_found").show();
-  }
-}
-/* END - Fire not Found */
 
 
 </script>
