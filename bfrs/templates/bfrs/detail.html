@@ -284,7 +284,7 @@
 
         {% else %}
 
-          <input type="submit" {% if object.report_status >= object.STATUS_FINAL_AUTHORISED %}value="Save final"{% else %} value="Save draft"{% endif %} class="btn btn-primary btn-success" name="_save" {% if is_authorised %}title="Final Report cannot be edited" disabled{% endif %} />
+          <input type="submit" {% if object.report_status and object.report_status >= object.STATUS_INITIAL_AUTHORISED %}value="Save final"{% else %} value="Save draft"{% endif %} class="btn btn-primary btn-success" name="_save" {% if is_authorised %}title="Final Report cannot be edited" disabled{% endif %} />
           <input type="submit" value="Authorise" class="btn btn-primary btn-success" name="authorise_final" {% if object.report_status >= object.STATUS_FINAL_AUTHORISED %}title="Final Report already authorised on {{object.authorised_date}} by {{object.authorised_by}}" disabled{% elif is_authorised %}disabled{% else %}title="Save and authorise"{% endif %} />
 
         {% endif %}
