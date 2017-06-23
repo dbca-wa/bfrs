@@ -148,7 +148,7 @@
         <tr>
             <th class="cbas">District *</th>
             <td colspan="2" class="cbas">
-				{% if can_maintain_data or not is_init_authorised %}
+				{% if can_maintain_data and not action or not is_init_authorised %}
                   {{form.region}}<span style="margin:20;"></span>
                   {{form.district}}
 				{% else %}
