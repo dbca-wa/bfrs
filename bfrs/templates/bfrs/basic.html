@@ -1,0 +1,59 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>The HTML5 Herald</title>
+  <meta name="description" content="The HTML5 Herald">
+  <meta name="author" content="SitePoint">
+
+</head>
+
+<body>
+
+<table id="table" class="tablesorter table table-striped table-bordered table-hover table-condensed" style="cursor:pointer;">
+  <thead>
+	  <th><font color="dodgerblue">Fire Number </font></th>
+	  <th><font color="dodgerblue">Name </font></th>
+	  <th><font color="dodgerblue">Notifications <i class="icon-sort"></font></i></th>
+	  <th><font color="dodgerblue">Report <i class="icon-sort"></i></font></th>
+
+  </thead>
+  <tbody>
+    {% for bushfire in object_list %}
+      <tr>
+        <td>{{ bushfire.fire_number }}</td>
+        <td>{{ bushfire.name }}</td>
+
+{% comment %}
+{% endcomment %}
+		<td align="center">
+            {% if bushfire.report_status == bushfire.STATUS_INITIAL %}
+			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="Edit initial fire report"><font color="red"><span style="display:none">{{bushfire.report_status}}</span>Edit</font></a>
+            {% elif bushfire.report_status == bushfire.STATUS_INVALIDATED %}
+			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="View the invalidated initial fire report"><span style="display:none">{{bushfire.report_status}}</span>Inv</a>
+		    {% else %}
+			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="Notifications fire report submitted on {{bushfire.init_authorised_date}} by {{bushfire.init_authorised_by}}"><span style="display:none">{{bushfire.report_status}}</span><font color="green">OK</font></a>
+		    {% endif %}
+		</td>
+
+		<td align="center">
+            {% if bushfire.report_status == bushfire.STATUS_INITIAL_AUTHORISED %}
+			<a href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Edit final fire report"><span style="display:none">{{bushfire.report_status}}</span><font color="red">OK</red></a>
+            {% elif bushfire.report_status >= bushfire.STATUS_FINAL_AUTHORISED and bushfire.report_status != bushfire.STATUS_INVALIDATED%}
+			<a href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Final fire report authorised on {{bushfire.authorised_date}} by {{bushfire.authorised_by}}"><span style="display:none">{{bushfire.report_status}}</span><font color="green">OK</font></a>
+		    {% endif %}
+		</td>
+
+
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% comment %}
+  <script src="js/scripts.js"></script>
+{% endcomment %}
+</body>
+</html>

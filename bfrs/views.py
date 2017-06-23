@@ -143,19 +143,13 @@ class ProfileView(LoginRequiredMixin, generic.FormView):
         return TemplateResponse(request, self.template_name)
 
 
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 class BushfireView(LoginRequiredMixin, filter_views.FilterView):
 #class BushfireView(LoginRequiredMixin, generic.ListView):
     #model = Bushfire
     filterset_class = BushfireFilter
     template_name = 'bfrs/bushfire.html'
-
-#    @property
-#    def fssdrs_group(self):
-#        return Group.objects.get(name='FSS Datasets and Reporting Services')
-#
-#    @property
-#    def can_maintain_data(self):
-#        return self.fssdrs_group in self.request.user.groups.all() and not is_external_user(self.request.user)
+    paginate_by = 50
 
     def get_queryset(self):
         if self.request.GET.has_key('report_status') and int(self.request.GET.get('report_status'))==Bushfire.STATUS_INVALIDATED:
@@ -279,12 +273,22 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
 
         if not self.request.GET.has_key('include_archived'):
             self.object_list = self.object_list.exclude(archive=True)
-	else:
+        else:
             initial.update({'include_archived': self.request.GET['include_archived']})
+
+        bushfire_list = self.object_list.order_by('-modified')
+        paginator = Paginator(bushfire_list, self.paginate_by)
+        page = self.request.GET.get('page')
+        try:
+            object_list_paginated = paginator.page(page)
+        except PageNotAnInteger:
+            object_list_paginated = paginator.page(1)
+        except EmptyPage:
+            object_list_paginated = paginator.page(paginator.num_pages)
 
         # update context with form - filter is already in the context
         context['form'] = BushfireFilterForm(initial=initial)
-        context['object_list'] = self.object_list.order_by('-modified') # passed by default, but we are (possibly) updating, if profile exists!
+        context['object_list'] = object_list_paginated
         context['sss_url'] = settings.SSS_URL
         context['can_maintain_data'] = can_maintain_data(self.request.user)
         context['is_external_user'] = is_external_user(self.request.user)
