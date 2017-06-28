@@ -357,8 +357,9 @@ def update_status(request, bushfire, action):
             resp = police_email(bushfire, mail_url(request, bushfire))
             notification['POLICE'] = 'Email Sent' if resp else 'Email failed'
 
-        #bushfire.area = None # reset bushfire area
-        #bushfire.sss_data = None
+        bushfire.area = None # reset bushfire area
+        #bushfire.sss_data = None 
+        bushfire.final_fire_boundary = False # used to check if final boundary is updated in Final Report template - allows to toggle show()/hide() area_limit widget via js
         bushfire.save()
 
     elif action == 'Authorise' and bushfire.report_status==Bushfire.STATUS_INITIAL_AUTHORISED:

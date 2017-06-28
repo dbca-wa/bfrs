@@ -181,7 +181,7 @@
         <tr>
 			<th class="cbas">P&W Resource dispatched *<br><br><div class=div_dispatch_pw_date style="display: none;">Date and time of dispatch</div></th>
             <td colspan="2" class="cbas">
-                {% if is_init_authorised %} {{initial_snapshot.dispatch_pw|yesno:"Yes,No"}}{% if initial_snapshot.dispatch_pw|yesno:"YesNo" == 'Yes' %}<br>{{initial_snapshot.dispatch_pw_date}} {% endif %} {% else %} {{form.dispatch_pw}} {% endif %}<br>
+                {% if is_init_authorised %} {{initial_snapshot.dispatch_pw|yesno:"Yes,No"}}{% if initial_snapshot.dispatch_pw|yesno:"Yes,No" == 'Yes' %}<br>{{initial_snapshot.dispatch_pw_date}} {% endif %} {% else %} {{form.dispatch_pw}} {% endif %}<br>
 				<div class=div_dispatch_pw_date style="display: none;">{% if not is_init_authorised %} {{form.dispatch_pw_date}} {% endif %}</div>
 			</td>
 
@@ -260,11 +260,11 @@
     <div role="tab" id="pn_fire_behaviour">
       <h4 class="panel-title">
         <a role="button" data-toggle="collapse" data-parent="#accordion" href="#fire_behaviour" aria-expanded="true" aria-controls="fire_behaviour">
-          <div colspan="6" style="background: black; color: white; text-align: left; font-size: 16px; padding: 12px;" > FIRE REPORT (Click to open)</div>
+          <div colspan="6" style="background: black; color: white; text-align: left; font-size: 16px; padding: 12px;" > FIRE REPORT (Click to expand/collapse)</div>
         </a>
       </h4>
     </div>
-    <div id="fire_behaviour" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pn_fire_behaviour">
+    <div id="fire_behaviour" {% if initial %}class="panel-collapse collapse in" {% else %} class="panel-collapse collapse" {% endif %} role="tabpanel" aria-labelledby="pn_fire_behaviour">
         {% include "bfrs/final_notifications.html" %}
     </div>
   </div>
@@ -277,7 +277,7 @@
     <div class="container">
       <p class="pull-right">
       {% if object.report_status != object.STATUS_INVALIDATED or not object.report_status %}
-        {% if object.report_status < object.STATUS_INITIAL_AUTHORISED %}
+        {% if create or initial %}
 
           <input type="submit" value="Save draft" class="btn btn-primary btn-success" name="_save" {% if is_init_authorised %}title="Submitted initial report cannot be edited" disabled{% endif %} />
           <input type="submit" value="Submit" class="btn btn-primary btn-success" name="submit_initial" {% if is_init_authorised %}title="Initial Report already submitted" disabled{% else %}title="Save and submit"{% endif %} />
@@ -311,7 +311,11 @@
 	<!-- Below line causes an error in the Django Formset -->
     <a href="javascript: history.go(-1)" class="btn btn-danger">Cancel</a>
 	{% endcomment %}
-    <a id="id_cancel_btn" href="{% url 'bushfire:bushfire_initial' bushfire.id %}" class="btn btn-primary btn-danger">Cancel</a>
+    {% if object.report_status < object.STATUS_INITIAL_AUTHORISED %}
+        <a id="id_cancel_btn" href="{% url 'bushfire:bushfire_initial' bushfire.id %}" class="btn btn-primary btn-danger">Cancel</a>
+    {% else %}
+        <a id="id_cancel_btn" href="{% url 'bushfire:bushfire_final' bushfire.id %}" class="btn btn-primary btn-danger">Cancel</a>
+    {% endif %}
   </div>
 </form>
 {% endif %}
@@ -467,7 +471,8 @@ $('#id_initial_area_unknown').on('change', function() {
 	}
 }).change();
 
-$("#id_initial_area").prop('min', 0).prop('max',{{area_threshold|to_float}});
+//$("#id_initial_area").prop('min', 0).prop('max',{{area_threshold|to_float}});
+$("#id_initial_area").prop('min', 0);
 /* END - Area Override */
 
 /* Fire Position Override */
@@ -490,6 +495,19 @@ $('#id_fire_monitored_only').on('change', function() {
     if($("#id_fire_monitored_only").is(':checked')) { 
         $('#id_th_initial_attack_agency').css("font-weight", "normal");
         $("#id_th_initial_attack_agency").html("Initial attack agency");
+
+        $('#id_th_fire_contained_date').css("font-weight", "normal");
+        $("#id_th_fire_contained_date").html("Date fire contained");
+
+        $('#id_th_fire_controlled_date').css("font-weight", "normal");
+        $("#id_th_fire_controlled_date").html("Date fire controlled");
+
+        $('#id_fire_behaviour_unknown').prop('checked', true);
+	    $('.div_fire_behaviour_unknown').hide(); 
+
+	    $('#id_th_field_officer').css("font-weight", "normal");
+	    $("#id_th_field_officer").html("Field Officer");
+
         /*
         $('#id_th_initial_controlling_agency').css("font-weight", "normal");
         $("#id_th_initial_controlling_agency").html("Initial controlling agency");
@@ -499,6 +517,21 @@ $('#id_fire_monitored_only').on('change', function() {
     } else {
         $('#id_th_initial_attack_agency').css("font-weight", "bold");
         $("#id_th_initial_attack_agency").html("Initial attack agency *");
+
+        $('#id_th_fire_contained_date').css("font-weight", "bold");
+        $("#id_th_fire_contained_date").html("Date fire contained *");
+
+        $('#id_th_fire_controlled_date').css("font-weight", "bold");
+        $("#id_th_fire_controlled_date").html("Date fire controlled *");
+
+        //$('#id_fire_behaviour_unknown').prop('checked', false);
+	    $('.div_fire_behaviour_unknown').show(); 
+
+        {% if object.report_status >= object.STATUS_INITIAL_AUTHORISED and object.initial_snapshot_deserialized.dispatch_pw %}
+	        $('#id_th_field_officer').css("font-weight", "bold");
+	        $("#id_th_field_officer").html("Field Officer *");
+        {% endif %}
+
         /*
         $('#id_th_initial_controlling_agency').css("font-weight", "bold");
         $("#id_th_initial_controlling_agency").html("Initial controlling agency *");

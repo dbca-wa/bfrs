@@ -196,6 +196,7 @@ class BushfireUpdateForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super(BushfireUpdateForm, self).clean()
 
+        #import ipdb; ipdb.set_trace()
         # Resetting forms fields declared above to None (from '') if None if not set in form
         if not self.cleaned_data['dispatch_pw']: self.cleaned_data['dispatch_pw'] = None
         if not self.cleaned_data['dispatch_aerial']: self.cleaned_data['dispatch_aerial'] = None
@@ -208,15 +209,21 @@ class BushfireUpdateForm(forms.ModelForm):
         #if not self.cleaned_data['assistance_req']: self.cleaned_data['assistance_req'] = None
         if not self.cleaned_data['other_tenure']: self.cleaned_data['other_tenure'] = None
 
-        if self.cleaned_data['dispatch_pw'] and eval(self.cleaned_data['dispatch_pw'])==Bushfire.DISPATCH_PW_YES:
-            if not self.cleaned_data['dispatch_pw_date']:
-                self.add_error('dispatch_pw_date', 'Must specify Date and Time of dispatch, if resource is dispatched.')
-            if not self.cleaned_data['field_officer']:
-                self.add_error('field_officer', 'Must specify Field Officer, if resource is dispatched.')
+#        if self.cleaned_data['dispatch_pw'] and eval(self.cleaned_data['dispatch_pw'])==Bushfire.DISPATCH_PW_YES:
+#            if not self.cleaned_data['dispatch_pw_date']:
+#                self.add_error('dispatch_pw_date', 'Must specify Date and Time of dispatch, if resource is dispatched.')
+#            if not self.cleaned_data['field_officer']:
+#                self.add_error('field_officer', 'Must specify Field Officer, if resource is dispatched.')
 
-        if self.cleaned_data['dispatch_aerial'] and eval(self.cleaned_data['dispatch_aerial']):
-            if not self.cleaned_data['dispatch_aerial_date']:
-                self.add_error('dispatch_aerial_date', 'Must specify Date and Time of dispatch, if resource is dispatched.')
+#        if self.cleaned_data['dispatch_aerial'] and eval(self.cleaned_data['dispatch_aerial']):
+#            if not self.cleaned_data['dispatch_aerial_date']:
+#                self.add_error('dispatch_aerial_date', 'Must specify Date and Time of dispatch, if resource is dispatched.')
+
+        #import ipdb; ipdb.set_trace()
+        if self.cleaned_data.has_key('job_code') and self.cleaned_data['job_code']:
+            job_code = self.cleaned_data['job_code']
+            if not (job_code.isalpha() or len(job_code)==3 or job_code.isupper()):
+                self.add_error('job_code', 'Must be alpha characters, length 3, and uppercase, eg. UOV')
 
         if self.cleaned_data.has_key('fire_detected_date') and self.cleaned_data['fire_detected_date']:
             if self.cleaned_data.has_key('dispatch_pw_date') and self.cleaned_data['dispatch_pw_date'] and self.cleaned_data['dispatch_pw_date'] < self.cleaned_data['fire_detected_date']:

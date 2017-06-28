@@ -21,11 +21,8 @@ SUBMIT_MANDATORY_FIELDS= [
     'dispatch_pw', 'dispatch_aerial', 'investigation_req', 'park_trail_impacted', 'media_alert_req',
 ]
 SUBMIT_MANDATORY_DEP_FIELDS= {
-    'dispatch_pw': [[1, 'dispatch_pw_date'], [1, 'field_officer']],
-    #'dispatch_pw': [[1, 'field_officer']],
-    'dispatch_aerial': [[True, 'dispatch_aerial_date']],
-    'cause': [['Other (specify)', 'other_cause'], ['Escape P&W burning', 'prescribed_burn_id']],
-    #'cause': [['Escape P&W burning', 'prescribed_burn_id']],
+    'dispatch_pw': [['1', 'dispatch_pw_date']],
+    'dispatch_aerial': [['True', 'dispatch_aerial_date']],
 }
 SUBMIT_MANDATORY_FORMSETS= [
 ]
@@ -33,17 +30,22 @@ SUBMIT_MANDATORY_FORMSETS= [
 AUTH_MANDATORY_FIELDS= [
     #'assistance_req', 
     'cause_state', 'cause',
-    'fire_contained_date', 'fire_controlled_date', 'fire_safe_date',
+    #'fire_contained_date', 'fire_controlled_date', 
+    'fire_safe_date',
     #'first_attack', 'initial_control', 'final_control',
     #'initial_control', 'final_control',
     'max_fire_level', 'arson_squad_notified', 'job_code',
+    'duty_officer',
 ]
 AUTH_MANDATORY_DEP_FIELDS= {
     #'first_attack': [True, 'other_first_attack'],
     #'initial_control': [True, 'other_initial_control'],
     #'final_control': [True, 'other_final_control'],
-    #'fire_contained_date': [[True, 'fire_controlled_date']],
-    #'fire_controlled_date': [[True, 'fire_safe_date']],
+
+    'dispatch_pw': [['1', 'field_officer']],
+    'fire_monitored_only': [[False, 'fire_contained_date'], [False, 'fire_controlled_date'], [False, 'field_officer']],
+
+    'cause': [['Other (specify)', 'other_cause'], ['Escape P&W burning', 'prescribed_burn_id']],
     'area_limit': [[True, 'area']],
     'tenure': [['Other', 'other_tenure']],
 }
@@ -76,11 +78,16 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
 
     for field, dep_sets in dep_fields.iteritems():
         for dep_set in dep_sets:
+#            import ipdb; ipdb.set_trace()
             # next line checks for normal Field or Enumerated list field (i.e. '.name')
-            if getattr(obj, field) and (getattr(obj, field)==dep_set[0] or (hasattr(getattr(obj, field), 'name') and getattr(obj, field).name==dep_set[0])):
+            #import ipdb; ipdb.set_trace()
+            if hasattr(obj, field) and (getattr(obj, field)==dep_set[0] or (hasattr(getattr(obj, field), 'name') and getattr(obj, field).name==dep_set[0])):
                 if getattr(obj, dep_set[1]) is None or (isinstance(getattr(obj, dep_set[1]), (str, unicode)) and not getattr(obj, dep_set[1]).strip()):
                     # field is unset or empty string
                     missing.append(dep_set[1])
+
+#            elif not getattr(obj, field) and getattr(obj, field)==dep_set[0]: # and dep_set[0]==False:
+#                missing.append(dep_set[1])
 
     for fs in formsets:
         if fs == 'fire_behaviour' and obj.fire_behaviour_unknown:
@@ -101,7 +108,7 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
 
     if obj.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED:
         if not obj.area_limit and (obj.area < settings.AREA_THRESHOLD or obj.area is None):
-            missing.append("Must enter Final Area, if area < {}ha".format(settings.AREA_THRESHOLD))
+            missing.append("Final fire shape must be uploaded for fires > {}ha".format(settings.AREA_THRESHOLD))
 
     return missing
 
@@ -252,6 +259,7 @@ class Bushfire(Audit):
     fire_boundary = models.MultiPolygonField(srid=4326, null=True, blank=True, editable=True, help_text='Optional.')
     fire_not_found = models.BooleanField(default=False)
     fire_monitored_only = models.BooleanField(default=False)
+    final_fire_boundary = models.BooleanField(default=False)
 
     assistance_req = models.PositiveSmallIntegerField(choices=ASSISTANCE_CHOICES, null=True, blank=True)
     assistance_details = models.CharField(max_length=250, null=True, blank=True)

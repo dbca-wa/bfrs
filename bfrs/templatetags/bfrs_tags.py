@@ -127,6 +127,8 @@ def split_capitalize(string):
 
         {{ msg|split_capitalize}}
     """
+    if string=='Area':
+        string = 'Must enter final fire area, if area < {}ha'.format(settings.AREA_THRESHOLD)
     return ' '.join([i.capitalize() for i in string.split('_')])
 
 @register.filter(is_safe=False)
