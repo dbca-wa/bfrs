@@ -24,14 +24,15 @@
 
   {% block extra_js %}
   {{ block.super }}
-  <script src="{% static 'js/jquery.formset.js' %}"></script>
 
   <!-- http://xdsoft.net/jqplugins/datetimepicker/ -->
   <script src="{% static 'js/jquery.datetimepicker.full.min.js' %}"></script>
+  <script src="{% static 'js/jquery.formset.js' %}"></script>
   {% endblock %}
 
 
 {% block content %}
+
 
 <div class="alert alert-error">
   {% if form.errors %}
@@ -264,7 +265,7 @@
         </a>
       </h4>
     </div>
-    <div id="fire_behaviour" {% if initial %}class="panel-collapse collapse in" {% else %} class="panel-collapse collapse" {% endif %} role="tabpanel" aria-labelledby="pn_fire_behaviour">
+    <div id="fire_behaviour" {% if initial %}class="panel-collapse collapse in" {% else %} class="panel-collapse collapse in" {% endif %} role="tabpanel" aria-labelledby="pn_fire_behaviour">
         {% include "bfrs/final_notifications.html" %}
     </div>
   </div>
@@ -323,6 +324,10 @@
 
 
 <script>
+
+{% if final %}
+  $('.panel-collapse').collapse('show');
+{% endif %}
 
 $("#id_hours").attr('min',0)
 $("#id_days").attr('min',0)
@@ -390,6 +395,28 @@ $('#id_fire_behaviour_unknown').on('change', function() {
 	}
 }).change();
 
+/* Damage Unknown */
+$('#id_damage_unknown').on('change', function() {
+	if($('#id_damage_unknown').is(':checked')) { 
+        $('.div_damage_unknown *').prop('disabled',true).css({ opacity: 0.8  });
+        $(".div_damage_unknown a").css('visibility','hidden');
+
+	} else {
+        $('.div_damage_unknown *').prop('disabled',false).css({ opacity: 1.0  });
+        $(".div_damage_unknown a").css('visibility','visible');
+	}
+}).change();
+
+/* Injury Unknown */
+$('#id_injury_unknown').on('change', function() {
+	if($('#id_injury_unknown').is(':checked')) { 
+        $('.div_injury_unknown *').prop('disabled',true).css({ opacity: 0.8  });
+        $(".div_injury_unknown a").css('visibility','hidden');
+	} else {
+        $('.div_injury_unknown *').prop('disabled',false).css({ opacity: 1.0  });
+        $(".div_injury_unknown a").css('visibility','visible');
+	}
+}).change();
 
 /* Assistance Required */
 /*
@@ -434,6 +461,7 @@ $('#id_tenure').on('change', function() {
 }).change();
 
 // default is to collapse all on page load
+/*
 $('.collapse').collapse()
 
 $('.close-all').click(function(){
@@ -449,6 +477,7 @@ $('.open-all').click(function(){
   $(".close-all").show();
   $(".open-all").hide();
 });
+*/
 
 /* Initial Area Override */
 // Only allow override if no fire_boundary supllied

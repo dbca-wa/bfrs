@@ -1,3 +1,5 @@
+{% load i18n %}
+{% load static from staticfiles %}
 <!doctype html>
 
 <html lang="en">
@@ -8,10 +10,16 @@
   <meta name="description" content="The HTML5 Herald">
   <meta name="author" content="SitePoint">
 
+  <link rel="stylesheet" href="{% static "css/font-awesome.min.css" %}">
 </head>
 
 <body>
 
+  <script src="{% static 'js/jquery-1.9.1.min.js' %}"></script>
+  <script src="{% static 'js/jquery.formset.js' %}"></script>
+  {% include "bfrs/damage_fs.html" %}
+
+{% comment %}
 <table id="table" class="tablesorter table table-striped table-bordered table-hover table-condensed" style="cursor:pointer;">
   <thead>
 	  <th><font color="dodgerblue">Fire Number </font></th>
@@ -21,13 +29,12 @@
 
   </thead>
   <tbody>
+
     {% for bushfire in object_list %}
       <tr>
         <td>{{ bushfire.fire_number }}</td>
         <td>{{ bushfire.name }}</td>
 
-{% comment %}
-{% endcomment %}
 		<td align="center">
             {% if bushfire.report_status == bushfire.STATUS_INITIAL %}
 			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="Edit initial fire report"><font color="red"><span style="display:none">{{bushfire.report_status}}</span>Edit</font></a>
@@ -51,9 +58,7 @@
     {% endfor %}
   </tbody>
 </table>
-
-{% comment %}
-  <script src="js/scripts.js"></script>
 {% endcomment %}
+
 </body>
 </html>

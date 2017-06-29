@@ -1,0 +1,13 @@
+{% load i18n %}
+{% load static from staticfiles %}
+<!doctype html>
+
+{% block extra_js %}
+  <script src="{% static 'js/jquery.formset.js' %}"></script>
+{% endblock %}
+
+
+{% block content %}
+  {% include "bfrs/damage_fs.html" %}
+{% endblock %}
+

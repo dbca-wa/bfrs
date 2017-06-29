@@ -185,7 +185,7 @@ class BushfireResource(APIResource):
         if bundle.data.has_key('fire_boundary') and isinstance(bundle.data['fire_boundary'], list):
             bundle.data['fire_boundary'] = MultiPolygon([Polygon(*p) for p in bundle.data['fire_boundary']]).__str__()
             if bundle.obj.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED:
-                import ipdb;ipdb.set_trace()
+                #import ipdb;ipdb.set_trace()
                 bundle.obj.final_fire_boundary = True
         else:
 #            if bundle.obj.report_status < Bushfire.STATUS_INITIAL_AUTHORISED:

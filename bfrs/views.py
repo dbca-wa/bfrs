@@ -302,6 +302,7 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
     model = Bushfire
     form_class = BushfireUpdateForm
     template_name = 'bfrs/detail.html'
+    #template_name = 'bfrs/basic.html'
 
     def get_success_url(self):
         return reverse("home")
@@ -433,6 +434,7 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
             if form.cleaned_data['fire_not_found']:
                 return self.form_valid(request, form)
 
+            #import ipdb; ipdb.set_trace()
             if fire_behaviour_formset.is_valid() and injury_formset.is_valid() and damage_formset.is_valid(): # No need to check area_burnt_formset since the fs is readonly
                 return self.form_valid(request, form, fire_behaviour_formset, area_burnt_formset, injury_formset, damage_formset)
             else:

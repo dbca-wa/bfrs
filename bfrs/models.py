@@ -50,7 +50,9 @@ AUTH_MANDATORY_DEP_FIELDS= {
     'tenure': [['Other', 'other_tenure']],
 }
 AUTH_MANDATORY_FORMSETS= [
-    'fire_behaviour'
+    'fire_behaviour',
+    'damages',
+    'injuries',
 ]
 
 def current_finyear():
@@ -89,8 +91,11 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
 #            elif not getattr(obj, field) and getattr(obj, field)==dep_set[0]: # and dep_set[0]==False:
 #                missing.append(dep_set[1])
 
+
     for fs in formsets:
-        if fs == 'fire_behaviour' and obj.fire_behaviour_unknown:
+        if (fs == 'fire_behaviour' and obj.fire_behaviour_unknown) or \
+            fs == 'damages' and obj.damage_unknown or \
+            fs == 'injuries' and obj.injury_unknown:
             continue
 
         if getattr(obj, fs) is None or not getattr(obj, fs).all():
@@ -301,6 +306,8 @@ class Bushfire(Audit):
     area_limit = models.BooleanField(verbose_name="Area < 2ha", default=False)
     time_to_control = models.DurationField(verbose_name="Time to Control", null=True, blank=True)
     fire_behaviour_unknown = models.BooleanField(default=False)
+    damage_unknown = models.BooleanField(default=False)
+    injury_unknown = models.BooleanField(default=False)
 
     authorised_by = models.ForeignKey(User, verbose_name="Authorised By", null=True, blank=True, related_name='authorised_by')
     authorised_date = models.DateTimeField(verbose_name="Authorised Date", null=True, blank=True)

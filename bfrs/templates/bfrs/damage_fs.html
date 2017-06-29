@@ -1,4 +1,4 @@
-
+<div class="div_damage_unknown">
 {% if is_authorised and final or action %}
     <table class="table_fs" border="0" >
         <tbody>
@@ -16,7 +16,6 @@
             {% endif %}
         </tbody>
     </table>
-    {{ damage_formset.management_form }}
 {% else %}
     <div id="id_damage" class="row formset damage-formset">
         <table class="table_fs" border="0">
@@ -44,9 +43,10 @@
                 {% endfor %}
             </tbody>
         </table>
-        {{ damage_formset.management_form }}
     </div>
 {% endif %}
+</div>
+{{ damage_formset.management_form }}
 
 <script>
     $('.damage-formset tbody tr').formset({

@@ -166,7 +166,7 @@ class BushfireUpdateForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super (BushfireUpdateForm,self ).__init__(*args,**kwargs)
-        active_users = User.objects.filter(is_active=True)
+        active_users = User.objects.filter(is_active=True).order_by('username')
         self.fields['field_officer'].queryset = active_users
         self.fields['duty_officer'].queryset = active_users
 
@@ -190,6 +190,7 @@ class BushfireUpdateForm(forms.ModelForm):
                   'first_attack', 'initial_control', 'final_control',
                   'other_first_attack', 'other_initial_control', 'other_final_control',
                   'arson_squad_notified', 'offence_no', 'job_code', 'reporting_year',
+                  'damage_unknown','injury_unknown',
 
                  )
 
