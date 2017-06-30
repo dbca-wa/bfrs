@@ -49,7 +49,7 @@
         <tr>
             <th class="cbas">Fuel and fire behaviour *</th>
 			<td colspan="5" class="cbas" > 
-				{% if is_authorised %} {{form.fire_behaviour_unknown|yesno:"Known,Unknown"}} {% else %} {{form.fire_behaviour_unknown}} Unknown {% endif %}
+				{% if is_authorised %} {{form.fire_behaviour_unknown|yesno:"Unknown,Known"}} {% else %} {{form.fire_behaviour_unknown}} Unknown {% endif %}
 				<div class="div_fire_behaviour_unknown" style="display: true;">{% include "bfrs/fire_behaviour_fs.html" %}</div>
 			</td>
         </tr>
@@ -135,7 +135,7 @@
         <tr>
 
             <th id="id_th_field_officer" class="cbas" style="font-weight:normal;">Field Officer</th>
-            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.field_officer|is_none}} {% else %} {{form.field_officer}} {% endif %}</td>
+            <td colspan="5" class="cbas">{% if is_authorised %} {{snapshot.field_officer|is_none}} {% else %} {{form.field_officer}} {% endif %}</td>
 
             {% comment %}
             <th class="cbas">Duty Officer *</th>
@@ -224,11 +224,11 @@
         <tr>
 		<td class="cbas">{% include "bfrs/tenure_veg.html" %}</td>
 		<td class="cbas">
-    		{% if is_authorised %} {{form.damage_unknown|yesno:"Known,Unknown"}} {% else %} {{form.damage_unknown}} Unknown {% endif %}
+    		{% if is_authorised %} {{form.damage_unknown|yesno:"Unknown,Known"}} {% else %} {{form.damage_unknown}} Unknown {% endif %}
             {% include "bfrs/damage_fs.html" %}
         </td>
 		<td class="cbas">
-    		{% if is_authorised %} {{form.injury_unknown|yesno:"Known,Unknown"}} {% else %} {{form.injury_unknown}} Unknown {% endif %}
+    		{% if is_authorised %} {{form.injury_unknown|yesno:"Unknown,Known"}} {% else %} {{form.injury_unknown}} Unknown {% endif %}
             {% include "bfrs/injuries_fs.html" %}
         </td>
         </tr>

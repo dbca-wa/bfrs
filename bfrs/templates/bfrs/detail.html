@@ -398,6 +398,26 @@ $('#id_fire_behaviour_unknown').on('change', function() {
 /* Damage Unknown */
 $('#id_damage_unknown').on('change', function() {
 	if($('#id_damage_unknown').is(':checked')) { 
+        $('.div_damage_unknown').css('visibility','hidden');
+	} else {
+        $('.div_damage_unknown').css('visibility','visible');
+	}
+}).change();
+
+/* Injury Unknown */
+$('#id_injury_unknown').on('change', function() {
+	if($('#id_injury_unknown').is(':checked')) { 
+        $('.div_injury_unknown').css('visibility','hidden');
+	} else {
+        $('.div_injury_unknown').css('visibility','visible');
+	}
+}).change();
+
+
+/* Damage Unknown */
+/*
+$('#id_damage_unknown').on('change', function() {
+	if($('#id_damage_unknown').is(':checked')) { 
         $('.div_damage_unknown *').prop('disabled',true).css({ opacity: 0.8  });
         $(".div_damage_unknown a").css('visibility','hidden');
 
@@ -406,17 +426,22 @@ $('#id_damage_unknown').on('change', function() {
         $(".div_damage_unknown a").css('visibility','visible');
 	}
 }).change();
+*/
 
 /* Injury Unknown */
+/*
 $('#id_injury_unknown').on('change', function() {
 	if($('#id_injury_unknown').is(':checked')) { 
-        $('.div_injury_unknown *').prop('disabled',true).css({ opacity: 0.8  });
-        $(".div_injury_unknown a").css('visibility','hidden');
+        //alert('** 1')
+        $('.div_injury_unknown *').prop('disabled',true).css({ opacity: 0.8 });
+        $('.div_injury_unknown a').css('visibility','hidden');
 	} else {
-        $('.div_injury_unknown *').prop('disabled',false).css({ opacity: 1.0  });
-        $(".div_injury_unknown a").css('visibility','visible');
+        //alert('** 2')
+        $('.div_injury_unknown *').prop('disabled',false).css({ opacity: 1.0 });
+        $('.div_injury_unknown a').css('visibility','visible');
 	}
 }).change();
+*/
 
 /* Assistance Required */
 /*
@@ -575,11 +600,6 @@ $('#id_fire_not_found').on('change', function() {
     fire_not_found();
 }).change();
 
-
-/* Fire not Found */
-$('#id_fire_not_found').on('change', function() {
-    fire_not_found();
-}).change();
 
 function fire_not_found() {
   if($("#id_fire_not_found").is(':checked')) {

@@ -261,7 +261,8 @@ def update_injury_fs(bushfire, injury_formset):
     try:
         with transaction.atomic():
             Injury.objects.filter(bushfire=bushfire).delete()
-            Injury.objects.bulk_create(new_fs_object)
+            if not bushfire.injury_unknown:
+                Injury.objects.bulk_create(new_fs_object)
     except IntegrityError:
         return 0
 
@@ -284,7 +285,8 @@ def update_damage_fs(bushfire, damage_formset):
     try:
         with transaction.atomic():
             Damage.objects.filter(bushfire=bushfire).delete()
-            Damage.objects.bulk_create(new_fs_object)
+            if not bushfire.damage_unknown:
+                Damage.objects.bulk_create(new_fs_object)
     except IntegrityError:
         return 0
 

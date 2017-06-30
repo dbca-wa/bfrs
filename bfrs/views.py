@@ -464,6 +464,7 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         self.object.modifier = request.user
 
         # reset fields
+        #import ipdb; ipdb.set_trace()
         if self.object.cause and not self.object.cause.name.startswith('Other'):
             self.object.other_cause = None
         if self.object.cause and not self.object.cause.name.startswith('Escape P&W'):
