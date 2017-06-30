@@ -291,6 +291,112 @@ class BushfireUpdateForm(forms.ModelForm):
         return cleaned_data
 
 
+class BaseInjuryFormSet(BaseInlineFormSet):
+    def clean(self):
+        """
+        Adds validation to check:
+            1. no duplicate (injury_type) combination
+            2. all fields are filled
+        """
+        #import ipdb; ipdb.set_trace()
+        #if any(self.errors):
+        #    return
+
+        duplicates = False
+        injuries = []
+
+        for form in self.forms:
+            if form.cleaned_data:
+                injury_type = form.cleaned_data['injury_type'] if form.cleaned_data.has_key('injury_type') else None
+                number = form.cleaned_data['number'] if form.cleaned_data.has_key('number') else None
+                remove = form.cleaned_data['DELETE'] if form.cleaned_data.has_key('DELETE') else False
+
+                if not remove:
+                    if not injury_type and not number:
+                        form.cleaned_data['DELETE'] = True
+
+#                    if not injury_type:
+#                        form.add_error('injury_type', 'Injury type required')
+#                    if not number:
+#                        form.add_error('number', 'Number required')
+
+                    # Check that no two records have the same injury_type
+                    if injury_type and number:
+                        if set([(injury_type.name)]).issubset(injuries):
+                            duplicates = True
+                        injuries.append((injury_type.name))
+
+                    if duplicates:
+                        form.add_error('injury_type', 'Duplicate: Injury type must be unique')
+
+        return
+
+
+class BaseDamageFormSet(BaseInlineFormSet):
+    def clean(self):
+        """
+        Adds validation to check:
+            1. no duplicate (damage_type) combination
+            2. all fields are filled
+        """
+        duplicates = False
+        damages = []
+
+        for form in self.forms:
+            if form.cleaned_data:
+                damage_type = form.cleaned_data['damage_type'] if form.cleaned_data.has_key('damage_type') else None
+                number = form.cleaned_data['number'] if form.cleaned_data.has_key('number') else None
+                remove = form.cleaned_data['DELETE'] if form.cleaned_data.has_key('DELETE') else False
+
+                if not remove:
+                    if not damage_type and not number:
+                        form.cleaned_data['DELETE'] = True
+
+                    # Check that no two records have the same damage_type
+                    if damage_type and number:
+                        if set([(damage_type.name)]).issubset(damages):
+                            duplicates = True
+                        damages.append((damage_type.name))
+
+                    if duplicates:
+                        form.add_error('damage_type', 'Duplicate: Damage type must be unique')
+
+        return
+
+
+class BaseFireBehaviourFormSet(BaseInlineFormSet):
+    def clean(self):
+        """
+        Adds validation to check:
+            1. no duplicate (fuel_type) combination
+            2. all fields are filled
+        """
+        duplicates = False
+        fire_behaviour = []
+
+        for form in self.forms:
+            if form.cleaned_data:
+                fuel_type = form.cleaned_data['fuel_type'] if form.cleaned_data.has_key('fuel_type') else None
+                ros = form.cleaned_data['ros'] if form.cleaned_data.has_key('ros') else None
+                flame_height = form.cleaned_data['flame_height'] if form.cleaned_data.has_key('flame_height') else None
+                remove = form.cleaned_data['DELETE'] if form.cleaned_data.has_key('DELETE') else False
+
+                if not remove:
+                    if not fuel_type and not ros and not flame_height:
+                        form.cleaned_data['DELETE'] = True
+
+                    # Check that no two records have the same damage_type
+                    if fuel_type and ros and flame_height:
+                        if set([(fuel_type.name)]).issubset(fire_behaviour):
+                            duplicates = True
+                        fire_behaviour.append((fuel_type.name))
+
+                    if duplicates:
+                        form.add_error('fuel_type', 'Duplicate: Fuel type must be unique')
+
+        return
+
+
 class AreaBurntForm(forms.ModelForm):
     class Meta:
         model = AreaBurnt
@@ -303,9 +409,9 @@ class AreaBurntForm(forms.ModelForm):
             self.fields['area'].widget.attrs['readonly'] = True
 
 AreaBurntFormSet            = inlineformset_factory(Bushfire, AreaBurnt, extra=0, min_num=0, exclude=(), form=AreaBurntForm)
-InjuryFormSet               = inlineformset_factory(Bushfire, Injury, extra=1, max_num=7, min_num=0, validate_min=False, exclude=())
-DamageFormSet               = inlineformset_factory(Bushfire, Damage, extra=1, max_num=7, min_num=0, validate_min=False, exclude=())
-FireBehaviourFormSet        = inlineformset_factory(Bushfire, FireBehaviour, extra=1, min_num=0, validate_min=False, exclude=())
+InjuryFormSet               = inlineformset_factory(Bushfire, Injury, formset=BaseInjuryFormSet, extra=1, max_num=7, min_num=0, validate_min=False, exclude=())
+DamageFormSet               = inlineformset_factory(Bushfire, Damage, formset=BaseDamageFormSet, extra=1, max_num=7, min_num=0, validate_min=False, exclude=())
+FireBehaviourFormSet        = inlineformset_factory(Bushfire, FireBehaviour, formset=BaseFireBehaviourFormSet, extra=1, min_num=0, validate_min=False, exclude=())
 
 
 

@@ -222,8 +222,8 @@ def update_areas_burnt_fs(bushfire, area_burnt_formset):
 
     At first object create time, formset values are saved to the newly created bushfire object
     """
-    #if not area_burnt_formset:
-    #    return 1
+#    if not area_burnt_formset:
+#        return 1
 
     new_fs_object = []
     for form in area_burnt_formset:
@@ -325,6 +325,11 @@ def mail_url(request, bushfire, status='initial'):
 
 
 def update_status(request, bushfire, action):
+
+    # when user Submits, without first Saving
+#    if not bushfire:
+#        bushfire = Bushfire.objects.get(id=request.POST.get('bushfire_id'))
+
     notification = {}
     if action == 'Submit' and bushfire.report_status==Bushfire.STATUS_INITIAL:
         bushfire.init_authorised_by = request.user

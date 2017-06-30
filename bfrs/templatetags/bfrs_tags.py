@@ -269,6 +269,10 @@ def to_int(value):
 def to_float(value):
     return round(float(value), 1)
 
+@register.filter()
+def check_errors(error_list):
+    return any(error_list)
+
 
 @register.simple_tag
 def settings_value(name):

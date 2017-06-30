@@ -149,7 +149,7 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
     #model = Bushfire
     filterset_class = BushfireFilter
     template_name = 'bfrs/bushfire.html'
-    paginate_by = 50
+    paginate_by = 5
 
     def get_queryset(self):
         if self.request.GET.has_key('report_status') and int(self.request.GET.get('report_status'))==Bushfire.STATUS_INVALIDATED:
@@ -376,7 +376,8 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         form_class = self.get_form_class()
         form = self.get_form(form_class)
 
-        if self.request.POST.has_key('action'):
+        #import ipdb; ipdb.set_trace()
+        if self.request.POST.has_key('action'): # and 'create' not in self.request.get_full_path():
             # the 'initial_submit' already cleaned and saved the form, no need to save again
             # we are here because the redirected page confirmed this action
             action = self.request.POST.get('action')
@@ -474,6 +475,7 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         self.object.save()
 
         if not self.get_object():
+            #import ipdb; ipdb.set_trace()
             areas_burnt_updated = update_areas_burnt_fs(self.object, area_burnt_formset)
         fire_behaviour_updated = update_fire_behaviour_fs(self.object, fire_behaviour_formset)
         injury_updated = update_injury_fs(self.object, injury_formset)
@@ -544,6 +546,12 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         request.session['action'] = "update"
 
         self.object.save()
+
+        if self.request.POST.has_key('_save_continue'):
+            return HttpResponseRedirect(
+                reverse("bushfire:bushfire_initial", kwargs={'pk': self.object.id})
+            )
+
         return HttpResponseRedirect(self.get_success_url())
 
     def get_context_data(self, **kwargs):
