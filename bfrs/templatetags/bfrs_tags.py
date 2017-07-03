@@ -71,7 +71,7 @@ def deg_min_sec(value):
         lat_str = lat[0] + u'\N{DEGREE SIGN} ' + lat[1].zfill(2) + '\' ' + lat[2].zfill(4) + '\" ' + lat[3]
         lon_str = lon[0] + u'\N{DEGREE SIGN} ' + lon[1].zfill(2) + '\' ' + lon[2].zfill(4) + '\" ' + lon[3]
 
-        return 'Lat/Lon: ' + lat_str + ', ' + lon_str
+        return 'Lat/Lon ' + lat_str + ', ' + lon_str
     except:
         return None
 

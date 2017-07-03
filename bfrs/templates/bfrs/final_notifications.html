@@ -59,10 +59,12 @@
             <td colspan="5" class="cbas">
 				{% if is_init_authorised %} 
 					{% comment %}{{object.origin_coords|is_none}} <br>{% endcomment %}
-					{{object.origin_geo|is_none}}
+					{{object.origin_geo|is_none}} <br>
+					{{object.sss_data_to_dict.origin_point_mga|is_none}}
 				{% else %} 
                     {% comment %}{{form.origin_point.value|latlon}} <br>{% endcomment %}
-                    {{form.origin_point.value|deg_min_sec}}
+                    {{form.origin_point.value|deg_min_sec}} <br>
+					{{object.sss_data_to_dict.origin_point_mga|is_none}}
 				{% endif %}
 			</td>
         </tr>
