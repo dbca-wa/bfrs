@@ -48,7 +48,7 @@ def can_maintain_data(user):
 
 def is_external_user(user):
     try:
-        return user.email.split('@')[1].lower() != settings.INTERNAL_EMAIL #'dpaw.wa.gov.au'
+        return user.email.split('@')[1].lower() not in settings.INTERNAL_EMAIL #['dpaw.wa.gov.au']
     except:
         return True
 
@@ -483,7 +483,7 @@ def update_users():
         fssdrs_group.permissions = Permission.objects.filter(name__in=['Can add group', 'Can change group', 'Can add permission', 'Can change permission', 'Can add user', 'Can change user'])
 
     for user in resp.json()['objects']:
-        if user['email'] and user['email'].split('@')[-1].lower() == settings.INTERNAL_EMAIL:
+        if user['email'] and user['email'].split('@')[-1].lower() in settings.INTERNAL_EMAIL:
             u, created = User.objects.get_or_create(
                 username=user['username'],
                 defaults = {
