@@ -89,6 +89,7 @@
     [id^="id_other_info"] {width: 100%;}
     [id^="id_other_cause"] {width: 100%;}
     [id^="id_prescribed_burn_id"] {width: 100%;}
+    [id^="id_fire_position"] {width: 100%;}
 
     [id^="id_invalid_details"] {width: 100%;}
     [id^="id_other_first_attack"] {width: 100%;}
@@ -120,10 +121,11 @@
         gokart.call("open", open_options);
     }
 
-    //if ({{request.session.refreshGokart|yesno:"true,false"}}) {
-    //    //console.log("region " + {{request.session.region}} + " - district " + {{request.session.district}});
-    //    gokart.call("open", {"action":"{{request.session.action}}", "region":{{request.session.region}}, "district":{{request.session.district}}, "bushfireid":"{{request.session.id}}", "refresh":true});
-    //}
+    if ({% clear_session %}) {
+        //console.log('1: object id  + {{request.session.id}}' );
+        gokart.call("open", {"action":"{{request.session.action}}", "region":{{request.session.region}}, "district":{{request.session.district}}, "bushfireid":"{{request.session.id}}", "refresh":true}, true);
+    }
+
    /* END - GoKart section */
 </script>
 

@@ -278,6 +278,39 @@ def to_float(value):
 def check_errors(error_list):
     return any(error_list)
 
+@register.simple_tag(takes_context=True)
+def _clear_session(context):
+    """
+    Usage::
+        {% clear_session %}
+    """
+    request = context['request']
+    if request.session.has_key('refreshGokart'): request.session.pop('refreshGokart')
+    if request.session.has_key('region'): request.session.pop('region')
+    if request.session.has_key('district'): request.session.pop('district')
+    if request.session.has_key('id'): request.session.pop('id')
+    if request.session.has_key('action'): request.session.pop('action')
+    request.session.modified = True
+    #return request
+
+@register.simple_tag(takes_context=True)
+def clear_session(context):
+    """
+    Usage::
+        {% clear_session %}
+    """
+    request = context['request']
+    if request.session.has_key('refreshGokart'):
+        request.session.pop('refreshGokart')
+        #request.session.pop('region')
+        #request.session.pop('district')
+        #request.session.pop('id')
+        #request.session.pop('action')
+        request.session.modified = True
+        return 'true'
+    return 'false'
+
+
 
 @register.simple_tag
 def settings_value(name):
@@ -286,4 +319,5 @@ def settings_value(name):
         {% settings_value "LANGUAGE_CODE" %}
     """
     return getattr(settings, name, "")
+
 

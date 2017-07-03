@@ -19,18 +19,21 @@
     <tbody>
         <tr>
             <th class="cbas" style="font-weight:normal;" width ='17%'>Fire not found</th>
-            <td colspan="1" class="cbas" >
+            <td colspan="2" class="cbas" >
                 {% if is_authorised %} {{snapshot.fire_not_found|yesno:"Yes,No"}}<br> Details: {{snapshot.invalid_details}} {% else %} {{form.fire_not_found}} {% endif %}
                 <span class="div_invalid_details" style="display: none; margin: 20px;">{% if not is_authorised %} Details{{form.invalid_details}} {% endif %}</span>
             </td>
 
             <th class="cbas" style="font-weight:normal;" width='17%'>Fire monitored only</th>
-  	        <td colspan="1" class="cbas" >{% if is_authorised %} {{snapshot.fire_monitored_only|yesno:"Yes,No"}}{% else %} {{form.fire_monitored_only}} {% endif %}</td>
+  	        <td colspan="2" class="cbas" >{% if is_authorised %} {{snapshot.fire_monitored_only|yesno:"Yes,No"}}{% else %} {{form.fire_monitored_only}} {% endif %}</td>
         </tr>
 
         <tr>
             <th class="cbas">Duty Officer *</th>
             <td colspan="1" class="cbas">{% if is_authorised %} {{snapshot.duty_officer|is_none}} {% else %} {{form.duty_officer}} {% endif %}</td>
+
+            <th id="id_th_field_officer" class="cbas" style="font-weight:normal;">Field Officer</th>
+            <td colspan="1" class="cbas">{% if is_authorised %} {{snapshot.field_officer|is_none}} {% else %} {{form.field_officer}} {% endif %}</td>
 
             <th class="cbas">Job code *</th>
             <td colspan="1" class="cbas">{% if is_authorised %} {{snapshot.job_code}} {% else %} {{form.job_code}} {% endif %}</td>
@@ -47,14 +50,12 @@
     <tbody>
 
         <tr>
-            <th class="cbas">Fuel and fire behaviour *</th>
-			<td colspan="5" class="cbas" > 
-				{% if is_authorised %} {{form.fire_behaviour_unknown|yesno:"Unknown,Known"}} {% else %} {{form.fire_behaviour_unknown}} Unknown {% endif %}
-				<div class="div_fire_behaviour_unknown" style="display: true;">{% include "bfrs/fire_behaviour_fs.html" %}</div>
+            <th width="25%" class="cbas" style="font-weight:normal;">Position of fire<br>(street address, or km from landmark/suburb)</th>
+            <td colspan="2" class="cbas">
+				{% if is_authorised %} {{snapshot.fire_position}} {% else %} {{form.fire_position}} {% endif %}<br>
+                {% if is_authorised %} SSS overide - {{snapshot.fire_position_override|yesno:"Yes,No"}} {% else %} {{form.fire_position_override}} SSS override{% endif %}
 			</td>
-        </tr>
 
-        <tr>
             <th class="cbas" style="font-weight:normal;">Point of origin</th>
             <td colspan="5" class="cbas">
 				{% if is_init_authorised %} 
@@ -70,21 +71,26 @@
         </tr>
 
         <tr>
-            <th width="25%" class="cbas" style="font-weight:normal;">Position of fire<br>(street address, or km from landmark/suburb)</th>
-            <td colspan="2" class="cbas">
-				{% if is_authorised %} {{snapshot.fire_position}} {% else %} {{form.fire_position}} {% endif %}<br>
-                {% if is_authorised %} SSS overide - {{snapshot.fire_position_override|yesno:"Yes,No"}} {% else %} {{form.fire_position_override}} SSS override{% endif %}
+            <th class="cbas">Fuel and fire behaviour *</th>
+			<td colspan="5" class="cbas" > 
+				{% if is_authorised %} {{form.fire_behaviour_unknown|yesno:"Unknown,Known"}} {% else %} {{form.fire_behaviour_unknown}} Unknown {% endif %}
+				<div class="div_fire_behaviour_unknown" style="display: true;">{% include "bfrs/fire_behaviour_fs.html" %}</div>
 			</td>
+        </tr>
 
+        <tr>
             <th class="cbas" style="font-weight:normal;">Estimated Time to Control</th>
-	    <td colspan="2" class="cbas">
+	        <td colspan="2" class="cbas">
 				{% if is_authorised %}
                   <span>{{snapshot.time_to_control_str}}</span>
 				{% else %}
-                  <span>{{form.days}} Days{{form.hours}} Hours</span>
+                  <span>{{form.days}} Days<br>{{form.hours}} Hours</span>
 				{% endif %}
                 {{time_to_control.as_hidden}}
-	     </td>
+	        </td>
+
+            <th class="cbas" style="font-weight:normal;">Communications</th>
+			<td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.communications|is_none}} {% else %} <span>{{form.communications}}</span> {% endif %}</td>
         </tr>
 
         {% comment %}
@@ -98,11 +104,6 @@
         {% endcomment %}
 
 
-        <tr>
-            <th class="cbas" style="font-weight:normal;">Communications</th>
-			<td colspan="5" class="cbas">{% if is_authorised %} {{snapshot.communications|is_none}} {% else %} <span>{{form.communications}}</span> {% endif %}</td>
-
-        </tr>
         <tr>
             <th class="cbas">Fire Cause *<br><br><br><br>
 				<div class=div_cause style="display: none;">Other Cause *</div>
@@ -134,16 +135,14 @@
             </td>
         </tr>
 
+            {% comment %}
         <tr>
 
-            <th id="id_th_field_officer" class="cbas" style="font-weight:normal;">Field Officer</th>
-            <td colspan="5" class="cbas">{% if is_authorised %} {{snapshot.field_officer|is_none}} {% else %} {{form.field_officer}} {% endif %}</td>
 
-            {% comment %}
             <th class="cbas">Duty Officer *</th>
             <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.duty_officer|is_none}} {% else %} {{form.duty_officer}} {% endif %}</td>
-            {% endcomment %}
         </tr>
+            {% endcomment %}
 
         {% if object.is_init_authorised_by %} 
         <tr>
