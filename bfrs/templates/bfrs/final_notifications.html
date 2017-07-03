@@ -58,10 +58,10 @@
             <th class="cbas" style="font-weight:normal;">Point of origin</th>
             <td colspan="5" class="cbas">
 				{% if is_init_authorised %} 
-					{{object.origin_coords|is_none}} <br>
-					{{object.origin_geo|is_none}} 
+					{% comment %}{{object.origin_coords|is_none}} <br>{% endcomment %}
+					{{object.origin_geo|is_none}}
 				{% else %} 
-                    {{form.origin_point.value|latlon}} <br>
+                    {% comment %}{{form.origin_point.value|latlon}} <br>{% endcomment %}
                     {{form.origin_point.value|deg_min_sec}}
 				{% endif %}
 			</td>
