@@ -75,7 +75,7 @@ class Audit(models.Model):
                     user = User.objects.get(pk=_locals.request.user.pk)
                 except Exception:
                     user, created = User.objects.get_or_create(username='admin',
-                      defaults={'first_name':'Admin', 'last_name':'Admin', 'email':'admin@{}'.format(settings.INTERNAL_EMAIL) }
+                      defaults={'first_name':'Admin', 'last_name':'Admin', 'email':'admin@{}'.format(settings.INTERNAL_EMAIL[0]) }
                     )
                 _locals.user = user
         else:
@@ -83,7 +83,7 @@ class Audit(models.Model):
                 user = User.objects.get(pk=_locals.request.user.pk)
             except Exception:
                 user, created = User.objects.get_or_create(username='admin',
-                    defaults={'first_name':'Admin', 'last_name':'Admin', 'email':'admin@{}'.format(settings.INTERNAL_EMAIL) }
+                    defaults={'first_name':'Admin', 'last_name':'Admin', 'email':'admin@{}'.format(settings.INTERNAL_EMAIL[0]) }
                 )
 
         # If saving a new model, set the creator.
