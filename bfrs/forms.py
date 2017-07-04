@@ -170,6 +170,10 @@ class BushfireUpdateForm(forms.ModelForm):
         self.fields['field_officer'].queryset = active_users
         self.fields['duty_officer'].queryset = active_users
 
+        # For use when debugging outside SSS - need to create an origin_point manually
+        #from django.contrib.gis.geos import Point, GEOSGeometry
+        #self.fields['origin_point'].initial = GEOSGeometry(Point(122.45, -33.15))
+
     class Meta:
         model = Bushfire
         fields = ('sss_data',

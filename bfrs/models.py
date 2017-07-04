@@ -177,7 +177,7 @@ class District(models.Model):
         return self.name
 
 
-class Bushfire(Audit):
+class BushfireBase(Audit):
     STATUS_INITIAL            = 1
     STATUS_INITIAL_AUTHORISED = 2
     STATUS_FINAL_AUTHORISED   = 3
@@ -324,13 +324,47 @@ class Bushfire(Audit):
     # recursive relationship - an object that has a many-to-many relationship with itself
     valid_bushfire = models.ForeignKey('self', null=True, related_name='invalidated')
 
-#    def save(self, *args, **kwargs):
-#        '''Overide save() to cleanse text input fields.
-#        '''
-#        self.name = unidecode(unicode(self.name))
-#        if self.description:
-#            self.description = unidecode(unicode(self.description))
-#        super(Bushfire, self).save()
+    class Meta:
+        abstract = True
+
+class BushfireSnapshot(BushfireBase):
+
+    SNAPSHOT_INITIAL = 1
+    SNAPSHOT_FINAL = 2
+    SNAPSHOT_TYPE_CHOICES = (
+        (SNAPSHOT_INITIAL, 'Initial'),
+        (SNAPSHOT_FINAL, 'Final'),
+    )
+
+    snapshot_type = models.PositiveSmallIntegerField(choices=SNAPSHOT_TYPE_CHOICES)
+    #bushfire = models.ForeignKey('Bushfire', related_name='snapshots')
+
+    def __str__(self):
+        return ', '.join([self.fire_number, self.get_snapshot_type_display()])
+
+    class Meta:
+        unique_together = ('district', 'year', 'fire_number', 'snapshot_type')
+
+    class Meta:
+        unique_together = ('bushfire', 'snapshot_type',)
+
+
+class Bushfire(BushfireBase):
+
+    bushfire = models.ForeignKey(BushfireSnapshot, related_name='snapshots')
+
+    def user_unicode_patch(self):
+        """ overwrite the User model's __unicode__() method """
+        if self.first_name or self.last_name:
+            return '%s %s' % (self.first_name, self.last_name)
+        return self.username
+    User.__unicode__ = user_unicode_patch
+
+    def __str__(self):
+        return ', '.join([self.fire_number])
+
+    class Meta:
+        unique_together = ('district', 'year', 'fire_number')
 
     def next_id(self, district):
         ids = map(int, [i.fire_number.split(' ')[-1] for i in Bushfire.objects.filter(district=district, year=self.year)])
@@ -465,20 +499,6 @@ class Bushfire(Audit):
             s += ' ' + str(self.time_to_control.seconds/3600) + ' Hours' if self.time_to_control.seconds>0 else ''
         return s if s else '-'
 
-    def user_unicode_patch(self):
-        """ overwrite the User model's __unicode__() method """
-        if self.first_name or self.last_name:
-            return '%s %s' % (self.first_name, self.last_name)
-        return self.username
-    User.__unicode__ = user_unicode_patch
-
-    def __str__(self):
-        return ', '.join([self.fire_number])
-
-    class Meta:
-        unique_together = ('district', 'year', 'fire_number')
-#        default_permissions = ('add', 'change', 'delete', 'view')
-
     def initial_snapshot_deserialized(self):
         obj = self.initial_snapshot if hasattr(self, 'initial_snapshot') else None
         return serializers.deserialize("json", obj).next().object
@@ -534,6 +554,10 @@ class Bushfire(Audit):
 
         #return old, new
         return old
+
+
+
+
 
 @python_2_unicode_compatible
 class Tenure(models.Model):

@@ -184,6 +184,7 @@ class BushfireResource(APIResource):
     def hydrate_fire_boundary(self, bundle):
         if bundle.data.has_key('fire_boundary') and isinstance(bundle.data['fire_boundary'], list):
             bundle.data['fire_boundary'] = MultiPolygon([Polygon(*p) for p in bundle.data['fire_boundary']]).__str__()
+            bundle.obj.tenures_burnt.all().delete()
             if bundle.obj.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED:
                 #import ipdb;ipdb.set_trace()
                 bundle.obj.final_fire_boundary = True
