@@ -343,7 +343,7 @@ $('form').submit(function() {
   $(this).find("input[type='submit']").click(false);
 });
 
-// $('[id^=""]').hide() // starts with 
+// $('[id^=""]').hide() // starts with --> http://xdsoft.net/jqplugins/datetimepicker/
 $('[id$="_date"]').datetimepicker({ 
     format: "Y-m-d H:i" ,
     maxDate:true,
@@ -358,6 +358,7 @@ $('.selectpicker').selectpicker({
   size: 6,
   liveSearch: true,
   dropupAuto: false,
+  closeOnDateSelect: true,
 });
 
 /* dispatch PW */
@@ -520,6 +521,7 @@ $('.open-all').click(function(){
 $('#id_initial_area').val({{object.sss_data_to_dict.area.total_area|floatformat:2}});
 if( {{object.fire_boundary|yesno:"true,false"}} || {{sss_data.area.total_area|yesno:"true,false"}} ) { 
     $('.div_area_unknown').hide();
+    $('#id_initial_area_unknown').prop('checked', false);
 	$("#id_initial_area").attr('readonly','readonly').css('background-color' , '#DEDEDE');
 } else {
     $('.div_initial_area_unknown').show();
@@ -529,13 +531,12 @@ if( {{object.fire_boundary|yesno:"true,false"}} || {{sss_data.area.total_area|ye
 
 $('#id_initial_area_unknown').on('change', function() {
     if($("#id_initial_area_unknown").is(':checked')) { 
-		$('.div_initial_area').css('visibility','hidden');
+		    $('.div_initial_area').css('visibility','hidden');
 	} else {
 		$('.div_initial_area').css('visibility','visible');
 	}
 }).change();
 
-//$("#id_initial_area").prop('min', 0).prop('max',{{area_threshold|to_float}});
 $("#id_initial_area").prop('min', 0);
 /* END - Area Override */
 
