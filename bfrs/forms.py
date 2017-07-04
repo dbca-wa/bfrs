@@ -171,8 +171,8 @@ class BushfireUpdateForm(forms.ModelForm):
         self.fields['duty_officer'].queryset = active_users
 
         # For use when debugging outside SSS - need to create an origin_point manually
-        #from django.contrib.gis.geos import Point, GEOSGeometry
-        #self.fields['origin_point'].initial = GEOSGeometry(Point(122.45, -33.15))
+        from django.contrib.gis.geos import Point, GEOSGeometry
+        self.fields['origin_point'].initial = GEOSGeometry(Point(122.45, -33.15))
 
     class Meta:
         model = Bushfire
@@ -181,7 +181,7 @@ class BushfireUpdateForm(forms.ModelForm):
                   'name', 'year', 'prob_fire_level', 'max_fire_level', 'field_officer', 'duty_officer', #'init_authorised_by', 'init_authorised_date',
                   'media_alert_req', 'park_trail_impacted', 'fire_position', 'fire_position_override',
                   'fire_detected_date', 'dispatch_pw_date', 'dispatch_aerial_date',
-                  #'assistance_req', 'assistance_details', 
+                  #'assistance_req', 'assistance_details',
                   'communications', 'other_info',
                   'cause', 'cause_state', 'other_cause', 'prescribed_burn_id', 'tenure', 'other_tenure',
                   'days', 'hours', 'time_to_control',

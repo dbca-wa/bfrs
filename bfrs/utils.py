@@ -1,4 +1,4 @@
-from bfrs.models import (Bushfire, AreaBurnt, Damage, Injury, FireBehaviour, Tenure, SnapshotHistory) #, LinkedBushfire)
+from bfrs.models import (Bushfire, BushfireSnapshot, AreaBurnt, Damage, Injury, FireBehaviour, Tenure, SnapshotHistory) #, LinkedBushfire)
 #from bfrs.forms import (BaseAreaBurntFormSet)
 from django.db import IntegrityError, transaction
 from django.http import HttpResponse
@@ -52,12 +52,16 @@ def is_external_user(user):
     except:
         return True
 
+def model_to_dict(instance, include=[], exclude=[]):
+    fields = instance._meta.concrete_fields
+    if include:
+        return {f.attname: getattr(instance, f.attname) for f in fields if f.name in include}
+    return {f.attname: getattr(instance, f.attname) for f in fields if f.name not in exclude}
+
 def serialize_bushfire(auth_type, action, obj):
-    "Serializes a Bushfire object"
-    if auth_type == 'initial':
-        obj.initial_snapshot = serializers.serialize('json', [obj])
-    if auth_type == 'final':
-        obj.final_snapshot = serializers.serialize('json', [obj])
+    snapshot_type = BushfireSnapshot.SNAPSHOT_INITIAL if auth_type == 'initial' else BushfireSnapshot.SNAPSHOT_FINAL
+    d = model_to_dict(obj, exclude=['id', 'snapshot', 'fire_number', 'district', 'year'])
+    obj, created = BushfireSnapshot.objects.update_or_create(fire_number=obj.fire_number, district=obj.district, year=obj.year, snapshot_type=snapshot_type, defaults=d)
     archive_snapshot(auth_type, action, obj)
     obj.save()
 
@@ -79,6 +83,34 @@ def deserialize_bushfire(auth_type, obj):
         obj = obj.final_snapshot if hasattr(obj, 'final_snapshot') else obj
 
     return serializers.deserialize("json", obj).next().object
+
+#def serialize_bushfire(auth_type, action, obj):
+#    "Serializes a Bushfire object"
+#    if auth_type == 'initial':
+#        obj.initial_snapshot = serializers.serialize('json', [obj])
+#    if auth_type == 'final':
+#        obj.final_snapshot = serializers.serialize('json', [obj])
+#    archive_snapshot(auth_type, action, obj)
+#    obj.save()
+#
+#def deserialize_bushfire(auth_type, obj):
+#    """Returns a deserialized Bushfire object
+#
+#       obj is either:
+#         1. bushfire obj, eg.
+#            b=Bushfire.objects.get(id=12)
+#            deserialize_bushfire('final', b.final_snapshot)
+#
+#         2. serialized json object (bushfire text string JSONified), eg.
+#            snapshop_history_obj=b.snapshot_history.all()[0]
+#            deserialize_bushfire(snapshots_history_obj.auth_type, snapshots_history_obj.snapshot)
+#    """
+#    if auth_type == 'initial':
+#        obj = obj.initial_snapshot if hasattr(obj, 'initial_snapshot') else obj
+#    if auth_type == 'final':
+#        obj = obj.final_snapshot if hasattr(obj, 'final_snapshot') else obj
+#
+#    return serializers.deserialize("json", obj).next().object
 
 def archive_snapshot(auth_type, action, obj):
         """ allows archicing of existing snapshot before overwriting """
@@ -365,7 +397,7 @@ def update_status(request, bushfire, action):
             notification['POLICE'] = 'Email Sent' if resp else 'Email failed'
 
         bushfire.area = None # reset bushfire area
-        #bushfire.sss_data = None 
+        #bushfire.sss_data = None
         bushfire.final_fire_boundary = False # used to check if final boundary is updated in Final Report template - allows to toggle show()/hide() area_limit widget via js
         bushfire.save()
 

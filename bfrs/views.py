@@ -17,7 +17,7 @@ from django.db.models import Q
 from django.contrib.auth.models import User, Group
 from django.http import JsonResponse
 
-from bfrs.models import (Profile, Bushfire,
+from bfrs.models import (Profile, Bushfire, BushfireSnapshot,
         Region, District,
         Tenure, AreaBurnt,
         SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS, SUBMIT_MANDATORY_FORMSETS,
@@ -590,7 +590,7 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
                     is_authorised = bushfire.is_final_authorised and not can_maintain_data(self.request.user)
                     is_init_authorised = True
                 else:
-                    is_authorised = True if bushfire.is_init_authorised else False 
+                    is_authorised = True if bushfire.is_init_authorised else False
                     is_init_authorised = bushfire.is_init_authorised
             else:
                 # create new bushfire
@@ -601,6 +601,11 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
             # don't validate the form when initially displaying
             form.is_bound = False
 
+        snapshots = BushfireSnapshot.objects.filter(fire_number=bushfire.fire_number, district=bushfire.district, year=bushfire.year)
+        initial_snapshot = snapshots.filter(snapshot_type=BushfireSnapshot.SNAPSHOT_INITIAL)
+        final_snapshot   = snapshots.filter(snapshot_type=BushfireSnapshot.SNAPSHOT_FINAL)
+
+
         context.update({'form': form,
                         'area_burnt_formset': area_burnt_formset,
                         'fire_behaviour_formset': fire_behaviour_formset,
@@ -608,8 +613,10 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
                         'damage_formset': damage_formset,
                         'is_authorised': is_authorised, # If True, will make Report section of template read-only
                         'is_init_authorised': is_init_authorised, # If True, will make Notifications section of template read-only
-                        'initial_snapshot': deserialize_bushfire('initial', bushfire) if bushfire and bushfire.initial_snapshot else self.get_object(),
-                        'snapshot': deserialize_bushfire('final', bushfire) if bushfire and bushfire.final_snapshot else self.get_object(),
+                        #'initial_snapshot': deserialize_bushfire('initial', bushfire) if bushfire and bushfire.initial_snapshot else self.get_object(),
+                        #'snapshot': deserialize_bushfire('final', bushfire) if bushfire and bushfire.final_snapshot else self.get_object(),
+                        'initial_snapshot': initial_snapshot[0] if initial_snapshot else self.get_object(),
+                        'snapshot': final_snapshot[0] if final_snapshot else self.get_object(),
                         'create': True if 'create' in self.request.get_full_path() else False,
                         'initial': True if 'initial' in self.request.get_full_path() else False,
                         'final': True if 'final' in self.request.get_full_path() else False,

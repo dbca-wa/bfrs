@@ -28,9 +28,9 @@ SUBMIT_MANDATORY_FORMSETS= [
 ]
 
 AUTH_MANDATORY_FIELDS= [
-    #'assistance_req', 
+    #'assistance_req',
     'cause_state', 'cause',
-    #'fire_contained_date', 'fire_controlled_date', 
+    #'fire_contained_date', 'fire_controlled_date',
     'fire_safe_date',
     #'first_attack', 'initial_control', 'final_control',
     #'initial_control', 'final_control',
@@ -271,9 +271,9 @@ class BushfireBase(Audit):
     communications = models.CharField(verbose_name='Communication', max_length=250, null=True, blank=True)
     other_info = models.CharField(verbose_name='Other Information', max_length=250, null=True, blank=True)
 
-    field_officer = models.ForeignKey(User, verbose_name="Field Officer", null=True, blank=True, related_name='init_field_officer')
-    duty_officer = models.ForeignKey(User, verbose_name="Duty Officer", null=True, blank=True, related_name='init_duty_officer')
-    init_authorised_by = models.ForeignKey(User, verbose_name="Initial Authorised By", null=True, blank=True, related_name='init_authorised_by')
+    field_officer = models.ForeignKey(User, verbose_name="Field Officer", null=True, blank=True, related_name='%(class)s_init_field_officer')
+    duty_officer = models.ForeignKey(User, verbose_name="Duty Officer", null=True, blank=True, related_name='%(class)s_init_duty_officer')
+    init_authorised_by = models.ForeignKey(User, verbose_name="Initial Authorised By", null=True, blank=True, related_name='%(class)s_init_authorised_by')
     init_authorised_date = models.DateTimeField(verbose_name='Initial Authorised Date', null=True, blank=True)
 
     dispatch_pw = models.PositiveSmallIntegerField(choices=DISPATCH_PW_CHOICES, null=True, blank=True)
@@ -281,20 +281,21 @@ class BushfireBase(Audit):
     dispatch_pw_date = models.DateTimeField(verbose_name='P&W Resource dispatched', null=True, blank=True)
     dispatch_aerial_date = models.DateTimeField(verbose_name='Aerial support dispatched', null=True, blank=True)
     fire_detected_date = models.DateTimeField(verbose_name='Fire Detected', null=True, blank=True)
+
     # we serialise/snapshot the initial and final reports when authorised
-    initial_snapshot = models.TextField(null=True, blank=True)
-    final_snapshot = models.TextField(null=True, blank=True)
+#    initial_snapshot = models.TextField(null=True, blank=True)
+#    final_snapshot = models.TextField(null=True, blank=True)
 
     # FINAL Fire Report Fields
     fire_contained_date = models.DateTimeField(verbose_name='Fire Contained', null=True, blank=True)
     fire_controlled_date = models.DateTimeField(verbose_name='Fire Controlled', null=True, blank=True)
     fire_safe_date = models.DateTimeField(verbose_name='Fire Safe', null=True, blank=True)
 
-    first_attack = models.ForeignKey('Agency', verbose_name="First Attack Agency", null=True, blank=True, related_name='first_attack')
+    first_attack = models.ForeignKey('Agency', verbose_name="First Attack Agency", null=True, blank=True, related_name='%(class)s_first_attack')
     other_first_attack = models.CharField(verbose_name="Other First Attack Agency", max_length=50, null=True, blank=True)
-    initial_control = models.ForeignKey('Agency', verbose_name="Initial Controlling Agency", null=True, blank=True, related_name='initial_control')
+    initial_control = models.ForeignKey('Agency', verbose_name="Initial Controlling Agency", null=True, blank=True, related_name='%(class)s_initial_control')
     other_initial_control = models.CharField(verbose_name="Other Initial Control Agency", max_length=50, null=True, blank=True)
-    final_control = models.ForeignKey('Agency', verbose_name="Final Controlling Agency", null=True, blank=True, related_name='final_control')
+    final_control = models.ForeignKey('Agency', verbose_name="Final Controlling Agency", null=True, blank=True, related_name='%(class)s_final_control')
     other_final_control = models.CharField(verbose_name="Other Final Control Agency", max_length=50, null=True, blank=True)
 
     arson_squad_notified = models.NullBooleanField(verbose_name="Arson Squad Notified", null=True)
@@ -309,10 +310,10 @@ class BushfireBase(Audit):
     damage_unknown = models.BooleanField(default=False)
     injury_unknown = models.BooleanField(default=False)
 
-    authorised_by = models.ForeignKey(User, verbose_name="Authorised By", null=True, blank=True, related_name='authorised_by')
+    authorised_by = models.ForeignKey(User, verbose_name="Authorised By", null=True, blank=True, related_name='%(class)s_authorised_by')
     authorised_date = models.DateTimeField(verbose_name="Authorised Date", null=True, blank=True)
 
-    reviewed_by = models.ForeignKey(User, verbose_name="Reviewed By", null=True, blank=True, related_name='reviewed_by')
+    reviewed_by = models.ForeignKey(User, verbose_name="Reviewed By", null=True, blank=True, related_name='%(class)s_reviewed_by')
     reviewed_date = models.DateTimeField(verbose_name="Reviewed Date", null=True, blank=True)
 
     report_status = models.PositiveSmallIntegerField(choices=REPORT_STATUS_CHOICES, editable=False, default=1)
@@ -322,7 +323,7 @@ class BushfireBase(Audit):
     invalid_details = models.CharField(verbose_name="Reason for invalidating", max_length=64, null=True, blank=True)
 
     # recursive relationship - an object that has a many-to-many relationship with itself
-    valid_bushfire = models.ForeignKey('self', null=True, related_name='invalidated')
+    valid_bushfire = models.ForeignKey('self', null=True, related_name='%(class)s_invalidated')
 
     class Meta:
         abstract = True
@@ -345,13 +346,10 @@ class BushfireSnapshot(BushfireBase):
     class Meta:
         unique_together = ('district', 'year', 'fire_number', 'snapshot_type')
 
-    class Meta:
-        unique_together = ('bushfire', 'snapshot_type',)
-
 
 class Bushfire(BushfireBase):
 
-    bushfire = models.ForeignKey(BushfireSnapshot, related_name='snapshots')
+    snapshot = models.ForeignKey(BushfireSnapshot, related_name='snapshots', null=True, blank=True)
 
     def user_unicode_patch(self):
         """ overwrite the User model's __unicode__() method """
