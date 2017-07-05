@@ -30,7 +30,8 @@
 	  <th>Modifier</th>
   </thead>
   <tbody>
-    {% for snapshot in object.snapshot_history.all %}
+      {% comment %}{% for snapshot in object.snapshot_history.all %}{% endcomment %}
+    {% for snapshot in object.snapshot_list %}
       <tr class="row-vm" data-toggle="myCollapse" data-target="#{{snapshot.id}}">
         <td>{{ forloop.counter  }}</td>
         <td>{{ snapshot.action|split_capitalize }}</td>

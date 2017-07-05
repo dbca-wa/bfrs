@@ -1,4 +1,4 @@
-from bfrs.models import (Bushfire, BushfireSnapshot, AreaBurnt, Damage, Injury, FireBehaviour, Tenure, SnapshotHistory) #, LinkedBushfire)
+from bfrs.models import (Bushfire, BushfireSnapshot, AreaBurnt, Damage, Injury, FireBehaviour, Tenure)
 #from bfrs.forms import (BaseAreaBurntFormSet)
 from django.db import IntegrityError, transaction
 from django.http import HttpResponse
@@ -59,11 +59,19 @@ def model_to_dict(instance, include=[], exclude=[]):
     return {f.attname: getattr(instance, f.attname) for f in fields if f.name not in exclude}
 
 def serialize_bushfire(auth_type, action, obj):
+    action = action if action else 'Update'
     snapshot_type = BushfireSnapshot.SNAPSHOT_INITIAL if auth_type == 'initial' else BushfireSnapshot.SNAPSHOT_FINAL
-    d = model_to_dict(obj, exclude=['id', 'snapshot', 'fire_number', 'district', 'year'])
-    obj, created = BushfireSnapshot.objects.update_or_create(fire_number=obj.fire_number, district=obj.district, year=obj.year, snapshot_type=snapshot_type, defaults=d)
-    archive_snapshot(auth_type, action, obj)
-    obj.save()
+    d = model_to_dict(obj, exclude=['id'])
+    BushfireSnapshot.objects.create(snapshot_type=snapshot_type, action=action, bushfire_id=obj.id, **d)
+
+#    d = model_to_dict(obj, exclude=['id', 'snapshot', 'fire_number', 'district', 'year'])
+#    snapshot_obj, created = BushfireSnapshot.objects.update_or_create(
+#        fire_number=obj.fire_number, district=obj.district, year=obj.year, created=obj.created, snapshot_type=snapshot_type,
+#        defaults=d
+#    )
+
+    #archive_snapshot(auth_type, action, obj)
+    #obj.save()
 
 def deserialize_bushfire(auth_type, obj):
     """Returns a deserialized Bushfire object
@@ -120,6 +128,7 @@ def archive_snapshot(auth_type, action, obj):
             modifier = obj.modifier,
             auth_type = auth_type,
             action = action if action else 'Update',
+            #snapshot = obj.initial_snapshot if auth_type =='initial' else obj.final_snapshot if obj.final_snapshot else '{"Deleted": True}',
             snapshot = obj.initial_snapshot if auth_type =='initial' else obj.final_snapshot if obj.final_snapshot else '{"Deleted": True}',
             prev_snapshot = cur_snapshot_history.latest('created') if cur_snapshot_history else None,
             bushfire_id = obj.id
@@ -136,7 +145,7 @@ def invalidate_bushfire(obj, new_district, user):
         obj.modifier = user
         obj.save()
         old_obj = deepcopy(obj)
-        old_invalidated = old_obj.invalidated.all()
+        old_invalidated = old_obj.bushfire_invalidated.all()
 
         # create a new object as a copy of existing
         obj.pk = None
@@ -165,11 +174,17 @@ def invalidate_bushfire(obj, new_district, user):
         # copy all links from the above invalidated bushfire to the new bushfire
         if old_invalidated:
             for linked in old_invalidated:
-                obj.invalidated.add(linked)
+                obj.bushfire_invalidated.add(linked)
 
         # link the old invalidate bushfire to the new (valid) bushfire - fwd link
         old_obj.valid_bushfire = obj
         old_obj.save()
+
+        # update Bushfire Snapshots to the new bushfire_id and then create a new snapshot
+        for snapshot in old_obj.snapshots.all():
+            snapshot.bushfire_id=obj.id
+            snapshot.save()
+        serialize_bushfire('Final', 'Update District ({} --> {})'.format(old_obj.district.code, obj.district.code), obj)
 
         return obj
     return False

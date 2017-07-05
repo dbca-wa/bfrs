@@ -111,8 +111,17 @@
          {% if bushfire.report_status == bushfire.STATUS_FINAL_AUTHORISED %}
            {% if can_maintain_data %}
            <td>
+		     {% comment %}
 			 <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=mark_reviewed');" title="Mark Final report as Reviewed"><span style="display:none">{{bushfire.report_status}}</span><font color="red"><i class="icon-warning-sign"></i></font></a>
+		     {% endcomment %}
 			 <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=delete_final_authorisation');" title="Delete authorisation"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-trash icon-white"></i></a>
+
+             {% if not bushfire.archive %}
+			   <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=archive');" title="Archive Report"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-folder-close"></i></a>
+             {% else %}
+		       <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=unarchive');" title="Unarchive Report"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-folder-open"></i></a>
+             {% endif %}
+
 		   </td>
            {% endif %}
 
@@ -149,12 +158,12 @@
               </tr>
               <tr>
                 <th colspan="1">No. of Archived Snapshots</th>
-		        <td colspan="3"><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&action=snapshot_history');" title="Snapshot history details">{{ bushfire.snapshot_history.count }}</a></td>
+		        <td colspan="3"><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&action=snapshot_history');" title="Snapshot history details">{{ bushfire.snapshot_list.count }}</a></td>
               </tr>
 			  <tr>
                 <th>Linked bushfires</th>
 				<td colspan="3" >
-                  {% if bushfire.invalidated.all or bushfire.valid_bushfire %}
+                  {% if bushfire.bushfire_invalidated.all or bushfire.valid_bushfire %}
                   <table class="table table-bordered table-condensed">
 			        <thead>
                       <th>Fire Number</th>
@@ -164,8 +173,8 @@
                       <th>Details</th>
                     </thead>
                     <tbody>
-                    {% if bushfire.invalidated.all %}
-                      {% for linked_obj in bushfire.invalidated.all|dictsortreversed:"modified" %}
+                    {% if bushfire.bushfire_invalidated.all %}
+                      {% for linked_obj in bushfire.bushfire_invalidated.all|dictsortreversed:"modified" %}
                       <tr>
 				        <td><a href="{% url 'bushfire:bushfire_initial' linked_obj.id %}">{{linked_obj.fire_number}}</a></td>
 				        <td>{{linked_obj.modified|date_fmt}}</td>

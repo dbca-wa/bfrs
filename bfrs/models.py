@@ -338,18 +338,19 @@ class BushfireSnapshot(BushfireBase):
     )
 
     snapshot_type = models.PositiveSmallIntegerField(choices=SNAPSHOT_TYPE_CHOICES)
-    #bushfire = models.ForeignKey('Bushfire', related_name='snapshots')
+    action = models.CharField(verbose_name="Action Type", max_length=50)
+    bushfire = models.ForeignKey('Bushfire', related_name='snapshots')
 
     def __str__(self):
         return ', '.join([self.fire_number, self.get_snapshot_type_display()])
 
-    class Meta:
-        unique_together = ('district', 'year', 'fire_number', 'snapshot_type')
+#    class Meta:
+#        unique_together = ('district', 'year', 'fire_number', 'snapshot_type', 'created')
 
 
 class Bushfire(BushfireBase):
 
-    snapshot = models.ForeignKey(BushfireSnapshot, related_name='snapshots', null=True, blank=True)
+    #snapshot = models.ForeignKey(BushfireSnapshot, related_name='snapshots', null=True, blank=True)
 
     def user_unicode_patch(self):
         """ overwrite the User model's __unicode__() method """
@@ -363,6 +364,20 @@ class Bushfire(BushfireBase):
 
     class Meta:
         unique_together = ('district', 'year', 'fire_number')
+
+    @property
+    def initial_snapshot(self):
+        qs = self.snapshots.filter(snapshot_type=BushfireSnapshot.SNAPSHOT_INITIAL)
+        return qs.latest('created') if len(qs)>0 and self.is_init_authorised else None
+
+    @property
+    def final_snapshot(self):
+        qs = self.snapshots.filter(snapshot_type=BushfireSnapshot.SNAPSHOT_FINAL)
+        return qs.latest('created') if len(qs)>0 and self.is_final_authorised else None
+
+    @property
+    def snapshot_list(self):
+        return self.snapshots.all().order_by('created')
 
     def next_id(self, district):
         ids = map(int, [i.fire_number.split(' ')[-1] for i in Bushfire.objects.filter(district=district, year=self.year)])
@@ -511,9 +526,9 @@ class Bushfire(BushfireBase):
 
         Example usage:
             b=Bushfire.objects.get(id=18)
-            b.snapshot_history.all().order_by('created')
-            s1=b.snapshot_history.all().order_by('created')[0]
-            s2=b.snapshot_history.all().order_by('created')[1]
+            b.snapshots.all().order_by('created')
+            s1=b.snapshots.all().order_by('created')[0]
+            s2=b.snapshots.all().order_by('created')[1]
             s1.deserialize().compare(s2.deserialize())
 
         """
@@ -692,38 +707,6 @@ class FireBehaviour(models.Model):
 #        default_permissions = ('add', 'change', 'delete', 'view')
 
 
-@python_2_unicode_compatible
-class SnapshotHistory(Audit):
-    snapshot = models.TextField()
-    auth_type = models.CharField(verbose_name="Authorisation: Initial/Final/Review", max_length=36)
-    action = models.CharField(verbose_name="Action Type", max_length=36)
-    prev_snapshot = models.ForeignKey('SnapshotHistory', null=True, blank=True)
-    bushfire = models.ForeignKey(Bushfire, related_name='snapshot_history')
-
-    def deserialize(self):
-        return serializers.deserialize("json", self.snapshot).next().object
-
-    def diff(self):
-        """
-        Returns the difference between two consecutive snapshots (given a snapshot, compares it with the last one)
-
-        b=Bushfire.objects.get(pk=3)
-        s=b.snapshot_history.all().latest('created')
-
-        s.diff()
-            {
-              'report_status': [4, 3],
-              'reviewed_date': [datetime.datetime(2017, 5, 5, 2, 14, 30, 502000, tzinfo=<UTC>), None]
-            }
-        """
-        if self.prev_snapshot and self.action not in ['Submit', 'Authorise', 'Delete Final Authorisation', 'Delete Reviewed']:
-            return self.deserialize().compare(self.prev_snapshot.deserialize())
-        return None
-
-    def __str__(self):
-        return 'Created {}, Creator {}'.format(self.created, self.creator)
-
-
 reversion.register(Bushfire, follow=['fire_behaviour', 'tenures_burnt', 'injuries', 'damages'])
 reversion.register(Profile)
 reversion.register(Region)
@@ -738,5 +721,5 @@ reversion.register(AreaBurnt)       # related_name=tenures_burnt
 reversion.register(Injury)          # related_name=injuries
 reversion.register(Damage)          # related_name=damages
 reversion.register(FireBehaviour)   # related_name=fire_behaviour
-reversion.register(SnapshotHistory) # related_name=snapshot_history
+reversion.register(BushfireSnapshot) # related_name=snapshots
 
