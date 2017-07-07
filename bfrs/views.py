@@ -21,7 +21,7 @@ from bfrs.models import (Profile, Bushfire, BushfireSnapshot,
         Region, District,
         Tenure, AreaBurnt,
         SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS, SUBMIT_MANDATORY_FORMSETS,
-        AUTH_MANDATORY_FIELDS, AUTH_MANDATORY_DEP_FIELDS, AUTH_MANDATORY_FORMSETS,
+        AUTH_MANDATORY_FIELDS, AUTH_MANDATORY_FIELDS_FIRE_NOT_FOUND, AUTH_MANDATORY_DEP_FIELDS, AUTH_MANDATORY_FORMSETS,
         check_mandatory_fields,
     )
 from bfrs.forms import (ProfileForm, BushfireFilterForm, BushfireUpdateForm,
@@ -204,7 +204,8 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
                 context['object'] = bushfire
                 context['review'] = True
 
-                context['mandatory_fields'] = check_mandatory_fields(bushfire, AUTH_MANDATORY_FIELDS, AUTH_MANDATORY_DEP_FIELDS, AUTH_MANDATORY_FORMSETS)
+                fields = AUTH_MANDATORY_FIELDS_FIRE_NOT_FOUND if bushfire.fire_not_found else AUTH_MANDATORY_FIELDS
+                context['mandatory_fields'] = check_mandatory_fields(bushfire, fields, AUTH_MANDATORY_DEP_FIELDS, AUTH_MANDATORY_FORMSETS)
 
                 if context['mandatory_fields']:
                     return TemplateResponse(request, template_mandatory, context=context)
@@ -256,7 +257,7 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
 #        request.session['district'] = 'null'
 #        request.session['id'] = self.object.fire_number
 #        request.session['action'] = "update"
-        refresh_gokart(request, fire_number=self.object.fire_number) #, region=None, district=None, action='update')
+        refresh_gokart(request, fire_number=bushfire.fire_number) #, region=None, district=None, action='update')
 
 
         return HttpResponseRedirect(self.get_success_url())
@@ -540,7 +541,8 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
                 context['object'] = self.object
                 context['final'] = True
 
-                context['mandatory_fields'] = check_mandatory_fields(self.object, AUTH_MANDATORY_FIELDS, AUTH_MANDATORY_DEP_FIELDS, AUTH_MANDATORY_FORMSETS)
+                fields = AUTH_MANDATORY_FIELDS_FIRE_NOT_FOUND if self.object.fire_not_found else AUTH_MANDATORY_FIELDS
+                context['mandatory_fields'] = check_mandatory_fields(self.object, fields, AUTH_MANDATORY_DEP_FIELDS, AUTH_MANDATORY_FORMSETS)
 
                 if context['mandatory_fields']:
                     return TemplateResponse(request, 'bfrs/mandatory_fields.html', context=context)

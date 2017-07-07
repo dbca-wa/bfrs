@@ -37,6 +37,11 @@ AUTH_MANDATORY_FIELDS= [
     'max_fire_level', 'arson_squad_notified', 'job_code',
     'duty_officer',
 ]
+
+AUTH_MANDATORY_FIELDS_FIRE_NOT_FOUND= [
+    'duty_officer', 'field_officer', 'job_code',
+]
+
 AUTH_MANDATORY_DEP_FIELDS= {
     #'first_attack': [True, 'other_first_attack'],
     #'initial_control': [True, 'other_initial_control'],
@@ -73,14 +78,14 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
     formsets  - fields in formsets
     """
     # getattr(obj, 'name') ==> obj.name (when property name is available as a string)
-    if obj.fire_not_found:
-        return []
 
     missing = [field for field in fields if getattr(obj, field) is None or getattr(obj, field)=='']
 
+    if obj.fire_not_found:
+        return missing
+
     for field, dep_sets in dep_fields.iteritems():
         for dep_set in dep_sets:
-#            import ipdb; ipdb.set_trace()
             # next line checks for normal Field or Enumerated list field (i.e. '.name')
             if hasattr(obj, field) and (getattr(obj, field)==dep_set[0] or (hasattr(getattr(obj, field), 'name') and getattr(obj, field).name==dep_set[0])):
                 if getattr(obj, dep_set[1]) is None or (isinstance(getattr(obj, dep_set[1]), (str, unicode)) and not getattr(obj, dep_set[1]).strip()):
@@ -90,7 +95,6 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
 #            elif not getattr(obj, field) and getattr(obj, field)==dep_set[0]: # and dep_set[0]==False:
 #                missing.append(dep_set[1])
 
-
     for fs in formsets:
         if fs == 'fire_behaviour':
             if (obj.fire_behaviour_unknown):
@@ -99,7 +103,6 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
                 missing.append(fs)
 
         if fs == 'damages':
-            #import ipdb; ipdb.set_trace()
             if (obj.damage_unknown):
                 continue
             elif getattr(obj, fs) is None or not getattr(obj, fs).all():
@@ -111,24 +114,10 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
             elif getattr(obj, fs) is None or not getattr(obj, fs).all():
                 missing.append(fs)
 
-#        if (fs == 'fire_behaviour' and obj.fire_behaviour_unknown) or \
-#            fs == 'damages' and obj.damage_unknown or \
-#            fs == 'injuries' and obj.injury_unknown:
-#            continue
-#
-#        if getattr(obj, fs) is None or not getattr(obj, fs).all():
-#            missing.append(fs)
-
-
     # initial fire boundary required for fires > 2 ha
     if not obj.initial_area_unknown:
         if not obj.initial_area and obj.report_status < Bushfire.STATUS_INITIAL_AUTHORISED:
             missing.append("Must enter Area of Arrival, if area < {}ha".format(settings.AREA_THRESHOLD))
-
-#    # final fire boundary required for fires > 2 ha
-#    if not obj.area_limit:
-#        if not obj.area and obj.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED:
-#            missing.append("Must enter Final Area, if area < {}ha".format(settings.AREA_THRESHOLD))
 
     if obj.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED:
         if not obj.area_limit and (obj.area < settings.AREA_THRESHOLD or obj.area is None):

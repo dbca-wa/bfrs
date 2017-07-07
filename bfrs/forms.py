@@ -259,7 +259,7 @@ class BushfireUpdateForm(forms.ModelForm):
             self.cleaned_data['area_limit'] = False
             self.cleaned_data['arson_squad_notified'] = None
             self.cleaned_data['offence_no'] = None
-            self.cleaned_data['job_code'] = None
+            #self.cleaned_data['job_code'] = None
             self.cleaned_data['reporting_year'] = None #current_finyear()
             self.cleaned_data['region_id'] = self.initial['region']
             self.cleaned_data['district_id'] = self.initial['district']
