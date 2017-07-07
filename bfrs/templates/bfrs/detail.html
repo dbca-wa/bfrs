@@ -644,6 +644,24 @@ function fire_not_found() {
 }
 /* END - Fire not Found */
 
+/* Can have checked either 'Fire not Found' or 'Fire Monitored only', but not both */
+$('#id_fire_not_found').on('change', function() {
+  if($("#id_fire_not_found").is(':checked')) {
+    $("#id_fire_monitored_only").prop('disabled',true).prop('title','Cannot have both Fire Not Found and Fire Monitored Only checked').css({ opacity: 0.8  });
+  } else {
+    $("#id_fire_monitored_only").prop('disabled',false).prop('title', '').css({ opacity: 1  });
+  }
+}).change();
+
+$('#id_fire_monitored_only').on('change', function() {
+  if($("#id_fire_monitored_only").is(':checked')) {
+    $("#id_fire_not_found").prop('disabled',true).prop('title','Cannot have both Fire Not Found and Fire Monitored Only checked').css({ opacity: 0.8  });
+  } else {
+    $("#id_fire_not_found").prop('disabled',false).prop('title', '').css({ opacity: 1  });
+  } 
+}).change();
+/* END - 'Fire not Found' or 'Fire Monitored only' */
+
 </script>
 
 {% endblock %}

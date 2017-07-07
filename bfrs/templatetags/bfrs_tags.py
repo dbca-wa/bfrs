@@ -320,7 +320,7 @@ def enum_name(id, arg=None):
     elif id and arg.lower() == 'district':
         district = District.objects.get(id=id)
         return district.region.name + ' - ' + district.name
-    return 'arg={} or id={} Unknown'.format(arg)
+    return 'arg={} or id={} Unknown'.format(arg, id)
 
 @register.simple_tag
 def settings_value(name):

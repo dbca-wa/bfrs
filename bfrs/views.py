@@ -448,9 +448,9 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         if form.is_valid():
 #            if (self.request.POST.has_key('submit_initial') and self.request.POST.get('submit_initial')) or (self.request.POST.has_key('authorise_final') and self.request.POST.get('authorise_final')):
 #                return self.form_valid(request, form, damage_formset)
-#
-#            if form.cleaned_data['fire_not_found']:
-#                return self.form_valid(request, form)
+
+            if form.cleaned_data['fire_not_found']:
+                return self.form_valid(request, form)
 
             #import ipdb; ipdb.set_trace()
             if fire_behaviour_formset.is_valid() and injury_formset.is_valid() and damage_formset.is_valid(): # No need to check area_burnt_formset since the fs is readonly
