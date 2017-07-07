@@ -548,6 +548,23 @@ def update_users():
             if created:
                 logger.info('User {}, Created {}'.format(u.get_full_name(), created))
 
+def update_email_domain():
+    for u in User.objects.all():
+        if 'dpaw' in u.email:
+            u.email = u.email.replace('dpaw', 'dbca')
+            u.save()
+
+        if 'DPaW' in u.email:
+            u.email = u.email.replace('DPaW', 'dbca')
+            u.save()
+
+def refresh_gokart(request, fire_number=None, region=None, district=None, action='update'):
+    request.session['refreshGokart'] = True
+    request.session['region'] = region if region else 'null'
+    request.session['district'] = district if district else 'null'
+    request.session['id'] = fire_number if fire_number else 'null'
+    request.session['action'] = action
+
 def create_view():
     """
     cursor.execute('''drop view bfrs_bushfire_v''')

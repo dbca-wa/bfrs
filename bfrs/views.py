@@ -32,7 +32,7 @@ from bfrs.utils import (breadcrumbs_li,
         export_final_csv, export_excel,
         update_status, serialize_bushfire, deserialize_bushfire,
         rdo_email, pvs_email, fpc_email, pica_email, pica_sms, police_email, dfes_email, fssdrs_email,
-        invalidate_bushfire, is_external_user, can_maintain_data,
+        invalidate_bushfire, is_external_user, can_maintain_data, refresh_gokart,
     )
 from django.db import IntegrityError, transaction
 from django.contrib import messages
@@ -251,6 +251,14 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
 
             bushfire.save()
 
+#        request.session['refreshGokart'] = True
+#        request.session['region'] = 'null'
+#        request.session['district'] = 'null'
+#        request.session['id'] = self.object.fire_number
+#        request.session['action'] = "update"
+        refresh_gokart(request, fire_number=self.object.fire_number) #, region=None, district=None, action='update')
+
+
         return HttpResponseRedirect(self.get_success_url())
 
     def get_context_data(self, **kwargs):
@@ -292,6 +300,14 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
         context['sss_url'] = settings.SSS_URL
         context['can_maintain_data'] = can_maintain_data(self.request.user)
         context['is_external_user'] = is_external_user(self.request.user)
+
+#        self.request.session['refreshGokart'] = True
+#        self.request.session['region'] = 'null'
+#        self.request.session['district'] = 'null'
+#        self.request.session['id'] = ""
+#        self.request.session['action'] = "update"
+        refresh_gokart(self.request) #, fire_number="") #, region=None, district=None, action='update')
+
         return context
 
 
@@ -428,12 +444,13 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         area_burnt_formset      = AreaBurntFormSet(self.request.POST, prefix='area_burnt_fs')
         fire_behaviour_formset  = FireBehaviourFormSet(self.request.POST, prefix='fire_behaviour_fs')
 
+        #import ipdb; ipdb.set_trace()
         if form.is_valid():
-            if (self.request.POST.has_key('submit_initial') and self.request.POST.get('submit_initial')) or (self.request.POST.has_key('authorise_final') and self.request.POST.get('authorise_final')):
-                return self.form_valid(request, form)
-
-            if form.cleaned_data['fire_not_found']:
-                return self.form_valid(request, form)
+#            if (self.request.POST.has_key('submit_initial') and self.request.POST.get('submit_initial')) or (self.request.POST.has_key('authorise_final') and self.request.POST.get('authorise_final')):
+#                return self.form_valid(request, form, damage_formset)
+#
+#            if form.cleaned_data['fire_not_found']:
+#                return self.form_valid(request, form)
 
             #import ipdb; ipdb.set_trace()
             if fire_behaviour_formset.is_valid() and injury_formset.is_valid() and damage_formset.is_valid(): # No need to check area_burnt_formset since the fs is readonly
@@ -539,11 +556,12 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
                 # update is occuring after report has already been authorised (action is undefined) - ie. it is being Reviewed by FSSDRS
                 serialize_bushfire('final', 'Review', self.object)
 
-        request.session['refreshGokart'] = True
-        request.session['region'] = self.object.region.id
-        request.session['district'] = self.object.district.id
-        request.session['id'] = self.object.fire_number
-        request.session['action'] = "update"
+#        request.session['refreshGokart'] = True
+#        request.session['region'] = self.object.region.id
+#        request.session['district'] = self.object.district.id
+#        request.session['id'] = self.object.fire_number
+#        request.session['action'] = "update"
+        refresh_gokart(request, fire_number=self.object.fire_number, region=self.object.region.id, district=self.object.district.id)
 
         self.object.save()
 

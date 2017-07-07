@@ -158,6 +158,7 @@ class BushfireUpdateForm(forms.ModelForm):
     origin_point_str = forms.CharField(required=False, widget=DisplayOnlyField())#, widget=forms.TextInput(attrs={'readonly':'readonly'}))
     media_alert_req = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
     park_trail_impacted = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
+    #dispatch_pw = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
     dispatch_pw = forms.ChoiceField(choices=Bushfire.DISPATCH_PW_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
     #assistance_req = forms.ChoiceField(choices=Bushfire.ASSISTANCE_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
     other_tenure = forms.ChoiceField(choices=Bushfire.IGNITION_POINT_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
@@ -171,8 +172,8 @@ class BushfireUpdateForm(forms.ModelForm):
         self.fields['duty_officer'].queryset = active_users
 
         # For use when debugging outside SSS - need to create an origin_point manually
-        from django.contrib.gis.geos import Point, GEOSGeometry
-        self.fields['origin_point'].initial = GEOSGeometry(Point(122.45, -33.15))
+        #from django.contrib.gis.geos import Point, GEOSGeometry
+        #self.fields['origin_point'].initial = GEOSGeometry(Point(122.45, -33.15))
 
     class Meta:
         model = Bushfire
@@ -291,6 +292,10 @@ class BushfireUpdateForm(forms.ModelForm):
             if self.cleaned_data.has_key('fire_safe_date') and self.cleaned_data['fire_safe_date'] and self.cleaned_data['fire_safe_date'] < self.cleaned_data['fire_controlled_date']:
                 self.add_error('fire_safe_date', 'Datetime must not be before Fire Controlled Datetime.')
 
+        if self.cleaned_data.has_key('dispatch_pw_date') and self.cleaned_data['dispatch_pw_date'] and int(self.cleaned_data['dispatch_pw']) == Bushfire.DISPATCH_PW_NO:
+            self.cleaned_data['dispatch_pw_date'] = None
+        if self.cleaned_data.has_key('dispatch_aerial_date') and self.cleaned_data['dispatch_aerial_date'] and eval(self.cleaned_data['dispatch_aerial']) == False:
+            self.cleaned_data['dispatch_aerial_date'] = None
 
         return cleaned_data
 

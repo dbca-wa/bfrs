@@ -1,5 +1,5 @@
 from django import template
-from bfrs.models import Bushfire, current_finyear
+from bfrs.models import Bushfire, Region, District, current_finyear
 from django.contrib.gis.geos import Point, GEOSGeometry
 from django.conf import settings
 import LatLon
@@ -31,7 +31,6 @@ def is_init_authorised(context, bushfire_id):
     """
 
     obj = Bushfire.objects.get(id=bushfire_id)
-    #import ipdb; ipdb.set_trace()
     return obj.is_init_authorised
 
 @register.filter
@@ -66,7 +65,7 @@ def deg_min_sec(value):
         # need to format float number (seconds) to 1 dp
         lon[2] = str(round(eval(lon[2]), 1))
         lat[2] = str(round(eval(lat[2]), 1))
-        
+
         # Degrees Minutes Seconds Hemisphere
         lat_str = lat[0] + u'\N{DEGREE SIGN} ' + lat[1].zfill(2) + '\' ' + lat[2].zfill(4) + '\" ' + lat[3]
         lon_str = lon[0] + u'\N{DEGREE SIGN} ' + lon[1].zfill(2) + '\' ' + lon[2].zfill(4) + '\" ' + lon[3]
@@ -84,7 +83,6 @@ def latlon(value):
     """
     #GEOSGeometry('POINT(-95.3385 29.7245)')
 
-    #import ipdb; ipdb.set_trace()
     try:
         point = GEOSGeometry(value)
         x = round(point.get_x(), 2)
@@ -310,7 +308,19 @@ def clear_session(context):
         return 'true'
     return 'false'
 
+@register.filter(is_safe=False)
+def enum_name(id, arg=None):
+    """
+    Usage::
 
+        {{ value|enum_name:"string" }}
+    """
+    if id and arg.lower() == 'region':
+        return Region.objects.get(id=id).name
+    elif id and arg.lower() == 'district':
+        district = District.objects.get(id=id)
+        return district.region.name + ' - ' + district.name
+    return 'arg={} or id={} Unknown'.format(arg)
 
 @register.simple_tag
 def settings_value(name):

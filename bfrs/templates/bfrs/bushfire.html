@@ -58,6 +58,7 @@
 	  {%comment%}<td><input type="checkbox" name ="check_all" onClick=toggle(this) /></td>{%endcomment%}
 	  <th><font color="dodgerblue">Fire Number <i class="icon-sort"></i></font></th>
 	  <th><font color="dodgerblue">Name <i class="icon-sort"></i></font></th>
+	  <th><font color="dodgerblue">Job Code <i class="icon-sort"></i></font></th>
 	  <th><font color="dodgerblue">Notifications <i class="icon-sort"></font></i></th>
 	  <th><font color="dodgerblue">Report <i class="icon-sort"></i></font></th>
 	  {% if can_maintain_data %}<th><font color="dodgerblue">Review <i class="icon-sort"></i></font></th>{% endif %}
@@ -70,6 +71,7 @@
 		  {%comment%}<td><input type="checkbox" name="chkbox" value={{ bushfire.id }}  /></td>{%endcomment%}
         <td>{{ bushfire.fire_number }}</td>
         <td>{{ bushfire.name }}</td>
+		<td>{% if bushfire.job_code %}{{ bushfire.job_code }}{% else %}  {% endif %}</td>
 		<td align="center">
             {% if bushfire.report_status == bushfire.STATUS_INITIAL %}
 			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="Edit initial fire report"><font color="red"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-edit icon-white"></i></font></a>

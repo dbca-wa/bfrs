@@ -82,7 +82,6 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
         for dep_set in dep_sets:
 #            import ipdb; ipdb.set_trace()
             # next line checks for normal Field or Enumerated list field (i.e. '.name')
-            #import ipdb; ipdb.set_trace()
             if hasattr(obj, field) and (getattr(obj, field)==dep_set[0] or (hasattr(getattr(obj, field), 'name') and getattr(obj, field).name==dep_set[0])):
                 if getattr(obj, dep_set[1]) is None or (isinstance(getattr(obj, dep_set[1]), (str, unicode)) and not getattr(obj, dep_set[1]).strip()):
                     # field is unset or empty string
@@ -93,13 +92,33 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
 
 
     for fs in formsets:
-        if (fs == 'fire_behaviour' and obj.fire_behaviour_unknown) or \
-            fs == 'damages' and obj.damage_unknown or \
-            fs == 'injuries' and obj.injury_unknown:
-            continue
+        if fs == 'fire_behaviour':
+            if (obj.fire_behaviour_unknown):
+                continue
+            elif getattr(obj, fs) is None or not getattr(obj, fs).all():
+                missing.append(fs)
 
-        if getattr(obj, fs) is None or not getattr(obj, fs).all():
-            missing.append(fs)
+        if fs == 'damages':
+            #import ipdb; ipdb.set_trace()
+            if (obj.damage_unknown):
+                continue
+            elif getattr(obj, fs) is None or not getattr(obj, fs).all():
+                missing.append(fs)
+
+        if fs == 'injuries':
+            if (obj.injury_unknown):
+                continue
+            elif getattr(obj, fs) is None or not getattr(obj, fs).all():
+                missing.append(fs)
+
+#        if (fs == 'fire_behaviour' and obj.fire_behaviour_unknown) or \
+#            fs == 'damages' and obj.damage_unknown or \
+#            fs == 'injuries' and obj.injury_unknown:
+#            continue
+#
+#        if getattr(obj, fs) is None or not getattr(obj, fs).all():
+#            missing.append(fs)
+
 
     # initial fire boundary required for fires > 2 ha
     if not obj.initial_area_unknown:

@@ -150,13 +150,22 @@
         <tr>
             <th class="cbas">District *</th>
             <td colspan="2" class="cbas">
-				{% if can_maintain_data and not action or not is_init_authorised %}
-                  {{form.region}}<span style="margin:20;"></span>
-                  {{form.district}}
-				{% else %}
-                  {% if object %} {{object.region}} {{form.region.as_hidden}} {% else %} {{form.region}} {% endif %}<span style="margin:20;"></span>
-                  {% if object %} {{object.district}} {{form.district.as_hidden}} {% else %} {{form.district}} {% endif %}
-				{% endif %}
+                {% if can_maintain_data %}
+                  {% if not action or not is_init_authorised %}
+                    {{form.region}}<span style="margin:20;"></span>
+                    {{form.district}}
+                  {% endif %}
+                {% else %}
+                  {% if object %}
+                    {{object.region}}<span style="margin:20;"></span>{{object.district}}
+                  {% else %}
+                    <!-- object not yet created - get district from SSS -->
+                    {{form.district.value|enum_name:"district"}}
+                  {% endif %}
+                  {{form.region.as_hidden}}
+                  {{form.district.as_hidden}}
+                {% endif %}
+
             </td>
 
             <th class="cbas">Financial Year *</th>
@@ -183,7 +192,7 @@
         <tr>
 			<th class="cbas">P&W Resource dispatched *<br><br><div class=div_dispatch_pw_date style="display: none;">Date and time of dispatch</div></th>
             <td colspan="2" class="cbas">
-                {% if is_init_authorised %} {{initial_snapshot.dispatch_pw|yesno:"Yes,No"}}{% if initial_snapshot.dispatch_pw|yesno:"Yes,No" == 'Yes' %}<br>{{initial_snapshot.dispatch_pw_date}} {% endif %} {% else %} {{form.dispatch_pw}} {% endif %}<br>
+                {% if is_init_authorised %} {{initial_snapshot.get_dispatch_pw_display}}{% if initial_snapshot.dispatch_pw == object.DISPATCH_PW_YES %}<br>{{initial_snapshot.dispatch_pw_date}} {% endif %} {% else %} {{form.dispatch_pw}} {% endif %}<br>
 				<div class=div_dispatch_pw_date style="display: none;">{% if not is_init_authorised %} {{form.dispatch_pw_date}} {% endif %}</div>
 			</td>
 
@@ -297,7 +306,12 @@
         {% endif %}
       {% endif %}
 
-      <a id="id_cancel_btn" href="{% url 'main' %}" class="btn btn-primary btn-danger">Cancel</a>
+      {% if form.errors or fire_behaviour_formset.errors|check_errors or damage_formset.errors|check_errors or injury_formset.errors|check_errors %}
+        <a href="javascript: history.go(-1)" class="btn btn-danger">Cancel</a>
+      {% else %}
+        <a id="id_cancel_btn" href="{% url 'main' %}" class="btn btn-primary btn-danger">Cancel</a>
+      {% endif %}
+
       </p>
     </div>
   </div>
@@ -339,9 +353,11 @@ $("#id_hours").attr('min',0)
 $("#id_days").attr('min',0)
 
 // prevent user from submitting the form multiple times
-$('form').submit(function() {
-  $(this).find("input[type='submit']").click(false);
-});
+{% if create %}
+  $('form').submit(function() {
+    $(this).find("input[type='submit']").click(false);
+  });
+{% endif %}
 
 // $('[id^=""]').hide() // starts with --> http://xdsoft.net/jqplugins/datetimepicker/
 $('[id$="_date"]').datetimepicker({ 

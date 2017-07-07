@@ -338,5 +338,8 @@ $('#id_area_limit').on('change', function() {
 
 $("#id_area").prop('min', 0).prop('max',{{area_threshold|to_float}});
 
+/* Job Code Validation */
+$("#id_job_code").prop('pattern', '[A-Z]{3}').prop('title', '3 letters and upper case');
+
 </script>
 
