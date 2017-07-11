@@ -103,58 +103,36 @@
     "pk": 1,
     "model": "bfrs.injurytype",
     "fields": {
-        "name": "CATTLE"
+        "name": "DEATH P&W"
     }
 },
 {
     "pk": 2,
     "model": "bfrs.injurytype",
     "fields": {
-        "name": "DEATH P&W"
+        "name": "DEATH OTHER"
     }
 },
 {
     "pk": 3,
     "model": "bfrs.injurytype",
     "fields": {
-        "name": "DEATH OTHER"
+        "name": "INJURY P&W"
     }
 },
 {
     "pk": 4,
     "model": "bfrs.injurytype",
     "fields": {
-        "name": "INJURY P&W"
-    }
-},
-{
-    "pk": 5,
-    "model": "bfrs.injurytype",
-    "fields": {
         "name": "INJURY OTHER"
     }
 },
-{
-    "pk": 6,
-    "model": "bfrs.injurytype",
-    "fields": {
-        "name": "OTHER STOCK"
-    }
-},
-{
-    "pk": 7,
-    "model": "bfrs.injurytype",
-    "fields": {
-        "name": "SHEEP"
-    }
-},
-
 
 {
     "pk": 1,
     "model": "bfrs.damagetype",
     "fields": {
-        "name": "FENCING"
+        "name": "FENCING (km)"
     }
 },
 {
@@ -185,6 +163,28 @@
         "name": "VEHICLES"
     }
 },
+{
+    "pk": 6,
+    "model": "bfrs.damagetype",
+    "fields": {
+        "name": "CATTLE"
+    }
+},
+{
+    "pk": 7,
+    "model": "bfrs.damagetype",
+    "fields": {
+        "name": "SHEEP"
+    }
+},
+{
+    "pk": 8,
+    "model": "bfrs.damagetype",
+    "fields": {
+        "name": "OTHER STOCK"
+    }
+},
+
 
 {
     "pk": 1,

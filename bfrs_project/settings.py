@@ -75,7 +75,11 @@ if not DEBUG:
         'bfrs-uat.dpaw.wa.gov.au',
         'bfrs-uat.dpaw.wa.gov.au.',
         'bfrs-dev.dpaw.wa.gov.au',
-        'bfrs-dev.dpaw.wa.gov.au.'
+        'bfrs-dev.dpaw.wa.gov.au.',
+        'bfrs-dev.dbca.wa.gov.au',
+        'bfrs-dev.dbca.wa.gov.au.',
+        'aws-oim-001',
+        'aws-oim-001.',
     ]
 
 ALLOWED_HOSTS = [
@@ -86,7 +90,11 @@ ALLOWED_HOSTS = [
     'bfrs-uat.dpaw.wa.gov.au',
     'bfrs-uat.dpaw.wa.gov.au.',
     'bfrs-dev.dpaw.wa.gov.au',
-    'bfrs-dev.dpaw.wa.gov.au.'
+    'bfrs-dev.dpaw.wa.gov.au.',
+    'bfrs-dev.dbca.wa.gov.au',
+    'bfrs-dev.dbca.wa.gov.au.',
+    'aws-oim-001',
+    'aws-oim-001.',
 ]
 
 # Application definition

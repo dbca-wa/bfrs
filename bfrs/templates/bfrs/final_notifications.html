@@ -29,14 +29,11 @@
         </tr>
 
         <tr>
-            <th class="cbas">Duty Officer *</th>
-            <td colspan="1" class="cbas">{% if is_authorised %} {{snapshot.duty_officer|is_none}} {% else %} {{form.duty_officer}} {% endif %}</td>
-
             <th id="id_th_field_officer" class="cbas" style="font-weight:normal;">Field Officer</th>
-            <td colspan="1" class="cbas">{% if is_authorised %} {{snapshot.field_officer|is_none}} {% else %} {{form.field_officer}} {% endif %}</td>
+            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.field_officer|is_none}} {% else %} {{form.field_officer}} {% endif %}</td>
 
             <th class="cbas">Job code *</th>
-            <td colspan="1" class="cbas">{% if is_authorised %} {{snapshot.job_code}} {% else %} {{form.job_code}} {% endif %}</td>
+            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.job_code}} {% else %} {{form.job_code}} {% endif %}</td>
         </tr>
 
 
@@ -50,27 +47,6 @@
     <tbody>
 
         <tr>
-            <th width="25%" class="cbas" style="font-weight:normal;">Position of fire<br>(street address, or km from landmark/suburb)</th>
-            <td colspan="2" class="cbas">
-				{% if is_authorised %} {{snapshot.fire_position}} {% else %} {{form.fire_position}} {% endif %}<br>
-                {% if is_authorised %} SSS overide - {{snapshot.fire_position_override|yesno:"Yes,No"}} {% else %} {{form.fire_position_override}} SSS override{% endif %}
-			</td>
-
-            <th class="cbas" style="font-weight:normal;">Point of origin</th>
-            <td colspan="5" class="cbas">
-				{% if is_init_authorised %} 
-					{% comment %}{{object.origin_coords|is_none}} <br>{% endcomment %}
-					{{object.origin_geo|is_none}} <br>
-					{{object.sss_data_to_dict.origin_point_mga|is_none}}
-				{% else %} 
-                    {% comment %}{{form.origin_point.value|latlon}} <br>{% endcomment %}
-                    {{form.origin_point.value|deg_min_sec}} <br>
-					{{object.sss_data_to_dict.origin_point_mga|is_none}}
-				{% endif %}
-			</td>
-        </tr>
-
-        <tr>
             <th class="cbas">Fuel and fire behaviour *</th>
 			<td colspan="5" class="cbas" > 
 				{% if is_authorised %} {{form.fire_behaviour_unknown|yesno:"Unknown,Known"}} {% else %} {{form.fire_behaviour_unknown}} Unknown {% endif %}
@@ -78,6 +54,7 @@
 			</td>
         </tr>
 
+        {% comment %}
         <tr>
             <th class="cbas" style="font-weight:normal;">Estimated Time to Control</th>
 	        <td colspan="2" class="cbas">
@@ -92,6 +69,7 @@
             <th class="cbas" style="font-weight:normal;">Communications</th>
 			<td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.communications|is_none}} {% else %} <span>{{form.communications}}</span> {% endif %}</td>
         </tr>
+        {% endcomment %}
 
         {% comment %}
         <tr>
@@ -109,7 +87,7 @@
 				<div class=div_cause style="display: none;">Other Cause *</div>
 				<div class=div_cause_escape style="display: none;">Prescribed Burn ID *</div>
 			</th>
-			<td colspan="2" class="cbas">
+			<td colspan="5" class="cbas">
 				{% if is_authorised %} {{snapshot.cause_state|cause_state}} {% else %} {{form.cause_state}} {% endif %}<br>
                 {% if is_authorised %} {{snapshot.cause}} {% else %} {{form.cause}} {% endif %}<br><br>
 
@@ -124,15 +102,6 @@
 			</td>
 
 
-            <th class="cbas">Tenure of ignition point *<br><br><div class=div_tenure style="visibility: hidden;">Other Tenure *</div>{% if is_authorised %} Other Tenure{% endif %}</th>
-            <td colspan="2" class="cbas">
-                {% if is_authorised %} {{snapshot.tenure}} {% else %} {{form.tenure}} {% endif %}<br><br>
-
-				<div class="div_tenure" style="visibility: hidden;">
-				    {% if is_authorised %} {{snapshot.other_tenure}} {% else %} {{form.other_tenure}} {% endif %}
-				</div>
-                {% if is_authorised %} {{snapshot.get_other_tenure_display}} {% endif %} <!-- Used when viewing template after it has been authorised, since js is not available -->
-            </td>
         </tr>
 
             {% comment %}
@@ -179,7 +148,7 @@
         </tr>
 
         <tr>
-	        <th class="cbas" title='Placeholder ...'>Date fire safe <i class="icon-info-sign icon-white"></i> *</th>
+	        <th class="cbas" title='Placeholder ...'>Date fire inactive <i class="icon-info-sign icon-white"></i> *</th>
             <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.fire_safe_date}} {% else %} {{form.fire_safe_date}} {% endif %}</td>
 
             <th class="cbas">Arson squad notified *</th>
@@ -225,11 +194,11 @@
         <tr>
 		<td class="cbas">{% include "bfrs/tenure_veg.html" %}</td>
 		<td class="cbas">
-    		{% if is_authorised %} {{form.damage_unknown|yesno:"Unknown,Known"}} {% else %} {{form.damage_unknown}} Unknown {% endif %}
+    		{% if is_authorised %} {{form.damage_unknown|yesno:"Unknown,Known"}} {% else %} {{form.damage_unknown}} No damage to report {% endif %}
             {% include "bfrs/damage_fs.html" %}
         </td>
 		<td class="cbas">
-    		{% if is_authorised %} {{form.injury_unknown|yesno:"Unknown,Known"}} {% else %} {{form.injury_unknown}} Unknown {% endif %}
+    		{% if is_authorised %} {{form.injury_unknown|yesno:"Unknown,Known"}} {% else %} {{form.injury_unknown}} No injuries/fatalities to report {% endif %}
             {% include "bfrs/injuries_fs.html" %}
         </td>
         </tr>

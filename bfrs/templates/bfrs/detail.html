@@ -144,7 +144,7 @@
 <table class="table table-bordered table-striped table-condensed">
     <tbody>
         <tr>
-          <th colspan="6" style="background: black; color: white; text-align: center; font-size: 16px; padding: 12px;" > PARKS AND WILDLIFE NOTIFICATIONS</th>
+          <th colspan="6" style="background: black; color: white; text-align: left; font-size: 16px; padding: 12px;" > BUSHFIRE NOTIFICATION (submit within 30 mins of detection)</th>
         </tr>
 
         <tr>
@@ -188,17 +188,63 @@
             <td colspan="2" class="cbas">{% if is_authorised %} {{initial_snapshot.dfes_incident_no}} {% else %} {{form.dfes_incident_no}} {% endif %}</td>
         </tr>
 
+        <tr>
+            <th width="25%" class="cbas" style="font-weight:normal;">Position of fire<br>(street address, or km from landmark/suburb)</th>
+            <td colspan="2" class="cbas">
+				{% if is_init_authorised %} {{snapshot.fire_position}} {% else %} {{form.fire_position}} {% endif %}<br>
+                {% if is_init_authorised %} SSS overide - {{snapshot.fire_position_override|yesno:"Yes,No"}} {% else %} {{form.fire_position_override}} SSS override{% endif %}
+			</td>
+
+            <th class="cbas" style="font-weight:normal;">Point of origin</th>
+            <td colspan="5" class="cbas">
+				{% if is_init_authorised %} 
+					{% comment %}{{object.origin_coords|is_none}} <br>{% endcomment %}
+					{{object.origin_geo|is_none}} <br>
+					{{object.sss_data_to_dict.origin_point_mga|is_none}}
+				{% else %} 
+                    {% comment %}{{form.origin_point.value|latlon}} <br>{% endcomment %}
+                    {{form.origin_point.value|deg_min_sec}} <br>
+					{{object.sss_data_to_dict.origin_point_mga|is_none}}
+				{% endif %}
+			</td>
+        </tr>
+
+        <tr>
+            <th class="cbas">Tenure of ignition point *<br><br><div class=div_tenure style="visibility: hidden;">Other Tenure *</div>{% if is_authorised %} Other Tenure{% endif %}</th>
+            <td colspan="2" class="cbas">
+                {% if is_init_authorised %} {{snapshot.tenure}} {% else %} {{form.tenure}} {% endif %}
+
+				<div class="div_tenure" style="visibility: hidden;">
+				    {% if is_init_authorised %} {{snapshot.other_tenure}} {% else %} {{form.other_tenure}} {% endif %}
+				</div>
+                {% if is_init_authorised %} {{snapshot.get_other_tenure_display}} {% endif %} <!-- Used when viewing template after it has been authorised, since js is not available -->
+            </td>
+
+            <th class="cbas">Duty Officer *</th>
+            <td colspan="2" class="cbas">
+              {% if final %}
+                {% if is_authorised %} {{snapshot.duty_officer|is_none}} {% else %} {{form.duty_officer}} {% endif %}
+              {% elif create or initial %}
+                {% if is_init_authorised %} {{initial_snapshot.duty_officer|is_none}} {% else %} {{form.duty_officer}} {% endif %}
+              {% endif %}
+            </td>
+
+        </tr>
 
         <tr>
 			<th class="cbas">P&W Resource dispatched *<br><br><div class=div_dispatch_pw_date style="display: none;">Date and time of dispatch</div></th>
             <td colspan="2" class="cbas">
-                {% if is_init_authorised %} {{initial_snapshot.get_dispatch_pw_display}}{% if initial_snapshot.dispatch_pw == object.DISPATCH_PW_YES %}<br>{{initial_snapshot.dispatch_pw_date}} {% endif %} {% else %} {{form.dispatch_pw}} {% endif %}<br>
-				<div class=div_dispatch_pw_date style="display: none;">{% if not is_init_authorised %} {{form.dispatch_pw_date}} {% endif %}</div>
+              {% if final %}
+                {% if is_authorised %}{{snapshot.get_dispatch_pw_display}}{% if snapshot.dispatch_pw == object.DISPATCH_PW_YES %}<br>{{snapshot.dispatch_pw_date}} {% endif %} {% else %} {{form.dispatch_pw}}{% endif %}<br> 
+              {% elif create or initial %}
+                {% if is_init_authorised %}{{initial_snapshot.get_dispatch_pw_display}}{% if initial_snapshot.dispatch_pw == object.DISPATCH_PW_YES %}<br>{{initial_snapshot.dispatch_pw_date}} {% endif %} {% else %} {{form.dispatch_pw}}{% endif %}<br> 
+              {% endif %}
+		  	  <div class=div_dispatch_pw_date style="display: none;">{% if not is_init_authorised %} {{form.dispatch_pw_date}} {% endif %}</div>
 			</td>
 
-			<th class="cbas">Aerial support dispatched *<br><br><div class=div_dispatch_aerial_date style="display: none;">Date and time of dispatch</div></th>
+			<th class="cbas">Aerial suppression dispatched *<br><br><div class=div_dispatch_aerial_date style="display: none;">Date and time of dispatch</div></th>
             <td colspan="2" class="cbas">
-                {% if is_init_authorised %} {{initial_snapshot.dispatch_aerial|yesno:"Yes,No"}}{% if initial_snapshot.dispatch_aerial|yesno:"Yes,No" == 'Yes' %}<br>{{initial_snapshot.dispatch_aerial_date}}{% endif %}{% else %} {{form.dispatch_aerial}} {% endif %}<br>
+                {% if is_authorised %} {{initial_snapshot.dispatch_aerial|yesno:"Yes,No"}}{% if initial_snapshot.dispatch_aerial|yesno:"Yes,No" == 'Yes' %}<br>{{initial_snapshot.dispatch_aerial_date}}{% endif %}{% else %} {{form.dispatch_aerial}} {% endif %}<br>
 				<div class=div_dispatch_aerial_date style="display: none;">{% if not is_init_authorised %} {{form.dispatch_aerial_date}} {% endif %}</div>
 			</td>
         </tr>
@@ -261,7 +307,6 @@
             <th class="cbas" style="font-weight:normal;">Other information<br>(include Burn ID if cause is escape)</th>
             <td colspan="5" class="cbas">{% if is_authorised %} {{initial_snapshot.other_info|is_none}} {% else %} {{form.other_info}} {% endif %}</td>
         </tr>
-
 
   </tbody>
 </table>
