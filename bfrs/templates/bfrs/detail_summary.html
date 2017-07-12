@@ -34,86 +34,6 @@
 {% block content %}
 
 
-<div class="alert alert-error">
-  {% if form.errors %}
-      <h1 class="errornote">
-        <p>Form Errors</p>
-        <button type="button" class="close" data-dismiss="alert">×</button>
-        {% for field in form %} 
-            {% if field.errors %}
-            <li>{{ field.label }}: {{ field.errors|striptags }}</li>
-            {{ field.meta  }}
-            {% endif %}
-        {% endfor %}
-
-        {% if form.non_field_errors %}
-            {{ form.non_field_errors  }}
-        {% endif %}
-      </h1>
-  {% endif %}
-
-  {% comment %}{% if fire_behaviour_formset.errors and fire_behaviour_formset.errors.0 %}{% endcomment %}
-  {% if fire_behaviour_formset.errors|check_errors %}
-      <h1 class="errornote">
-        <p>Fire Behaviour formset Errors</p>
-        <button type="button" class="close" data-dismiss="alert">×</button>
-        {% for form in fire_behaviour_formset %} 
-          {% for field in form %} 
-            {% if field.errors %}
-              <li>{{ field.label }}: {{ field.errors|striptags }}</li>
-              {{ field.meta  }}
-            {% endif %}
-          {% endfor %}
-        {% endfor %}
-
-        {% if fire_behaviour_formset.non_field_errors %}
-          {{ fire_behaviour_formset.non_field_errors }}
-        {% endif %}
-      </h1>
-  {% endif %}
-
-  {% if damage_formset.errors|check_errors %}
-      <h1 class="errornote">
-        <p>Damage formset Errors</p>
-        <button type="button" class="close" data-dismiss="alert">×</button>
-        {% for form in damage_formset %} 
-          {% for field in form %} 
-            {% if field.errors %}
-              <li>{{ field.label }}: {{ field.errors|striptags }}</li>
-              {{ field.meta  }}
-            {% endif %}
-          {% endfor %}
-        {% endfor %}
-
-        {% if damage_formset.non_field_errors %}
-          {{ damage_formset.non_field_errors }}
-        {% endif %}
-      </h1>
-  {% endif %}
-</div>
-
-{% if injury_formset.errors|check_errors %}
-    <div class="alert alert-error">
-      <h1 class="errornote">
-        <p>Injury formset Errors</p>
-        <button type="button" class="close" data-dismiss="alert">×</button>
-        {% for form in injury_formset %} 
-          {% for field in form %} 
-            {% if field.errors %}
-              <li>{{ field.label }}: {{ field.errors|striptags }}</li>
-              {{ field.meta  }}
-            {% endif %}
-          {% endfor %}
-        {% endfor %}
-
-        {% if injury_formset.non_field_errors %}
-          {{ injury_formset.non_field_errors }}
-        {% endif %}
-      </h1>
-    </div>
-{% endif %}
-
-
 <div>
   <div style='float: left;'>
     {% if object.report_status and object.report_status == object.STATUS_INVALIDATED %}
@@ -131,11 +51,6 @@
       <h1>Bushfire Detail</h1>
     {% endif %}
   </div>
-  <div style='float: right;'>
-    {% if request.user.is_superuser or can_maintain_data %}
-      {% if not create %}<a class="btn btn-default" href="{% url 'bushfire:bushfire_history' bushfire.id %}">History</a>{% endif %}
-    {% endif %}
-  </div>
 </div>
 
 <form action="" method="post">{% csrf_token %}
@@ -144,67 +59,45 @@
 <table class="table table-bordered table-striped table-condensed">
     <tbody>
         <tr>
-          <th colspan="6" style="background: black; color: white; text-align: left; font-size: 16px; padding: 12px;" > BUSHFIRE NOTIFICATION (submit within 30 mins of detection)</th>
+          <th colspan="6" style="background: black; color: white; text-align: center; font-size: 16px; padding: 12px;" > PARKS AND WILDLIFE NOTIFICATIONS</th>
         </tr>
 
         <tr>
             <th class="cbas">District *</th>
-            <td colspan="2" class="cbas">
-                {% if can_maintain_data %}
-                  {% if not action or not is_init_authorised %}
-                    {{form.region}}<span style="margin:20;"></span>
-                    {{form.district}}
-                  {% endif %}
-                {% else %}
-                  {% if object %}
-                    {{object.region}}<span style="margin:20;"></span>{{object.district}}
-                  {% else %}
-                    <!-- object not yet created - get district from SSS -->
-                    {{form.district.value|enum_name:"district"}}
-                  {% endif %}
-                  {{form.region.as_hidden}}
-                  {{form.district.as_hidden}}
-                {% endif %}
-
-            </td>
+            <td colspan="2" class="cbas">{{snapshot.region}}<span style="margin:20;"></span>{{snapshot.district}}</td>
 
             <th class="cbas">Financial Year *</th>
-            <td colspan="2" class="cbas">{{snapshot.year|fin_year}} {{form.year.as_hidden}}</td>
+            <td colspan="2" class="cbas">{{snapshot.year|fin_year}}</td>
         </tr>
 
         <tr>
             <th class="cbas">Fire name *</th>
-            <td colspan="2" class="cbas"> {% if is_init_authorised %} {{snapshot.name}} {% else %} {{form.name}} {% endif %} </td>
+            <td colspan="2" class="cbas">{{snapshot.name}}</td>
 
             <th class="cbas">Date and time fire detected *</th>
-            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.fire_detected_date}} {% else %} {{form.fire_detected_date}} {% endif %}</td>
+            <td colspan="2" class="cbas">{{snapshot.fire_detected_date}}</td>
         </tr>
 
         <tr>
             <th class="cbas">P&W Fire no. *</th>
-            <td colspan="2" class="cbas">{% if object %} {{object.fire_number}} {% else %} autogenerated on save {% endif %}</td>
+            <td colspan="2" class="cbas">{{snapshot.fire_number}}</td>
 
             <th class="cbas" style="font-weight:normal;">DFES Incident no.</th>
-            <td colspan="2" class="cbas">{{form.dfes_incident_no}}</td>
+            <td colspan="2" class="cbas">{{snapshot.dfes_incident_no}}</td>
         </tr>
 
         <tr>
             <th width="25%" class="cbas" style="font-weight:normal;">Position of fire<br>(street address, or km from landmark/suburb)</th>
             <td colspan="2" class="cbas">
-                {% if is_init_authorised %} 
-                    {{snapshot.fire_position}} 
-                {% else %} 
-                    {{form.fire_position}}<br>
-                    <label for="id_fire_position_override"> SSS override</label><span style="float:left;">{{form.fire_position_override}}</span>
-                {% endif %} 
+                {{snapshot.fire_position}}<br>{% if snapshot.fire_position_override %} SSS overide - {{snapshot.fire_position_override|yesno:"Yes,No"}} {% endif %}
             </td>
 
             <th class="cbas" style="font-weight:normal;">Point of origin</th>
             <td colspan="5" class="cbas">
                 {% if is_init_authorised %} 
-                    {{object.origin_geo|is_none}} <br>
-                    {{object.sss_data_to_dict.origin_point_mga|is_none}}
-                {% else %}
+                   {{snapshot.origin_geo|is_none}} <br>
+                   {{snapshot.sss_data_to_dict.origin_point_mga|is_none}}
+                {% else %} 
                     {{form.origin_point.value|deg_min_sec}} <br>
                     {{object.sss_data_to_dict.origin_point_mga|is_none}}
                 {% endif %}
@@ -212,81 +105,49 @@
         </tr>
 
         <tr>
-            <th class="cbas">Tenure of ignition point *<br><br><div class=div_tenure style="visibility: hidden;">Other Tenure *</div></th>
-            <td colspan="2" class="cbas">{{form.tenure}}
-                <div class="div_tenure" style="visibility: hidden;">{% if is_init_authorised %} {{snapshot.other_tenure}} {% else %} {{form.other_tenure}} {% endif %}</div>
-            </td>
+            <th class="cbas">Tenure of ignition point *{% if snapshot.other_tenure %}<br> Other Tenure{% endif %}</th>
+            <td colspan="2" class="cbas">{{snapshot.tenure}}{% if snapshot.other_tenure %} {{snapshot.get_other_tenure_display}} {% endif %}</td>
 
             <th class="cbas">Duty Officer *</th>
-            <td colspan="2" class="cbas">{{form.duty_officer}}</td>
+            <td colspan="2" class="cbas">{{snapshot.duty_officer|is_none}}</td>
+        </tr>
+        <tr>
+            <th class="cbas">P&W Resource dispatched *{% if snapshot.dispatch_pw == object.DISPATCH_PW_YES %}<br>Date and time of dispatch{% endif %}</th>
+            <td colspan="2" class="cbas">{{snapshot.get_dispatch_pw_display}}{% if snapshot.dispatch_pw == object.DISPATCH_PW_YES %}<br>{{snapshot.dispatch_pw_date}} {% endif %}</td>
+
+	    <th class="cbas">Aerial support dispatched *<br><br><div class=div_dispatch_aerial_date style="display: none;">Date and time of dispatch</div></th>
+            <td colspan="2" class="cbas">{{snapshot.dispatch_aerial|yesno:"Yes,No"}}{% if snapshot.dispatch_aerial|yesno:"Yes,No" == 'Yes' %}<br>{{snapshot.dispatch_aerial_date}} {% endif %}</td>
         </tr>
 
         <tr>
-            <th class="cbas">P&W Resource dispatched *<br><br><div class=div_dispatch_pw_date style="display: none;">Date and time of dispatch</div></th>
-            <td colspan="2" class="cbas">
-                {% if is_init_authorised %} 
-                    {{snapshot.get_dispatch_pw_display}}{% if snapshot.dispatch_pw == object.DISPATCH_PW_YES %}<br>{{snapshot.dispatch_pw_date}} {% endif %}
-                {% else %} 
-                    {{form.dispatch_pw}}<br><div class=div_dispatch_pw_date style="display: none;">{{form.dispatch_pw_date}}</div>
-                {% endif %}
-            </td>
-
-            <th class="cbas">Aerial suppression dispatched *<br><br><div class=div_dispatch_aerial_date style="display: none;">Date and time of dispatch</div></th>
-            <td colspan="2" class="cbas">
-                {% if is_init_authorised %} 
-                    {{snapshot.dispatch_aerial|yesno:"Yes,No"}}{% if snapshot.dispatch_aerial|yesno:"Yes,No" == 'Yes' %}<br>{{snapshot.dispatch_aerial_date}}{% endif %}
-                {% else %} 
-                    {{form.dispatch_aerial}}<br><div class=div_dispatch_aerial_date style="display: none;">{{form.dispatch_aerial_date}}</div>
-                {% endif %} 
-            </td>
-        </tr>
-
-        <tr>
-            <th class="cbas" id="id_th_initial_controlling_agency">Initial controlling agency *<br><br><div class=div_other_initial_control style="display: none;">Other initial controlling agency *</div></th>
-            <td colspan="2" class="cbas">
-                {% if is_init_authorised %} 
-                    {{snapshot.initial_control}} <br>{% if snapshot.other_initial_control %}Other agency: {{snapshot.other_initial_control}} {% endif %}
-                {% else %} 
-                    {{form.initial_control}}<br><div class=div_other_initial_control style="display: none;">{{form.other_initial_control}}</div>
-                {% endif %} 
-            </td>
+	    <th class="cbas" id="id_th_initial_controlling_agency">Initial controlling agency *</th>
+            <td colspan="2" class="cbas">{{snapshot.initial_control}} <br>{% if snapshot.other_initial_control %} Other initial controlling agency: {{snapshot.other_initial_control}} {% endif %}</td>
 
             <th class="cbas">Area of fire at arrival (ha) *</th>
-            <td colspan="2" class="cbas">
-                {% if is_init_authorised %} 
-                    {% if snapshot.initial_area_unknown %} Unknown{% else %}{{snapshot.initial_area}}{% endif %}
-                {% else %} 
-                    <span class="div_initial_area_unknown" style="display: none;">{{form.initial_area_unknown}} Unknown<br></span>
-                    <div class="div_initial_area" style="visibility: visible;">{{form.initial_area}}</div>
-                {% endif %} 
-            </td>
-
+            <td colspan="2" class="cbas">{% if snapshot.initial_area_unknown %}Unknown{% else %}{{snapshot.initial_area}}{% endif %}</td>
         </tr>
 
         <tr>
             <th class="cbas">Probable Fire Level *</th>
-             <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.prob_fire_level}} {% else %} {{form.prob_fire_level}} {% endif %}</td>
+            <td colspan="2" class="cbas">{{snapshot.prob_fire_level}}</td>
 
             <th class="cbas">Investigation required *</th>
-            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.investigation_req|yesno:"Yes,No"}} {% else %} {{form.investigation_req}} {% endif %}</td>
+            <td colspan="2" class="cbas">{{snapshot.investigation_req|yesno:"Yes,No"}}</td>
         </tr>
 
         <tr>
             <th class="cbas">Media Alert Required *</th>
-            <td colspan="2" class="cbas">
-                {% if is_init_authorised %} {{snapshot.media_alert_req|yesno:"Yes,No"}}<br> {% else %} {{form.media_alert_req}}<br> {% endif %} <span class="div_pica" style="display: none;">call PICA on 9219 9999</span>
-            </td>
+            <td colspan="2" class="cbas">{{snapshot.media_alert_req|yesno:"Yes,No"}} {% if snapshot.media_alert_req|yesno:"Yes,No" == 'Yes' %}<br> <span>call PICA on 9219 9999</span>{% endif %}</td>
 
             <th class="cbas">Park and/or Trail *<br>potentially impacted</th>
-            <td colspan="2" class="cbas">
-                {% if is_init_authorised %} {{snapshot.park_trail_impacted|yesno:"Yes,No"}}<br> {% else %} {{form.park_trail_impacted}}<br> {% endif %}<span class="div_pvs" style="display: none;">PVS will be notified by email</span>
-            </td>
+            <td colspan="2" class="cbas">{{snapshot.park_trail_impacted|yesno:"Yes,No"}} {% if snapshot.park_trail_impacted|yesno:"Yes,No" == 'Yes' %}<br> <span>PVS will be notified by email</span>{% endif %}</td>
         </tr>
 
         <tr>
             <th class="cbas" style="font-weight:normal;">Other information<br>(include Burn ID if cause is escape)</th>
-			<td colspan="5" class="cbas">{% if is_init_authorised %} {{snapshot.other_info}}<br> {% else %} {{form.other_info}} {% endif %}</td>
+            <td colspan="5" class="cbas">{{snapshot.other_info|is_none}}</td>
         </tr>
+
 
   </tbody>
 </table>
@@ -301,7 +162,7 @@
       </h4>
     </div>
     <div id="fire_behaviour" {% if initial %}class="panel-collapse collapse in" {% else %} class="panel-collapse collapse in" {% endif %} role="tabpanel" aria-labelledby="pn_fire_behaviour">
-        {% include "bfrs/final_notifications.html" %}
+        {% include "bfrs/final_notification_summary.html" %}
     </div>
   </div>
 </div>

@@ -369,7 +369,16 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
                 initial['region'] = Region.objects.get(id=sss['region_id'])
                 initial['district'] = District.objects.get(id=sss['district_id'])
 
+        # below for testing
+	initial['origin_point'] = GEOSGeometry(Point(122.45, -33.15))
+        initial['region'] = 1
+        initial['district'] = 1
+
         return initial
+
+#    def get_template_names(self):
+#        import ipdb; ipdb.set_trace()
+#        return super(BushfireUpdateView, self).get_template_names()
 
     def get(self, request, *args, **kwargs):
         if not self.get_object() and is_external_user(self.request.user):
@@ -473,9 +482,12 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
 
     @transaction.atomic
     def form_valid(self, request, form, fire_behaviour_formset=None, area_burnt_formset=None, injury_formset=None, damage_formset=None):
+        template_summary = 'bfrs/detail_summary.html'
+        template_error = 'bfrs/error.html'
+        template_mandatory_fields = 'bfrs/mandatory_fields.html'
 
         if is_external_user(request.user):
-            return TemplateResponse(request, 'bfrs/error.html', context={'is_external_user': True, 'status':401}, status=401)
+            return TemplateResponse(request, template_error, context={'is_external_user': True, 'status':401}, status=401)
 
         self.object = form.save(commit=False)
         if not hasattr(self.object, 'creator'):
@@ -490,6 +502,12 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
             self.object.prescribed_burn_id = None
         if self.object.tenure and not self.object.tenure.name.startswith('Other'):
             self.object.other_tenure = None
+        if self.object.dispatch_pw:
+            self.object.dispatch_pw = int(self.object.dispatch_pw)
+#        if self.object.prob_fire_level:
+#            self.object.prob_fire_level = int(self.object.prob_fire_level)
+#        if self.object.max_fire_level:
+#            self.object.max_fire_level = int(self.object.max_fire_level)
         self.object.save()
 
         if not self.get_object():
@@ -514,6 +532,7 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         redirect_referrer =  HttpResponseRedirect(request.META.get('HTTP_REFERER'))
         # This section to Submit initial report, placed here to allow any changes to be cleaned and saved first - effectively the 'Submit' btn is a 'save and submit'
         if self.request.POST.has_key('submit_initial'):
+            #import ipdb; ipdb.set_trace()
             action = self.request.POST.get('submit_initial')
             if action == 'Submit':
                 context = self.get_context_data()
@@ -526,9 +545,9 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
                 context['mandatory_fields'] = check_mandatory_fields(self.object, SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS, SUBMIT_MANDATORY_FORMSETS)
 
                 if context['mandatory_fields']:
-                    return TemplateResponse(request, 'bfrs/mandatory_fields.html', context=context)
+                    return TemplateResponse(request, template_mandatory_fields, context=context)
 
-                return TemplateResponse(request, self.template_name, context=context)
+                return TemplateResponse(request, template_summary, context=context)
 
         # This section to Authorise Final report, placed here to allow any changes to be cleaned and saved first - effectively the 'Authorise' btn is a 'save and submit'
         if self.request.POST.has_key('authorise_final'):
@@ -545,9 +564,9 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
                 context['mandatory_fields'] = check_mandatory_fields(self.object, fields, AUTH_MANDATORY_DEP_FIELDS, AUTH_MANDATORY_FORMSETS)
 
                 if context['mandatory_fields']:
-                    return TemplateResponse(request, 'bfrs/mandatory_fields.html', context=context)
+                    return TemplateResponse(request, template_mandatory_fields, context=context)
 
-                return TemplateResponse(request, self.template_name, context=context)
+                return TemplateResponse(request, template_summary, context=context)
 
         if self.object.report_status >=  Bushfire.STATUS_FINAL_AUTHORISED:
             # if bushfire has been authorised, update snapshot and archive old snapshot

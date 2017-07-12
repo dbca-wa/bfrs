@@ -1,0 +1,134 @@
+{% load i18n %}
+{% load static from staticfiles %}
+{% load bfrs_tags %}
+{% load humanize %}
+
+
+<table class="table table-bordered table-striped table-condensed">
+    <tbody>
+        <tr>
+            <th class="cbas" style="font-weight:normal;" width ='17%'>Fire not found</th>
+            <td colspan="2" class="cbas" >{{snapshot.fire_not_found|yesno:"Yes,No"}}<br> Details: {{snapshot.invalid_details}}</td>
+
+            <th class="cbas" style="font-weight:normal;" width='17%'>Fire monitored only</th>
+            <td colspan="2" class="cbas" >{{snapshot.fire_monitored_only|yesno:"Yes,No"}}</td>
+        </tr>
+
+        <tr>
+            <th id="id_th_field_officer" class="cbas" style="font-weight:normal;">Field Officer</th>
+            <td colspan="2" class="cbas">{{snapshot.field_officer|is_none}}</td>
+
+            <th class="cbas">Job code *</th>
+            <td colspan="2" class="cbas">{{snapshot.job_code}}</td>
+        </tr>
+  </tbody>
+</table>
+
+<div class="div_form_invalidate">
+<table class="table table-bordered table-striped table-condensed">
+    <tbody>
+        <tr>
+            <th class="cbas">Fuel and fire behaviour *</th>
+            <td colspan="5" class="cbas" > 
+                {{snapshot.fire_behaviour_unknown|yesno:"Unknown,Known"}}
+                {% if not snapshot.fire_behaviour_unknown %} {% include "bfrs/fire_behaviour_fs.html" %}{% endif %}
+            </td>
+        </tr>
+
+        <tr>
+            <th class="cbas">Fire Cause *<br><br><br><br>
+                <div class=div_cause style="display: none;">Other Cause *</div>
+                <div class=div_cause_escape style="display: none;">Prescribed Burn ID *</div>
+            </th>
+            <td colspan="5" class="cbas">
+                {{snapshot.cause_state|cause_state}}<br>
+                {{snapshot.cause}}<br><br>
+                {% if snapshot.other_cause %} {{snapshot.other_cause|is_none}} {% endif %}
+                {% if snapshot.prescribed_burn_id %} {{snapshot.prescribed_burn_id|is_none}} {% endif %}
+            </td>
+        </tr>
+
+        {% if object.is_init_authorised_by %} 
+        <tr>
+            <th class="cbas" style="font-weight:normal;">Authorised By</th>
+            <td colspan="2" class="cbas">{{snapshot.init_authorised_by}}</td>
+
+            <th class="cbas" style="font-weight:normal;">Authorised Date</th>
+            <td colspan="2" class="cbas">{{snapshot.init_authorised_date|date_fmt}}</td>
+        </tr>
+        {% endif %}
+
+
+        <tr>
+	    <th class="cbas" id="id_th_fire_contained_date" title=" Fire spread has been halted, though the fire may still be burning freely within the perimeter of the fire control lines">Date fire contained <i class="icon-info-sign icon-white"></i> *</th>
+            <td colspan="2" class="cbas">{{snapshot.fire_contained_date}}</td>
+
+            <th class="cbas" id="id_th_initial_attack_agency">Initial attack agency *<br><br><div class=div_other_first_attack style="display: none;">Other initial attack agency *</div></th>
+            <td colspan="2" class="cbas">{{snapshot.first_attack}}<br>{% if snapshot.other_first_attack %} {{snapshot.other_first_attack}} {% endif %}</td>
+        </tr>
+
+        <tr>
+	    <th class="cbas" id="id_th_fire_controlled_date" title="Complete perimeter of fire is secured and no breakaway is expected">Date fire controlled <i class="icon-info-sign icon-white"></i> *</th>
+            <td colspan="2" class="cbas">{{snapshot.fire_controlled_date}}</td>
+
+            <th class="cbas" id="id_th_final_controlling_agency">Final controlling agency *<br><br><div class=div_other_final_control style="display: none;">Other final controlling agency *</div></th>
+            <td colspan="2" class="cbas">{{snapshot.final_control}} <br>{% if snapshot.other_final_control %} {{snapshot.other_final_control}} {% endif %}</td>
+
+        </tr>
+
+        <tr>
+            <th class="cbas" title='Placeholder ...'>Date fire inactive <i class="icon-info-sign icon-white"></i> *</th>
+            <td colspan="2" class="cbas">{{snapshot.fire_safe_date}}</td>
+
+            <th class="cbas">Arson squad notified *</th>
+            <td colspan="2" class="cbas">
+                {{snapshot.arson_squad_notified|yesno:"Yes,No"}}{% if snapshot.arson_squad_notified|yesno:"Yes,No" == 'Yes' %}<br>Police offence no {{snapshot.offence_no}} {% endif %}
+            </td>
+        </tr>
+
+        <tr>
+            <th class="cbas">Maximum Fire Level *</th>
+            <td colspan="2" class="cbas">{{snapshot.max_fire_level}}</td>
+
+            <th class="cbas">Final fire size (ha) *</th>
+            <td colspan="2" class="cbas">{{snapshot.area}}<br>Is area < {{area_threshold}}ha? {{snapshot.area_limit|yesno:"Yes,No"}}</td>
+        </tr>
+
+
+        {% if can_maintain_data %}
+        <tr>
+            <th class="cbas" style="font-weight:normal;">Reporting Year</th>
+            <td colspan="5" class="cbas">{{snapshot.reporting_year|fin_year}}</td>
+        </tr>
+        {% endif %}
+
+  </tbody>
+</table>
+
+<table class="table table-bordered table-striped table-condensed cbas">
+    <thead>
+        <th class="cbas">Tenure of burnt area *</th>
+        <th class="cbas">Damage ABHC</th>
+        <th class="cbas" >Injuries and Fatalities</th>
+    </thead>
+    <tbody>
+        <tr>
+            <td class="cbas">{% include "bfrs/tenure_veg.html" %}</td>
+            <td class="cbas">
+                {{snapshot.damage_unknown|yesno:"No damage to report,Known"}}
+                {% if not snapshot.damage_unknown %} {% include "bfrs/damage_fs.html" %}{% endif %}
+            </td>
+            <td class="cbas">
+                {{snapshot.injury_unknown|yesno:"No injuries/fatalities to report,Known"}}
+                {% if not snapshot.injury_unknown %} {% include "bfrs/injuries_fs.html" %}{% endif %}
+            </td>
+        </tr>
+    </tbody>
+</table>
+</div> <!-- div_form_invalidate -->
+
+
+<script>
+
+</script>
+

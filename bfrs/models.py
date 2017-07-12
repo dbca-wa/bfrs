@@ -19,10 +19,12 @@ import json
 SUBMIT_MANDATORY_FIELDS= [
     'region', 'district', 'year', 'fire_number', 'name', 'fire_detected_date', 'prob_fire_level',
     'dispatch_pw', 'dispatch_aerial', 'investigation_req', 'park_trail_impacted', 'media_alert_req',
+    'duty_officer',
 ]
 SUBMIT_MANDATORY_DEP_FIELDS= {
-    'dispatch_pw': [['1', 'dispatch_pw_date']],
+    'dispatch_pw': [[1, 'dispatch_pw_date']],
     'dispatch_aerial': [['True', 'dispatch_aerial_date']],
+    'initial_control': [['OTHER', 'other_initial_control']],
 }
 SUBMIT_MANDATORY_FORMSETS= [
 ]
@@ -35,11 +37,12 @@ AUTH_MANDATORY_FIELDS= [
     #'first_attack', 'initial_control', 'final_control',
     #'initial_control', 'final_control',
     'max_fire_level', 'arson_squad_notified', 'job_code',
-    'duty_officer',
+    #'duty_officer',
 ]
 
 AUTH_MANDATORY_FIELDS_FIRE_NOT_FOUND= [
-    'duty_officer', 'field_officer', 'job_code',
+    #'duty_officer', 'field_officer', 'job_code',
+    'field_officer', 'job_code',
 ]
 
 AUTH_MANDATORY_DEP_FIELDS= {
@@ -81,12 +84,16 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
 
     missing = [field for field in fields if getattr(obj, field) is None or getattr(obj, field)=='']
 
-    if obj.fire_not_found:
-        return missing
+    if obj.fire_not_found and obj.is_init_authorised:
+        # no need to check these
+        dep_fields = {}
+        formsets = []
+        #return missing
 
     for field, dep_sets in dep_fields.iteritems():
         for dep_set in dep_sets:
             # next line checks for normal Field or Enumerated list field (i.e. '.name')
+            #import ipdb; ipdb.set_trace()
             if hasattr(obj, field) and (getattr(obj, field)==dep_set[0] or (hasattr(getattr(obj, field), 'name') and getattr(obj, field).name==dep_set[0])):
                 if getattr(obj, dep_set[1]) is None or (isinstance(getattr(obj, dep_set[1]), (str, unicode)) and not getattr(obj, dep_set[1]).strip()):
                     # field is unset or empty string
@@ -119,7 +126,7 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
         if not obj.initial_area and obj.report_status < Bushfire.STATUS_INITIAL_AUTHORISED:
             missing.append("Must enter Area of Arrival, if area < {}ha".format(settings.AREA_THRESHOLD))
 
-    if obj.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED:
+    if not obj.fire_not_found and obj.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED:
         if not obj.area_limit and (obj.area < settings.AREA_THRESHOLD or obj.area is None):
             missing.append("Final fire shape must be uploaded for fires > {}ha".format(settings.AREA_THRESHOLD))
 

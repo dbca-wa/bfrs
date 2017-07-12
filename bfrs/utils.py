@@ -392,6 +392,9 @@ def update_status(request, bushfire, action):
         resp = dfes_email(bushfire, mail_url(request, bushfire))
         notification['DFES'] = 'Email Sent' if resp else 'Email failed'
 
+        resp = police_email(bushfire, mail_url(request, bushfire))
+        notification['POLICE'] = 'Email Sent' if resp else 'Email failed'
+
         if bushfire.park_trail_impacted:
             resp = pvs_email(bushfire, mail_url(request, bushfire))
             notification['PVS'] = 'Email Sent' if resp else 'Email failed'
@@ -407,9 +410,9 @@ def update_status(request, bushfire, action):
             resp = pica_sms(bushfire, mail_url(request, bushfire))
             notification['PICA SMS'] = 'SMS Sent' if resp else 'SMS failed'
 
-        if bushfire.investigation_req:
-            resp = police_email(bushfire, mail_url(request, bushfire))
-            notification['POLICE'] = 'Email Sent' if resp else 'Email failed'
+#        if bushfire.investigation_req:
+#            resp = police_email(bushfire, mail_url(request, bushfire))
+#            notification['POLICE'] = 'Email Sent' if resp else 'Email failed'
 
         bushfire.area = None # reset bushfire area
         #bushfire.sss_data = None
@@ -501,7 +504,9 @@ def police_email(bushfire, url):
        return
 
     subject = 'POLICE Email - Initial report submitted and an investigation is required- {}'.format(bushfire.fire_number)
-    message = 'POLICE Email - {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.fire_number, url)
+    message = 'POLICE Email - {}\n\nInitial report has been submitted and is located at {}\n\nInvestigation Required: {}'.format(
+        bushfire.fire_number, url, 'Yes' if bushfire.investigation_req else 'No'
+    )
 
     return send_mail(subject, message, settings.FROM_EMAIL, settings.POLICE_EMAIL)
 

@@ -1,0 +1,314 @@
+{% load i18n %}
+{% load static from staticfiles %}
+{% load bfrs_tags %}
+{% load humanize %}
+
+
+{% comment %}
+{% if action == 'Authorise' %}
+<h1>Confirm action 'Mark Final Report Authorised'</h1>
+{% elif action == 'mark_reviewed' %}
+<h1>Confirm action 'Mark Reviewed'</h1>
+{% else %}
+<h1>Bushfire Detail</h1>
+{% endif %}
+{% endcomment %}
+
+
+<table class="table table-bordered table-striped table-condensed">
+    <tbody>
+        <tr>
+            <th class="cbas" style="font-weight:normal;" width ='17%'>Fire not found</th>
+            <td colspan="2" class="cbas" >
+                {% if is_authorised %} {{snapshot.fire_not_found|yesno:"Yes,No"}}<br> Details: {{snapshot.invalid_details}} {% else %} {{form.fire_not_found}} {% endif %}
+                <span class="div_invalid_details" style="display: none; margin: 20px;">{% if not is_authorised %} Details{{form.invalid_details}} {% endif %}</span>
+            </td>
+
+            <th class="cbas" style="font-weight:normal;" width='17%'>Fire monitored only</th>
+  	        <td colspan="2" class="cbas" >{% if is_authorised %} {{snapshot.fire_monitored_only|yesno:"Yes,No"}}{% else %} {{form.fire_monitored_only}} {% endif %}</td>
+        </tr>
+
+        <tr>
+            <th id="id_th_field_officer" class="cbas" style="font-weight:normal;">Field Officer</th>
+            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.field_officer|is_none}} {% else %} {{form.field_officer}} {% endif %}</td>
+
+            <th class="cbas">Job code *</th>
+            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.job_code}} {% else %} {{form.job_code}} {% endif %}</td>
+        </tr>
+
+
+  </tbody>
+</table>
+
+{{form.origin_point.as_hidden}}
+{{form.fire_boundary.as_hidden}}
+<div class="div_form_invalidate">
+<table class="table table-bordered table-striped table-condensed">
+    <tbody>
+
+        <tr>
+            <th class="cbas">Fuel and fire behaviour *</th>
+			<td colspan="5" class="cbas" > 
+				{% if is_authorised %} {{form.fire_behaviour_unknown|yesno:"Unknown,Known"}} {% else %} {{form.fire_behaviour_unknown}} Unknown {% endif %}
+				<div class="div_fire_behaviour_unknown" style="display: true;">{% include "bfrs/fire_behaviour_fs.html" %}</div>
+			</td>
+        </tr>
+
+        {% comment %}
+        <tr>
+            <th class="cbas" style="font-weight:normal;">Estimated Time to Control</th>
+	        <td colspan="2" class="cbas">
+				{% if is_authorised %}
+                  <span>{{snapshot.time_to_control_str}}</span>
+				{% else %}
+                  <span>{{form.days}} Days<br>{{form.hours}} Hours</span>
+				{% endif %}
+                {{time_to_control.as_hidden}}
+	        </td>
+
+            <th class="cbas" style="font-weight:normal;">Communications</th>
+			<td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.communications|is_none}} {% else %} <span>{{form.communications}}</span> {% endif %}</td>
+        </tr>
+        {% endcomment %}
+
+        {% comment %}
+        <tr>
+		    <th class="cbas">Assistance Required *<br><br><div class=div_assist style="display: none; font-weight:normal;">Details</div></th>
+            <td colspan="5" class="cbas">
+                {% if is_authorised %} {{ snapshot.assistance_req|assistance }} {% if snapshot.assistance_req %}<br>{{snapshot.assistance_details}} {% endif %}{% else %} {{form.assistance_req}} {% endif %}<br>
+		        <div class=div_assist style="display: none;">{% if is_authorised %}  {% else %} {{form.assistance_details}} {% endif %}</div>
+		    </td>
+        </tr>
+        {% endcomment %}
+
+
+        <tr>
+            <th class="cbas">Fire Cause *<br><br><br><br>
+				<div class=div_cause style="display: none;">Other Cause *</div>
+				<div class=div_cause_escape style="display: none;">Prescribed Burn ID *</div>
+			</th>
+			<td colspan="5" class="cbas">
+				{% if is_authorised %} {{snapshot.cause_state|cause_state}} {% else %} {{form.cause_state}} {% endif %}<br>
+                {% if is_authorised %} {{snapshot.cause}} {% else %} {{form.cause}} {% endif %}<br><br>
+
+                <div class="div_cause" style="display: none;">
+                    {% if is_authorised %} {{snapshot.other_cause|is_none}} {% else %} {{form.other_cause}} {% endif %}
+				</div>
+
+                <div class="div_cause_escape" style="display: none;">
+                    {% if is_authorised %} {{snapshot.prescribed_burn_id|is_none}} {% else %} {{form.prescribed_burn_id}} {% endif %}
+				</div>
+
+			</td>
+
+
+        </tr>
+
+            {% comment %}
+        <tr>
+
+
+            <th class="cbas">Duty Officer *</th>
+            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.duty_officer|is_none}} {% else %} {{form.duty_officer}} {% endif %}</td>
+        </tr>
+            {% endcomment %}
+
+        {% if object.is_init_authorised_by %} 
+        <tr>
+            <th class="cbas" style="font-weight:normal;">Authorised By</th>
+            <td colspan="2" class="cbas">{{object.init_authorised_by}}</td>
+
+            <th class="cbas" style="font-weight:normal;">Authorised Date</th>
+            <td colspan="2" class="cbas">{{object.init_authorised_date|date_fmt}}</td>
+        </tr>
+        {% endif %}
+
+
+        <tr>
+	    <th class="cbas" id="id_th_fire_contained_date" title=" Fire spread has been halted, though the fire may still be burning freely within the perimeter of the fire control lines">Date fire contained <i class="icon-info-sign icon-white"></i> *</th>
+            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.fire_contained_date}} {% else %} {{form.fire_contained_date}} {% endif %}</td>
+
+            <th class="cbas" id="id_th_initial_attack_agency">Initial attack agency *<br><br><div class=div_other_first_attack style="display: none;">Other initial attack agency *</div></th>
+            <td colspan="2" class="cbas">
+		{% if is_authorised %} {{snapshot.first_attack}}<br>{% if snapshot.other_first_attack %} {{snapshot.other_first_attack}} {% endif %}{% else %} {{form.first_attack}} {% endif %}<br>
+                <div class=div_other_first_attack style="display: none;">{% if is_authorised %} {{snapshot.other_first_attack}} {% else %} {{form.other_first_attack}} {% endif %}</div>
+            </td>
+        </tr>
+
+        <tr>
+	    <th class="cbas" id="id_th_fire_controlled_date" title="Complete perimeter of fire is secured and no breakaway is expected">Date fire controlled <i class="icon-info-sign icon-white"></i> *</th>
+            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.fire_controlled_date}} {% else %} {{form.fire_controlled_date}} {% endif %}</td>
+
+            <th class="cbas" id="id_th_final_controlling_agency">Final controlling agency *<br><br><div class=div_other_final_control style="display: none;">Other final controlling agency *</div></th>
+            <td colspan="2" class="cbas">
+                {% if is_authorised %} {{snapshot.final_control}} <br>{% if snapshot.other_final_control %} {{snapshot.other_final_control}} {% endif %} {% else %} {{form.final_control}} {% endif %}<br>
+                <div class=div_other_final_control style="display: none;">{% if is_authorised %} {{snapshot.other_final_control}} {% else %} {{form.other_final_control}} {% endif %}</div>
+            </td>
+
+        </tr>
+
+        <tr>
+	        <th class="cbas" title='Placeholder ...'>Date fire inactive <i class="icon-info-sign icon-white"></i> *</th>
+            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.fire_safe_date}} {% else %} {{form.fire_safe_date}} {% endif %}</td>
+
+            <th class="cbas">Arson squad notified *</th>
+            <td colspan="2" class="cbas">
+		{% if is_authorised %} {{snapshot.arson_squad_notified|yesno:"Yes,No"}}{% if snapshot.arson_squad_notified|yesno:"Yes,No" == 'Yes' %}<br>Police offence no {{snapshot.offence_no}} {% endif %}{% else %} {{form.arson_squad_notified}} {% endif %}<br>
+                <span class="div_offence_no" style="display: none; margin: 0px;">{% if not is_authorised %} {{form.offence_no}} Police offence no {% endif %}</span>
+            </td>
+
+
+        </tr>
+
+        <tr>
+            <th class="cbas">Maximum Fire Level *</th>
+            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.max_fire_level}} {% else %} {{form.max_fire_level}} {% endif %}</td>
+
+            <th class="cbas">Final fire size (ha) *</th>
+            <td colspan="2" class="cbas">
+                {% if is_authorised %} {{snapshot.area}} {% else %} {{form.area}} {% endif %}
+		<span id="div_area_limit" style="margin: 20px;">{% if is_authorised %} Is area < {{area_threshold}}ha? {{snapshot.area_limit|yesno:"Yes,No"}} {% else %} {{form.area_limit}} Area < {{area_threshold}}ha{% endif %}</span>
+            </td>
+        </tr>
+
+
+        {% if can_maintain_data %}
+        <tr>
+            <th class="cbas" style="font-weight:normal;">Reporting Year</th>
+            <td colspan="5" class="cbas">{% if is_authorised %} {{snapshot.reporting_year|fin_year}} {{form.reporting_year.as_hidden}} {% else %} {{form.reporting_year}} {% endif %}</td>
+        </tr>
+        {% else %}
+	        {{form.reporting_year.as_hidden}}
+        {% endif %}
+
+  </tbody>
+</table>
+
+<table class="table table-bordered table-striped table-condensed cbas">
+    <thead>
+		<th class="cbas">Tenure of burnt area *</th>
+		<th class="cbas">Damage</th>
+		<th class="cbas" >Injuries and Fatalities</th>
+    </thead>
+    <tbody>
+        <tr>
+		<td class="cbas">{% include "bfrs/tenure_veg.html" %}</td>
+		<td class="cbas">
+    		{% if is_authorised %} {{form.damage_unknown|yesno:"Unknown,Known"}} {% else %} {{form.damage_unknown}} No damage to report {% endif %}
+            {% include "bfrs/damage_fs.html" %}
+        </td>
+		<td class="cbas">
+    		{% if is_authorised %} {{form.injury_unknown|yesno:"Unknown,Known"}} {% else %} {{form.injury_unknown}} No injuries/fatalities to report {% endif %}
+            {% include "bfrs/injuries_fs.html" %}
+        </td>
+        </tr>
+
+  </tbody>
+</table>
+</div> <!-- div_form_invalidate -->
+
+
+<script>
+
+// $('[id^=""]').hide() // starts with 
+//$('[id$="_date"]').datetimepicker({ format: "Y-m-d H:i" }); //ends with
+
+$('#id_field_officer').prop('class', 'selectpicker dropup');
+$('#id_duty_officer').prop('class', 'selectpicker dropup');
+
+$('.selectpicker').selectpicker({
+  style: 'btn-default',
+  size: 6,
+  liveSearch: true,
+  dropupAuto: false,
+});
+
+/* Initial Attack */
+var selected = $('#id_first_attack :selected').text();
+$('#id_first_attack').on('change', function() {
+	var selected = $('#id_first_attack :selected').text();
+	if ((selected.indexOf('Other') > -1) || (selected.indexOf('OTHER') > -1)) {
+		$('.div_other_first_attack').show();
+	} else {
+		$('.div_other_first_attack').hide();
+	}
+}).change();
+
+/* Initial Control */
+var selected = $('#id_initial_control :selected').text();
+$('#id_initial_control').on('change', function() {
+	var selected = $('#id_initial_control :selected').text();
+	if ((selected.indexOf('Other') > -1) || (selected.indexOf('OTHER') > -1)) {
+		$('.div_other_initial_control').show();
+	} else {
+		$('.div_other_initial_control').hide();
+	}
+}).change();
+
+/* Initial Control */
+var selected = $('#id_final_control :selected').text();
+
+$('#id_final_control').on('change', function() {
+	var selected = $('#id_final_control :selected').text();
+	if ((selected.indexOf('Other') > -1) || (selected.indexOf('OTHER') > -1)) {
+		$('.div_other_final_control').show();
+	} else {
+		$('.div_other_final_control').hide();
+	}
+}).change();
+
+/* Police Notification */
+$('#id_arson_squad_notified_0').on('change', function() {
+	if($('#id_arson_squad_notified_0').is(':checked')) { $('.div_offence_no').show(); }
+}).change();
+$('#id_arson_squad_notified_1').on('change', function() {
+	if($('#id_arson_squad_notified_1').is(':checked')) { $('.div_offence_no').hide(); }
+}).change();
+
+$('.collapse').collapse()
+
+$('.close-all').click(function(){
+  $('.panel-collapse.in').collapse('hide');
+  // toggle the buttons also
+  $(".close-all").hide();
+  $(".open-all").show();
+});
+
+$('.open-all').click(function(){
+  $('.panel-collapse:not(".in")').collapse('show');
+  // toggle the buttons also
+  $(".close-all").show();
+  $(".open-all").hide();
+});
+
+/* Area Override */
+//$('#id_area').val({{snapshot.sss_data_to_dict.area.total_area|floatformat:2}});
+$('#id_area').val({{snapshot.area|floatformat:2}});
+var orig_area = $("#id_area").val();
+//var fire_boundary = {{snapshot.sss_data_to_dict.fire_boundary}}
+//$("#id_area").prop('min',0.0);
+//if ($('#id_area').val().length == 0 || fire_boundary!=null) {
+if ({{object.final_fire_boundary|yesno:"true,false"}} == false) {
+    $("#div_area_limit").show()
+    $("#id_area").attr('readonly','readonly').css('background-color' , '#DEDEDE');
+} else {
+    $("#div_area_limit").hide()
+    $("#id_area").prop('max',null);
+}
+
+$('#id_area_limit').on('change', function() {
+    if($("#id_area_limit").is(':checked')) { 
+	    $("#id_area").removeAttr('readonly').removeAttr('style');
+	} else {
+        $("#id_area").val(orig_area);
+	    $("#id_area").attr('readonly','readonly').css('background-color' , '#DEDEDE');
+	}
+}).change();
+
+$("#id_area").prop('min', 0).prop('max',{{area_threshold|to_float}});
+
+/* Job Code Validation */
+$("#id_job_code").prop('pattern', '[A-Z]{3}').prop('title', '3 letters and upper case');
+
+</script>
+

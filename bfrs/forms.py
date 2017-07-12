@@ -174,6 +174,8 @@ class BushfireUpdateForm(forms.ModelForm):
         # For use when debugging outside SSS - need to create an origin_point manually
         #from django.contrib.gis.geos import Point, GEOSGeometry
         #self.fields['origin_point'].initial = GEOSGeometry(Point(122.45, -33.15))
+        #self.fields['region'].initial = 1
+        #self.fields['district'].initial = 1
 
     class Meta:
         model = Bushfire
@@ -243,14 +245,14 @@ class BushfireUpdateForm(forms.ModelForm):
 
         # FINAL Form
         if self.cleaned_data['fire_not_found']:
-            self.cleaned_data['prob_fire_level'] = None
+            #self.cleaned_data['prob_fire_level'] = None
             self.cleaned_data['max_fire_level'] = None
             self.cleaned_data['arson_squad_notified'] = None
             self.cleaned_data['fire_contained_date'] = None
             self.cleaned_data['fire_controlled_date'] = None
             self.cleaned_data['fire_safe_date'] = None
             self.cleaned_data['first_attack'] = None
-            self.cleaned_data['initial_control'] = None
+            #self.cleaned_data['initial_control'] = None
             self.cleaned_data['final_control'] = None
             self.cleaned_data['other_first_attack'] = None
             self.cleaned_data['other_initial_control'] = None
@@ -296,6 +298,9 @@ class BushfireUpdateForm(forms.ModelForm):
             self.cleaned_data['dispatch_pw_date'] = None
         if self.cleaned_data.has_key('dispatch_aerial_date') and self.cleaned_data['dispatch_aerial_date'] and eval(self.cleaned_data['dispatch_aerial']) == False:
             self.cleaned_data['dispatch_aerial_date'] = None
+
+        if self.cleaned_data.has_key('dispatch_pw') and self.cleaned_data['dispatch_pw']:
+            self.cleaned_data['dispatch_pw'] = int(self.cleaned_data['dispatch_pw'])
 
         return cleaned_data
 
