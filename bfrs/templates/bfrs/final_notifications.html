@@ -20,23 +20,21 @@
         <tr>
             <th class="cbas" style="font-weight:normal;" width ='17%'>Fire not found</th>
             <td colspan="2" class="cbas" >
-                {% if is_authorised %} {{snapshot.fire_not_found|yesno:"Yes,No"}}<br> Details: {{snapshot.invalid_details}} {% else %} {{form.fire_not_found}} {% endif %}
+                {{form.fire_not_found}}
                 <span class="div_invalid_details" style="display: none; margin: 20px;">{% if not is_authorised %} Details{{form.invalid_details}} {% endif %}</span>
             </td>
 
             <th class="cbas" style="font-weight:normal;" width='17%'>Fire monitored only</th>
-  	        <td colspan="2" class="cbas" >{% if is_authorised %} {{snapshot.fire_monitored_only|yesno:"Yes,No"}}{% else %} {{form.fire_monitored_only}} {% endif %}</td>
+            <td colspan="2" class="cbas" >{{form.fire_monitored_only}}</td>
         </tr>
 
         <tr>
             <th id="id_th_field_officer" class="cbas" style="font-weight:normal;">Field Officer</th>
-            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.field_officer|is_none}} {% else %} {{form.field_officer}} {% endif %}</td>
+            <td colspan="2" class="cbas">{{form.field_officer}}</td>
 
             <th class="cbas">Job code *</th>
-            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.job_code}} {% else %} {{form.job_code}} {% endif %}</td>
+            <td colspan="2" class="cbas">{{form.job_code}}</td>
         </tr>
-
-
   </tbody>
 </table>
 
@@ -48,70 +46,26 @@
 
         <tr>
             <th class="cbas">Fuel and fire behaviour *</th>
-			<td colspan="5" class="cbas" > 
-				{% if is_authorised %} {{form.fire_behaviour_unknown|yesno:"Unknown,Known"}} {% else %} {{form.fire_behaviour_unknown}} Unknown {% endif %}
-				<div class="div_fire_behaviour_unknown" style="display: true;">{% include "bfrs/fire_behaviour_fs.html" %}</div>
-			</td>
+                <td colspan="5" class="cbas" > 
+                {{form.fire_behaviour_unknown}} Unknown
+                <div class="div_fire_behaviour_unknown" style="display: true;">{% include "bfrs/fire_behaviour_fs.html" %}</div>
+            </td>
         </tr>
-
-        {% comment %}
-        <tr>
-            <th class="cbas" style="font-weight:normal;">Estimated Time to Control</th>
-	        <td colspan="2" class="cbas">
-				{% if is_authorised %}
-                  <span>{{snapshot.time_to_control_str}}</span>
-				{% else %}
-                  <span>{{form.days}} Days<br>{{form.hours}} Hours</span>
-				{% endif %}
-                {{time_to_control.as_hidden}}
-	        </td>
-
-            <th class="cbas" style="font-weight:normal;">Communications</th>
-			<td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.communications|is_none}} {% else %} <span>{{form.communications}}</span> {% endif %}</td>
-        </tr>
-        {% endcomment %}
-
-        {% comment %}
-        <tr>
-		    <th class="cbas">Assistance Required *<br><br><div class=div_assist style="display: none; font-weight:normal;">Details</div></th>
-            <td colspan="5" class="cbas">
-                {% if is_authorised %} {{ snapshot.assistance_req|assistance }} {% if snapshot.assistance_req %}<br>{{snapshot.assistance_details}} {% endif %}{% else %} {{form.assistance_req}} {% endif %}<br>
-		        <div class=div_assist style="display: none;">{% if is_authorised %}  {% else %} {{form.assistance_details}} {% endif %}</div>
-		    </td>
-        </tr>
-        {% endcomment %}
-
 
         <tr>
             <th class="cbas">Fire Cause *<br><br><br><br>
-				<div class=div_cause style="display: none;">Other Cause *</div>
-				<div class=div_cause_escape style="display: none;">Prescribed Burn ID *</div>
-			</th>
-			<td colspan="5" class="cbas">
-				{% if is_authorised %} {{snapshot.cause_state|cause_state}} {% else %} {{form.cause_state}} {% endif %}<br>
-                {% if is_authorised %} {{snapshot.cause}} {% else %} {{form.cause}} {% endif %}<br><br>
+                <div class=div_cause style="display: none;">Other Cause *</div>
+                <div class=div_cause_escape style="display: none;">Prescribed Burn ID *</div>
+            </th>
 
-                <div class="div_cause" style="display: none;">
-                    {% if is_authorised %} {{snapshot.other_cause|is_none}} {% else %} {{form.other_cause}} {% endif %}
-				</div>
+            <td colspan="5" class="cbas">
+                {{form.cause_state}}<br>
+                {{form.cause}}<br><br>
 
-                <div class="div_cause_escape" style="display: none;">
-                    {% if is_authorised %} {{snapshot.prescribed_burn_id|is_none}} {% else %} {{form.prescribed_burn_id}} {% endif %}
-				</div>
-
-			</td>
-
-
+                <div class="div_cause" style="display: none;">{{form.other_cause}}</div>
+                <div class="div_cause_escape" style="display: none;">{{form.prescribed_burn_id}}</div>
+            </td>
         </tr>
-
-            {% comment %}
-        <tr>
-
-
-            <th class="cbas">Duty Officer *</th>
-            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.duty_officer|is_none}} {% else %} {{form.duty_officer}} {% endif %}</td>
-        </tr>
-            {% endcomment %}
 
         {% if object.is_init_authorised_by %} 
         <tr>
@@ -123,62 +77,46 @@
         </tr>
         {% endif %}
 
-
         <tr>
-	    <th class="cbas" id="id_th_fire_contained_date" title=" Fire spread has been halted, though the fire may still be burning freely within the perimeter of the fire control lines">Date fire contained <i class="icon-info-sign icon-white"></i> *</th>
-            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.fire_contained_date}} {% else %} {{form.fire_contained_date}} {% endif %}</td>
+            <th class="cbas" id="id_th_fire_contained_date" title=" Fire spread has been halted, though the fire may still be burning freely within the perimeter of the fire control lines">Date fire contained <i class="icon-info-sign icon-white"></i> *</th>
+            <td colspan="2" class="cbas">{{form.fire_contained_date}}</td>
 
             <th class="cbas" id="id_th_initial_attack_agency">Initial attack agency *<br><br><div class=div_other_first_attack style="display: none;">Other initial attack agency *</div></th>
-            <td colspan="2" class="cbas">
-		{% if is_authorised %} {{snapshot.first_attack}}<br>{% if snapshot.other_first_attack %} {{snapshot.other_first_attack}} {% endif %}{% else %} {{form.first_attack}} {% endif %}<br>
-                <div class=div_other_first_attack style="display: none;">{% if is_authorised %} {{snapshot.other_first_attack}} {% else %} {{form.other_first_attack}} {% endif %}</div>
-            </td>
+            <td colspan="2" class="cbas">{{form.first_attack}}<br><div class=div_other_first_attack style="display: none;">{{form.other_first_attack}}</div></td>
         </tr>
 
         <tr>
-	    <th class="cbas" id="id_th_fire_controlled_date" title="Complete perimeter of fire is secured and no breakaway is expected">Date fire controlled <i class="icon-info-sign icon-white"></i> *</th>
-            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.fire_controlled_date}} {% else %} {{form.fire_controlled_date}} {% endif %}</td>
+            <th class="cbas" id="id_th_fire_controlled_date" title="Complete perimeter of fire is secured and no breakaway is expected">Date fire controlled <i class="icon-info-sign icon-white"></i> *</th>
+            <td colspan="2" class="cbas">{{form.fire_controlled_date}}</td>
 
             <th class="cbas" id="id_th_final_controlling_agency">Final controlling agency *<br><br><div class=div_other_final_control style="display: none;">Other final controlling agency *</div></th>
-            <td colspan="2" class="cbas">
-                {% if is_authorised %} {{snapshot.final_control}} <br>{% if snapshot.other_final_control %} {{snapshot.other_final_control}} {% endif %} {% else %} {{form.final_control}} {% endif %}<br>
-                <div class=div_other_final_control style="display: none;">{% if is_authorised %} {{snapshot.other_final_control}} {% else %} {{form.other_final_control}} {% endif %}</div>
-            </td>
-
+            <td colspan="2" class="cbas">{{form.final_control}}<br><div class=div_other_final_control style="display: none;">{{form.other_final_control}}</div></td>
         </tr>
 
         <tr>
-	        <th class="cbas" title='Placeholder ...'>Date fire inactive <i class="icon-info-sign icon-white"></i> *</th>
-            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.fire_safe_date}} {% else %} {{form.fire_safe_date}} {% endif %}</td>
+            <th class="cbas" title='Placeholder ...'>Date fire inactive <i class="icon-info-sign icon-white"></i> *</th>
+            <td colspan="2" class="cbas">{{form.fire_safe_date}}</td>
 
             <th class="cbas">Arson squad notified *</th>
-            <td colspan="2" class="cbas">
-		{% if is_authorised %} {{snapshot.arson_squad_notified|yesno:"Yes,No"}}{% if snapshot.arson_squad_notified|yesno:"Yes,No" == 'Yes' %}<br>Police offence no {{snapshot.offence_no}} {% endif %}{% else %} {{form.arson_squad_notified}} {% endif %}<br>
-                <span class="div_offence_no" style="display: none; margin: 0px;">{% if not is_authorised %} {{form.offence_no}} Police offence no {% endif %}</span>
-            </td>
-
-
+            <td colspan="2" class="cbas">{{form.arson_squad_notified}}<br><span class="div_offence_no" style="display: none; margin: 0px;">{{form.offence_no}} Police offence no</span></td>
         </tr>
 
         <tr>
             <th class="cbas">Maximum Fire Level *</th>
-            <td colspan="2" class="cbas">{% if is_authorised %} {{snapshot.max_fire_level}} {% else %} {{form.max_fire_level}} {% endif %}</td>
+            <td colspan="2" class="cbas">{{form.max_fire_level}}</td>
 
             <th class="cbas">Final fire size (ha) *</th>
-            <td colspan="2" class="cbas">
-                {% if is_authorised %} {{snapshot.area}} {% else %} {{form.area}} {% endif %}
-		<span id="div_area_limit" style="margin: 20px;">{% if is_authorised %} Is area < {{area_threshold}}ha? {{snapshot.area_limit|yesno:"Yes,No"}} {% else %} {{form.area_limit}} Area < {{area_threshold}}ha{% endif %}</span>
-            </td>
+            <td colspan="2" class="cbas">{{form.area}}<span id="div_area_limit" style="margin: 20px;">{{form.area_limit}} Area < {{area_threshold}}ha</span></td>
         </tr>
 
 
         {% if can_maintain_data %}
         <tr>
             <th class="cbas" style="font-weight:normal;">Reporting Year</th>
-            <td colspan="5" class="cbas">{% if is_authorised %} {{snapshot.reporting_year|fin_year}} {{form.reporting_year.as_hidden}} {% else %} {{form.reporting_year}} {% endif %}</td>
+            <td colspan="5" class="cbas">{{form.reporting_year}}</td>
         </tr>
         {% else %}
-	        {{form.reporting_year.as_hidden}}
+            {{form.reporting_year.as_hidden}}
         {% endif %}
 
   </tbody>
@@ -186,24 +124,23 @@
 
 <table class="table table-bordered table-striped table-condensed cbas">
     <thead>
-		<th class="cbas">Tenure of burnt area *</th>
-		<th class="cbas">Damage</th>
-		<th class="cbas" >Injuries and Fatalities</th>
+        <th class="cbas">Tenure of burnt area *</th>
+        <th class="cbas">Damage</th>
+        <th class="cbas" >Injuries and Fatalities</th>
     </thead>
     <tbody>
         <tr>
-		<td class="cbas">{% include "bfrs/tenure_veg.html" %}</td>
-		<td class="cbas">
-    		{% if is_authorised %} {{form.damage_unknown|yesno:"Unknown,Known"}} {% else %} {{form.damage_unknown}} No damage to report {% endif %}
-            {% include "bfrs/damage_fs.html" %}
-        </td>
-		<td class="cbas">
-    		{% if is_authorised %} {{form.injury_unknown|yesno:"Unknown,Known"}} {% else %} {{form.injury_unknown}} No injuries/fatalities to report {% endif %}
-            {% include "bfrs/injuries_fs.html" %}
-        </td>
+            <td class="cbas">{% include "bfrs/tenure_veg.html" %}</td>
+            <td class="cbas">
+                {{form.damage_unknown}} No damage to report
+                {% include "bfrs/damage_fs.html" %}
+            </td>
+                <td class="cbas">
+                {{form.injury_unknown}} No injuries/fatalities to report
+                {% include "bfrs/injuries_fs.html" %}
+            </td>
         </tr>
-
-  </tbody>
+    </tbody>
 </table>
 </div> <!-- div_form_invalidate -->
 

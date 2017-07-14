@@ -1,28 +1,65 @@
 <div class="div_damage_unknown">
-{% if is_authorised and final or action %}
+{% comment %}{% if is_authorised and final or action %}{% endcomment %}
+{{snapshot.is_init_authorised}}
+{{snapshot.is_final_authorised}}
+{% if static or action %}
+
     <table class="table_fs" border="0" >
         <tbody>
-            {% if snapshot.damages.exists %}
-				<th>Damage Type</th>
-				<th>Number</th>
-				{% for damage in snapshot.damages.all %}
-				<tr>
-					<td>{{ damage.damage_type }}</td>
-					<td>{{ damage.number }}</td>
-				</tr>
-				{% endfor %}
+
+            <th>Damage Type</th>
+            <th>Number</th>
+
+                {% for damage in damages.all %}
+                <tr>
+                    <td>{{ damage.damage_type }}</td>
+                    <td>{{ damage.number }}</td>
+                </tr>
+                {% endfor %}
+
+
+			{% comment %}
+			{% if not snapshot %} <!-- snapshot object not created yet -->
+				AA
+                {% for damage in snapshot.damages.all %}
+                <tr>
+                    <td>{{ damage.damage_type }}</td>
+                    <td>{{ damage.number }}</td>
+                </tr>
+                {% endfor %}
+
+            {% elif snapshot.bushfire.is_init_authorised and not snapshot.bushfire.is_final_authorised %}
+				BB
+                {% for damage in snapshot.damage_snapshot.all %}
+                <tr>
+                    <td>{{ damage.damage_type }}</td>
+                    <td>{{ damage.number }}</td>
+                </tr>
+                {% endfor %}
+
             {% else %}
-                <p> No damages</p>
+				CC
+                {% for damage in snapshot.damage_snapshot.all %}
+                <tr>
+                    <td>{{ damage.damage_type }}</td>
+                    <td>{{ damage.number }}</td>
+                </tr>
+                {% endfor %}
             {% endif %}
+			{% endcomment %}
+
         </tbody>
     </table>
+
 {% else %}
+
     <div id="id_damage" class="row formset damage-formset">
         <table class="table_fs" border="0">
             <tbody>
                 <th>Damage Type</th>
                 <th>Number</th>
                 <th></th>
+				DD
                 {% for form in damage_formset %}
                 <tr>
                   <td>{{ form.damage_type }}</td>

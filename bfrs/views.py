@@ -23,6 +23,7 @@ from bfrs.models import (Profile, Bushfire, BushfireSnapshot,
         SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS, SUBMIT_MANDATORY_FORMSETS,
         AUTH_MANDATORY_FIELDS, AUTH_MANDATORY_FIELDS_FIRE_NOT_FOUND, AUTH_MANDATORY_DEP_FIELDS, AUTH_MANDATORY_FORMSETS,
         check_mandatory_fields,
+        SNAPSHOT_INITIAL, SNAPSHOT_FINAL,
     )
 from bfrs.forms import (ProfileForm, BushfireFilterForm, BushfireUpdateForm,
         AreaBurntFormSet, InjuryFormSet, DamageFormSet, FireBehaviourFormSet,
@@ -311,6 +312,51 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
 
         return context
 
+class BushfireInitialSnapshotView(LoginRequiredMixin, generic.DetailView):
+
+    model = Bushfire
+    template_name = 'bfrs/detail_summary.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(BushfireInitialSnapshotView, self).get_context_data(**kwargs)
+
+        #self.object = Bushfirself.kwargs.get(self.pk_url_kwarg):
+        self.object = self.get_object()
+        #import ipdb; ipdb.set_trace()
+        context.update({
+            'initial': True,
+            'snapshot': self.object.initial_snapshot.bushfire,
+            'damages': self.object.initial_snapshot.damage_snapshot.exclude(snapshot_type=SNAPSHOT_FINAL),
+            'injuries': self.object.initial_snapshot.injury_snapshot.exclude(snapshot_type=SNAPSHOT_FINAL),
+            'fire_behaviour': self.object.initial_snapshot.fire_behaviour_snapshot.exclude(snapshot_type=SNAPSHOT_FINAL),
+            'tenures_burnt': self.object.initial_snapshot.tenures_burnt_snapshot.exclude(snapshot_type=SNAPSHOT_FINAL).order_by('id'),
+        })
+        return context
+
+
+class BushfireFinalSnapshotView(LoginRequiredMixin, generic.DetailView):
+
+    model = Bushfire
+    template_name = 'bfrs/detail_summary.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(BushfireInitialSnapshotView, self).get_context_data(**kwargs)
+
+        #self.object = Bushfirself.kwargs.get(self.pk_url_kwarg):
+        self.object = self.get_object()
+        context.update({
+            'final': True,
+            'snapshot': self.object.final_snapshot.bushfire,
+            'damages': self.object.final_snapshot.damage_snapshot.exclude(snapshot_type=SNAPSHOT_INITIAL),
+            'injuries': self.object.final_snapshot.injury_snapshot.exclude(snapshot_type=SNAPSHOT_INITIAL),
+            'fire_behaviour': self.object.final_snapshot.fire_behaviour_snapshot.exclude(snapshot_type=SNAPSHOT_INITIAL),
+            'tenures_burnt': self.object.final_snapshot.tenures_burnt_snapshot.exclude(snapshot_type=SNAPSHOT_INITIAL).order_by('id'),
+        })
+        import ipdb; ipdb.set_trace()
+        return context
+
+
+
 
 @method_decorator(csrf_exempt, name='dispatch')
 class BushfireUpdateView(LoginRequiredMixin, UpdateView):
@@ -319,7 +365,19 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
     model = Bushfire
     form_class = BushfireUpdateForm
     template_name = 'bfrs/detail.html'
+    template_summary = 'bfrs/detail_summary.html'
     #template_name = 'bfrs/basic.html'
+
+    def get_template_names(self):
+        #import ipdb; ipdb.set_trace()
+        obj = self.get_object()
+        if is_external_user(self.request.user):
+            return [self.template_summary]
+        elif 'initial' in self.request.get_full_path() and obj.is_init_authorised:
+            return [self.template_summary]
+        elif 'final' in self.request.get_full_path() and obj.is_final_authorised:
+            return [self.template_summary]
+        return super(BushfireUpdateView, self).get_template_names()
 
     def get_success_url(self):
         return reverse("home")
@@ -376,11 +434,8 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
 
         return initial
 
-#    def get_template_names(self):
-#        import ipdb; ipdb.set_trace()
-#        return super(BushfireUpdateView, self).get_template_names()
-
     def get(self, request, *args, **kwargs):
+        #import ipdb; ipdb.set_trace()
         if not self.get_object() and is_external_user(self.request.user):
             # external user cannot create bushfire
             return TemplateResponse(request, 'bfrs/error.html', context={'is_external_user': True, 'status':401}, status=401)
@@ -394,6 +449,7 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         return super(BushfireUpdateView, self).get_object(queryset)
 
     def post(self, request, *args, **kwargs):
+        #import ipdb; ipdb.set_trace()
 
         if self.request.POST.has_key('sss_create'):
             return self.render_to_response(self.get_context_data())
@@ -621,6 +677,7 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
             # Display both reports readonly
             is_authorised = True
             is_init_authorised = True
+            static = True
         else:
             # which url was clicked - initial or final
             if bushfire:
@@ -647,19 +704,19 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
                         'damage_formset': damage_formset,
                         'is_authorised': is_authorised, # If True, will make Report section of template read-only
                         'is_init_authorised': is_init_authorised, # If True, will make Notifications section of template read-only
-                        #'initial_snapshot': deserialize_bushfire('initial', bushfire) if bushfire and bushfire.initial_snapshot else self.get_object(),
-                        #'snapshot': deserialize_bushfire('final', bushfire) if bushfire and bushfire.final_snapshot else self.get_object(),
-                        'initial_snapshot': bushfire.initial_snapshot if bushfire and bushfire.initial_snapshot else self.get_object(),
-                        'snapshot': bushfire.final_snapshot if bushfire and bushfire.final_snapshot else self.get_object(),
+                        'snapshot': bushfire.initial_snapshot if 'final' in self.request.get_full_path() else bushfire, #snapshot,
                         'create': True if 'create' in self.request.get_full_path() else False,
                         'initial': True if 'initial' in self.request.get_full_path() else False,
                         'final': True if 'final' in self.request.get_full_path() else False,
+                        'static': True if self.template_summary in self.get_template_names() else False,
                         'can_maintain_data': can_maintain_data(self.request.user),
                         'is_external_user': is_external_user(self.request.user),
                         'area_threshold': settings.AREA_THRESHOLD,
                         'sss_data': json.loads(self.request.POST.get('sss_create')) if self.request.POST.has_key('sss_create') else None, # needed since no object created yet
                         'sss_url': settings.SSS_URL,
+			'test': [{'damage_type': 'Other Property', 'number': '1'}],
             })
+        #import ipdb; ipdb.set_trace()
         return context
 
 

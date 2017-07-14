@@ -1,4 +1,8 @@
-from bfrs.models import (Bushfire, BushfireSnapshot, AreaBurnt, Damage, Injury, FireBehaviour, Tenure)
+from bfrs.models import (Bushfire, BushfireSnapshot,
+    AreaBurnt, Damage, Injury, FireBehaviour, Tenure,
+    SNAPSHOT_INITIAL, SNAPSHOT_FINAL,
+    DamageSnapshot, InjurySnapshot, FireBehaviourSnapshot, AreaBurntSnapshot,
+    )
 #from bfrs.forms import (BaseAreaBurntFormSet)
 from django.db import IntegrityError, transaction
 from django.http import HttpResponse
@@ -52,6 +56,21 @@ def is_external_user(user):
     except:
         return True
 
+def damages(request, bushfire):
+    if 'initial' in request.get_full_path() and not bushfire.is_init_authorised:
+        return bushfire.damage.all()
+    if 'final' in request.get_full_path() and bushfire.is_init_authorised and not bushfire.is_final_authorised:
+        return bushfire.damage.all()
+
+    elif 'initial' in request.get_full_path() and bushfire.is_init_authorised and not bushfire.is_final_authorised:
+        return bushfire.damage.all()
+
+        return bushfire.damage.all().exlude(snapshot_type='final')
+        return bushfire.damage.filter(snapshot_type='initial')
+    elif self.bushfire.is_final_authorised:
+        return self.bushfire.final_snapshot.damage_snapshots.all()
+
+
 def model_to_dict(instance, include=[], exclude=[]):
     fields = instance._meta.concrete_fields
     if include:
@@ -60,9 +79,58 @@ def model_to_dict(instance, include=[], exclude=[]):
 
 def serialize_bushfire(auth_type, action, obj):
     action = action if action else 'Update'
-    snapshot_type = BushfireSnapshot.SNAPSHOT_INITIAL if auth_type == 'initial' else BushfireSnapshot.SNAPSHOT_FINAL
-    d = model_to_dict(obj, exclude=['id'])
-    BushfireSnapshot.objects.create(snapshot_type=snapshot_type, action=action, bushfire_id=obj.id, **d)
+    snapshot_type = SNAPSHOT_INITIAL if auth_type == 'initial' else SNAPSHOT_FINAL
+    d = model_to_dict(obj, exclude=['id', 'created', 'modified'])
+    s = BushfireSnapshot.objects.create(snapshot_type=snapshot_type, action=action, bushfire_id=obj.id, **d)
+
+    # create the formset snapshots and attach the bushfire_snapshot
+    for i in obj.damages.all():
+        #import ipdb; ipdb.set_trace()
+        damage_obj, created = DamageSnapshot.objects.update_or_create(
+            snapshot_id=s.id, snapshot_type=snapshot_type, damage_type=i.damage_type, number=i.number, creator=obj.modifier, modifier=obj.modifier
+        )
+
+    for i in obj.injuries.all():
+        injury_obj, created = InjurySnapshot.objects.update_or_create(
+            snapshot_id=s.id, snapshot_type=snapshot_type, injury_type=i.injury_type, number=i.number, creator=obj.modifier, modifier=obj.modifier
+        )
+
+    for i in obj.fire_behaviour.all():
+        fire_behaviour_obj, created = FireBehaviourSnapshot.objects.update_or_create(
+            snapshot_id=s.id, snapshot_type=snapshot_type, fuel_type=i.fuel_type, ros=i.ros, flame_height=i.flame_height, creator=obj.modifier, modifier=obj.modifier
+        )
+
+    for i in obj.tenures_burnt.all():
+        tenure_burnt_obj, created = AreaBurntSnapshot.objects.update_or_create(
+            snapshot_id=s.id, snapshot_type=snapshot_type, tenure_id=i.tenure_id, area=i.area, creator=obj.modifier, modifier=obj.modifier
+        )
+
+
+
+#    for i in obj.damages.all():
+#        damage_obj = DamageSnapshot.objects.create(
+#            damage_type=i.damage_type,
+#            number=i.number,
+#            snapshot=b.initial_snapshot if auth_type == 'initial' else b.final_snapshot,
+#            snapshot_type=snapshot_type
+#        )
+#
+#    for i in obj.injuries.all():
+#        injury_obj = InjurySnapshot.objects.create(
+#            injury_type=i.injury_type,
+#            number=i.number,
+#            snapshot=b.initial_snapshot if auth_type == 'initial' else b.final_snapshot,
+#            snapshot_type=snapshot_type
+#        )
+#
+#    for i in obj.tenures_burnt.all():
+#        injury_obj = InjurySnapshot.objects.create(
+#            injury_type=i.injury_type,
+#            number=i.number,
+#            snapshot=b.initial_snapshot if auth_type == 'initial' else b.final_snapshot,
+#            snapshot_type=snapshot_type
+#        )
+
 
 #    d = model_to_dict(obj, exclude=['id', 'snapshot', 'fire_number', 'district', 'year'])
 #    snapshot_obj, created = BushfireSnapshot.objects.update_or_create(

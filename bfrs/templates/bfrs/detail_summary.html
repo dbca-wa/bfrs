@@ -59,7 +59,7 @@
 <table class="table table-bordered table-striped table-condensed">
     <tbody>
         <tr>
-          <th colspan="6" style="background: black; color: white; text-align: center; font-size: 16px; padding: 12px;" > PARKS AND WILDLIFE NOTIFICATIONS</th>
+          <th colspan="6" style="background: black; color: white; text-align: left; font-size: 16px; padding: 12px;" > BUSHFIRE NOTIFICATION (submit within 30 mins of detection)</th>
         </tr>
 
         <tr>
@@ -94,6 +94,10 @@
 
             <th class="cbas" style="font-weight:normal;">Point of origin</th>
             <td colspan="5" class="cbas">
+                {{snapshot.origin_geo|is_none}} <br>
+                {{snapshot.sss_data_to_dict.origin_point_mga|is_none}}
+
+                {% comment %}
                 {% if is_init_authorised %} 
                    {{snapshot.origin_geo|is_none}} <br>
                    {{snapshot.sss_data_to_dict.origin_point_mga|is_none}}
@@ -101,6 +105,7 @@
                     {{form.origin_point.value|deg_min_sec}} <br>
                     {{object.sss_data_to_dict.origin_point_mga|is_none}}
                 {% endif %}
+                {% endcomment %}
             </td>
         </tr>
 
@@ -173,6 +178,8 @@
   <div class="navbar-inner">
     <div class="container">
       <p class="pull-right">
+
+      {% comment %}
       {% if object.report_status != object.STATUS_INVALIDATED or not object.report_status %}
         {% if create or initial %}
 
@@ -197,6 +204,9 @@
       {% else %}
         <a id="id_cancel_btn" href="{% url 'main' %}" class="btn btn-primary btn-danger">Cancel</a>
       {% endif %}
+      {% endcomment %}
+
+      <a id="id_cancel_btn" href="{% url 'main' %}" class="btn btn-primary btn-info">Return</a>
 
       </p>
     </div>

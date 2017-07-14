@@ -78,7 +78,8 @@
             {% elif bushfire.report_status == bushfire.STATUS_INVALIDATED %}
 			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="View the invalidated initial fire report"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-ban-circle icon-white"></i></a>
 		    {% else %}
-			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="Notifications fire report submitted on {{bushfire.init_authorised_date|date_fmt}} by {{bushfire.init_authorised_by}}"><span style="display:none">{{bushfire.report_status}}</span><font color="green"><i class="icon-ok icon-white"></i></font></a>
+			<a href="{% url 'bushfire:initial_snapshot' bushfire.id %}" title="Notifications fire report submitted on {{bushfire.init_authorised_date|date_fmt}} by {{bushfire.init_authorised_by}}"><span style="display:none">{{bushfire.report_status}}</span><font color="green"><i class="icon-ok icon-white"></i></font></a>
+			{% comment %}<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="Notifications fire report submitted on {{bushfire.init_authorised_date|date_fmt}} by {{bushfire.init_authorised_by}}"><span style="display:none">{{bushfire.report_status}}</span><font color="green"><i class="icon-ok icon-white"></i></font></a>{% endcomment %}
 		    {% endif %}
 		</td>
 

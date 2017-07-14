@@ -262,7 +262,8 @@ def qs_order_by(qs, arg=None):
     Usage:
         {{ qs|qs_order_by:"id" }}
     """
-    return qs.order_by('id')
+    #import ipdb; ipdb.set_trace()
+    return qs.order_by('id') if qs else []
 
 @register.filter()
 def to_int(value):

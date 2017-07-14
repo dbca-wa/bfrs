@@ -1,24 +1,34 @@
 {% load bfrs_tags %}
 
-{% if is_authorised or action %}
+{% comment %}{% if is_authorised or action %}{% endcomment %}
+{% if static or action %}
+
     <table class="table_fs" border="0" >
         <tbody>
-            {% if snapshot.tenures_burnt.exists %}
-		<th>Tenure</th>
-		<th>Area (ha)</th>
-		{% for area in snapshot.tenures_burnt.all|qs_order_by:"id" %}
-		<tr>
-			<td>{{ area.tenure }}</td>
-			<td>{{ area.area }}</td>
-		</tr>
-		{% endfor %}
+            <th>Tenure</th>
+            <th>Area (ha)</th>
+            {% if not snapshot.is_init_authorised or snapshot.is_init_authorised and not snapshot.is_final_authorised %}
+                {% for area in snapshot.tenures_burnt.all|qs_order_by:"id" %}
+                <tr>
+                    <td>{{ area.tenure }}</td>
+                    <td>{{ area.area }}</td>
+                </tr>
+                {% endfor %}
             {% else %}
-                <p>AA No Tenures</p>
+                {% for injury in snapshot.injury_snapshot.all|qs_order_by:"id" %}
+                <tr>
+                    <td>{{ area.tenure }}</td>
+                    <td>{{ area.area }}</td>
+                </tr>
+                {% endfor %}
             {% endif %}
         </tbody>
     </table>
+
     {{ area_burnt_formset.management_form }}
+
 {% else %}
+
     <div id="id_areas_burnt" class="row formset area-burnt-formset">
         <table class="table_fs" border="0">
             <tbody>

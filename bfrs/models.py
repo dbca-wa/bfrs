@@ -63,6 +63,13 @@ AUTH_MANDATORY_FORMSETS= [
     'injuries',
 ]
 
+SNAPSHOT_INITIAL = 1
+SNAPSHOT_FINAL = 2
+SNAPSHOT_TYPE_CHOICES = (
+    (SNAPSHOT_INITIAL, 'Initial'),
+    (SNAPSHOT_FINAL, 'Final'),
+)
+
 def current_finyear():
     return datetime.now().year if datetime.now().month>7 else datetime.now().year-1
 
@@ -345,16 +352,26 @@ class BushfireBase(Audit):
 
 class BushfireSnapshot(BushfireBase):
 
-    SNAPSHOT_INITIAL = 1
-    SNAPSHOT_FINAL = 2
-    SNAPSHOT_TYPE_CHOICES = (
-        (SNAPSHOT_INITIAL, 'Initial'),
-        (SNAPSHOT_FINAL, 'Final'),
-    )
-
     snapshot_type = models.PositiveSmallIntegerField(choices=SNAPSHOT_TYPE_CHOICES)
     action = models.CharField(verbose_name="Action Type", max_length=50)
+#    json_data = models.TextField(null=True, blank=True)
     bushfire = models.ForeignKey('Bushfire', related_name='snapshots')
+
+#    @property
+#    def json_data_todict(self):
+#        return json.loads(self.json_data) if self.json_data else None
+#
+#    @property
+#    def damages(self):
+#        return self.json_data_todict['damages'] if self.json_data_todict.has_key('damages') else []
+
+#    @property
+#    def damages(self):
+#        if self.bushfire.is_final_authorised:
+#            return self.bushfire.final_snapshot.damage_snapshots.all()
+#        elif self.bushfire.is_final_authorised:
+#            return self.bushfire.final_snapshot.damage_snapshots.all()
+
 
     def __str__(self):
         return ', '.join([self.fire_number, self.get_snapshot_type_display()])
@@ -382,12 +399,12 @@ class Bushfire(BushfireBase):
 
     @property
     def initial_snapshot(self):
-        qs = self.snapshots.filter(snapshot_type=BushfireSnapshot.SNAPSHOT_INITIAL)
+        qs = self.snapshots.filter(snapshot_type=SNAPSHOT_INITIAL)
         return qs.latest('created') if len(qs)>0 and self.is_init_authorised else None
 
     @property
     def final_snapshot(self):
-        qs = self.snapshots.filter(snapshot_type=BushfireSnapshot.SNAPSHOT_FINAL)
+        qs = self.snapshots.filter(snapshot_type=SNAPSHOT_FINAL)
         return qs.latest('created') if len(qs)>0 and self.is_final_authorised else None
 
     @property
@@ -661,10 +678,9 @@ class DamageType(models.Model):
 
 
 @python_2_unicode_compatible
-class AreaBurnt(models.Model):
-    tenure = models.ForeignKey(Tenure, related_name='tenures')
+class AreaBurntBase(models.Model):
+    tenure = models.ForeignKey(Tenure, related_name='%(class)s_tenures')
     area = models.DecimalField(verbose_name="Area (ha)", max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], null=True, blank=True)
-    bushfire = models.ForeignKey(Bushfire, related_name='tenures_burnt')
 
     def to_json(self):
         return json.dumps(self.to_dict)
@@ -676,50 +692,102 @@ class AreaBurnt(models.Model):
         return 'Tenure: {}, Area: {}'.format(self.tenure.name, self.area)
 
     class Meta:
+        abstract = True
+
+class AreaBurnt(AreaBurntBase):
+    bushfire = models.ForeignKey(Bushfire, related_name='tenures_burnt')
+
+    class Meta:
         unique_together = ('bushfire', 'tenure',)
-#        default_permissions = ('add', 'change', 'delete', 'view')
+
+
+class AreaBurntSnapshot(AreaBurntBase, Audit):
+    snapshot_type = models.PositiveSmallIntegerField(choices=SNAPSHOT_TYPE_CHOICES)
+    snapshot = models.ForeignKey(BushfireSnapshot, related_name='tenures_burnt_snapshot')
+
+    class Meta:
+        unique_together = ('tenure', 'snapshot', 'snapshot_type',)
 
 
 @python_2_unicode_compatible
-class Injury(models.Model):
+class InjuryBase(models.Model):
     injury_type = models.ForeignKey(InjuryType)
     number = models.PositiveSmallIntegerField(validators=[MinValueValidator(0)])
-    bushfire = models.ForeignKey(Bushfire, related_name='injuries')
 
     def __str__(self):
         return 'Injury Type {}, Number {}'.format(self.injury_type, self.number)
 
     class Meta:
+        abstract = True
+
+
+class Injury(InjuryBase):
+    bushfire = models.ForeignKey(Bushfire, related_name='injuries')
+
+    class Meta:
         unique_together = ('bushfire', 'injury_type',)
-#        default_permissions = ('add', 'change', 'delete', 'view')
 
 
-@python_2_unicode_compatible
-class Damage(models.Model):
+class InjurySnapshot(InjuryBase, Audit):
+    snapshot_type = models.PositiveSmallIntegerField(choices=SNAPSHOT_TYPE_CHOICES)
+    snapshot = models.ForeignKey(BushfireSnapshot, related_name='injury_snapshot')
+
+    class Meta:
+        unique_together = ('injury_type', 'snapshot', 'snapshot_type',)
+
+
+class DamageBase(models.Model):
     damage_type = models.ForeignKey(DamageType)
     number = models.PositiveSmallIntegerField(validators=[MinValueValidator(0)])
-    bushfire = models.ForeignKey(Bushfire, related_name='damages')
 
     def __str__(self):
         return 'Damage Type {}, Number {}'.format(self.damage_type, self.number)
 
     class Meta:
+        abstract = True
+
+
+class Damage(DamageBase):
+    bushfire = models.ForeignKey(Bushfire, related_name='damages')
+
+    class Meta:
         unique_together = ('bushfire', 'damage_type',)
-#        default_permissions = ('add', 'change', 'delete', 'view')
+
+
+class DamageSnapshot(DamageBase, Audit):
+    snapshot_type = models.PositiveSmallIntegerField(choices=SNAPSHOT_TYPE_CHOICES)
+    snapshot = models.ForeignKey(BushfireSnapshot, related_name='damage_snapshot')
+
+    class Meta:
+        unique_together = ('damage_type', 'snapshot', 'snapshot_type',)
+
 
 @python_2_unicode_compatible
-class FireBehaviour(models.Model):
+class FireBehaviourBase(models.Model):
     fuel_type = models.ForeignKey(FuelType)
     ros = models.PositiveSmallIntegerField(verbose_name="ROS (m/h)")
     flame_height = models.DecimalField(verbose_name="Flame height (m)", max_digits=6, decimal_places=1)
-    bushfire = models.ForeignKey(Bushfire, related_name='fire_behaviour')
 
     def __str__(self):
         return 'Fuel type {}, ROS {}, Flame height {}'.format(self.fuel_type, self.ros, self.flame_height)
 
     class Meta:
+        abstract = True
+
+
+class FireBehaviour(FireBehaviourBase):
+    bushfire = models.ForeignKey(Bushfire, related_name='fire_behaviour')
+
+    class Meta:
         unique_together = ('bushfire', 'fuel_type',)
-#        default_permissions = ('add', 'change', 'delete', 'view')
+
+
+class FireBehaviourSnapshot(FireBehaviourBase, Audit):
+    snapshot_type = models.PositiveSmallIntegerField(choices=SNAPSHOT_TYPE_CHOICES)
+    snapshot = models.ForeignKey(BushfireSnapshot, related_name='fire_behaviour_snapshot')
+
+    class Meta:
+        unique_together = ('fuel_type', 'snapshot', 'snapshot_type',)
 
 
 reversion.register(Bushfire, follow=['fire_behaviour', 'tenures_burnt', 'injuries', 'damages'])

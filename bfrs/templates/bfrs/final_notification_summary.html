@@ -31,7 +31,7 @@
             <th class="cbas">Fuel and fire behaviour *</th>
             <td colspan="5" class="cbas" > 
                 {{snapshot.fire_behaviour_unknown|yesno:"Unknown,Known"}}
-                {% if not snapshot.fire_behaviour_unknown %} {% include "bfrs/fire_behaviour_fs.html" %}{% endif %}
+                {% if not snapshot.fire_behaviour_unknown %} {% include "bfrs/fire_behaviour_fs_snapshot.html" %}{% endif %}
             </td>
         </tr>
 
@@ -73,7 +73,6 @@
 
             <th class="cbas" id="id_th_final_controlling_agency">Final controlling agency *<br><br><div class=div_other_final_control style="display: none;">Other final controlling agency *</div></th>
             <td colspan="2" class="cbas">{{snapshot.final_control}} <br>{% if snapshot.other_final_control %} {{snapshot.other_final_control}} {% endif %}</td>
-
         </tr>
 
         <tr>
@@ -113,14 +112,14 @@
     </thead>
     <tbody>
         <tr>
-            <td class="cbas">{% include "bfrs/tenure_veg.html" %}</td>
+            <td class="cbas">{% include "bfrs/tenure_veg_snapshot.html" %}</td>
             <td class="cbas">
                 {{snapshot.damage_unknown|yesno:"No damage to report,Known"}}
-                {% if not snapshot.damage_unknown %} {% include "bfrs/damage_fs.html" %}{% endif %}
+                {% if not snapshot.damage_unknown %} {% include "bfrs/damage_fs_snapshot.html" %}{% endif %}
             </td>
             <td class="cbas">
                 {{snapshot.injury_unknown|yesno:"No injuries/fatalities to report,Known"}}
-                {% if not snapshot.injury_unknown %} {% include "bfrs/injuries_fs.html" %}{% endif %}
+                {% if not snapshot.injury_unknown %} {% include "bfrs/injuries_fs_snapshot.html" %}{% endif %}
             </td>
         </tr>
     </tbody>

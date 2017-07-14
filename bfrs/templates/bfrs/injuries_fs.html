@@ -1,24 +1,31 @@
 <div class="div_injury_unknown">
-{% if is_authorised and final or action %}
+{% comment %}{% if is_authorised and final or action %}{% endcomment %}
+{% if static or action %}
+
     <table class="table_fs" border="0" >
         <tbody>
-            {% if snapshot.injuries.exists %}
-				<th>Injury Type</th>
-				<th>Number</th>
-				
-				{% for injury in snapshot.injuries.all %}
-				<tr>
-					<td>{{ injury.injury_type }}</td>
-					<td>{{ injury.number }}</td>
-				</tr>
-				{% endfor %}
-
+            <th>Injury Type</th>
+            <th>Number</th>
+            {% if not snapshot.is_init_authorised or snapshot.is_init_authorised and not snapshot.is_final_authorised %}
+                {% for injury in snapshot.injuries.all %}
+                <tr>
+                    <td>{{ injury.injury_type }}</td>
+                    <td>{{ injury.number }}</td>
+                </tr>
+                {% endfor %}
             {% else %}
-                <p> No Injuries or Fatalities</p>
+                {% for injury in snapshot.injury_snapshot.all %}
+                <tr>
+                    <td>{{ injury.injury_type }}</td>
+                    <td>{{ injury.number }}</td>
+                </tr>
+                {% endfor %}
             {% endif %}
         </tbody>
     </table>
+
 {% else %}
+
     <div id="id_injury" class="row formset injury-formset">
         <table class="table_fs" border="0">
             <tbody>
