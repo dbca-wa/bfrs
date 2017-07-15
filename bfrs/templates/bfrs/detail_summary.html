@@ -229,9 +229,9 @@
     <a href="javascript: history.go(-1)" class="btn btn-danger">Cancel</a>
 	{% endcomment %}
     {% if object.report_status < object.STATUS_INITIAL_AUTHORISED %}
-        <a id="id_cancel_btn" href="{% url 'bushfire:bushfire_initial' bushfire.id %}" class="btn btn-primary btn-danger">Cancel</a>
+        <a id="id_cancel_btn" href="{% url 'bushfire:bushfire_initial' snapshot.id %}" class="btn btn-primary btn-danger">Cancel</a>
     {% else %}
-        <a id="id_cancel_btn" href="{% url 'bushfire:bushfire_final' bushfire.id %}" class="btn btn-primary btn-danger">Cancel</a>
+        <a id="id_cancel_btn" href="{% url 'bushfire:bushfire_final' snapshot.id %}" class="btn btn-primary btn-danger">Cancel</a>
     {% endif %}
   </div>
 </form>
@@ -506,7 +506,7 @@ $('#id_fire_monitored_only').on('change', function() {
         //$('#id_fire_behaviour_unknown').prop('checked', false);
 	    $('.div_fire_behaviour_unknown').show(); 
 
-        {% if object.report_status >= object.STATUS_INITIAL_AUTHORISED and object.initial_snapshot_deserialized.dispatch_pw %}
+        {% if object.report_status >= object.STATUS_INITIAL_AUTHORISED and object.initial_snapshot.dispatch_pw %}
 	        $('#id_th_field_officer').css("font-weight", "bold");
 	        $("#id_th_field_officer").html("Field Officer *");
         {% endif %}

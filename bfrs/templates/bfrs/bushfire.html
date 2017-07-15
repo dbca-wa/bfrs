@@ -87,7 +87,8 @@
             {% if bushfire.report_status == bushfire.STATUS_INITIAL_AUTHORISED %}
 			<a href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Edit final fire report"><span style="display:none">{{bushfire.report_status}}</span><font color="red"><i class="icon-edit icon-white"></i></red></a>
             {% elif bushfire.report_status >= bushfire.STATUS_FINAL_AUTHORISED and bushfire.report_status != bushfire.STATUS_INVALIDATED%}
-			<a href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Final fire report authorised on {{bushfire.authorised_date}} by {{bushfire.authorised_by}}"><span style="display:none">{{bushfire.report_status}}</span><font color="green"><i class="icon-ok icon-white"></i></font></a>
+            {% comment %}<a href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Final fire report authorised on {{bushfire.authorised_date}} by {{bushfire.authorised_by}}"><span style="display:none">{{bushfire.report_status}}</span><font color="green"><i class="icon-ok icon-white"></i></font></a>{% endcomment %}
+			<a href="{% url 'bushfire:final_snapshot' bushfire.id %}" title="Final fire report authorised on {{bushfire.authorised_date}} by {{bushfire.authorised_by}}"><span style="display:none">{{bushfire.report_status}}</span><font color="green"><i class="icon-ok icon-white"></i></font></a>
 		    {% endif %}
 		</td>
 

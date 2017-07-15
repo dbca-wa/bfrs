@@ -177,7 +177,7 @@
             <td colspan="2" class="cbas"> {% if is_init_authorised %} {{snapshot.name}} {{form.name.as_hidden}}{% else %} {{form.name}} {% endif %} </td>
 
             <th class="cbas">Date and time fire detected *</th>
-            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.fire_detected_date}} {% else %} {{form.fire_detected_date}} {% endif %}</td>
+            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.fire_detected_date}} {{form.fire_detected_date}} {% else %} {{form.fire_detected_date}} {% endif %}</td>
         </tr>
 
         <tr>
@@ -192,7 +192,7 @@
             <th width="25%" class="cbas" style="font-weight:normal;">Position of fire<br>(street address, or km from landmark/suburb)</th>
             <td colspan="2" class="cbas">
                 {% if is_init_authorised %} 
-                    {{snapshot.fire_position}} 
+                    {{snapshot.fire_position}} {{form.fire_position.as_hidden}}
                 {% else %} 
                     {{form.fire_position}}<br>
                     <label for="id_fire_position_override"> SSS override</label><span style="float:left;">{{form.fire_position_override}}</span>
@@ -214,7 +214,7 @@
         <tr>
             <th class="cbas">Tenure of ignition point *<br><br><div class=div_tenure style="visibility: hidden;">Other Tenure *</div></th>
             <td colspan="2" class="cbas">{{form.tenure}}
-                <div class="div_tenure" style="visibility: hidden;">{% if is_init_authorised %} {{snapshot.other_tenure}} {% else %} {{form.other_tenure}} {% endif %}</div>
+                <div class="div_tenure" style="visibility: hidden;">{% if is_init_authorised %} {{snapshot.other_tenure}} {{form.other_tenure.as_hidden}} {% else %} {{form.other_tenure}} {% endif %}</div>
             </td>
 
             <th class="cbas">Duty Officer *</th>
@@ -224,20 +224,26 @@
         <tr>
             <th class="cbas">P&W Resource dispatched *<br><br><div class=div_dispatch_pw_date style="display: none;">Date and time of dispatch</div></th>
             <td colspan="2" class="cbas">
+                {% comment %}
                 {% if is_init_authorised %} 
                     {{snapshot.get_dispatch_pw_display}}{% if snapshot.dispatch_pw == object.DISPATCH_PW_YES %}<br>{{snapshot.dispatch_pw_date}} {% endif %}
                 {% else %} 
                     {{form.dispatch_pw}}<br><div class=div_dispatch_pw_date style="display: none;">{{form.dispatch_pw_date}}</div>
                 {% endif %}
+                {% endcomment %}
+                {{form.dispatch_pw}}<br><div class=div_dispatch_pw_date style="display: none;">{{form.dispatch_pw_date}}</div>
             </td>
 
             <th class="cbas">Aerial suppression dispatched *<br><br><div class=div_dispatch_aerial_date style="display: none;">Date and time of dispatch</div></th>
             <td colspan="2" class="cbas">
+                {% comment %}
                 {% if is_init_authorised %} 
                     {{snapshot.dispatch_aerial|yesno:"Yes,No"}}{% if snapshot.dispatch_aerial|yesno:"Yes,No" == 'Yes' %}<br>{{snapshot.dispatch_aerial_date}}{% endif %}
                 {% else %} 
                     {{form.dispatch_aerial}}<br><div class=div_dispatch_aerial_date style="display: none;">{{form.dispatch_aerial_date}}</div>
                 {% endif %} 
+                {% endcomment %}
+                {{form.dispatch_aerial}}<br><div class=div_dispatch_aerial_date style="display: none;">{{form.dispatch_aerial_date}}</div>
             </td>
         </tr>
 
@@ -245,7 +251,7 @@
             <th class="cbas" id="id_th_initial_controlling_agency">Initial controlling agency *<br><br><div class=div_other_initial_control style="display: none;">Other initial controlling agency *</div></th>
             <td colspan="2" class="cbas">
                 {% if is_init_authorised %} 
-                    {{snapshot.initial_control}} <br>{% if snapshot.other_initial_control %}Other agency: {{snapshot.other_initial_control}} {% endif %}
+                    {{snapshot.initial_control}} {{form.initial_control.as_hidden}} <br>{% if snapshot.other_initial_control %}Other agency: {{snapshot.other_initial_control}} {{form.other_initial_control.as_hidden}} {% endif %}
                 {% else %} 
                     {{form.initial_control}}<br><div class=div_other_initial_control style="display: none;">{{form.other_initial_control}}</div>
                 {% endif %} 
@@ -254,7 +260,7 @@
             <th class="cbas">Area of fire at arrival (ha) *</th>
             <td colspan="2" class="cbas">
                 {% if is_init_authorised %} 
-                    {% if snapshot.initial_area_unknown %} Unknown{% else %}{{snapshot.initial_area}}{% endif %}
+                {% if snapshot.initial_area_unknown %} {{form.initial_area_unknown.as_hidden}} Unknown{% else %}{{snapshot.initial_area}} {{form.initial_area.as_hidden}} {% endif %}
                 {% else %} 
                     <span class="div_initial_area_unknown" style="display: none;">{{form.initial_area_unknown}} Unknown<br></span>
                     <div class="div_initial_area" style="visibility: visible;">{{form.initial_area}}</div>
@@ -265,27 +271,27 @@
 
         <tr>
             <th class="cbas">Probable Fire Level *</th>
-             <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.prob_fire_level}} {% else %} {{form.prob_fire_level}} {% endif %}</td>
+            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.prob_fire_level}} {{form.prob_fire_level.as_hidden}} {% else %} {{form.prob_fire_level}} {% endif %}</td>
 
             <th class="cbas">Investigation required *</th>
-            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.investigation_req|yesno:"Yes,No"}} {% else %} {{form.investigation_req}} {% endif %}</td>
+            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.investigation_req|yesno:"Yes,No"}} {{form.investigation_req.as_hidden}} {% else %} {{form.investigation_req}} {% endif %}</td>
         </tr>
 
         <tr>
             <th class="cbas">Media Alert Required *</th>
             <td colspan="2" class="cbas">
-                {% if is_init_authorised %} {{snapshot.media_alert_req|yesno:"Yes,No"}}<br> {% else %} {{form.media_alert_req}}<br> {% endif %} <span class="div_pica" style="display: none;">call PICA on 9219 9999</span>
+                {% if is_init_authorised %} {{snapshot.media_alert_req|yesno:"Yes,No"}}<br>{{form.media_alert_req.as_hidden}} {% else %} {{form.media_alert_req}}<br> {% endif %} <span class="div_pica" style="display: none;">call PICA on 9219 9999</span>
             </td>
 
             <th class="cbas">Park and/or Trail *<br>potentially impacted</th>
             <td colspan="2" class="cbas">
-                {% if is_init_authorised %} {{snapshot.park_trail_impacted|yesno:"Yes,No"}}<br> {% else %} {{form.park_trail_impacted}}<br> {% endif %}<span class="div_pvs" style="display: none;">PVS will be notified by email</span>
+                {% if is_init_authorised %} {{snapshot.park_trail_impacted|yesno:"Yes,No"}} {{form.park_trail_impacted.as_hidden}}<br> {% else %} {{form.park_trail_impacted}}<br> {% endif %}<span class="div_pvs" style="display: none;">PVS will be notified by email</span>
             </td>
         </tr>
 
         <tr>
             <th class="cbas" style="font-weight:normal;">Other information<br>(include Burn ID if cause is escape)</th>
-			<td colspan="5" class="cbas">{% if is_init_authorised %} {{snapshot.other_info}}<br> {% else %} {{form.other_info}} {% endif %}</td>
+            <td colspan="5" class="cbas">{% if is_init_authorised %} {{snapshot.other_info}} {{form.other_info.as_hidden}}<br> {% else %} {{form.other_info}} {% endif %}</td>
         </tr>
 
   </tbody>
@@ -320,7 +326,11 @@
           {% if create %}
             <input type="submit" value="Save and continue" class="btn btn-primary btn-success" name="_save_continue" />
           {% else %}
-            <input type="submit" value="Submit" class="btn btn-primary btn-success" name="submit_initial" {% if is_init_authorised %}title="Initial Report already submitted" disabled{% else %}title="Save and submit"{% endif %} />
+          <input type="submit" value="Submit" class="btn btn-primary btn-success" name="submit_initial" {% if is_init_authorised %}title="Initial Report already submitted" disabled{% else %}title="Save and submit"{% endif %} />
+          {% comment %}
+            <a id="id_submit_btn" href="{% url 'bushfire:initial_snapshot' snapshot.id %}?action=submit_initial" class="btn btn-primary btn-danger">Submit 2</a>
+            <input formaction="{% url 'bushfire:initial_snapshot' snapshot.id %}" type="submit" value="Submit" class="btn btn-primary btn-success" name="submit_initial" />
+          {% endcomment %}
           {% endif %}
 
         {% else %}
@@ -344,6 +354,7 @@
 {% endif %}
 
 </form>
+
 
 {% if action %}
 <!-- This section to allow redirect confirmation -->
@@ -635,7 +646,7 @@ $('#id_fire_monitored_only').on('change', function() {
         //$('#id_fire_behaviour_unknown').prop('checked', false);
 	    $('.div_fire_behaviour_unknown').show(); 
 
-        {% if object.report_status >= object.STATUS_INITIAL_AUTHORISED and object.initial_snapshot_deserialized.dispatch_pw %}
+        {% if object.report_status >= object.STATUS_INITIAL_AUTHORISED and object.initial_snapshot.dispatch_pw %}
 	        $('#id_th_field_officer').css("font-weight", "bold");
 	        $("#id_th_field_officer").html("Field Officer *");
         {% endif %}

@@ -1,7 +1,11 @@
+from django.template.response import TemplateResponse
 from bfrs.models import (Bushfire, BushfireSnapshot,
     AreaBurnt, Damage, Injury, FireBehaviour, Tenure,
     SNAPSHOT_INITIAL, SNAPSHOT_FINAL,
     DamageSnapshot, InjurySnapshot, FireBehaviourSnapshot, AreaBurntSnapshot,
+    SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS, SUBMIT_MANDATORY_FORMSETS,
+    AUTH_MANDATORY_FIELDS, AUTH_MANDATORY_FIELDS_FIRE_NOT_FOUND, AUTH_MANDATORY_DEP_FIELDS, AUTH_MANDATORY_FORMSETS,
+    check_mandatory_fields,
     )
 #from bfrs.forms import (BaseAreaBurntFormSet)
 from django.db import IntegrityError, transaction
@@ -56,19 +60,19 @@ def is_external_user(user):
     except:
         return True
 
-def damages(request, bushfire):
-    if 'initial' in request.get_full_path() and not bushfire.is_init_authorised:
-        return bushfire.damage.all()
-    if 'final' in request.get_full_path() and bushfire.is_init_authorised and not bushfire.is_final_authorised:
-        return bushfire.damage.all()
-
-    elif 'initial' in request.get_full_path() and bushfire.is_init_authorised and not bushfire.is_final_authorised:
-        return bushfire.damage.all()
-
-        return bushfire.damage.all().exlude(snapshot_type='final')
-        return bushfire.damage.filter(snapshot_type='initial')
-    elif self.bushfire.is_final_authorised:
-        return self.bushfire.final_snapshot.damage_snapshots.all()
+#def damages(request, bushfire):
+#    if 'initial' in request.get_full_path() and not bushfire.is_init_authorised:
+#        return bushfire.damage.all()
+#    if 'final' in request.get_full_path() and bushfire.is_init_authorised and not bushfire.is_final_authorised:
+#        return bushfire.damage.all()
+#
+#    elif 'initial' in request.get_full_path() and bushfire.is_init_authorised and not bushfire.is_final_authorised:
+#        return bushfire.damage.all()
+#
+#        return bushfire.damage.all().exlude(snapshot_type='final')
+#        return bushfire.damage.filter(snapshot_type='initial')
+#    elif self.bushfire.is_final_authorised:
+#        return self.bushfire.final_snapshot.damage_snapshots.all()
 
 
 def model_to_dict(instance, include=[], exclude=[]):
@@ -105,33 +109,6 @@ def serialize_bushfire(auth_type, action, obj):
             snapshot_id=s.id, snapshot_type=snapshot_type, tenure_id=i.tenure_id, area=i.area, creator=obj.modifier, modifier=obj.modifier
         )
 
-
-
-#    for i in obj.damages.all():
-#        damage_obj = DamageSnapshot.objects.create(
-#            damage_type=i.damage_type,
-#            number=i.number,
-#            snapshot=b.initial_snapshot if auth_type == 'initial' else b.final_snapshot,
-#            snapshot_type=snapshot_type
-#        )
-#
-#    for i in obj.injuries.all():
-#        injury_obj = InjurySnapshot.objects.create(
-#            injury_type=i.injury_type,
-#            number=i.number,
-#            snapshot=b.initial_snapshot if auth_type == 'initial' else b.final_snapshot,
-#            snapshot_type=snapshot_type
-#        )
-#
-#    for i in obj.tenures_burnt.all():
-#        injury_obj = InjurySnapshot.objects.create(
-#            injury_type=i.injury_type,
-#            number=i.number,
-#            snapshot=b.initial_snapshot if auth_type == 'initial' else b.final_snapshot,
-#            snapshot_type=snapshot_type
-#        )
-
-
 #    d = model_to_dict(obj, exclude=['id', 'snapshot', 'fire_number', 'district', 'year'])
 #    snapshot_obj, created = BushfireSnapshot.objects.update_or_create(
 #        fire_number=obj.fire_number, district=obj.district, year=obj.year, created=obj.created, snapshot_type=snapshot_type,
@@ -141,24 +118,24 @@ def serialize_bushfire(auth_type, action, obj):
     #archive_snapshot(auth_type, action, obj)
     #obj.save()
 
-def deserialize_bushfire(auth_type, obj):
-    """Returns a deserialized Bushfire object
-
-       obj is either:
-         1. bushfire obj, eg.
-            b=Bushfire.objects.get(id=12)
-            deserialize_bushfire('final', b.final_snapshot)
-
-         2. serialized json object (bushfire text string JSONified), eg.
-            snapshop_history_obj=b.snapshot_history.all()[0]
-            deserialize_bushfire(snapshots_history_obj.auth_type, snapshots_history_obj.snapshot)
-    """
-    if auth_type == 'initial':
-        obj = obj.initial_snapshot if hasattr(obj, 'initial_snapshot') else obj
-    if auth_type == 'final':
-        obj = obj.final_snapshot if hasattr(obj, 'final_snapshot') else obj
-
-    return serializers.deserialize("json", obj).next().object
+#def deserialize_bushfire(auth_type, obj):
+#    """Returns a deserialized Bushfire object
+#
+#       obj is either:
+#         1. bushfire obj, eg.
+#            b=Bushfire.objects.get(id=12)
+#            deserialize_bushfire('final', b.final_snapshot)
+#
+#         2. serialized json object (bushfire text string JSONified), eg.
+#            snapshop_history_obj=b.snapshot_history.all()[0]
+#            deserialize_bushfire(snapshots_history_obj.auth_type, snapshots_history_obj.snapshot)
+#    """
+#    if auth_type == 'initial':
+#        obj = obj.initial_snapshot if hasattr(obj, 'initial_snapshot') else obj
+#    if auth_type == 'final':
+#        obj = obj.final_snapshot if hasattr(obj, 'final_snapshot') else obj
+#
+#    return serializers.deserialize("json", obj).next().object
 
 #def serialize_bushfire(auth_type, action, obj):
 #    "Serializes a Bushfire object"
@@ -256,6 +233,51 @@ def invalidate_bushfire(obj, new_district, user):
 
         return obj
     return False
+
+def authorise_report(request, obj):
+    """ Sets the
+        1. initial report to 'Submitted' status, or
+        2. final report to 'Authorisd' status
+    """
+    template_summary = 'bfrs/detail_summary.html'
+    template_mandatory_fields = 'bfrs/mandatory_fields.html'
+    context = {
+        'is_authorised': True,
+        'object': obj,
+        'snapshot': obj,
+        'damages': obj.damages,
+        'injuries': obj.injuries,
+        'fire_behaviour': obj.fire_behaviour,
+        'tenures_burnt': obj.tenures_burnt.order_by('id'),
+    }
+
+    #import ipdb; ipdb.set_trace()
+    if request.POST.has_key('submit_initial'):
+        action = request.POST.get('submit_initial')
+        if action == 'Submit':
+            context['action'] = action
+            context['initial'] = True
+            context['mandatory_fields'] = check_mandatory_fields(obj, SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS, SUBMIT_MANDATORY_FORMSETS)
+
+            if context['mandatory_fields']:
+                return TemplateResponse(request, template_mandatory_fields, context=context)
+
+            return TemplateResponse(request, template_summary, context=context)
+
+    elif request.POST.has_key('authorise_final'):
+        action = request.POST.get('authorise_final')
+        if action == 'Authorise':
+            context['action'] = action
+            context['final'] = True
+            fields = AUTH_MANDATORY_FIELDS_FIRE_NOT_FOUND if obj.fire_not_found else AUTH_MANDATORY_FIELDS
+            context['mandatory_fields'] = check_mandatory_fields(obj, fields, AUTH_MANDATORY_DEP_FIELDS, AUTH_MANDATORY_FORMSETS)
+
+            if context['mandatory_fields']:
+                return TemplateResponse(request, template_mandatory_fields, context=context)
+
+            return TemplateResponse(request, template_summary, context=context)
+
+    return None
 
 
 def create_areas_burnt(bushfire, area_burnt_list):

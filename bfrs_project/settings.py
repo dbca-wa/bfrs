@@ -80,6 +80,8 @@ if not DEBUG:
         'bfrs-dev.dbca.wa.gov.au.',
         'aws-oim-001',
         'aws-oim-001.',
+        '192.168.0.4',
+        '192.168.0.4.',
     ]
 
 ALLOWED_HOSTS = [
@@ -95,6 +97,8 @@ ALLOWED_HOSTS = [
     'bfrs-dev.dbca.wa.gov.au.',
     'aws-oim-001',
     'aws-oim-001.',
+    '192.168.0.4',
+    '192.168.0.4.',
 ]
 
 # Application definition

@@ -487,17 +487,17 @@ class Bushfire(BushfireBase):
     def is_final_authorised(self):
         return True if self.authorised_by and self.authorised_date and self.report_status >= Bushfire.STATUS_FINAL_AUTHORISED else False
 
-    @property
-    def is_reviewed(self):
-        return False # no need to lock down Review report
+#    @property
+#    def is_reviewed(self):
+#        return False # no need to lock down Review report
 
     @property
     def can_create_final(self):
         return self.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED
 
-    @property
-    def can_create_review(self):
-        return self.report_status >= Bushfire.STATUS_FINAL_AUTHORISED
+#    @property
+#    def can_create_review(self):
+#        return self.report_status >= Bushfire.STATUS_FINAL_AUTHORISED
 
     @property
     def has_restapi_write_perms(self):
@@ -544,64 +544,61 @@ class Bushfire(BushfireBase):
             s += ' ' + str(self.time_to_control.seconds/3600) + ' Hours' if self.time_to_control.seconds>0 else ''
         return s if s else '-'
 
-    def initial_snapshot_deserialized(self):
-        obj = self.initial_snapshot if hasattr(self, 'initial_snapshot') else None
-        return serializers.deserialize("json", obj).next().object
+#    def initial_snapshot_deserialized(self):
+#        obj = self.initial_snapshot if hasattr(self, 'initial_snapshot') else None
+#        return serializers.deserialize("json", obj).next().object
+#
+#    def final_snapshot_deserialized(self):
+#        obj = self.final_snapshot if hasattr(self, 'final_snapshot') else None
+#        return serializers.deserialize("json", obj).next().object
 
-    def final_snapshot_deserialized(self):
-        obj = self.final_snapshot if hasattr(self, 'final_snapshot') else None
-        return serializers.deserialize("json", obj).next().object
-
-    def compare(self, obj):
-        """
-        Returns a dict of fields that have changed between a pair of snpshots (or the diff fields between two model instances)
-
-        Example usage:
-            b=Bushfire.objects.get(id=18)
-            b.snapshots.all().order_by('created')
-            s1=b.snapshots.all().order_by('created')[0]
-            s2=b.snapshots.all().order_by('created')[1]
-            s1.deserialize().compare(s2.deserialize())
-
-        """
-        excluded_keys = [
-            '_initial', '_state', '_changed_data', 'id',
-            'creator_id', 'modifier_id', 'created', 'modified',
-            'init_authorised_date', 'authorised_date', 'reviewed_date', 'init_authorised_by_id', 'authorised_by_id', 'reviewed_by_id',
-            'sss_data', 'initial_snapshot', 'final_snapshot', 'origin_point', 'fire_boundary'
-        ]
-
-        return self._compare(self, obj, excluded_keys)
-
-    def _compare(self, obj1, obj2, excluded_keys):
-        d1, d2 = obj1.__dict__, obj2.__dict__
-
-        old, new = {}, {}
-        for k,v in d1.items():
-            if k in excluded_keys:
-                continue
-            try:
-                if v != d2[k]:
-                    if hasattr(self, 'get_' + k  +'_display'):
-                        #v2 = getattr(obj2, 'get_report_status_display')()
-                        v1 = getattr(obj1, 'get_' + k + '_display')()
-                        v2 = getattr(obj2, 'get_' + k + '_display')()
-                    else:
-                        v1 = v
-                        v2 = d2[k]
-                    field = ' '.join(k.split('_')).capitalize()
-
-                    old.update({field: [v1, v2]})
-                    #old.update({k: [v, d2[k]]})
-                    #new.update({k: d2[k]})
-            except KeyError:
-                old.update({k: v})
-
-        #return old, new
-        return old
-
-
-
+#    def compare(self, obj):
+#        """
+#        Returns a dict of fields that have changed between a pair of snpshots (or the diff fields between two model instances)
+#
+#        Example usage:
+#            b=Bushfire.objects.get(id=18)
+#            b.snapshots.all().order_by('created')
+#            s1=b.snapshots.all().order_by('created')[0]
+#            s2=b.snapshots.all().order_by('created')[1]
+#            s1.deserialize().compare(s2.deserialize())
+#
+#        """
+#        excluded_keys = [
+#            '_initial', '_state', '_changed_data', 'id',
+#            'creator_id', 'modifier_id', 'created', 'modified',
+#            'init_authorised_date', 'authorised_date', 'reviewed_date', 'init_authorised_by_id', 'authorised_by_id', 'reviewed_by_id',
+#            'sss_data', 'initial_snapshot', 'final_snapshot', 'origin_point', 'fire_boundary'
+#        ]
+#
+#        return self._compare(self, obj, excluded_keys)
+#
+#    def _compare(self, obj1, obj2, excluded_keys):
+#        d1, d2 = obj1.__dict__, obj2.__dict__
+#
+#        old, new = {}, {}
+#        for k,v in d1.items():
+#            if k in excluded_keys:
+#                continue
+#            try:
+#                if v != d2[k]:
+#                    if hasattr(self, 'get_' + k  +'_display'):
+#                        #v2 = getattr(obj2, 'get_report_status_display')()
+#                        v1 = getattr(obj1, 'get_' + k + '_display')()
+#                        v2 = getattr(obj2, 'get_' + k + '_display')()
+#                    else:
+#                        v1 = v
+#                        v2 = d2[k]
+#                    field = ' '.join(k.split('_')).capitalize()
+#
+#                    old.update({field: [v1, v2]})
+#                    #old.update({k: [v, d2[k]]})
+#                    #new.update({k: d2[k]})
+#            except KeyError:
+#                old.update({k: v})
+#
+#        #return old, new
+#        return old
 
 
 @python_2_unicode_compatible
