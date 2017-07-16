@@ -1,5 +1,6 @@
+from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
-from bfrs.models import (Bushfire, BushfireSnapshot,
+from bfrs.models import (Bushfire, BushfireSnapshot, District,
     AreaBurnt, Damage, Injury, FireBehaviour, Tenure,
     SNAPSHOT_INITIAL, SNAPSHOT_FINAL,
     DamageSnapshot, InjurySnapshot, FireBehaviourSnapshot, AreaBurntSnapshot,
@@ -234,6 +235,46 @@ def invalidate_bushfire(obj, new_district, user):
         return obj
     return False
 
+def check_district_changed(request, obj, form):
+    """
+    Checks if district is changed from within the bushfire reporting system (FSSDRS Group can do this)
+    Further, primary use case is to update the district from SSS, which then executes the equiv code below from bfrs/api.py
+    """
+    if obj:
+        cur_obj = Bushfire.objects.get(id=obj.id)
+        district = District.objects.get(id=request.POST['district']) if request.POST.has_key('district') else None # get the district from the form
+        if request.POST.has_key('action') and request.POST.get('action')=='invalidate' and cur_obj.report_status!=Bushfire.STATUS_INVALIDATED:
+            obj.invalid_details = request.POST.get('invalid_details')
+            obj.save()
+            obj = invalidate_bushfire(obj, district, request.user)
+            #url_name = 'bushfire_initial' if self.object.report_status < Bushfire.STATUS_INITIAL_AUTHORISED else 'bushfire_final'
+            #return  HttpResponseRedirect(reverse('bushfire:' + url_name, kwargs={'pk': self.object.id}))
+            return HttpResponseRedirect(reverse("home"))
+
+        elif district != cur_obj.district and not request.POST.has_key('fire_not_found'):
+            if cur_obj.fire_not_found and form.is_valid():
+                # logic below to save object, present to allow final form change from fire_not_found=True --> to fire_not_found=False. Will allow correct fire_number invalidation
+                obj = form.save(commit=False)
+                obj.modifier = request.user
+                obj.region = cur_obj.region # this will allow invalidate_bushfire() to invalidate and create the links as necessary
+                obj.district = cur_obj.district
+                obj.fire_number = cur_obj.fire_number
+                obj.save()
+
+            message = 'District has changed (from {} to {}). This action will invalidate the existing bushfire and create  a new bushfire with the new district, and a new fire number.'.format(
+                cur_obj.district.name,
+                district.name
+            )
+            context={
+                'action': 'invalidate',
+                'district': district.id,
+                'message': message,
+            }
+            return TemplateResponse(request, 'bfrs/confirm.html', context=context)
+
+    return None
+
+
 def authorise_report(request, obj):
     """ Sets the
         1. initial report to 'Submitted' status, or
@@ -278,7 +319,6 @@ def authorise_report(request, obj):
             return TemplateResponse(request, template_summary, context=context)
 
     return None
-
 
 def create_areas_burnt(bushfire, area_burnt_list):
     """
@@ -659,337 +699,6 @@ def refresh_gokart(request, fire_number=None, region=None, district=None, action
     request.session['district'] = district if district else 'null'
     request.session['id'] = fire_number if fire_number else 'null'
     request.session['action'] = action
-
-def create_view():
-    """
-    cursor.execute('''drop view bfrs_bushfire_v''')
-    """
-    from django.db import connection
-    cursor = connection.cursor()
-    cursor.execute('''
-    CREATE OR REPLACE VIEW bfrs_bushfire_v AS
-    SELECT b.id,
-    b.origin_point,
-    CASE WHEN b.report_status >= 2 THEN ST_AsGeoJSON(st_envelope(b.fire_boundary))
-     	 ELSE ST_AsGeoJSON(b.fire_boundary)
-    END as fire_boundary,
-    b.created,
-    b.modified,
-    b.name,
-    b.fire_number,
-    b.year,
-    b.reporting_year,
-    b.prob_fire_level,
-    b.max_fire_level,
-    CASE WHEN media_alert_req THEN 1
-     	 ELSE 0
-    END as media_alert_req,
-    CASE WHEN park_trail_impacted THEN 1
-     	 ELSE 0
-    END as park_trail_impacted,
-    b.cause_state,
-    b.other_cause,
-    b.other_tenure,
-    b.dfes_incident_no,
-    b.job_code,
-    b.fire_position,
-    CASE WHEN fire_position_override THEN 1
-     	 ELSE 0
-    END as fire_position_override,
-    CASE WHEN fire_not_found THEN 1
-     	 ELSE 0
-    END as fire_not_found,
-    b.assistance_req,
-    b.assistance_details,
-    b.communications,
-    b.other_info,
-    b.init_authorised_date,
-    b.dispatch_pw,
-    CASE WHEN dispatch_aerial THEN 1
-     	 ELSE 0
-    END as dispatch_aerial,
-    b.dispatch_pw_date,
-    b.dispatch_aerial_date,
-    b.fire_detected_date,
-    b.fire_contained_date,
-    b.fire_controlled_date,
-    b.fire_safe_date,
-    b.other_first_attack,
-    b.other_initial_control,
-    b.other_final_control,
-    CASE WHEN arson_squad_notified THEN 1
-     	 ELSE 0
-    END as arson_squad_notified,
-    CASE WHEN investigation_req THEN 1
-     	 ELSE 0
-    END as investigation_req,
-    b.offence_no,
-    b.initial_area,
-    b.area,
-    CASE WHEN area_limit THEN 1
-     	 ELSE 0
-    END as area_limit,
-    CASE WHEN initial_area_unknown THEN 1
-     	 ELSE 0
-    END as initial_area_unknown,
-    b.time_to_control,
-    CASE WHEN fire_behaviour_unknown THEN 1
-     	 ELSE 0
-    END as fire_behaviour_unknown,
-    b.authorised_date,
-    b.reviewed_date,
-    b.report_status,
-    CASE WHEN archive THEN 1
-     	 ELSE 0
-    END as archive,
-    b.authorised_by_id,
-    b.cause_id,
-    b.creator_id,
-    b.district_id,
-    b.duty_officer_id,
-    b.field_officer_id,
-    b.final_control_id,
-    b.first_attack_id,
-    b.init_authorised_by_id,
-    b.initial_control_id,
-    b.modifier_id,
-    b.region_id,
-    b.reviewed_by_id,
-    b.tenure_id
-    FROM bfrs_bushfire b
-    WHERE b.archive = false AND b.report_status < {};
-    '''.format(Bushfire.STATUS_INVALIDATED))
-
-def create_final_view():
-    """
-    cursor.execute('''drop view bfrs_bushfire_final_fireboundary_v''')
-    """
-    from django.db import connection
-    cursor = connection.cursor()
-    cursor.execute('''
-    CREATE OR REPLACE VIEW bfrs_bushfire_final_fireboundary_v AS
-    SELECT b.id,
-    b.fire_boundary,
-    b.created,
-    b.modified,
-    b.name,
-    b.fire_number,
-    b.year,
-    b.reporting_year,
-    b.prob_fire_level,
-    b.max_fire_level,
-    CASE WHEN media_alert_req THEN 1
-     	 ELSE 0
-    END as media_alert_req,
-    CASE WHEN park_trail_impacted THEN 1
-     	 ELSE 0
-    END as park_trail_impacted,
-    b.cause_state,
-    b.other_cause,
-    b.other_tenure,
-    b.dfes_incident_no,
-    b.job_code,
-    b.fire_position,
-    CASE WHEN fire_position_override THEN 1
-     	 ELSE 0
-    END as fire_position_override,
-    CASE WHEN fire_not_found THEN 1
-     	 ELSE 0
-    END as fire_not_found,
-    b.assistance_req,
-    b.assistance_details,
-    b.communications,
-    b.other_info,
-    b.init_authorised_date,
-    b.dispatch_pw,
-    CASE WHEN dispatch_aerial THEN 1
-     	 ELSE 0
-    END as dispatch_aerial,
-    b.dispatch_pw_date,
-    b.dispatch_aerial_date,
-    b.fire_detected_date,
-    b.fire_contained_date,
-    b.fire_controlled_date,
-    b.fire_safe_date,
-    b.other_first_attack,
-    b.other_initial_control,
-    b.other_final_control,
-    CASE WHEN arson_squad_notified THEN 1
-     	 ELSE 0
-    END as arson_squad_notified,
-    CASE WHEN investigation_req THEN 1
-     	 ELSE 0
-    END as investigation_req,
-    b.offence_no,
-    b.initial_area,
-    b.area,
-    CASE WHEN area_limit THEN 1
-     	 ELSE 0
-    END as area_limit,
-    CASE WHEN initial_area_unknown THEN 1
-     	 ELSE 0
-    END as initial_area_unknown,
-    b.time_to_control,
-    CASE WHEN fire_behaviour_unknown THEN 1
-     	 ELSE 0
-    END as fire_behaviour_unknown,
-    b.authorised_date,
-    b.reviewed_date,
-    b.report_status,
-    CASE WHEN archive THEN 1
-     	 ELSE 0
-    END as archive,
-    b.authorised_by_id,
-    b.cause_id,
-    b.creator_id,
-    b.district_id,
-    b.duty_officer_id,
-    b.field_officer_id,
-    b.final_control_id,
-    b.first_attack_id,
-    b.init_authorised_by_id,
-    b.initial_control_id,
-    b.modifier_id,
-    b.region_id,
-    b.reviewed_by_id,
-    b.tenure_id
-    FROM bfrs_bushfire b
-    WHERE b.archive = false AND b.report_status >= {} AND b.report_status < {};
-    '''.format(Bushfire.STATUS_INITIAL_AUTHORISED, Bushfire.STATUS_INVALIDATED))
-
-def create_fireboundary_view():
-    """
-    cursor.execute('''drop view bfrs_bushfire_fireboundary_v''')
-    """
-    from django.db import connection
-    cursor = connection.cursor()
-    cursor.execute('''
-    CREATE OR REPLACE VIEW bfrs_bushfire_fireboundary_v AS
-    SELECT b.id,
-    b.fire_boundary,
-    b.created,
-    b.modified,
-    b.name,
-    b.fire_number,
-    b.year,
-    b.reporting_year,
-    b.prob_fire_level,
-    b.max_fire_level,
-    CASE WHEN media_alert_req THEN 1
-     	 ELSE 0
-    END as media_alert_req,
-    CASE WHEN park_trail_impacted THEN 1
-     	 ELSE 0
-    END as park_trail_impacted,
-    b.cause_state,
-    b.other_cause,
-    b.other_tenure,
-    b.dfes_incident_no,
-    b.job_code,
-    b.fire_position,
-    CASE WHEN fire_position_override THEN 1
-     	 ELSE 0
-    END as fire_position_override,
-    CASE WHEN fire_not_found THEN 1
-     	 ELSE 0
-    END as fire_not_found,
-    b.assistance_req,
-    b.assistance_details,
-    b.communications,
-    b.other_info,
-    b.init_authorised_date,
-    b.dispatch_pw,
-    CASE WHEN dispatch_aerial THEN 1
-     	 ELSE 0
-    END as dispatch_aerial,
-    b.dispatch_pw_date,
-    b.dispatch_aerial_date,
-    b.fire_detected_date,
-    b.fire_contained_date,
-    b.fire_controlled_date,
-    b.fire_safe_date,
-    b.other_first_attack,
-    b.other_initial_control,
-    b.other_final_control,
-    CASE WHEN arson_squad_notified THEN 1
-     	 ELSE 0
-    END as arson_squad_notified,
-    CASE WHEN investigation_req THEN 1
-     	 ELSE 0
-    END as investigation_req,
-    b.offence_no,
-    b.initial_area,
-    b.area,
-    CASE WHEN area_limit THEN 1
-     	 ELSE 0
-    END as area_limit,
-    CASE WHEN initial_area_unknown THEN 1
-     	 ELSE 0
-    END as initial_area_unknown,
-    b.time_to_control,
-    CASE WHEN fire_behaviour_unknown THEN 1
-     	 ELSE 0
-    END as fire_behaviour_unknown,
-    b.authorised_date,
-    b.reviewed_date,
-    b.report_status,
-    CASE WHEN archive THEN 1
-     	 ELSE 0
-    END as archive,
-    b.authorised_by_id,
-    b.cause_id,
-    b.creator_id,
-    b.district_id,
-    b.duty_officer_id,
-    b.field_officer_id,
-    b.final_control_id,
-    b.first_attack_id,
-    b.init_authorised_by_id,
-    b.initial_control_id,
-    b.modifier_id,
-    b.region_id,
-    b.reviewed_by_id,
-    b.tenure_id
-    FROM bfrs_bushfire b
-    WHERE b.archive = false AND b.report_status < {};
-    '''.format(Bushfire.STATUS_INVALIDATED))
-
-
-def test_view():
-    from django.db import connection
-    cursor=connection.cursor()
-    cursor.execute('''select fire_number, year, district_id from bfrs_bushfire_v''')
-    return cursor.fetchall()
-
-def test_final_view():
-    from django.db import connection
-    cursor=connection.cursor()
-    cursor.execute('''select fire_number, year, district_id from bfrs_bushfire_final_fireboundary_v''')
-    return cursor.fetchall()
-
-def test_fireboundary_view():
-    from django.db import connection
-    cursor=connection.cursor()
-    cursor.execute('''select fire_number, year, district_id from bfrs_bushfire_fireboundary_v''')
-    return cursor.fetchall()
-
-def drop_view():
-    from django.db import connection
-    cursor=connection.cursor()
-    cursor.execute('''drop view bfrs_bushfire_v''')
-    return cursor.fetchall()
-
-def drop_final_view():
-    from django.db import connection
-    cursor=connection.cursor()
-    cursor.execute('''drop view bfrs_bushfire_final_fireboundary_v''')
-    return cursor.fetchall()
-
-def drop_fireboundary_view():
-    from django.db import connection
-    cursor=connection.cursor()
-    cursor.execute('''drop view bfrs_bushfire_fireboundary_v''')
-    return cursor.fetchall()
 
 def export_final_csv(request, queryset):
     #import csv

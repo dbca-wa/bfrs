@@ -31,7 +31,7 @@ from bfrs.utils import (breadcrumbs_li,
         update_status, serialize_bushfire,
         rdo_email, pvs_email, fpc_email, pica_email, pica_sms, police_email, dfes_email, fssdrs_email,
         invalidate_bushfire, is_external_user, can_maintain_data, refresh_gokart,
-        authorise_report,
+        authorise_report, check_district_changed,
     )
 from django.db import IntegrityError, transaction
 from django.contrib import messages
@@ -468,42 +468,47 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
                 update_status(self.request, self.object, action)
                 return HttpResponseRedirect(self.get_success_url())
 
-        """ _________________________________________________________________________________________________________________
-        This Section used if district is changed from within the bushfire reporting system (FSSDRS Group can do this)
-        Second use case is to update the district from SSS, which then executes the equiv code below from bfrs/api.py
-        """
-        if self.object:
-            cur_obj = Bushfire.objects.get(id=self.object.id)
-            district = District.objects.get(id=request.POST['district']) if request.POST.has_key('district') else None # get the district from the form
-            if self.request.POST.has_key('action') and self.request.POST.get('action')=='invalidate' and cur_obj.report_status!=Bushfire.STATUS_INVALIDATED:
-                self.object.invalid_details = self.request.POST.get('invalid_details')
-                self.object.save()
-                self.object = invalidate_bushfire(self.object, district, request.user)
-                #url_name = 'bushfire_initial' if self.object.report_status < Bushfire.STATUS_INITIAL_AUTHORISED else 'bushfire_final'
-                #return  HttpResponseRedirect(reverse('bushfire:' + url_name, kwargs={'pk': self.object.id}))
-                return HttpResponseRedirect(self.get_success_url())
+        # update district, if it has changed (invalidates the current report and creates another with a new fire number)
+        response = check_district_changed(self.request, self.object, form)
+        if response:
+            return response
 
-            elif district != cur_obj.district and not self.request.POST.has_key('fire_not_found'):
-                if cur_obj.fire_not_found and form.is_valid():
-                    # logic below to save object, present to allow final form change from fire_not_found=True --> to fire_not_found=False. Will allow correct fire_number invalidation
-                    self.object = form.save(commit=False)
-                    self.object.modifier = request.user
-                    self.object.region = cur_obj.region # this will allow invalidate_bushfire() to invalidate and create the links as necessary
-                    self.object.district = cur_obj.district
-                    self.object.fire_number = cur_obj.fire_number
-                    self.object.save()
-
-                message = 'District has changed (from {} to {}). This action will invalidate the existing bushfire and create  a new bushfire with the new district, and a new fire number.'.format(
-                    cur_obj.district.name,
-                    district.name
-                )
-                context={
-                    'action': 'invalidate',
-                    'district': district.id,
-                    'message': message,
-                }
-                return TemplateResponse(request, 'bfrs/confirm.html', context=context)
-        """ _________________________________________________________________________________________________________________ """
+#        """ _________________________________________________________________________________________________________________
+#        This Section used if district is changed from within the bushfire reporting system (FSSDRS Group can do this)
+#        Further, primary use case is to update the district from SSS, which then executes the equiv code below from bfrs/api.py
+#        """
+#        if self.object:
+#            cur_obj = Bushfire.objects.get(id=self.object.id)
+#            district = District.objects.get(id=request.POST['district']) if request.POST.has_key('district') else None # get the district from the form
+#            if self.request.POST.has_key('action') and self.request.POST.get('action')=='invalidate' and cur_obj.report_status!=Bushfire.STATUS_INVALIDATED:
+#                self.object.invalid_details = self.request.POST.get('invalid_details')
+#                self.object.save()
+#                self.object = invalidate_bushfire(self.object, district, request.user)
+#                #url_name = 'bushfire_initial' if self.object.report_status < Bushfire.STATUS_INITIAL_AUTHORISED else 'bushfire_final'
+#                #return  HttpResponseRedirect(reverse('bushfire:' + url_name, kwargs={'pk': self.object.id}))
+#                return HttpResponseRedirect(self.get_success_url())
+#
+#            elif district != cur_obj.district and not self.request.POST.has_key('fire_not_found'):
+#                if cur_obj.fire_not_found and form.is_valid():
+#                    # logic below to save object, present to allow final form change from fire_not_found=True --> to fire_not_found=False. Will allow correct fire_number invalidation
+#                    self.object = form.save(commit=False)
+#                    self.object.modifier = request.user
+#                    self.object.region = cur_obj.region # this will allow invalidate_bushfire() to invalidate and create the links as necessary
+#                    self.object.district = cur_obj.district
+#                    self.object.fire_number = cur_obj.fire_number
+#                    self.object.save()
+#
+#                message = 'District has changed (from {} to {}). This action will invalidate the existing bushfire and create  a new bushfire with the new district, and a new fire number.'.format(
+#                    cur_obj.district.name,
+#                    district.name
+#                )
+#                context={
+#                    'action': 'invalidate',
+#                    'district': district.id,
+#                    'message': message,
+#                }
+#                return TemplateResponse(request, 'bfrs/confirm.html', context=context)
+#        """ _________________________________________________________________________________________________________________ """
 
         injury_formset          = InjuryFormSet(self.request.POST, prefix='injury_fs')
         damage_formset          = DamageFormSet(self.request.POST, prefix='damage_fs')

@@ -34,7 +34,6 @@
 {% block content %}
 
 
-<div class="alert alert-error">
   {% if form.errors %}
       <h1 class="errornote">
         <p>Form Errors</p>
@@ -90,10 +89,8 @@
         {% endif %}
       </h1>
   {% endif %}
-</div>
 
-{% if injury_formset.errors|check_errors %}
-    <div class="alert alert-error">
+  {% if injury_formset.errors|check_errors %}
       <h1 class="errornote">
         <p>Injury formset Errors</p>
         <button type="button" class="close" data-dismiss="alert">×</button>
@@ -110,8 +107,7 @@
           {{ injury_formset.non_field_errors }}
         {% endif %}
       </h1>
-    </div>
-{% endif %}
+  {% endif %}
 
 
 <div>
@@ -194,8 +190,8 @@
                 {% if is_init_authorised %} 
                     {{snapshot.fire_position}} {{form.fire_position.as_hidden}}
                 {% else %} 
-                    {{form.fire_position}}<br>
-                    <label for="id_fire_position_override"> SSS override</label><span style="float:left;">{{form.fire_position_override}}</span>
+                    {{form.fire_position}} <br>
+                    {{form.fire_position_override}} SSS override
                 {% endif %} 
             </td>
 
