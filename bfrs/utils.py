@@ -61,21 +61,6 @@ def is_external_user(user):
     except:
         return True
 
-#def damages(request, bushfire):
-#    if 'initial' in request.get_full_path() and not bushfire.is_init_authorised:
-#        return bushfire.damage.all()
-#    if 'final' in request.get_full_path() and bushfire.is_init_authorised and not bushfire.is_final_authorised:
-#        return bushfire.damage.all()
-#
-#    elif 'initial' in request.get_full_path() and bushfire.is_init_authorised and not bushfire.is_final_authorised:
-#        return bushfire.damage.all()
-#
-#        return bushfire.damage.all().exlude(snapshot_type='final')
-#        return bushfire.damage.filter(snapshot_type='initial')
-#    elif self.bushfire.is_final_authorised:
-#        return self.bushfire.final_snapshot.damage_snapshots.all()
-
-
 def model_to_dict(instance, include=[], exclude=[]):
     fields = instance._meta.concrete_fields
     if include:
@@ -118,53 +103,6 @@ def serialize_bushfire(auth_type, action, obj):
 
     #archive_snapshot(auth_type, action, obj)
     #obj.save()
-
-#def deserialize_bushfire(auth_type, obj):
-#    """Returns a deserialized Bushfire object
-#
-#       obj is either:
-#         1. bushfire obj, eg.
-#            b=Bushfire.objects.get(id=12)
-#            deserialize_bushfire('final', b.final_snapshot)
-#
-#         2. serialized json object (bushfire text string JSONified), eg.
-#            snapshop_history_obj=b.snapshot_history.all()[0]
-#            deserialize_bushfire(snapshots_history_obj.auth_type, snapshots_history_obj.snapshot)
-#    """
-#    if auth_type == 'initial':
-#        obj = obj.initial_snapshot if hasattr(obj, 'initial_snapshot') else obj
-#    if auth_type == 'final':
-#        obj = obj.final_snapshot if hasattr(obj, 'final_snapshot') else obj
-#
-#    return serializers.deserialize("json", obj).next().object
-
-#def serialize_bushfire(auth_type, action, obj):
-#    "Serializes a Bushfire object"
-#    if auth_type == 'initial':
-#        obj.initial_snapshot = serializers.serialize('json', [obj])
-#    if auth_type == 'final':
-#        obj.final_snapshot = serializers.serialize('json', [obj])
-#    archive_snapshot(auth_type, action, obj)
-#    obj.save()
-#
-#def deserialize_bushfire(auth_type, obj):
-#    """Returns a deserialized Bushfire object
-#
-#       obj is either:
-#         1. bushfire obj, eg.
-#            b=Bushfire.objects.get(id=12)
-#            deserialize_bushfire('final', b.final_snapshot)
-#
-#         2. serialized json object (bushfire text string JSONified), eg.
-#            snapshop_history_obj=b.snapshot_history.all()[0]
-#            deserialize_bushfire(snapshots_history_obj.auth_type, snapshots_history_obj.snapshot)
-#    """
-#    if auth_type == 'initial':
-#        obj = obj.initial_snapshot if hasattr(obj, 'initial_snapshot') else obj
-#    if auth_type == 'final':
-#        obj = obj.final_snapshot if hasattr(obj, 'final_snapshot') else obj
-#
-#    return serializers.deserialize("json", obj).next().object
 
 def archive_snapshot(auth_type, action, obj):
         """ allows archicing of existing snapshot before overwriting """
@@ -317,6 +255,24 @@ def authorise_report(request, obj):
                 return TemplateResponse(request, template_mandatory_fields, context=context)
 
             return TemplateResponse(request, template_summary, context=context)
+
+    elif request.POST.has_key('_save') and obj.is_final_authorised:
+        # the '_save' component will ensure all mandatory fields are (still) completed if FSSDRS group attempt to re-save after obj has already been final authorised
+        action = request.POST.get('_save')
+        if action == 'Authorise' or action == 'Save final':
+            context['action'] = action
+            context['final'] = True
+
+            #import ipdb; ipdb.set_trace()
+            context['mandatory_fields'] = check_mandatory_fields(obj, SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS, SUBMIT_MANDATORY_FORMSETS)
+            fields = AUTH_MANDATORY_FIELDS_FIRE_NOT_FOUND if obj.fire_not_found else AUTH_MANDATORY_FIELDS
+            context['mandatory_fields'] = context['mandatory_fields'] + check_mandatory_fields(obj, fields, AUTH_MANDATORY_DEP_FIELDS, AUTH_MANDATORY_FORMSETS)
+
+            if context['mandatory_fields']:
+                return TemplateResponse(request, template_mandatory_fields, context=context)
+
+            serialize_bushfire('Final', 'Post Authorised Update', obj)
+            return HttpResponseRedirect(reverse("home"))
 
     return None
 

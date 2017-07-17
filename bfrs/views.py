@@ -545,7 +545,8 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
                 self.object.tenures_burnt.update_or_create(tenure=Tenure.objects.get(name=other_crown_tenure), defaults={"area": other_crown_area})
 
         # This section to Submit/Authorise report, placed here to allow any changes to be cleaned and saved first - effectively the 'Submit' btn is a 'save and submit'
-        if self.request.POST.has_key('submit_initial') or self.request.POST.has_key('authorise_final'):
+        if self.request.POST.has_key('submit_initial') or self.request.POST.has_key('authorise_final') or \
+           (self.request.POST.has_key('_save') and self.request.POST.get('_save') and self.object.is_final_authorised):
             response = authorise_report(self.request, self.object)
             if response:
                 return response

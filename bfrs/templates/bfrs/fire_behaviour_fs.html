@@ -1,67 +1,33 @@
-
-{% comment %}{% if is_authorised and final or action %}{% endcomment %}
-{% if static or action %}
-
-    <table class="table_fs" border="0" >
+<div id="id_fire_behaviour" class="row formset fire_behaviour-formset">
+    <table class="table_fs" border="0">
         <tbody>
             <th>Fuel Type</th>
             <th>ROS (m/h)</th>
-            <th>Flame height (m)</th>
-            {% if not snapshot.is_init_authorised or snapshot.is_init_authorised and not snapshot.is_final_authorised %}
-                {% for fb in snapshot.fire_behaviour.all %}
-                <tr>
-                    <td>{{ fb.fuel_type }}</td>
-                    <td>{{ fb.ros }}</td>
-                    <td>{{ fb.flame_height }}</td>
-                </tr>
+            <th>Flame Height (m)</th>
+            <th></th>
+            {% for form in fire_behaviour_formset %}
+            <tr>
+                <td>{{ form.fuel_type }}</td>
+                <td>{{ form.ros }}</td>
+                <td>{{ form.flame_height }}</td>
+
+                <td>
+                {% if form.instance.pk %}{{ form.DELETE }}{% endif %}
+                {{ form.id }}
+
+                {% for field in form %} 
+                    {% if field.errors %}
+                        <font color="red"><li>{{ field.label }}: {{ field.errors|striptags }}</li></font>
+                    {% endif %}
                 {% endfor %}
-            {% else %}
-                {% for fb in snapshot.fire_behaviour_snapshot.all %}
-                <tr>
-                    <td>{{ fb.fuel_type }}</td>
-                    <td>{{ fb.ros }}</td>
-                    <td>{{ fb.flame_height }}</td>
-                </tr>
-                {% endfor %}
-            {% endif %}
+
+                </td>
+            </tr>
+            {% endfor %}
         </tbody>
     </table>
-
-    {{ fire_behaviour_formset.management_form }}
-
-{% else %}
-
-    <div id="id_fire_behaviour" class="row formset fire_behaviour-formset">
-        <table class="table_fs" border="0">
-            <tbody>
-                <th>Fuel Type</th>
-                <th>ROS (m/h)</th>
-                <th>Flame Height (m)</th>
-                <th></th>
-                {% for form in fire_behaviour_formset %}
-                <tr>
-                  <td>{{ form.fuel_type }}</td>
-                  <td>{{ form.ros }}</td>
-                  <td>{{ form.flame_height }}</td>
-
-                  <td>
-                    {% if form.instance.pk %}{{ form.DELETE }}{% endif %}
-                    {{ form.id }}
-
-                    {% for field in form %} 
-                      {% if field.errors %}
-                         <font color="red"><li>{{ field.label }}: {{ field.errors|striptags }}</li></font>
-                      {% endif %}
-                    {% endfor %}
-
-                  </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {{ fire_behaviour_formset.management_form }}
-    </div>
-{% endif %}
+</div>
+{{ fire_behaviour_formset.management_form }}
 
 <script>
     $('.fire_behaviour-formset tbody tr').formset({

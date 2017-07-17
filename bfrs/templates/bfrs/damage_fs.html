@@ -1,25 +1,4 @@
 <div class="div_damage_unknown">
-{% comment %}{% if is_authorised and final or action %}{% endcomment %}
-{% if static or action %}
-
-    <table class="table_fs" border="0" >
-        <tbody>
-
-            <th>Damage Type</th>
-            <th>Number</th>
-
-                {% for damage in damages.all %}
-                <tr>
-                    <td>{{ damage.damage_type }}</td>
-                    <td>{{ damage.number }}</td>
-                </tr>
-                {% endfor %}
-
-        </tbody>
-    </table>
-
-{% else %}
-
     <div id="id_damage" class="row formset damage-formset">
         <table class="table_fs" border="0">
             <tbody>
@@ -47,7 +26,6 @@
             </tbody>
         </table>
     </div>
-{% endif %}
 </div>
 {{ damage_formset.management_form }}
 

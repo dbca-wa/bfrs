@@ -192,11 +192,49 @@
 
 </form>
 
+{% if action %}
+<!-- This section to allow redirect confirmation -->
+<form action="" method="post">{% csrf_token %}
+  <div>
+    <input type="hidden" name="bushfire_id" value="{{snapshot.id}}" />
+    <input type="hidden" name="action" value="{{action}}" />
+    <input type="hidden" name="confirm_action" value="yes" />
+    <input type="submit" class="btn" value="{% trans "Yes, I'm sure" %}" />
+       {% comment %}
+       <!-- Below line causes an error in the Django Formset -->
+    <a href="javascript: history.go(-1)" class="btn btn-danger">Cancel</a>
+       {% endcomment %}
+    {% if object.report_status < object.STATUS_INITIAL_AUTHORISED %}
+        <a id="id_cancel_btn" href="{% url 'bushfire:bushfire_initial' snapshot.id %}" class="btn btn-primary btn-danger">Cancel</a>
+    {% else %}
+        <a id="id_cancel_btn" href="{% url 'bushfire:bushfire_final' snapshot.id %}" class="btn btn-primary btn-danger">Cancel</a>
+    {% endif %}
+  </div>
+</form>
+{% endif %}
+
 <script>
 
 {% if final %}
-  $('.panel-collapse').collapse('show');
+    $('.panel-collapse').collapse('show');
 {% endif %}
+
+/* Fire not Found */
+//$('#id_fire_not_found').on('change', function() {
+//    fire_not_found();
+//}).change();
+
+
+{% if snapshot.fire_not_found %}
+    $(".div_form_invalidate *").prop('disabled',true).css({ opacity: 0.8  });
+    $(".div_invalid_details").show();
+    $(".div_fire_not_found").hide();
+{% else %}
+    $(".div_form_invalidate *").prop('disabled',false).css({ opacity: 1  });
+    $(".div_invalid_details").hide();
+    $(".div_fire_not_found").show();
+{% endif %}
+/* END - Fire not Found */
 
 </script>
 
