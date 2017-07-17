@@ -114,11 +114,11 @@
         <tr>
             <td class="cbas">{% include "bfrs/tenure_veg_snapshot.html" %}</td>
             <td class="cbas">
-                {{snapshot.damage_unknown|yesno:"No damage to report,Known"}}
+                {{snapshot.damage_unknown|yesno:"No damage to report,"}}
                 {% if not snapshot.damage_unknown %} {% include "bfrs/damage_fs_snapshot.html" %}{% endif %}
             </td>
             <td class="cbas">
-                {{snapshot.injury_unknown|yesno:"No injuries/fatalities to report,Known"}}
+                {{snapshot.injury_unknown|yesno:"No injuries/fatalities to report,"}}
                 {% if not snapshot.injury_unknown %} {% include "bfrs/injuries_fs_snapshot.html" %}{% endif %}
             </td>
         </tr>

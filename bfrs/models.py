@@ -19,7 +19,7 @@ import json
 SUBMIT_MANDATORY_FIELDS= [
     'region', 'district', 'year', 'fire_number', 'name', 'fire_detected_date', 'prob_fire_level',
     'dispatch_pw', 'dispatch_aerial', 'investigation_req', 'park_trail_impacted', 'media_alert_req',
-    'duty_officer',
+    'duty_officer', 'initial_control',
 ]
 SUBMIT_MANDATORY_DEP_FIELDS= {
     'dispatch_pw': [[1, 'dispatch_pw_date']],

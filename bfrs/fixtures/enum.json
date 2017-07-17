@@ -46,11 +46,25 @@
     "pk": 7,
     "model": "bfrs.cause",
     "fields": {
-        "name": "Unknown"
+        "name": "Railway"
     }
 },
 {
     "pk": 8,
+    "model": "bfrs.cause",
+    "fields": {
+        "name": "Powerline"
+    }
+},
+{
+    "pk": 9,
+    "model": "bfrs.cause",
+    "fields": {
+        "name": "Unknown"
+    }
+},
+{
+    "pk": 10,
     "model": "bfrs.cause",
     "fields": {
         "name": "Other (specify)"

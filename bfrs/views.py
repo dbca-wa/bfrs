@@ -302,25 +302,16 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
         context['can_maintain_data'] = can_maintain_data(self.request.user)
         context['is_external_user'] = is_external_user(self.request.user)
 
-#        self.request.session['refreshGokart'] = True
-#        self.request.session['region'] = 'null'
-#        self.request.session['district'] = 'null'
-#        self.request.session['id'] = ""
-#        self.request.session['action'] = "update"
         refresh_gokart(self.request) #, fire_number="") #, region=None, district=None, action='update')
-
         return context
 
 class BushfireInitialSnapshotView(LoginRequiredMixin, generic.DetailView):
+    """
+    To view the initial static data (after notifications 'Submitted')
 
+    """
     model = Bushfire
     template_name = 'bfrs/detail_summary.html'
-
-#    def post(self, request, *args, **kwargs):
-#        import ipdb; ipdb.set_trace()
-#        self.object = self.get_object()
-#
-#        return HttpResponseRedirect(self.get_success_url())
 
     def get_context_data(self, **kwargs):
         context = super(BushfireInitialSnapshotView, self).get_context_data(**kwargs)
@@ -329,7 +320,7 @@ class BushfireInitialSnapshotView(LoginRequiredMixin, generic.DetailView):
 
         context.update({
             'initial': True,
-            'snapshot': self.object.initial_snapshot.bushfire,
+            'snapshot': self.object.initial_snapshot,
             'damages': self.object.initial_snapshot.damage_snapshot.exclude(snapshot_type=SNAPSHOT_FINAL),
             'injuries': self.object.initial_snapshot.injury_snapshot.exclude(snapshot_type=SNAPSHOT_FINAL),
             'fire_behaviour': self.object.initial_snapshot.fire_behaviour_snapshot.exclude(snapshot_type=SNAPSHOT_FINAL),
@@ -339,7 +330,9 @@ class BushfireInitialSnapshotView(LoginRequiredMixin, generic.DetailView):
 
 
 class BushfireFinalSnapshotView(LoginRequiredMixin, generic.DetailView):
-
+    """
+    To view the final static data (after report 'Authorised')
+    """
     model = Bushfire
     template_name = 'bfrs/detail_summary.html'
 
@@ -350,11 +343,12 @@ class BushfireFinalSnapshotView(LoginRequiredMixin, generic.DetailView):
 
         context.update({
             'final': True,
-            'snapshot': self.object.final_snapshot.bushfire,
+            'snapshot': self.object.final_snapshot,
             'damages': self.object.final_snapshot.damage_snapshot.exclude(snapshot_type=SNAPSHOT_INITIAL),
             'injuries': self.object.final_snapshot.injury_snapshot.exclude(snapshot_type=SNAPSHOT_INITIAL),
             'fire_behaviour': self.object.final_snapshot.fire_behaviour_snapshot.exclude(snapshot_type=SNAPSHOT_INITIAL),
             'tenures_burnt': self.object.final_snapshot.tenures_burnt_snapshot.exclude(snapshot_type=SNAPSHOT_INITIAL).order_by('id'),
+            'can_maintain_data': can_maintain_data(self.request.user),
         })
         return context
 
@@ -376,7 +370,7 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
             return [self.template_summary]
         elif 'initial' in self.request.get_full_path() and obj.is_init_authorised:
             return [self.template_summary]
-        elif 'final' in self.request.get_full_path() and obj.is_final_authorised:
+        elif 'final' in self.request.get_full_path() and obj.is_final_authorised and not can_maintain_data(self.request.user):
             return [self.template_summary]
         return super(BushfireUpdateView, self).get_template_names()
 
@@ -473,43 +467,6 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         if response:
             return response
 
-#        """ _________________________________________________________________________________________________________________
-#        This Section used if district is changed from within the bushfire reporting system (FSSDRS Group can do this)
-#        Further, primary use case is to update the district from SSS, which then executes the equiv code below from bfrs/api.py
-#        """
-#        if self.object:
-#            cur_obj = Bushfire.objects.get(id=self.object.id)
-#            district = District.objects.get(id=request.POST['district']) if request.POST.has_key('district') else None # get the district from the form
-#            if self.request.POST.has_key('action') and self.request.POST.get('action')=='invalidate' and cur_obj.report_status!=Bushfire.STATUS_INVALIDATED:
-#                self.object.invalid_details = self.request.POST.get('invalid_details')
-#                self.object.save()
-#                self.object = invalidate_bushfire(self.object, district, request.user)
-#                #url_name = 'bushfire_initial' if self.object.report_status < Bushfire.STATUS_INITIAL_AUTHORISED else 'bushfire_final'
-#                #return  HttpResponseRedirect(reverse('bushfire:' + url_name, kwargs={'pk': self.object.id}))
-#                return HttpResponseRedirect(self.get_success_url())
-#
-#            elif district != cur_obj.district and not self.request.POST.has_key('fire_not_found'):
-#                if cur_obj.fire_not_found and form.is_valid():
-#                    # logic below to save object, present to allow final form change from fire_not_found=True --> to fire_not_found=False. Will allow correct fire_number invalidation
-#                    self.object = form.save(commit=False)
-#                    self.object.modifier = request.user
-#                    self.object.region = cur_obj.region # this will allow invalidate_bushfire() to invalidate and create the links as necessary
-#                    self.object.district = cur_obj.district
-#                    self.object.fire_number = cur_obj.fire_number
-#                    self.object.save()
-#
-#                message = 'District has changed (from {} to {}). This action will invalidate the existing bushfire and create  a new bushfire with the new district, and a new fire number.'.format(
-#                    cur_obj.district.name,
-#                    district.name
-#                )
-#                context={
-#                    'action': 'invalidate',
-#                    'district': district.id,
-#                    'message': message,
-#                }
-#                return TemplateResponse(request, 'bfrs/confirm.html', context=context)
-#        """ _________________________________________________________________________________________________________________ """
-
         injury_formset          = InjuryFormSet(self.request.POST, prefix='injury_fs')
         damage_formset          = DamageFormSet(self.request.POST, prefix='damage_fs')
 
@@ -531,7 +488,6 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
                 return self.form_invalid(request, form, fire_behaviour_formset, area_burnt_formset, injury_formset, damage_formset)
         else:
             return self.form_invalid(request, form, fire_behaviour_formset, area_burnt_formset, injury_formset, damage_formset)
-
 
     def form_invalid(self, request, form, fire_behaviour_formset, area_burnt_formset, injury_formset, damage_formset):
         context = self.get_context_data()
@@ -594,57 +550,6 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
             if response:
                 return response
 
-
-#        redirect_referrer =  HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-#        # This section to Submit initial report, placed here to allow any changes to be cleaned and saved first - effectively the 'Submit' btn is a 'save and submit'
-#        if self.request.POST.has_key('submit_initial'):
-#            #import ipdb; ipdb.set_trace()
-#            action = self.request.POST.get('submit_initial')
-#            if action == 'Submit':
-#                #context = self.get_context_data()
-#                context = {
-#                    'action': action,
-#                    'is_authorised': True,
-#                    'initial': True,
-#                    'object': self.object,
-#                    'snapshot': self.object,
-#                    'damages': self.object.damages,
-#                    'injuries': self.object.injuries,
-#                    'fire_behaviour': self.object.fire_behaviour,
-#                    'tenures_burnt': self.object.tenures_burnt.order_by('id'),
-#                }
-#
-#                context['mandatory_fields'] = check_mandatory_fields(self.object, SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS, SUBMIT_MANDATORY_FORMSETS)
-#
-#                if context['mandatory_fields']:
-#                    return TemplateResponse(request, template_mandatory_fields, context=context)
-#
-#                return TemplateResponse(request, template_summary, context=context)
-#
-#        # This section to Authorise Final report, placed here to allow any changes to be cleaned and saved first - effectively the 'Authorise' btn is a 'save and submit'
-#        if self.request.POST.has_key('authorise_final'):
-#            action = self.request.POST.get('authorise_final')
-#            if action == 'Authorise':
-#                context = {
-#                    'action': action,
-#                    'is_authorised': True,
-#                    'final': True,
-#                    'object': self.object,
-#                    'snapshot': self.object,
-#                    'damages': self.object.damages,
-#                    'injuries': self.object.injuries,
-#                    'fire_behaviour': self.object.fire_behaviour,
-#                    'tenures_burnt': self.object.tenures_burnt.order_by('id'),
-#                }
-#
-#                fields = AUTH_MANDATORY_FIELDS_FIRE_NOT_FOUND if self.object.fire_not_found else AUTH_MANDATORY_FIELDS
-#                context['mandatory_fields'] = check_mandatory_fields(self.object, fields, AUTH_MANDATORY_DEP_FIELDS, AUTH_MANDATORY_FORMSETS)
-#
-#                if context['mandatory_fields']:
-#                    return TemplateResponse(request, template_mandatory_fields, context=context)
-#
-#                return TemplateResponse(request, template_summary, context=context)
-
         if self.object.report_status >=  Bushfire.STATUS_FINAL_AUTHORISED:
             # if bushfire has been authorised, update snapshot and archive old snapshot
             # That is, if FSSDRS group update the final report after it has been authorised, we archive the existing data
@@ -654,11 +559,6 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
                 # update is occuring after report has already been authorised (action is undefined) - ie. it is being Reviewed by FSSDRS
                 serialize_bushfire('final', 'Review', self.object)
 
-#        request.session['refreshGokart'] = True
-#        request.session['region'] = self.object.region.id
-#        request.session['district'] = self.object.district.id
-#        request.session['id'] = self.object.fire_number
-#        request.session['action'] = "update"
         refresh_gokart(request, fire_number=self.object.fire_number, region=self.object.region.id, district=self.object.district.id)
 
         self.object.save()
@@ -726,7 +626,8 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
                         'damage_formset': damage_formset,
                         'is_authorised': is_authorised, # If True, will make Report section of template read-only
                         'is_init_authorised': is_init_authorised, # If True, will make Notifications section of template read-only
-                        'snapshot': bushfire.initial_snapshot if 'final' in self.request.get_full_path() else bushfire, #snapshot,
+                        #'snapshot': bushfire.initial_snapshot if 'final' in self.request.get_full_path() else bushfire, #snapshot,
+                        'snapshot': bushfire,
                         'create': True if 'create' in self.request.get_full_path() else False,
                         'initial': True if 'initial' in self.request.get_full_path() else False,
                         'final': True if 'final' in self.request.get_full_path() else False,
