@@ -42,7 +42,8 @@ AUTH_MANDATORY_FIELDS= [
 
 AUTH_MANDATORY_FIELDS_FIRE_NOT_FOUND= [
     #'duty_officer', 'field_officer', 'job_code',
-    'field_officer', 'job_code',
+    #'field_officer', 'job_code',
+    'field_officer',
 ]
 
 AUTH_MANDATORY_DEP_FIELDS= {
@@ -95,7 +96,6 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
         # no need to check these
         dep_fields = {}
         formsets = []
-        #return missing
 
     for field, dep_sets in dep_fields.iteritems():
         for dep_set in dep_sets:

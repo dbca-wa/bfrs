@@ -332,3 +332,7 @@ def settings_value(name):
     return getattr(settings, name, "")
 
 
+@register.filter
+def test(name):
+    import ipdb; ipdb.set_trace()
+    pass

@@ -423,9 +423,9 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
                 initial['district'] = District.objects.get(id=sss['district_id'])
 
         # below for testing
-        initial['origin_point'] = GEOSGeometry(Point(122.45, -33.15))
-        initial['region'] = 1
-        initial['district'] = 1
+        #initial['origin_point'] = GEOSGeometry(Point(122.45, -33.15))
+        #initial['region'] = 1
+        #initial['district'] = 1
 
         return initial
 

@@ -649,12 +649,16 @@ def update_email_domain():
             u.email = u.email.replace('DPaW', 'dbca')
             u.save()
 
-def refresh_gokart(request, fire_number=None, region=None, district=None, action='update'):
+def refresh_gokart(request, fire_number=None, region=None, district=None, action=None):
     request.session['refreshGokart'] = True
     request.session['region'] = region if region else 'null'
     request.session['district'] = district if district else 'null'
     request.session['id'] = fire_number if fire_number else 'null'
-    request.session['action'] = action
+
+    if action:
+        request.session['action'] = action
+    else:
+        request.session['action'] = 'create' if 'create' in request.get_full_path() else 'update'
 
 def export_final_csv(request, queryset):
     #import csv

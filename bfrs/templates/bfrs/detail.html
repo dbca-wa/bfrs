@@ -209,8 +209,8 @@
 
         <tr>
             <th class="cbas">Tenure of ignition point *<br><br><div class=div_tenure style="visibility: hidden;">Other Tenure *</div></th>
-            <td colspan="2" class="cbas">{{form.tenure}}
-                <div class="div_tenure" style="visibility: hidden;">{% if is_init_authorised %} {{snapshot.other_tenure}} {{form.other_tenure.as_hidden}} {% else %} {{form.other_tenure}} {% endif %}</div>
+            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.tenure}}<br> {{snapshot.get_other_tenure_display}} {{snapshot.tenure.as_hidden}} {{snapshot.other_tenure.as_hidden}} {% else %} {{form.tenure}} {% endif %}
+                <div class="div_tenure" style="visibility: hidden;">{{form.other_tenure}}</div>
             </td>
 
             <th class="cbas">Duty Officer *</th>
@@ -537,11 +537,18 @@ $('#id_cause').on('change', function() {
 /* Tenure */
 $('#id_tenure').on('change', function() {
 	var tenure = $('#id_tenure :selected').text();
-	if (tenure.indexOf('Other') > -1) {
+    //$("#id_tenure").replaceWith('<input id="id_tenure" type="text" value=' + tenure + ' />');
+    
+    if (tenure.indexOf('Other') > -1) {
 		$('.div_tenure').css('visibility','visible');
 	} else {
 		$('.div_tenure').css('visibility','hidden');
 	}
+
+    // Make Tenure of ignition un-editable
+    $('#id_tenure').css('background-color' , '#DEDEDE');
+    $('#id_tenure').mousedown(function(e){ e.preventDefault(); });
+
 }).change();
 
 // default is to collapse all on page load
@@ -598,10 +605,6 @@ $('#id_fire_position_override').on('change', function() {
 	    $("#id_fire_position").attr('readonly','readonly').css('background-color' , '#DEDEDE');
 	}
 }).change();
-
-// Make Tenure of ignition un-editable
-$('#id_tenure').css('background-color' , '#DEDEDE');
-$('#id_tenure').mousedown(function(e){ e.preventDefault(); });
 
 /* Fire monitored Only Labels*/
 $('#id_fire_monitored_only').on('change', function() {
@@ -668,10 +671,16 @@ function fire_not_found() {
       $(".div_invalid_details").show();
       $(".div_fire_not_found").hide();
 
+	  $('#id_th_job_code').css("font-weight", "normal");
+	  $("#id_th_job_code").html("Job code");
+
   } else {
       $(".div_form_invalidate *").prop('disabled',false).css({ opacity: 1  });
       $(".div_invalid_details").hide();
       $(".div_fire_not_found").show();
+
+	  $('#id_th_job_code').css("font-weight", "bold");
+	  $("#id_th_job_code").html("Job code *");
   }
 }
 /* END - Fire not Found */

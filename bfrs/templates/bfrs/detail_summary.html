@@ -111,7 +111,7 @@
 
         <tr>
             <th class="cbas">Tenure of ignition point *{% if snapshot.other_tenure %}<br> Other Tenure{% endif %}</th>
-            <td colspan="2" class="cbas">{{snapshot.tenure}}{% if snapshot.other_tenure %} {{snapshot.get_other_tenure_display}} {% endif %}</td>
+            <td colspan="2" class="cbas">{{snapshot.tenure}}{% if snapshot.other_tenure %}<br> {{snapshot.get_other_tenure_display}} {% endif %}</td>
 
             <th class="cbas">Duty Officer *</th>
             <td colspan="2" class="cbas">{{snapshot.duty_officer|is_none}}</td>

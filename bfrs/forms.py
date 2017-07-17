@@ -302,6 +302,9 @@ class BushfireUpdateForm(forms.ModelForm):
         if self.cleaned_data.has_key('dispatch_pw') and self.cleaned_data['dispatch_pw']:
             self.cleaned_data['dispatch_pw'] = int(self.cleaned_data['dispatch_pw'])
 
+        if self.cleaned_data.has_key('other_tenure') and self.cleaned_data['other_tenure']:
+            self.cleaned_data['other_tenure'] = int(self.cleaned_data['other_tenure'])
+
         return cleaned_data
 
 
