@@ -613,10 +613,10 @@ $('#id_fire_monitored_only').on('change', function() {
         $("#id_th_initial_attack_agency").html("Initial attack agency");
 
         $('#id_th_fire_contained_date').css("font-weight", "normal");
-        $("#id_th_fire_contained_date").html("Date fire contained");
+        $("#id_th_fire_contained_date").html("Date fire contained <i class='icon-info-sign icon-white'>");
 
         $('#id_th_fire_controlled_date').css("font-weight", "normal");
-        $("#id_th_fire_controlled_date").html("Date fire controlled");
+        $("#id_th_fire_controlled_date").html("Date fire controlled <i class='icon-info-sign icon-white'>");
 
         {% if not object.fire_behaviour.all %}
             $('#id_fire_behaviour_unknown').prop('checked', true);
@@ -637,10 +637,10 @@ $('#id_fire_monitored_only').on('change', function() {
         $("#id_th_initial_attack_agency").html("Initial attack agency *");
 
         $('#id_th_fire_contained_date').css("font-weight", "bold");
-        $("#id_th_fire_contained_date").html("Date fire contained *");
+        $("#id_th_fire_contained_date").html("Date fire contained <i class='icon-info-sign icon-white'> *");
 
         $('#id_th_fire_controlled_date').css("font-weight", "bold");
-        $("#id_th_fire_controlled_date").html("Date fire controlled *");
+        $("#id_th_fire_controlled_date").html("Date fire controlled <i class='icon-info-sign icon-white'> *");
 
         //$('#id_fire_behaviour_unknown').prop('checked', false);
 	    $('.div_fire_behaviour_unknown').show(); 

@@ -57,6 +57,7 @@ AUTH_MANDATORY_DEP_FIELDS= {
     'cause': [['Other (specify)', 'other_cause'], ['Escape P&W burning', 'prescribed_burn_id']],
     'area_limit': [[True, 'area']],
     'tenure': [['Other', 'other_tenure']],
+    'field_officer': [['other', 'other_field_officer']], # username='other'
 }
 AUTH_MANDATORY_FORMSETS= [
     'fire_behaviour',
@@ -101,10 +102,18 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
         for dep_set in dep_sets:
             # next line checks for normal Field or Enumerated list field (i.e. '.name')
             #import ipdb; ipdb.set_trace()
-            if hasattr(obj, field) and (getattr(obj, field)==dep_set[0] or (hasattr(getattr(obj, field), 'name') and getattr(obj, field).name==dep_set[0])):
-                if getattr(obj, dep_set[1]) is None or (isinstance(getattr(obj, dep_set[1]), (str, unicode)) and not getattr(obj, dep_set[1]).strip()):
-                    # field is unset or empty string
-                    missing.append(dep_set[1])
+            try:
+                if hasattr(obj, field) and (
+                   getattr(obj, field)==dep_set[0] or \
+                   (hasattr(getattr(obj, field), 'name') and getattr(obj, field).name==dep_set[0]) or \
+                   (hasattr(getattr(obj, field), 'username') and getattr(obj, field).username==dep_set[0]) \
+                ):
+                    if getattr(obj, dep_set[1]) is None or (isinstance(getattr(obj, dep_set[1]), (str, unicode)) and not getattr(obj, dep_set[1]).strip()):
+                        # field is unset or empty string
+                        missing.append(dep_set[1])
+            except:
+                #import ipdb; ipdb.set_trace()
+                pass
 
 #            elif not getattr(obj, field) and getattr(obj, field)==dep_set[0]: # and dep_set[0]==False:
 #                missing.append(dep_set[1])
@@ -294,6 +303,10 @@ class BushfireBase(Audit):
     other_info = models.CharField(verbose_name='Other Information', max_length=250, null=True, blank=True)
 
     field_officer = models.ForeignKey(User, verbose_name="Field Officer", null=True, blank=True, related_name='%(class)s_init_field_officer')
+    other_field_officer = models.CharField(verbose_name="Other Field Officer Name", max_length=75, null=True, blank=True)
+    other_field_officer_agency = models.CharField(verbose_name="Other Field Officer Agency", max_length=36, null=True, blank=True)
+    other_field_officer_phone = models.CharField(verbose_name="Other Field Officer Phone", max_length=24, null=True, blank=True)
+
     duty_officer = models.ForeignKey(User, verbose_name="Duty Officer", null=True, blank=True, related_name='%(class)s_init_duty_officer')
     init_authorised_by = models.ForeignKey(User, verbose_name="Initial Authorised By", null=True, blank=True, related_name='%(class)s_init_authorised_by')
     init_authorised_date = models.DateTimeField(verbose_name='Initial Authorised Date', null=True, blank=True)
@@ -311,7 +324,7 @@ class BushfireBase(Audit):
     # FINAL Fire Report Fields
     fire_contained_date = models.DateTimeField(verbose_name='Fire Contained', null=True, blank=True)
     fire_controlled_date = models.DateTimeField(verbose_name='Fire Controlled', null=True, blank=True)
-    fire_safe_date = models.DateTimeField(verbose_name='Fire Safe', null=True, blank=True)
+    fire_safe_date = models.DateTimeField(verbose_name='Fire inactive', null=True, blank=True)
 
     first_attack = models.ForeignKey('Agency', verbose_name="First Attack Agency", null=True, blank=True, related_name='%(class)s_first_attack')
     other_first_attack = models.CharField(verbose_name="Other First Attack Agency", max_length=50, null=True, blank=True)
@@ -486,6 +499,10 @@ class Bushfire(BushfireBase):
     @property
     def is_final_authorised(self):
         return True if self.authorised_by and self.authorised_date and self.report_status >= Bushfire.STATUS_FINAL_AUTHORISED else False
+
+    @property
+    def other_contact(self):
+        return 'Name: {}, Agency: {}, Phone: {}'.format(self.other_field_officer, self.other_field_officer_agency, self.other_field_officer_phone)
 
 #    @property
 #    def is_reviewed(self):

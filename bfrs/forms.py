@@ -167,7 +167,9 @@ class BushfireUpdateForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super (BushfireUpdateForm,self ).__init__(*args,**kwargs)
-        active_users = User.objects.filter(is_active=True).order_by('username')
+        #active_users = User.objects.filter(is_active=True).order_by('username')
+        # order alphabetically, but with username='other', as first item in list
+        active_users = User.objects.filter(is_active=True).extra(select={'other': "CASE WHEN username='other' THEN 0 ELSE 1 END"}).order_by('other', 'username')
         self.fields['field_officer'].queryset = active_users
         self.fields['duty_officer'].queryset = active_users
 
@@ -181,7 +183,8 @@ class BushfireUpdateForm(forms.ModelForm):
         model = Bushfire
         fields = ('sss_data',
                   'region', 'district', 'dfes_incident_no',
-                  'name', 'year', 'prob_fire_level', 'max_fire_level', 'field_officer', 'duty_officer', #'init_authorised_by', 'init_authorised_date',
+                  'name', 'year', 'prob_fire_level', 'max_fire_level', 'duty_officer', #'init_authorised_by', 'init_authorised_date',
+                  'field_officer', 'other_field_officer', 'other_field_officer_agency', 'other_field_officer_phone',
                   'media_alert_req', 'park_trail_impacted', 'fire_position', 'fire_position_override',
                   'fire_detected_date', 'dispatch_pw_date', 'dispatch_aerial_date',
                   #'assistance_req', 'assistance_details',
@@ -304,6 +307,11 @@ class BushfireUpdateForm(forms.ModelForm):
 
         if self.cleaned_data.has_key('other_tenure') and self.cleaned_data['other_tenure']:
             self.cleaned_data['other_tenure'] = int(self.cleaned_data['other_tenure'])
+
+        if self.cleaned_data.has_key('field_officer') and self.cleaned_data['field_officer'] and self.cleaned_data['field_officer'].username != 'other':
+            self.cleaned_data['other_field_officer'] = None
+            self.cleaned_data['other_field_officer_agency'] = None
+            self.cleaned_data['other_field_officer_phone'] = None
 
         return cleaned_data
 

@@ -613,6 +613,10 @@ def fssdrs_email(bushfire, url, status='final'):
 
     return send_mail(subject, message, settings.FROM_EMAIL, settings.FSSDRS_EMAIL)
 
+def create_other_user():
+    return User.objects.get_or_create(username='other', first_name='Other', last_name='Contact')
+
+
 def update_users():
     resp=requests.get(url=settings.URL_SSO, auth=HTTPBasicAuth(settings.USER_SSO, settings.PASS_SSO))
 

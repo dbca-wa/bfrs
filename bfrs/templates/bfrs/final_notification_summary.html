@@ -15,8 +15,11 @@
         </tr>
 
         <tr>
-            <th id="id_th_field_officer" class="cbas" style="font-weight:normal;">Field Officer</th>
-            <td colspan="2" class="cbas">{{snapshot.field_officer|is_none}}</td>
+            <th id="id_th_field_officer" class="cbas" style="font-weight:normal;">P&W Field Officer</th>
+            <td colspan="2" class="cbas">
+                {{snapshot.field_officer|is_none}}<br>
+                {% if snapshot.other_field_officer %} Name: {{snapshot.other_field_officer}}<br> Agency: {{snapshot.other_field_officer_agency}}<br> Phone: {{snapshot.other_field_officer_phone}}<br>{% endif %}
+            </td>
 
             <th class="cbas">Job code *</th>
             <td colspan="2" class="cbas">{{snapshot.job_code}}</td>

@@ -27,8 +27,14 @@
         </tr>
 
         <tr>
-            <th id="id_th_field_officer" class="cbas" style="font-weight:normal;">Field Officer</th>
-            <td colspan="2" class="cbas">{{form.field_officer}}</td>
+            <th id="id_th_field_officer" class="cbas" style="font-weight:normal;">P&W Field Officer</th>
+            <td colspan="2" class="cbas">{{form.field_officer}}<br>
+                <span class="div_field_officer" style="display: none; margin: 0px;">
+                    {{form.other_field_officer}} <strong>Name *</strong><br>
+                    {{form.other_field_officer_agency}} Agency<br>
+                    {{form.other_field_officer_phone}} Phone
+                </span>
+            </td>
 
             <th id="id_th_job_code" class="cbas">Job code *</th>
             <td colspan="2" class="cbas">{{form.job_code}}</td>
@@ -157,6 +163,18 @@ $('.selectpicker').selectpicker({
   liveSearch: true,
   dropupAuto: false,
 });
+
+/* Other Field Officer */
+var selected = $('#id_field_officer :selected').text();
+$('#id_field_officer').on('change', function() {
+	var selected = $('#id_field_officer :selected').text();
+	if (selected.indexOf('Other Contact') > -1) {
+		$('.div_field_officer').show();
+	} else {
+		$('.div_field_officer').hide();
+	}
+}).change();
+
 
 /* Initial Attack */
 var selected = $('#id_first_attack :selected').text();
