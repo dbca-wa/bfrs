@@ -171,7 +171,7 @@ class BushfireUpdateForm(forms.ModelForm):
         # order alphabetically, but with username='other', as first item in list
         active_users = User.objects.filter(is_active=True).extra(select={'other': "CASE WHEN username='other' THEN 0 ELSE 1 END"}).order_by('other', 'username')
         self.fields['field_officer'].queryset = active_users
-        self.fields['duty_officer'].queryset = active_users
+        self.fields['duty_officer'].queryset = active_users.exclude(username='other')
 
         # For use when debugging outside SSS - need to create an origin_point manually
         #from django.contrib.gis.geos import Point, GEOSGeometry

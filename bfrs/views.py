@@ -27,7 +27,7 @@ from bfrs.forms import (ProfileForm, BushfireFilterForm, BushfireUpdateForm,
     )
 from bfrs.utils import (breadcrumbs_li,
         create_areas_burnt, update_areas_burnt, update_areas_burnt_fs, update_damage_fs, update_injury_fs, update_fire_behaviour_fs,
-        export_final_csv, export_excel,
+        export_final_csv, export_excel, export_excel_outstanding_fires, 
         update_status, serialize_bushfire,
         rdo_email, pvs_email, fpc_email, pica_email, pica_sms, police_email, dfes_email, fssdrs_email,
         invalidate_bushfire, is_external_user, can_maintain_data, refresh_gokart,
@@ -182,6 +182,20 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
             if eval(report):
                 qs = self.get_filterset(self.filterset_class).qs
                 return export_excel(self.request, qs)
+
+        if self.request.GET.has_key('export_excel_outstanding_fires'):
+            report = self.request.GET.get('export_excel_outstanding_fires')
+            if eval(report):
+                qs = self.get_filterset(self.filterset_class).qs
+                #qs = qs.filter(report_status__gte=Bushfire.STATUS_INITIAL_AUTHORISED).filter(report_status__lt=Bushfire.STATUS_FINAL_AUTHORISED)
+                #import ipdb; ipdb.set_trace()
+                return export_excel_outstanding_fires(self.request, self.filterset.data['region'], qs)
+
+#        if self.request.GET.has_key('export_fires_to_excel'):
+#            report = self.request.GET.get('export_fires_to_excel')
+#            if eval(report):
+#                qs = self.get_filterset(self.filterset_class).qs
+#                return TemplateResponse(request, template_snapshot_history, context=context)
 
         #import ipdb; ipdb.set_trace()
         if self.request.GET.has_key('action'):

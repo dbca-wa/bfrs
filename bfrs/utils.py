@@ -1,6 +1,6 @@
 from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
-from bfrs.models import (Bushfire, BushfireSnapshot, District,
+from bfrs.models import (Bushfire, BushfireSnapshot, District, Region,
     AreaBurnt, Damage, Injury, FireBehaviour, Tenure,
     SNAPSHOT_INITIAL, SNAPSHOT_FINAL,
     DamageSnapshot, InjurySnapshot, FireBehaviourSnapshot, AreaBurntSnapshot,
@@ -733,7 +733,7 @@ def export_final_csv(request, queryset):
 			smart_str( obj.fire_number),
 			smart_str( obj.dfes_incident_no),
 			smart_str( obj.job_code),
-			smart_str( obj.get_fire_level_display()),
+			smart_str( obj.get_prob_fire_level_display()),
 			smart_str( obj.media_alert_req),
 			smart_str( obj.investigation_req),
 			smart_str( obj.fire_position),
@@ -782,9 +782,11 @@ export_final_csv.short_description = u"Export CSV (Final)"
 def export_excel(request, queryset):
 
     filename = 'export_final-' + datetime.now().strftime('%Y-%m-%dT%H%M%S') + '.xls'
-    response = HttpResponse(content_type='application/vnd.ms-excel; charset=utf-16')
+    #response = HttpResponse(content_type='application/vnd.ms-excel; charset=utf-16')
+    response = HttpResponse(content_type='application/vnd.ms-excel')
     response['Content-Disposition'] = 'attachment; filename=' + filename
     writer = unicodecsv.writer(response, quoting=unicodecsv.QUOTE_ALL)
+    #import ipdb; ipdb.set_trace()
 
 
     book = Workbook()
@@ -804,7 +806,8 @@ def export_excel(request, queryset):
     hdr.write(col_no(), "Fire Number")
     hdr.write(col_no(), "DFES Incident No")
     hdr.write(col_no(), "Job Code")
-    hdr.write(col_no(), "Fire Level")
+    hdr.write(col_no(), "Probable Fire Level")
+    hdr.write(col_no(), "Max Fire Level")
     hdr.write(col_no(), "Media Alert Req")
     hdr.write(col_no(), "Investigation Req")
     hdr.write(col_no(), "Fire Position")
@@ -854,14 +857,15 @@ def export_excel(request, queryset):
         col_no = lambda c=count(): next(c)
 
         row.write(col_no(), obj.id )
-        row.write(col_no(), smart_str( obj.region.name) )
-        row.write(col_no(), smart_str( obj.district.name) )
-        row.write(col_no(), smart_str( obj.name) if obj.name else None)
-        row.write(col_no(), smart_str( obj.year) )
+        row.write(col_no(), obj.region.name )
+        row.write(col_no(), obj.district.name )
+        row.write(col_no(), obj.name)
+        row.write(col_no(), obj.year )
         row.write(col_no(), obj.fire_number )
         row.write(col_no(), obj.dfes_incident_no if obj.dfes_incident_no else None)
         row.write(col_no(), obj.job_code if obj.job_code else None)
-        row.write(col_no(), smart_str( obj.get_fire_level_display() if obj.fire_level else None))
+        row.write(col_no(), smart_str( obj.get_prob_fire_level_display() if obj.prob_fire_level else None))
+        row.write(col_no(), smart_str( obj.get_max_fire_level_display() if obj.max_fire_level else None))
         row.write(col_no(), smart_str( obj.media_alert_req if obj.media_alert_req else None))
         row.write(col_no(), smart_str( obj.investigation_req if obj.investigation_req else None))
         row.write(col_no(), smart_str( obj.fire_position if obj.fire_position else None))
@@ -896,7 +900,7 @@ def export_excel(request, queryset):
         row.write(col_no(), smart_str( obj.other_final_control if obj.other_final_control else None))
         row.write(col_no(), smart_str( obj.arson_squad_notified if obj.arson_squad_notified else None))
         row.write(col_no(), obj.offence_no if obj.offence_no else None)
-        row.write(col_no(), obj.area if obj.area else none)
+        row.write(col_no(), obj.area if obj.area else None)
         row.write(col_no(), smart_str( obj.time_to_control if obj.time_to_control else None))
         row.write(col_no(), smart_str( obj.authorised_by.get_full_name() if obj.authorised_by else None ) )
         row.write(col_no(), smart_str( obj.authorised_date.strftime('%Y-%m-%d %H:%M:%S') if obj.authorised_date else None ) )
@@ -909,5 +913,66 @@ def export_excel(request, queryset):
 
     return response
 export_final_csv.short_description = u"Export Excel"
+
+def export_excel_outstanding_fires(request, region_id, queryset):
+
+    #region = region.name if isinstance(region, Region) else region
+    #region = region if region else 'All Regions'
+    regions = Region.objects.filter(id=region_id) if region_id else Region.objects.all()
+    region_name = regions[0].name if region_id else 'All-Regions'
+
+    dt = datetime.now()
+    filename = 'outstanding_fires_{}_{}.xls'.format(region_name, dt.strftime('%d%b%Y'))
+    response = HttpResponse(content_type='application/vnd.ms-excel')
+    response['Content-Disposition'] = 'attachment; filename=' + filename
+    writer = unicodecsv.writer(response, quoting=unicodecsv.QUOTE_ALL)
+
+
+    book = Workbook()
+
+    for region in regions:
+        qs = queryset.filter(region_id=region.id)
+        sheet1 = book.add_sheet(region.name)
+
+        col_no = lambda c=count(): next(c)
+        row_no = lambda c=count(): next(c)
+        sheet1 = book.get_sheet(region.name)
+
+        hdr = sheet1.row(row_no())
+        hdr.write(0, 'Report Date')
+        hdr.write(1, dt.strftime('%d-%b-%Y'))
+
+        hdr = sheet1.row(row_no())
+        hdr.write(0, 'Region')
+        hdr.write(1, region.name)
+
+        hdr = sheet1.row(row_no())
+        hdr = sheet1.row(row_no())
+        hdr.write(col_no(), "Fire Number")
+        hdr.write(col_no(), "Name")
+        hdr.write(col_no(), "Date Detected")
+        hdr.write(col_no(), "Duty Officer")
+        hdr.write(col_no(), "Date Contained")
+        hdr.write(col_no(), "Date Controlled")
+        hdr.write(col_no(), "Date Inactive")
+
+        #row_no = lambda c=count(5): next(c)
+        for obj in qs:
+            row = sheet1.row(row_no())
+            col_no = lambda c=count(): next(c)
+
+            row.write(col_no(), obj.fire_number )
+            row.write(col_no(), obj.name)
+            row.write(col_no(), obj.fire_detected_date.strftime('%Y-%m-%d %H:%M:%S') if obj.fire_detected_date else '' )
+            row.write(col_no(), obj.duty_officer.get_full_name() if obj.duty_officer else '' )
+            row.write(col_no(), obj.fire_contained_date.strftime('%Y-%m-%d %H:%M:%S') if obj.fire_contained_date else '' )
+            row.write(col_no(), obj.fire_controlled_date.strftime('%Y-%m-%d %H:%M:%S') if obj.fire_controlled_date else '' )
+            row.write(col_no(), obj.fire_safe_date.strftime('%Y-%m-%d %H:%M:%S') if obj.fire_safe_date else '' )
+
+    book.add_sheet('Sheet 2')
+    book.save(response)
+
+    return response
+export_excel_outstanding_fires.short_description = u"Outstanding Fires"
 
 
