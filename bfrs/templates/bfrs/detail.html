@@ -173,7 +173,7 @@
             <td colspan="2" class="cbas"> {% if is_init_authorised %} {{snapshot.name}} {{form.name.as_hidden}}{% else %} {{form.name}} {% endif %} </td>
 
             <th class="cbas">Date and time fire detected *</th>
-            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.fire_detected_date}} {{form.fire_detected_date}} {% else %} {{form.fire_detected_date}} {% endif %}</td>
+            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.fire_detected_date}} {{form.fire_detected_date.as_hidden}} {% else %} {{form.fire_detected_date}} {% endif %}</td>
         </tr>
 
         <tr>
