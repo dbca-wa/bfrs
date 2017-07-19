@@ -209,10 +209,13 @@
 
         <tr>
             <th class="cbas">Tenure of ignition point *<br><br><div class=div_tenure style="visibility: hidden;">Other Tenure *</div></th>
-            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.tenure}}<br> {{snapshot.get_other_tenure_display}} {{snapshot.tenure.as_hidden}} {{snapshot.other_tenure.as_hidden}} {% else %} {{form.tenure}} {% endif %}
+                {% comment %}
+            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.tenure}} <br>{% if snapshot.other_tenure %} {{snapshot.get_other_tenure_display}} {% endif %} {{form.tenure.as_hidden}} {{form.other_tenure.as_hidden}} {% else %} {{form.tenure}} {% endif %}
                 <div class="div_tenure" style="visibility: hidden;">{{form.other_tenure}}</div>
             </td>
-
+                {% endcomment %}
+            <td colspan="2" class="cbas">{{form.tenure}}<br><div class="div_tenure" style="visibility: hidden;">{{form.other_tenure}}</div></td>
+                
             <th class="cbas">Duty Officer *</th>
             <td colspan="2" class="cbas">{{form.duty_officer}}</td>
         </tr>
@@ -573,6 +576,7 @@ $('.open-all').click(function(){
 /* Initial Area Override */
 // Only allow override if no fire_boundary supllied
 
+{% if not object.is_init_authorised %}
 $('#id_initial_area').val({{object.sss_data_to_dict.area.total_area|floatformat:2}});
 if( {{object.fire_boundary|yesno:"true,false"}} || {{sss_data.area.total_area|yesno:"true,false"}} ) { 
     $('.div_area_unknown').hide();
@@ -591,6 +595,7 @@ $('#id_initial_area_unknown').on('change', function() {
 		$('.div_initial_area').css('visibility','visible');
 	}
 }).change();
+{% endif %}
 
 $("#id_initial_area").prop('min', 0);
 /* END - Area Override */

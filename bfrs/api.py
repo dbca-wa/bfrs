@@ -219,12 +219,15 @@ class BushfireResource(APIResource):
         self.full_hydrate(bundle)
         bundle.obj.sss_data = json.dumps(bundle.data)
 
+        #import ipdb; ipdb.set_trace()
         if bundle.data.has_key('tenure_ignition_point') and bundle.data['tenure_ignition_point'] and \
             bundle.data['tenure_ignition_point'].has_key('category') and bundle.data['tenure_ignition_point']['category']:
             try:
                 bundle.obj.tenure = Tenure.objects.get(name__istartswith=bundle.data['tenure_ignition_point']['category'])
             except:
-                bundle.obj.tenure = Tenure.objects.get(name__istartswith='other')
+                bundle.obj.tenure = Tenure.objects.get(name__iendswith='other')
+        elif bundle.data.has_key('tenure_ignition_point') and not bundle.data['tenure_ignition_point']:
+            bundle.obj.tenure = Tenure.objects.get(name__iendswith='other')
 
         if bundle.data.has_key('area') and bundle.data['area'].has_key('tenure_area') and bundle.data['area']['tenure_area'].has_key('areas') and bundle.data['area']['tenure_area']['areas']:
             update_areas_burnt(bundle.obj, bundle.data['area']['tenure_area']['areas'])

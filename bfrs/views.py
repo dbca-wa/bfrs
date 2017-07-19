@@ -148,7 +148,7 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
     #model = Bushfire
     filterset_class = BushfireFilter
     template_name = 'bfrs/bushfire.html'
-    paginate_by = 5
+    paginate_by = 50
 
     def get_queryset(self):
         if self.request.GET.has_key('report_status') and int(self.request.GET.get('report_status'))==Bushfire.STATUS_INVALIDATED:
@@ -487,11 +487,11 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         area_burnt_formset      = AreaBurntFormSet(self.request.POST, prefix='area_burnt_fs')
         fire_behaviour_formset  = FireBehaviourFormSet(self.request.POST, prefix='fire_behaviour_fs')
 
-        #import ipdb; ipdb.set_trace()
         if form.is_valid():
 #            if (self.request.POST.has_key('submit_initial') and self.request.POST.get('submit_initial')) or (self.request.POST.has_key('authorise_final') and self.request.POST.get('authorise_final')):
 #                return self.form_valid(request, form, damage_formset)
 
+            #import ipdb; ipdb.set_trace()
             if form.cleaned_data['fire_not_found']:
                 return self.form_valid(request, form)
 
