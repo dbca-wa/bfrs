@@ -164,10 +164,21 @@ def invalidate_bushfire(obj, new_district, user):
         old_obj.valid_bushfire = obj
         old_obj.save()
 
+        def copy_fk_records(obj_id, fk_set, create_new=True):
+            # create duplicate injury records and associate them with the new object
+            for record in fk_set.all():
+                if create_new:
+                    record.id = None
+                record.bushfire_id = obj_id 
+                record.save()
+
+        copy_fk_records(obj.id, old_obj.damages)
+        copy_fk_records(obj.id, old_obj.injuries)
+        copy_fk_records(obj.id, old_obj.fire_behaviour)
+        copy_fk_records(obj.id, old_obj.tenures_burnt)
+
         # update Bushfire Snapshots to the new bushfire_id and then create a new snapshot
-        for snapshot in old_obj.snapshots.all():
-            snapshot.bushfire_id=obj.id
-            snapshot.save()
+        copy_fk_records(obj.id, old_obj.snapshots, create_new=False)
         serialize_bushfire('Final', 'Update District ({} --> {})'.format(old_obj.district.code, obj.district.code), obj)
 
         return obj
