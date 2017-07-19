@@ -61,14 +61,16 @@
                 <div class=div_cause style="display: none;">Other Cause *</div>
                 <div class=div_cause_escape style="display: none;">Prescribed Burn ID *</div>
             </th>
-
-            <td colspan="5" class="cbas">
+            <td colspan="2" class="cbas">
                 {{form.cause_state}}<br>
                 {{form.cause}}<br><br>
 
                 <div class="div_cause" style="display: none;">{{form.other_cause}}</div>
                 <div class="div_cause_escape" style="display: none;">{{form.prescribed_burn_id}}</div>
             </td>
+
+            <th class="cbas">Arson squad notified *</th>
+            <td colspan="2" class="cbas">{{form.arson_squad_notified}}<br><span class="div_offence_no" style="display: none; margin: 0px;">{{form.offence_no}} Police offence no</span></td>
         </tr>
 
         {% if object.is_init_authorised_by %} 
@@ -99,10 +101,7 @@
 
         <tr>
             <th class="cbas" title='Placeholder ...'>Date fire inactive <i class="icon-info-sign icon-white"></i> *</th>
-            <td colspan="2" class="cbas">{{form.fire_safe_date}}</td>
-
-            <th class="cbas">Arson squad notified *</th>
-            <td colspan="2" class="cbas">{{form.arson_squad_notified}}<br><span class="div_offence_no" style="display: none; margin: 0px;">{{form.offence_no}} Police offence no</span></td>
+            <td colspan="5" class="cbas">{{form.fire_safe_date}}</td>
         </tr>
 
         <tr>

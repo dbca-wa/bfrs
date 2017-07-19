@@ -43,11 +43,16 @@
                 <div class=div_cause style="display: none;">Other Cause *</div>
                 <div class=div_cause_escape style="display: none;">Prescribed Burn ID *</div>
             </th>
-            <td colspan="5" class="cbas">
+            <td colspan="2" class="cbas">
                 {{snapshot.cause_state|cause_state}}<br>
                 {{snapshot.cause}}<br><br>
                 {% if snapshot.other_cause %} {{snapshot.other_cause|is_none}} {% endif %}
                 {% if snapshot.prescribed_burn_id %} {{snapshot.prescribed_burn_id|is_none}} {% endif %}
+            </td>
+
+            <th class="cbas">Arson squad notified *</th>
+            <td colspan="2" class="cbas">
+                {{snapshot.arson_squad_notified|yesno:"Yes,No"}}{% if snapshot.arson_squad_notified|yesno:"Yes,No" == 'Yes' %}<br>Police offence no {{snapshot.offence_no}} {% endif %}
             </td>
         </tr>
 
@@ -80,12 +85,7 @@
 
         <tr>
             <th class="cbas" title='Placeholder ...'>Date fire inactive <i class="icon-info-sign icon-white"></i> *</th>
-            <td colspan="2" class="cbas">{{snapshot.fire_safe_date}}</td>
-
-            <th class="cbas">Arson squad notified *</th>
-            <td colspan="2" class="cbas">
-                {{snapshot.arson_squad_notified|yesno:"Yes,No"}}{% if snapshot.arson_squad_notified|yesno:"Yes,No" == 'Yes' %}<br>Police offence no {{snapshot.offence_no}} {% endif %}
-            </td>
+            <td colspan="5" class="cbas">{{snapshot.fire_safe_date}}</td>
         </tr>
 
         <tr>
