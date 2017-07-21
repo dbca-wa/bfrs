@@ -50,6 +50,32 @@ FSSDRS_GROUP = env('FSSDRS_GROUP', 'FSS Datasets and Reporting Services')
 HARVEST_EMAIL_HOST = env('HARVEST_EMAIL_HOST')
 HARVEST_EMAIL_USER = env('HARVEST_EMAIL_USER')
 HARVEST_EMAIL_PASSWORD = env('HARVEST_EMAIL_PASSWORD')
+
+# Outstanding Fires Report
+GOLDFIELDS_EMAIL = env('GOLDFIELDS_EMAIL', 'goldfields_email')
+KIMBERLEY_EMAIL = env('KIMBERLEY_EMAIL', 'kimberley_email')
+MIDWEST_EMAIL = env('MIDWEST_EMAIL', 'midwest_email')
+PILBARA_EMAIL = env('PILBARA_EMAIL', 'pilbara_email')
+SOUTH_COAST_EMAIL = env('SOUTH_COAST_EMAIL', 'south_coast_email')
+SOUTH_WEST_EMAIL = env('SOUTH_WEST_EMAIL', 'south_west_email')
+SWAN_EMAIL = env('SWAN_EMAIL', 'swan_email')
+WARREN_EMAIL = env('WARREN_EMAIL', 'warren_email')
+WHEATBELT_EMAIL = env('WHEATBELT_EMAIL', 'wheatbelt_email')
+ALL_REGIONS_EMAIL = env('ALL_REGIONS_EMAIL', None)
+OUTSTANDING_FIRES_EMAIL=[ 
+    {"Goldfields": GOLDFIELDS_EMAIL}, 
+    {"Kimberley": KIMBERLEY_EMAIL},
+    {"Midwest": MIDWEST_EMAIL},
+    {"Pilbara": PILBARA_EMAIL},
+    {"South Coast": SOUTH_COAST_EMAIL},
+    {"South West": SOUTH_WEST_EMAIL},
+    {"Swan": SWAN_EMAIL},
+    {"Warren": WARREN_EMAIL},
+    {"Wheatbelt": WHEATBELT_EMAIL},
+]
+#if ALL_REGIONS_EMAIL: OUTSTANDING_FIRES_EMAIL.append({"All Regions": ALL_REGIONS_EMAIL})
+     
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/
 

@@ -12,6 +12,8 @@ from bfrs.models import (Bushfire, BushfireSnapshot, District, Region,
 from django.db import IntegrityError, transaction
 from django.http import HttpResponse
 from django.core.mail import send_mail
+from cStringIO import StringIO
+from django.core.mail import EmailMessage
 from django.conf import settings
 from django.contrib.auth.models import User, Group, Permission
 import json
@@ -924,66 +926,5 @@ def export_excel(request, queryset):
 
     return response
 export_final_csv.short_description = u"Export Excel"
-
-def export_excel_outstanding_fires(request, region_id, queryset):
-
-    #region = region.name if isinstance(region, Region) else region
-    #region = region if region else 'All Regions'
-    regions = Region.objects.filter(id=region_id) if region_id else Region.objects.all()
-    region_name = regions[0].name if region_id else 'All-Regions'
-
-    dt = datetime.now()
-    filename = 'outstanding_fires_{}_{}.xls'.format(region_name, dt.strftime('%d%b%Y'))
-    response = HttpResponse(content_type='application/vnd.ms-excel')
-    response['Content-Disposition'] = 'attachment; filename=' + filename
-    writer = unicodecsv.writer(response, quoting=unicodecsv.QUOTE_ALL)
-
-
-    book = Workbook()
-
-    for region in regions:
-        qs = queryset.filter(region_id=region.id)
-        sheet1 = book.add_sheet(region.name)
-
-        col_no = lambda c=count(): next(c)
-        row_no = lambda c=count(): next(c)
-        sheet1 = book.get_sheet(region.name)
-
-        hdr = sheet1.row(row_no())
-        hdr.write(0, 'Report Date')
-        hdr.write(1, dt.strftime('%d-%b-%Y'))
-
-        hdr = sheet1.row(row_no())
-        hdr.write(0, 'Region')
-        hdr.write(1, region.name)
-
-        hdr = sheet1.row(row_no())
-        hdr = sheet1.row(row_no())
-        hdr.write(col_no(), "Fire Number")
-        hdr.write(col_no(), "Name")
-        hdr.write(col_no(), "Date Detected")
-        hdr.write(col_no(), "Duty Officer")
-        hdr.write(col_no(), "Date Contained")
-        hdr.write(col_no(), "Date Controlled")
-        hdr.write(col_no(), "Date Inactive")
-
-        #row_no = lambda c=count(5): next(c)
-        for obj in qs:
-            row = sheet1.row(row_no())
-            col_no = lambda c=count(): next(c)
-
-            row.write(col_no(), obj.fire_number )
-            row.write(col_no(), obj.name)
-            row.write(col_no(), obj.fire_detected_date.strftime('%Y-%m-%d %H:%M:%S') if obj.fire_detected_date else '' )
-            row.write(col_no(), obj.duty_officer.get_full_name() if obj.duty_officer else '' )
-            row.write(col_no(), obj.fire_contained_date.strftime('%Y-%m-%d %H:%M:%S') if obj.fire_contained_date else '' )
-            row.write(col_no(), obj.fire_controlled_date.strftime('%Y-%m-%d %H:%M:%S') if obj.fire_controlled_date else '' )
-            row.write(col_no(), obj.fire_safe_date.strftime('%Y-%m-%d %H:%M:%S') if obj.fire_safe_date else '' )
-
-    book.add_sheet('Sheet 2')
-    book.save(response)
-
-    return response
-export_excel_outstanding_fires.short_description = u"Outstanding Fires"
 
 

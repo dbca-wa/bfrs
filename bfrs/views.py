@@ -27,12 +27,13 @@ from bfrs.forms import (ProfileForm, BushfireFilterForm, BushfireUpdateForm,
     )
 from bfrs.utils import (breadcrumbs_li,
         create_areas_burnt, update_areas_burnt, update_areas_burnt_fs, update_damage_fs, update_injury_fs, update_fire_behaviour_fs,
-        export_final_csv, export_excel, export_excel_outstanding_fires, 
+        export_final_csv, export_excel, 
         update_status, serialize_bushfire,
         rdo_email, pvs_email, fpc_email, pica_email, pica_sms, police_email, dfes_email, fssdrs_email,
         invalidate_bushfire, is_external_user, can_maintain_data, refresh_gokart,
         authorise_report, check_district_changed,
     )
+from bfrs.reports import export_outstanding_fires 
 from django.db import IntegrityError, transaction
 from django.contrib import messages
 from django.forms import ValidationError
@@ -186,10 +187,9 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
         if self.request.GET.has_key('export_excel_outstanding_fires'):
             report = self.request.GET.get('export_excel_outstanding_fires')
             if eval(report):
-                qs = self.get_filterset(self.filterset_class).qs
-                #qs = qs.filter(report_status__gte=Bushfire.STATUS_INITIAL_AUTHORISED).filter(report_status__lt=Bushfire.STATUS_FINAL_AUTHORISED)
-                #import ipdb; ipdb.set_trace()
-                return export_excel_outstanding_fires(self.request, self.filterset.data['region'], qs)
+                # Only Reports that are Submitted, but not yet Authorised
+                qs = self.get_filterset(self.filterset_class).qs.filter(report_status__in=[Bushfire.STATUS_INITIAL_AUTHORISED])
+                return export_outstanding_fires(self.request, self.filterset.data['region'], qs)
 
 #        if self.request.GET.has_key('export_fires_to_excel'):
 #            report = self.request.GET.get('export_fires_to_excel')

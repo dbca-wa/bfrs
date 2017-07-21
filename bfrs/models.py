@@ -367,35 +367,13 @@ class BushfireSnapshot(BushfireBase):
 
     snapshot_type = models.PositiveSmallIntegerField(choices=SNAPSHOT_TYPE_CHOICES)
     action = models.CharField(verbose_name="Action Type", max_length=50)
-#    json_data = models.TextField(null=True, blank=True)
     bushfire = models.ForeignKey('Bushfire', related_name='snapshots')
-
-#    @property
-#    def json_data_todict(self):
-#        return json.loads(self.json_data) if self.json_data else None
-#
-#    @property
-#    def damages(self):
-#        return self.json_data_todict['damages'] if self.json_data_todict.has_key('damages') else []
-
-#    @property
-#    def damages(self):
-#        if self.bushfire.is_final_authorised:
-#            return self.bushfire.final_snapshot.damage_snapshots.all()
-#        elif self.bushfire.is_final_authorised:
-#            return self.bushfire.final_snapshot.damage_snapshots.all()
-
 
     def __str__(self):
         return ', '.join([self.fire_number, self.get_snapshot_type_display()])
 
-#    class Meta:
-#        unique_together = ('district', 'year', 'fire_number', 'snapshot_type', 'created')
-
 
 class Bushfire(BushfireBase):
-
-    #snapshot = models.ForeignKey(BushfireSnapshot, related_name='snapshots', null=True, blank=True)
 
     def user_unicode_patch(self):
         """ overwrite the User model's __unicode__() method """

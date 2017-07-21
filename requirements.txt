@@ -29,7 +29,7 @@ django-tastypie==0.13.3
 pandas==0.19.2
 
 webtemplate-dpaw
-fabric
+Fabric==1.12.0
 #git clone https://github.com/elo80ka/django-dynamic-formset - copy jquery.forset.js to statics/js dir
 
 # install postgress
