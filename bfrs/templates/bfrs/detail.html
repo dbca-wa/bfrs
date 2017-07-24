@@ -230,7 +230,11 @@
                     {{form.dispatch_pw}}<br><div class=div_dispatch_pw_date style="display: none;">{{form.dispatch_pw_date}}</div>
                 {% endif %}
                 {% endcomment %}
-                {{form.dispatch_pw}}<br><div class=div_dispatch_pw_date style="display: none;">{{form.dispatch_pw_date}}</div>
+                {% if snapshot.is_init_submitted and not can_maintain_data %} 
+                    {{snapshot.get_dispatch_pw_display}}<br>{{snapshot.dispatch_pw_date}}
+                {% else %}
+                    {{form.dispatch_pw}}<br><div class=div_dispatch_pw_date style="display: none;">{{form.dispatch_pw_date}}</div>
+                {% endif %}
             </td>
 
             <th class="cbas">Aerial suppression dispatched *<br><br><div class=div_dispatch_aerial_date style="display: none;">Date and time of dispatch</div></th>
@@ -242,7 +246,11 @@
                     {{form.dispatch_aerial}}<br><div class=div_dispatch_aerial_date style="display: none;">{{form.dispatch_aerial_date}}</div>
                 {% endif %} 
                 {% endcomment %}
-                {{form.dispatch_aerial}}<br><div class=div_dispatch_aerial_date style="display: none;">{{form.dispatch_aerial_date}}</div>
+                {% if snapshot.is_init_submitted and not can_maintain_data %} 
+                    {{snapshot.get_dispatch_aerial_display}}<br>{{snapshot.dispatch_aerial_date}}
+                {% else %}
+                    {{form.dispatch_aerial}}<br><div class=div_dispatch_aerial_date style="display: none;">{{form.dispatch_aerial_date}}</div>
+                {% endif %}
             </td>
         </tr>
 

@@ -574,7 +574,7 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
                 # update is occuring after report has already been authorised (action is undefined) - ie. it is being Reviewed by FSSDRS
                 serialize_bushfire('final', 'Review', self.object)
 
-        refresh_gokart(request, fire_number=self.object.fire_number, region=self.object.region.id, district=self.object.district.id)
+        refresh_gokart(self.request, fire_number=self.object.fire_number, region=self.object.region.id, district=self.object.district.id)
 
         self.object.save()
 
@@ -583,6 +583,7 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
                 reverse("bushfire:bushfire_initial", kwargs={'pk': self.object.id})
             )
 
+        #import ipdb; ipdb.set_trace()
         return HttpResponseRedirect(self.get_success_url())
 
     def get_context_data(self, **kwargs):
