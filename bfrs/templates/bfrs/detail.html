@@ -320,12 +320,12 @@
       {% if object.report_status != object.STATUS_INVALIDATED or not object.report_status %}
         {% if create or initial %}
 
-          <input type="submit" value="Save draft" class="btn btn-primary btn-success" name="_save" {% if is_init_authorised %}title="Submitted initial report cannot be edited" disabled{% endif %} />
+          <input type="submit" value="Save draft" class="btn btn-primary btn-success" name="_save" {% if is_init_authorised %}title="Submitted Notification report cannot be edited" disabled{% endif %} />
 
           {% if create %}
             <input type="submit" value="Save and continue" class="btn btn-primary btn-success" name="_save_continue" />
           {% else %}
-          <input type="submit" value="Submit" class="btn btn-primary btn-success" name="submit_initial" {% if is_init_authorised %}title="Initial Report already submitted" disabled{% else %}title="Save and submit"{% endif %} />
+          <input type="submit" value="Submit" class="btn btn-primary btn-success" name="submit_initial" {% if is_init_authorised %}title="Notification Report already submitted" disabled{% else %}title="Save and submit"{% endif %} />
           {% comment %}
             <a id="id_submit_btn" href="{% url 'bushfire:initial_snapshot' snapshot.id %}?action=submit_initial" class="btn btn-primary btn-danger">Submit 2</a>
             <input formaction="{% url 'bushfire:initial_snapshot' snapshot.id %}" type="submit" value="Submit" class="btn btn-primary btn-success" name="submit_initial" />
@@ -395,11 +395,23 @@ $("#id_days").attr('min',0)
 {% endif %}
 
 // $('[id^=""]').hide() // starts with --> http://xdsoft.net/jqplugins/datetimepicker/
+
 $('[id$="_date"]').datetimepicker({ 
     format: "Y-m-d H:i" ,
     maxDate:true,
-    maxTime:true,
+    //maxTime:true,
 }); //ends with
+
+$('#id_fire_detected_date').on('change', function () {
+        var d = $('#id_fire_detected_date').datetimepicker('getValue');
+        var now = moment();
+        //console.log('d ' + d +  ' - moment() ', now)
+        $('#div_fire_detected_date').remove();
+        if (d.valueOf() > now.valueOf()) {
+            $('#id_fire_detected_date').after('<div id="div_fire_detected_date"><p><font color="red">Date/time cannot be in the future. Reseting to current date/time ...</font></p><div>');
+            $('#id_fire_detected_date').val(now.format('YYYY-MM-DD H:mm'));
+        }
+});
 
 $('#id_field_officer').prop('class', 'selectpicker dropup');
 $('#id_duty_officer').prop('class', 'selectpicker dropup');
