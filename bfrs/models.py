@@ -51,8 +51,9 @@ AUTH_MANDATORY_DEP_FIELDS= {
     #'initial_control': [True, 'other_initial_control'],
     #'final_control': [True, 'other_final_control'],
 
-    'dispatch_pw': [['1', 'field_officer']], # if 'dispatch_pw' == '1' then 'field_officer' is required
-    'fire_monitored_only': [[False, 'fire_contained_date'], [False, 'fire_controlled_date'], [False, 'field_officer'], [False, 'first_attack']],
+    'dispatch_pw': [[1, 'field_officer']], # if 'dispatch_pw' == '1' then 'field_officer' is required
+    #'fire_monitored_only': [[False, 'fire_contained_date'], [False, 'fire_controlled_date'], [False, 'field_officer'], [False, 'first_attack']],
+    'fire_monitored_only': [[False, 'fire_contained_date'], [False, 'fire_controlled_date'], [False, 'first_attack']],
 
     'cause': [['Other (specify)', 'other_cause'], ['Escape P&W burning', 'prescribed_burn_id']],
     'area_limit': [[True, 'area']],
@@ -493,11 +494,6 @@ class Bushfire(BushfireBase):
         return self.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED
 
     @property
-    def has_restapi_write_perms(self):
-        # TODO add auth logic
-        return True
-
-    @property
     def origin_coords(self):
         return 'Lon/Lat ({}, {})'.format(round(self.origin_point.get_x(), 2), round(self.origin_point.get_y(), 2)) if self.origin_point else None
 
@@ -520,14 +516,6 @@ class Bushfire(BushfireBase):
         lon_str = lon[0] + u'\N{DEGREE SIGN} ' + lon[1].zfill(2) + '\' ' + lon[2].zfill(4) + '\" ' + lon[3]
 
         return 'Lat/Lon ' + lat_str + ', ' + lon_str
-
-#    def initial_snapshot_deserialized(self):
-#        obj = self.initial_snapshot if hasattr(self, 'initial_snapshot') else None
-#        return serializers.deserialize("json", obj).next().object
-#
-#    def final_snapshot_deserialized(self):
-#        obj = self.final_snapshot if hasattr(self, 'final_snapshot') else None
-#        return serializers.deserialize("json", obj).next().object
 
 #    def compare(self, obj):
 #        """

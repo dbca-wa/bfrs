@@ -436,9 +436,11 @@ $('#id_dispatch_pw_0').on('change', function() {
 	$("#id_th_field_officer").html("Field Officer *");
 }).change();
 $('#id_dispatch_pw_1').on('change', function() {
-	if($('#id_dispatch_pw_1').is(':checked')) { $('.div_dispatch_pw_date').hide(); }
-	$('#id_th_field_officer').css("font-weight", "normal");
-	$("#id_th_field_officer").html("Field Officer");
+	if($('#id_dispatch_pw_1').is(':checked')) { 
+        $('.div_dispatch_pw_date').hide(); 
+	    $('#id_th_field_officer').css("font-weight", "normal");
+	    $("#id_th_field_officer").html("Field Officer");
+    }
 }).change();
 
 /* dispatch Aerial */
@@ -635,10 +637,10 @@ $('#id_fire_monitored_only').on('change', function() {
 	        $('.div_fire_behaviour_unknown').hide(); 
         {% endif %}
 
+        /*
 	    $('#id_th_field_officer').css("font-weight", "normal");
 	    $("#id_th_field_officer").html("Field Officer");
 
-        /*
         $('#id_th_initial_controlling_agency').css("font-weight", "normal");
         $("#id_th_initial_controlling_agency").html("Initial controlling agency");
         $('#id_th_final_controlling_agency').css("font-weight", "normal");
@@ -657,12 +659,12 @@ $('#id_fire_monitored_only').on('change', function() {
         //$('#id_fire_behaviour_unknown').prop('checked', false);
 	    $('.div_fire_behaviour_unknown').show(); 
 
+        /*
         {% if object.report_status >= object.STATUS_INITIAL_AUTHORISED and object.initial_snapshot.dispatch_pw %}
 	        $('#id_th_field_officer').css("font-weight", "bold");
 	        $("#id_th_field_officer").html("Field Officer *");
         {% endif %}
 
-        /*
         $('#id_th_initial_controlling_agency').css("font-weight", "bold");
         $("#id_th_initial_controlling_agency").html("Initial controlling agency *");
         $('#id_th_final_controlling_agency').css("font-weight", "bold");
