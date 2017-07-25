@@ -392,9 +392,6 @@
   $('.panel-collapse').collapse('show');
 {% endif %}
 
-$("#id_hours").attr('min',0)
-$("#id_days").attr('min',0)
-
 // prevent user from submitting the form multiple times
 {% if create %}
   $('form').submit(function() {
@@ -522,16 +519,6 @@ $('#id_injury_unknown').on('change', function() {
         $('.div_injury_unknown *').prop('disabled',false).css({ opacity: 1.0 });
         $('.div_injury_unknown a').css('visibility','visible');
 	}
-}).change();
-*/
-
-/* Assistance Required */
-/*
-$('#id_assistance_req_0').on('change', function() {
-	if($('#id_assistance_req_0').is(':checked')) { $('.div_assist').show(); }
-}).change();
-$('#id_assistance_req_1').on('change', function() {
-	if($('#id_assistance_req_1').is(':checked')) { $('.div_assist').hide(); }
 }).change();
 */
 

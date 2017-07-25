@@ -110,9 +110,12 @@ class BushfireFilter(django_filters.FilterSet):
         # allows dynamic update of the filter set, on page refresh
         self.filters['year'].extra['choices'] = [[None, '---------']] + [[i['year'], str(i['year']) + '/' + str(i['year']+1)] for i in Bushfire.objects.all().values('year').distinct().order_by('year')]
         self.filters['reporting_year'].extra['choices'] = [[None, '---------']] + [[i['reporting_year'], str(i['reporting_year']) + '/' + str(i['reporting_year']+1)] for i in Bushfire.objects.all().values('reporting_year').distinct().order_by('reporting_year')]
-        if not can_maintain_data(self.request.user):
-            # pop the 'Reviewed' option
-            self.filters['report_status'].extra['choices'] = [(u'', '---------'), (1, 'Initial'), (2, 'Initial Authorised'), (3, 'Final Authorised'), (5, 'Invalidated'), (6, 'Missing Final')]
+#        if not can_maintain_data(self.request.user):
+#            # pop the 'Reviewed' option
+#            self.filters['report_status'].extra['choices'] = [(u'', '---------'), (1, 'Initial'), (2, 'Initial Authorised'), (3, 'Final Authorised'), (5, 'Invalidated'), (6, 'Missing Final')]
+
+        # pop the 'Reviewed' option
+        self.filters['report_status'].extra['choices'] = [(u'', '---------'), (1, 'Initial'), (2, 'Initial Authorised'), (3, 'Final Authorised'), (5, 'Invalidated'), (6, 'Missing Final')]
 
 
 class ProfileView(LoginRequiredMixin, generic.FormView):
@@ -210,22 +213,6 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
         if self.request.GET.has_key('confirm_action'):
             bushfire = Bushfire.objects.get(id=self.request.GET.get('bushfire_id'))
             action = self.request.GET.get('confirm_action')
-#            if action == 'mark_reviewed':
-#                context = self.get_context_data()
-#                context['action'] = action
-#                context['is_authorised'] = True
-#                context['snapshot'] = bushfire
-#                context['object'] = bushfire
-#                context['review'] = True
-#
-#                fields = AUTH_MANDATORY_FIELDS_FIRE_NOT_FOUND if bushfire.fire_not_found else AUTH_MANDATORY_FIELDS
-#                context['mandatory_fields'] = check_mandatory_fields(bushfire, fields, AUTH_MANDATORY_DEP_FIELDS, AUTH_MANDATORY_FORMSETS)
-#
-#                if context['mandatory_fields']:
-#                    return TemplateResponse(request, template_mandatory, context=context)
-#
-#                return TemplateResponse(request, template_final, context=context) # --> redirects to review the final report for confirmation
-
 
             return TemplateResponse(request, template_confirm, context={'action': action, 'bushfire_id': bushfire.id})
 
@@ -240,24 +227,13 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
         if self.request.POST.has_key('action'):
             action = self.request.POST.get('action')
 
-            if action == 'mark_reviewed' and bushfire.report_status==Bushfire.STATUS_FINAL_AUTHORISED:
-                update_status(self.request, bushfire, action)
-                return HttpResponseRedirect(self.get_success_url())
-
             # Delete Final Authorisation
-            elif action == 'delete_final_authorisation' and bushfire.report_status==Bushfire.STATUS_FINAL_AUTHORISED:
+            if action == 'delete_final_authorisation' and bushfire.report_status==Bushfire.STATUS_FINAL_AUTHORISED:
                 bushfire.authorised_by = None
                 bushfire.authorised_date = None
                 #bushfire.final_snapshot = None
                 bushfire.report_status = Bushfire.STATUS_INITIAL_AUTHORISED
                 serialize_bushfire(action, action, bushfire)
-
-#            # Delete Reviewed
-#            elif action == 'delete_reviewed' and bushfire.report_status==Bushfire.STATUS_REVIEWED:
-#                bushfire.reviewed_by = None
-#                bushfire.reviewed_date = None
-#                bushfire.report_status = Bushfire.STATUS_FINAL_AUTHORISED
-#                serialize_bushfire(action, action, bushfire)
 
             # Archive
             elif action == 'archive' and bushfire.report_status==Bushfire.STATUS_FINAL_AUTHORISED:
@@ -267,13 +243,7 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
 
             bushfire.save()
 
-#        request.session['refreshGokart'] = True
-#        request.session['region'] = 'null'
-#        request.session['district'] = 'null'
-#        request.session['id'] = self.object.fire_number
-#        request.session['action'] = "update"
         refresh_gokart(request, fire_number=bushfire.fire_number) #, region=None, district=None, action='update')
-
 
         return HttpResponseRedirect(self.get_success_url())
 
@@ -394,15 +364,22 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
     def get_initial(self):
 
         initial = {}
-        if self.get_object(): #hasattr(self, 'object') and self.object:
-            # if updating object ...
-            initial['hours'] = self.object.time_to_control_hours_part if self.object.time_to_control_hours_part > 0 else ''
-            initial['days']  = self.object.time_to_control_days_part if self.object.time_to_control_days_part > 0 else ''
-        else:
+#        if self.get_object(): #hasattr(self, 'object') and self.object:
+#            # if updating object ...
+#            initial['hours'] = self.object.time_to_control_hours_part if self.object.time_to_control_hours_part > 0 else ''
+#            initial['days']  = self.object.time_to_control_days_part if self.object.time_to_control_days_part > 0 else ''
+#        else:
+#            # if creating object ...
+#            profile, created = Profile.objects.get_or_create(user=self.request.user)
+#            initial['region'] = profile.region
+#            initial['district'] = profile.district
+
+        if not self.get_object():
             # if creating object ...
             profile, created = Profile.objects.get_or_create(user=self.request.user)
             initial['region'] = profile.region
             initial['district'] = profile.district
+
 
 
         if self.request.POST.has_key('sss_create'):

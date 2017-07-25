@@ -148,8 +148,6 @@ class BushfireFilterForm(forms.ModelForm):
 
 
 class BushfireUpdateForm(forms.ModelForm):
-    days = forms.IntegerField(label='Days', required=False)
-    hours = forms.IntegerField(label='Hours', required=False)
     dispatch_aerial = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
     prob_fire_level = forms.ChoiceField(choices=Bushfire.FIRE_LEVEL_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
     max_fire_level = forms.ChoiceField(choices=Bushfire.FIRE_LEVEL_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
@@ -160,7 +158,6 @@ class BushfireUpdateForm(forms.ModelForm):
     park_trail_impacted = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
     #dispatch_pw = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
     dispatch_pw = forms.ChoiceField(choices=Bushfire.DISPATCH_PW_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
-    #assistance_req = forms.ChoiceField(choices=Bushfire.ASSISTANCE_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
     other_tenure = forms.ChoiceField(choices=Bushfire.IGNITION_POINT_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
     arson_squad_notified = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
     reporting_year = forms.ChoiceField(choices=REPORTING_YEAR_CHOICES, required=False, initial=REPORTING_YEAR_CHOICES[0][0])
@@ -187,10 +184,8 @@ class BushfireUpdateForm(forms.ModelForm):
                   'field_officer', 'other_field_officer', 'other_field_officer_agency', 'other_field_officer_phone',
                   'media_alert_req', 'park_trail_impacted', 'fire_position', 'fire_position_override',
                   'fire_detected_date', 'dispatch_pw_date', 'dispatch_aerial_date',
-                  #'assistance_req', 'assistance_details',
-                  'communications', 'other_info',
+                  'other_info',
                   'cause', 'cause_state', 'other_cause', 'prescribed_burn_id', 'tenure', 'other_tenure',
-                  'days', 'hours', 'time_to_control',
                   'dispatch_pw', 'dispatch_aerial',
                   'investigation_req', 'fire_behaviour_unknown',
                   'initial_area', 'initial_area_unknown', 'area', 'area_limit', 'origin_point_str', 'origin_point', 'fire_boundary',
@@ -217,7 +212,6 @@ class BushfireUpdateForm(forms.ModelForm):
         if not self.cleaned_data['cause_state']: self.cleaned_data['cause_state'] = None
         if not self.cleaned_data['media_alert_req']: self.cleaned_data['media_alert_req'] = None
         if not self.cleaned_data['park_trail_impacted']: self.cleaned_data['park_trail_impacted'] = None
-        #if not self.cleaned_data['assistance_req']: self.cleaned_data['assistance_req'] = None
         if not self.cleaned_data['other_tenure']: self.cleaned_data['other_tenure'] = None
 
 #        if self.cleaned_data['dispatch_pw'] and eval(self.cleaned_data['dispatch_pw'])==Bushfire.DISPATCH_PW_YES:
@@ -241,10 +235,6 @@ class BushfireUpdateForm(forms.ModelForm):
                 self.add_error('dispatch_pw_date', 'Datetime must not be before Fire Detected Datetime.')
             if self.cleaned_data.has_key('dispatch_aerial_date') and self.cleaned_data['dispatch_aerial_date'] and self.cleaned_data['dispatch_aerial_date'] < self.cleaned_data['fire_detected_date']:
                 self.add_error('dispatch_aerial_date', 'Datetime must not be before Fire Detected Datetime.')
-
-        hours = self.cleaned_data['hours'] if self.cleaned_data.has_key('hours') and self.cleaned_data['hours'] else 0
-        days = self.cleaned_data['days'] if self.cleaned_data.has_key('days') and self.cleaned_data['days'] else 0
-        self.cleaned_data['time_to_control'] = timedelta(days=days, hours=hours)
 
         # FINAL Form
         if self.cleaned_data['fire_not_found']:

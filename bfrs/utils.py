@@ -466,7 +466,7 @@ def update_fire_behaviour_fs(bushfire, fire_behaviour_formset):
 def mail_url(request, bushfire, status='initial'):
     if status == 'initial':
         return "http://" + request.get_host() + reverse('bushfire:bushfire_initial', kwargs={'pk':bushfire.id})
-    if status == 'final' or status == 'review':
+    if status == 'final':
         return "http://" + request.get_host() + reverse('bushfire:bushfire_final', kwargs={'pk':bushfire.id})
 
 
@@ -528,18 +528,6 @@ def update_status(request, bushfire, action):
         # send emails
         resp = fssdrs_email(bushfire, mail_url(request, bushfire, status='final'), status='final')
         notification['FSSDRS-Auth'] = 'Email Sent' if resp else 'Email failed'
-
-        bushfire.save()
-
-    elif action == 'mark_reviewed' and bushfire.report_status==Bushfire.STATUS_FINAL_AUTHORISED:
-        bushfire.reviewed_by = request.user
-        bushfire.reviewed_date = datetime.now(tz=pytz.utc)
-        bushfire.report_status = Bushfire.STATUS_REVIEWED
-        serialize_bushfire('final', action, bushfire)
-
-        # send emails
-        resp = fssdrs_email(bushfire, mail_url(request, bushfire, status='review'), status='review')
-        notification['FSSDRS-Review'] = 'Email Sent' if resp else 'Email failed'
 
         bushfire.save()
 
@@ -613,17 +601,10 @@ def fssdrs_email(bushfire, url, status='final'):
     if not settings.ALLOW_EMAIL_NOTIFICATION:
        return
 
-    if status == 'final':
-        subject = 'FSSDRS Email - Final Fire report has been authorised - {}'.format(bushfire.fire_number)
-        message = 'FSSDRS Email - {}\n\nreport has been authorised. User {}, at {}.\n\nThe report is located at {}'.format(
-            bushfire.fire_number, bushfire.authorised_by, bushfire.authorised_date, url
-        )
-    else:
-        subject = 'FSSDRS Email - Final Fire report has been reviewed - {}'.format(bushfire.fire_number)
-        message = 'FSSDRS Email - {}\n\nreport has been reviewed. User {}, at {}.\n\nThe report is located at {}'.format(
-            bushfire.fire_number, bushfire.reviewed_by, bushfire.reviewed_date, url
-        )
-
+    subject = 'FSSDRS Email - Final Fire report has been authorised - {}'.format(bushfire.fire_number)
+    message = 'FSSDRS Email - {}\n\nreport has been authorised. User {}, at {}.\n\nThe report is located at {}'.format(
+        bushfire.fire_number, bushfire.authorised_by, bushfire.authorised_date, url
+    )
     return send_mail(subject, message, settings.FROM_EMAIL, settings.FSSDRS_EMAIL)
 
 def create_other_user():
@@ -700,8 +681,6 @@ def export_final_csv(request, queryset):
 		#"Origin Point",
 		#"Fire Boundary",
 		"Fire Not Found",
-		"Assistance Req",
-		"Communications",
 		"Other Info",
 		"Cause",
 		"Other Cause",
@@ -711,8 +690,6 @@ def export_final_csv(request, queryset):
 		"Init Authorised Date",
 		"Authorised By",
 		"Authorised Date",
-		"Reviewed By",
-		"Reviewed Date",
 		"Dispatch P&W",
 		"Dispatch Aerial",
 		"Fire Detected",
@@ -730,7 +707,6 @@ def export_final_csv(request, queryset):
 		"Arson Squad Notified",
 		"Offence No",
 		"Area",
-		"Estimated Time to Control",
 		"Authorised By",
 		"Authorised Date",
 		"Report Status",
@@ -753,8 +729,6 @@ def export_final_csv(request, queryset):
 			#row.write(col_no(), smart_str( obj.origin_point)),
 			#row.write(col_no(), smart_str( obj.fire_boundary),
 			smart_str( obj.fire_not_found),
-			smart_str( obj.assistance_req),
-			smart_str( obj.communications),
 			smart_str( obj.other_info),
 			smart_str( obj.cause),
 			smart_str( obj.other_cause),
@@ -764,8 +738,6 @@ def export_final_csv(request, queryset):
 			smart_str( obj.init_authorised_date.strftime('%Y-%m-%d %H:%M:%S') if obj.init_authorised_date else None),
 			smart_str( obj.authorised_by.get_full_name() if obj.authorised_by else None ),
 			smart_str( obj.authorised_date.strftime('%Y-%m-%d %H:%M:%S') if obj.authorised_date else None),
-			smart_str( obj.reviewed_by.get_full_name() if obj.reviewed_by else None ),
-			smart_str( obj.reviewed_date.strftime('%Y-%m-%d %H:%M:%S') if obj.reviewed_date else None),
 			smart_str( obj.dispatch_pw_date.strftime('%Y-%m-%d %H:%M:%S') if obj.dispatch_pw_date else None),
 			smart_str( obj.dispatch_aerial_date.strftime('%Y-%m-%d %H:%M:%S') if obj.dispatch_aerial_date else None),
 			smart_str( obj.fire_detected_date.strftime('%Y-%m-%d %H:%M:%S') if obj.fire_detected_date else None),
@@ -783,7 +755,6 @@ def export_final_csv(request, queryset):
 			smart_str( obj.arson_squad_notified),
 			smart_str( obj.offence_no),
 			smart_str( obj.area),
-			smart_str( obj.time_to_control),
 			smart_str( obj.authorised_by.get_full_name() if obj.authorised_by else None ),
 			smart_str( obj.authorised_date.strftime('%Y-%m-%d %H:%M:%S') if obj.authorised_date else None ),
 			smart_str( obj.get_report_status_display()),
@@ -827,8 +798,6 @@ def export_excel(request, queryset):
     #"Origin Point",
     #"Fire Boundary",
     hdr.write(col_no(), "Fire Not Found")
-    hdr.write(col_no(), "Assistance Req")
-    hdr.write(col_no(), "Communications")
     hdr.write(col_no(), "Other Info")
     hdr.write(col_no(), "Cause")
     hdr.write(col_no(), "Other Cause")
@@ -838,8 +807,6 @@ def export_excel(request, queryset):
     hdr.write(col_no(), "Init Authorised Date")
     hdr.write(col_no(), "Authorised By")
     hdr.write(col_no(), "Authorised Date")
-    hdr.write(col_no(), "Reviewed By")
-    hdr.write(col_no(), "Reviewed Date")
     hdr.write(col_no(), "Dispatch P&W")
     hdr.write(col_no(), "Dispatch Aerial")
     hdr.write(col_no(), "Fire Detected")
@@ -856,7 +823,6 @@ def export_excel(request, queryset):
     hdr.write(col_no(), "Arson Squad Notified")
     hdr.write(col_no(), "Offence No")
     hdr.write(col_no(), "Area")
-    hdr.write(col_no(), "Estimated Time to Control")
     hdr.write(col_no(), "Authorised By")
     hdr.write(col_no(), "Authorised Date")
     hdr.write(col_no(), "Report Status")
@@ -885,8 +851,6 @@ def export_excel(request, queryset):
         #row.write(col_no(), smart_str( obj.origin_point) )
         #row.write(col_no(), smart_str( obj.fire_boundary) )
         row.write(col_no(), smart_str( obj.fire_not_found if obj.fire_not_found else None))
-        row.write(col_no(), smart_str( obj.assistance_req if obj.assistance_req else None))
-        row.write(col_no(), smart_str( obj.communications if obj.communications else None))
         row.write(col_no(), smart_str( obj.other_info if obj.other_info else None))
         row.write(col_no(), smart_str( obj.cause if obj.cause else None))
         row.write(col_no(), smart_str( obj.other_cause if obj.other_cause else None))
@@ -896,8 +860,6 @@ def export_excel(request, queryset):
         row.write(col_no(), smart_str( obj.init_authorised_date.strftime('%Y-%m-%d %H:%M:%S') if obj.init_authorised_date else None) )
         row.write(col_no(), smart_str( obj.authorised_by.get_full_name() if obj.authorised_by else None ) )
         row.write(col_no(), smart_str( obj.authorised_date.strftime('%Y-%m-%d %H:%M:%S') if obj.authorised_date else None) )
-        row.write(col_no(), smart_str( obj.reviewed_by.get_full_name() if obj.reviewed_by else None ) )
-        row.write(col_no(), smart_str( obj.reviewed_date.strftime('%Y-%m-%d %H:%M:%S') if obj.reviewed_date else None) )
         row.write(col_no(), smart_str( obj.dispatch_pw_date.strftime('%Y-%m-%d %H:%M:%S') if obj.dispatch_pw_date else None) )
         row.write(col_no(), smart_str( obj.dispatch_aerial_date.strftime('%Y-%m-%d %H:%M:%S') if obj.dispatch_aerial_date else None) )
         row.write(col_no(), smart_str( obj.fire_detected_date.strftime('%Y-%m-%d %H:%M:%S') if obj.fire_detected_date else None) )
@@ -914,7 +876,6 @@ def export_excel(request, queryset):
         row.write(col_no(), smart_str( obj.arson_squad_notified if obj.arson_squad_notified else None))
         row.write(col_no(), obj.offence_no if obj.offence_no else None)
         row.write(col_no(), obj.area if obj.area else None)
-        row.write(col_no(), smart_str( obj.time_to_control if obj.time_to_control else None))
         row.write(col_no(), smart_str( obj.authorised_by.get_full_name() if obj.authorised_by else None ) )
         row.write(col_no(), smart_str( obj.authorised_date.strftime('%Y-%m-%d %H:%M:%S') if obj.authorised_date else None ) )
         row.write(col_no(), smart_str( obj.get_report_status_display() if obj.report_status else None))

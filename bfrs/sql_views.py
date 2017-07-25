@@ -38,9 +38,6 @@ def create_view():
     CASE WHEN fire_not_found THEN 1
      	 ELSE 0
     END as fire_not_found,
-    b.assistance_req,
-    b.assistance_details,
-    b.communications,
     b.other_info,
     b.init_authorised_date,
     b.dispatch_pw,
@@ -71,12 +68,10 @@ def create_view():
     CASE WHEN initial_area_unknown THEN 1
      	 ELSE 0
     END as initial_area_unknown,
-    b.time_to_control,
     CASE WHEN fire_behaviour_unknown THEN 1
      	 ELSE 0
     END as fire_behaviour_unknown,
     b.authorised_date,
-    b.reviewed_date,
     b.report_status,
     CASE WHEN archive THEN 1
      	 ELSE 0
@@ -93,7 +88,6 @@ def create_view():
     b.initial_control_id,
     b.modifier_id,
     b.region_id,
-    b.reviewed_by_id,
     b.tenure_id
     FROM bfrs_bushfire b
     WHERE b.archive = false AND b.report_status < {};
@@ -135,9 +129,6 @@ def create_final_view():
     CASE WHEN fire_not_found THEN 1
      	 ELSE 0
     END as fire_not_found,
-    b.assistance_req,
-    b.assistance_details,
-    b.communications,
     b.other_info,
     b.init_authorised_date,
     b.dispatch_pw,
@@ -168,12 +159,10 @@ def create_final_view():
     CASE WHEN initial_area_unknown THEN 1
      	 ELSE 0
     END as initial_area_unknown,
-    b.time_to_control,
     CASE WHEN fire_behaviour_unknown THEN 1
      	 ELSE 0
     END as fire_behaviour_unknown,
     b.authorised_date,
-    b.reviewed_date,
     b.report_status,
     CASE WHEN archive THEN 1
      	 ELSE 0
@@ -190,7 +179,6 @@ def create_final_view():
     b.initial_control_id,
     b.modifier_id,
     b.region_id,
-    b.reviewed_by_id,
     b.tenure_id
     FROM bfrs_bushfire b
     WHERE b.archive = false AND b.report_status >= {} AND b.report_status < {};
@@ -232,9 +220,6 @@ def create_fireboundary_view():
     CASE WHEN fire_not_found THEN 1
      	 ELSE 0
     END as fire_not_found,
-    b.assistance_req,
-    b.assistance_details,
-    b.communications,
     b.other_info,
     b.init_authorised_date,
     b.dispatch_pw,
@@ -265,12 +250,10 @@ def create_fireboundary_view():
     CASE WHEN initial_area_unknown THEN 1
      	 ELSE 0
     END as initial_area_unknown,
-    b.time_to_control,
     CASE WHEN fire_behaviour_unknown THEN 1
      	 ELSE 0
     END as fire_behaviour_unknown,
     b.authorised_date,
-    b.reviewed_date,
     b.report_status,
     CASE WHEN archive THEN 1
      	 ELSE 0
@@ -287,7 +270,6 @@ def create_fireboundary_view():
     b.initial_control_id,
     b.modifier_id,
     b.region_id,
-    b.reviewed_by_id,
     b.tenure_id
     FROM bfrs_bushfire b
     WHERE b.archive = false AND b.report_status < {};

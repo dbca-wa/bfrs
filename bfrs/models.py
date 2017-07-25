@@ -22,7 +22,7 @@ SUBMIT_MANDATORY_FIELDS= [
     'duty_officer', 'initial_control',
 ]
 SUBMIT_MANDATORY_DEP_FIELDS= {
-    'dispatch_pw': [[1, 'dispatch_pw_date']],
+    'dispatch_pw': [[1, 'dispatch_pw_date']], # if 'dispatch_pw' == 1 then 'dispatch_pw_date' is required
     'dispatch_aerial': [['True', 'dispatch_aerial_date']],
     'initial_control': [['OTHER', 'other_initial_control']],
 }
@@ -35,7 +35,7 @@ AUTH_MANDATORY_FIELDS= [
     #'fire_contained_date', 'fire_controlled_date',
     'fire_safe_date',
     #'first_attack', 'initial_control', 'final_control',
-    #'initial_control', 'final_control',
+    'final_control',
     'max_fire_level', 'arson_squad_notified', 'job_code',
     #'duty_officer',
 ]
@@ -51,8 +51,8 @@ AUTH_MANDATORY_DEP_FIELDS= {
     #'initial_control': [True, 'other_initial_control'],
     #'final_control': [True, 'other_final_control'],
 
-    'dispatch_pw': [['1', 'field_officer']],
-    'fire_monitored_only': [[False, 'fire_contained_date'], [False, 'fire_controlled_date'], [False, 'field_officer']],
+    'dispatch_pw': [['1', 'field_officer']], # if 'dispatch_pw' == '1' then 'field_officer' is required
+    'fire_monitored_only': [[False, 'fire_contained_date'], [False, 'fire_controlled_date'], [False, 'field_officer'], [False, 'first_attack']],
 
     'cause': [['Other (specify)', 'other_cause'], ['Escape P&W burning', 'prescribed_burn_id']],
     'area_limit': [[True, 'area']],
@@ -91,7 +91,7 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
     """
     # getattr(obj, 'name') ==> obj.name (when property name is available as a string)
 
-    missing = [field for field in fields if getattr(obj, field) is None or getattr(obj, field)=='']
+    missing = [Bushfire._meta.get_field(field).verbose_name for field in fields if getattr(obj, field) is None or getattr(obj, field)=='']
 
     if obj.fire_not_found and obj.is_init_authorised:
         # no need to check these
@@ -110,7 +110,8 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
                 ):
                     if getattr(obj, dep_set[1]) is None or (isinstance(getattr(obj, dep_set[1]), (str, unicode)) and not getattr(obj, dep_set[1]).strip()):
                         # field is unset or empty string
-                        missing.append(dep_set[1])
+                        verbose_name = Bushfire._meta.get_field(dep_set[1]).verbose_name
+                        missing.append(verbose_name)
             except:
                 #import ipdb; ipdb.set_trace()
                 pass
@@ -123,18 +124,21 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
             if (obj.fire_behaviour_unknown):
                 continue
             elif getattr(obj, fs) is None or not getattr(obj, fs).all():
+                verbose_name = Bushfire._meta.get_field(fs).verbose_name
                 missing.append(fs)
 
         if fs == 'damages':
             if (obj.damage_unknown):
                 continue
             elif getattr(obj, fs) is None or not getattr(obj, fs).all():
+                verbose_name = Bushfire._meta.get_field(fs).verbose_name
                 missing.append(fs)
 
         if fs == 'injuries':
             if (obj.injury_unknown):
                 continue
             elif getattr(obj, fs) is None or not getattr(obj, fs).all():
+                verbose_name = Bushfire._meta.get_field(fs).verbose_name
                 missing.append(fs)
 
     # initial fire boundary required for fires > 2 ha
@@ -146,6 +150,7 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
         if not obj.area_limit and (obj.area < settings.AREA_THRESHOLD or obj.area is None):
             missing.append("Final fire shape must be uploaded for fires > {}ha".format(settings.AREA_THRESHOLD))
 
+    #import ipdb; ipdb.set_trace()
     return missing
 
 
@@ -278,12 +283,12 @@ class BushfireBase(Audit):
     max_fire_level = models.PositiveSmallIntegerField(verbose_name='Maximum fire level', choices=FIRE_LEVEL_CHOICES, null=True, blank=True)
     media_alert_req = models.NullBooleanField(verbose_name="Media Alert Required", null=True)
     park_trail_impacted = models.NullBooleanField(verbose_name="Park and/or trail potentially impacted", null=True)
-    cause = models.ForeignKey('Cause', null=True, blank=True)
-    cause_state = models.PositiveSmallIntegerField(choices=CAUSE_STATE_CHOICES, null=True, blank=True)
-    other_cause = models.CharField(verbose_name='Other Cause', max_length=64, null=True, blank=True)
+    cause = models.ForeignKey('Cause', verbose_name="Fire Cause", null=True, blank=True)
+    cause_state = models.PositiveSmallIntegerField(verbose_name="Fire Cause State (Known/Possible)", choices=CAUSE_STATE_CHOICES, null=True, blank=True)
+    other_cause = models.CharField(verbose_name='Other Fire Cause', max_length=64, null=True, blank=True)
     prescribed_burn_id = models.CharField(verbose_name='Prescribed Burn ID', max_length=7, null=True, blank=True)
-    tenure = models.ForeignKey('Tenure', null=True, blank=True)
-    other_tenure = models.PositiveSmallIntegerField(choices=IGNITION_POINT_CHOICES, null=True, blank=True)
+    tenure = models.ForeignKey('Tenure', verbose_name="Tenure of Ignition Point", null=True, blank=True)
+    other_tenure = models.PositiveSmallIntegerField(verbose_name="Other Tenure (Crown/Private)", choices=IGNITION_POINT_CHOICES, null=True, blank=True)
 
     dfes_incident_no = models.CharField(verbose_name='DFES Fire Number', max_length=32, null=True, blank=True)
     job_code = models.CharField(verbose_name="Job Code", max_length=12, null=True, blank=True)
@@ -297,9 +302,14 @@ class BushfireBase(Audit):
     fire_monitored_only = models.BooleanField(default=False)
     final_fire_boundary = models.BooleanField(default=False)
 
-    assistance_req = models.PositiveSmallIntegerField(choices=ASSISTANCE_CHOICES, null=True, blank=True)
-    assistance_details = models.CharField(max_length=250, null=True, blank=True)
-    communications = models.CharField(verbose_name='Communication', max_length=250, null=True, blank=True)
+    # TODO remove next 7 fields
+    #assistance_req = models.PositiveSmallIntegerField(choices=ASSISTANCE_CHOICES, null=True, blank=True)
+    #assistance_details = models.CharField(max_length=250, null=True, blank=True)
+    #communications = models.CharField(verbose_name='Communication', max_length=250, null=True, blank=True)
+    #time_to_control = models.DurationField(verbose_name="Time to Control", null=True, blank=True)
+    #reviewed_by = models.ForeignKey(User, verbose_name="Reviewed By", null=True, blank=True, related_name='%(class)s_reviewed_by')
+    #reviewed_date = models.DateTimeField(verbose_name="Reviewed Date", null=True, blank=True)
+
     other_info = models.CharField(verbose_name='Other Information', max_length=250, null=True, blank=True)
 
     field_officer = models.ForeignKey(User, verbose_name="Field Officer", null=True, blank=True, related_name='%(class)s_init_field_officer')
@@ -311,23 +321,23 @@ class BushfireBase(Audit):
     init_authorised_by = models.ForeignKey(User, verbose_name="Initial Authorised By", null=True, blank=True, related_name='%(class)s_init_authorised_by')
     init_authorised_date = models.DateTimeField(verbose_name='Initial Authorised Date', null=True, blank=True)
 
-    dispatch_pw = models.PositiveSmallIntegerField(choices=DISPATCH_PW_CHOICES, null=True, blank=True)
-    dispatch_aerial = models.NullBooleanField(null=True)
-    dispatch_pw_date = models.DateTimeField(verbose_name='P&W Resource dispatched', null=True, blank=True)
-    dispatch_aerial_date = models.DateTimeField(verbose_name='Aerial support dispatched', null=True, blank=True)
-    fire_detected_date = models.DateTimeField(verbose_name='Fire Detected', null=True, blank=True)
+    dispatch_pw = models.PositiveSmallIntegerField(verbose_name="P&W Resource dispatched", choices=DISPATCH_PW_CHOICES, null=True, blank=True)
+    dispatch_aerial = models.NullBooleanField(verbose_name="Aerial suppression dispatched", null=True)
+    dispatch_pw_date = models.DateTimeField(verbose_name='P&W Resource dispatch date', null=True, blank=True)
+    dispatch_aerial_date = models.DateTimeField(verbose_name='Aerial suppression dispatch date', null=True, blank=True)
+    fire_detected_date = models.DateTimeField(verbose_name='Date and time fire detected', null=True, blank=True)
 
     # we serialise/snapshot the initial and final reports when authorised
 #    initial_snapshot = models.TextField(null=True, blank=True)
 #    final_snapshot = models.TextField(null=True, blank=True)
 
     # FINAL Fire Report Fields
-    fire_contained_date = models.DateTimeField(verbose_name='Fire Contained', null=True, blank=True)
-    fire_controlled_date = models.DateTimeField(verbose_name='Fire Controlled', null=True, blank=True)
-    fire_safe_date = models.DateTimeField(verbose_name='Fire inactive', null=True, blank=True)
+    fire_contained_date = models.DateTimeField(verbose_name='Date fire Contained', null=True, blank=True)
+    fire_controlled_date = models.DateTimeField(verbose_name='Date fire Controlled', null=True, blank=True)
+    fire_safe_date = models.DateTimeField(verbose_name='Date fire inactive', null=True, blank=True)
 
-    first_attack = models.ForeignKey('Agency', verbose_name="First Attack Agency", null=True, blank=True, related_name='%(class)s_first_attack')
-    other_first_attack = models.CharField(verbose_name="Other First Attack Agency", max_length=50, null=True, blank=True)
+    first_attack = models.ForeignKey('Agency', verbose_name="Initial Attack Agency", null=True, blank=True, related_name='%(class)s_first_attack')
+    other_first_attack = models.CharField(verbose_name="Other Initial Attack Agency", max_length=50, null=True, blank=True)
     initial_control = models.ForeignKey('Agency', verbose_name="Initial Controlling Agency", null=True, blank=True, related_name='%(class)s_initial_control')
     other_initial_control = models.CharField(verbose_name="Other Initial Control Agency", max_length=50, null=True, blank=True)
     final_control = models.ForeignKey('Agency', verbose_name="Final Controlling Agency", null=True, blank=True, related_name='%(class)s_final_control')
@@ -340,16 +350,12 @@ class BushfireBase(Audit):
     initial_area_unknown = models.BooleanField(default=False)
     area = models.FloatField(verbose_name="Final Fire Area (ha)", validators=[MinValueValidator(0)], null=True, blank=True)
     area_limit = models.BooleanField(verbose_name="Area < 2ha", default=False)
-    time_to_control = models.DurationField(verbose_name="Time to Control", null=True, blank=True)
-    fire_behaviour_unknown = models.BooleanField(default=False)
-    damage_unknown = models.BooleanField(default=False)
-    injury_unknown = models.BooleanField(default=False)
+    fire_behaviour_unknown = models.BooleanField(verbose_name="Fuel and fire behaviour", default=False)
+    damage_unknown = models.BooleanField(verbose_name="Damages to report?", default=False)
+    injury_unknown = models.BooleanField(verbose_name="Injuries to report?", default=False)
 
     authorised_by = models.ForeignKey(User, verbose_name="Authorised By", null=True, blank=True, related_name='%(class)s_authorised_by')
     authorised_date = models.DateTimeField(verbose_name="Authorised Date", null=True, blank=True)
-
-    reviewed_by = models.ForeignKey(User, verbose_name="Reviewed By", null=True, blank=True, related_name='%(class)s_reviewed_by')
-    reviewed_date = models.DateTimeField(verbose_name="Reviewed Date", null=True, blank=True)
 
     report_status = models.PositiveSmallIntegerField(choices=REPORT_STATUS_CHOICES, editable=False, default=1)
     sss_data = models.TextField(verbose_name="SSS REST Api Dict", null=True, blank=True)
@@ -482,17 +488,9 @@ class Bushfire(BushfireBase):
     def other_contact(self):
         return 'Name: {}, Agency: {}, Phone: {}'.format(self.other_field_officer, self.other_field_officer_agency, self.other_field_officer_phone)
 
-#    @property
-#    def is_reviewed(self):
-#        return False # no need to lock down Review report
-
     @property
     def can_create_final(self):
         return self.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED
-
-#    @property
-#    def can_create_review(self):
-#        return self.report_status >= Bushfire.STATUS_FINAL_AUTHORISED
 
     @property
     def has_restapi_write_perms(self):
@@ -522,22 +520,6 @@ class Bushfire(BushfireBase):
         lon_str = lon[0] + u'\N{DEGREE SIGN} ' + lon[1].zfill(2) + '\' ' + lon[2].zfill(4) + '\" ' + lon[3]
 
         return 'Lat/Lon ' + lat_str + ', ' + lon_str
-
-    @property
-    def time_to_control_hours_part(self):
-        return self.time_to_control.seconds/3600 if self.time_to_control and self.time_to_control.seconds else 0
-
-    @property
-    def time_to_control_days_part(self):
-        return self.time_to_control.days if self.time_to_control and self.time_to_control.days else 0
-
-    @property
-    def time_to_control_str(self):
-        s = None
-        if self.time_to_control:
-            s = str(self.time_to_control.days) + ' Days' if self.time_to_control.days>0 else ''
-            s += ' ' + str(self.time_to_control.seconds/3600) + ' Hours' if self.time_to_control.seconds>0 else ''
-        return s if s else '-'
 
 #    def initial_snapshot_deserialized(self):
 #        obj = self.initial_snapshot if hasattr(self, 'initial_snapshot') else None
