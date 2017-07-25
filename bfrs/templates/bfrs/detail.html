@@ -230,8 +230,14 @@
                     {{form.dispatch_pw}}<br><div class=div_dispatch_pw_date style="display: none;">{{form.dispatch_pw_date}}</div>
                 {% endif %}
                 {% endcomment %}
-                {% if snapshot.is_init_submitted and not can_maintain_data %} 
-                    {{snapshot.get_dispatch_pw_display}}<br>{{snapshot.dispatch_pw_date}}
+                {% if snapshot.is_init_authorised and not can_maintain_data %} 
+                    {% if snapshot.initial_snapshot.dispatch_pw == snapshot.DISPATCH_PW_YES %} 
+                        {{snapshot.initial_snapshot.get_dispatch_pw_display}}<br>{{snapshot.initial_snapshot.dispatch_pw_date}}
+                        {{form.dispatch_pw.as_hidden}}{{form.dispatch_pw_date.as_hidden}}
+                    {% else %}
+                        {% comment %}{{snapshot.get_dispatch_pw_display}}<br>{{snapshot.dispatch_pw_date}}{% endcomment %}
+                        {{form.dispatch_pw}}<br><div class=div_dispatch_pw_date style="display: none;">{{form.dispatch_pw_date}}</div>
+                    {% endif %}
                 {% else %}
                     {{form.dispatch_pw}}<br><div class=div_dispatch_pw_date style="display: none;">{{form.dispatch_pw_date}}</div>
                 {% endif %}
@@ -246,8 +252,14 @@
                     {{form.dispatch_aerial}}<br><div class=div_dispatch_aerial_date style="display: none;">{{form.dispatch_aerial_date}}</div>
                 {% endif %} 
                 {% endcomment %}
-                {% if snapshot.is_init_submitted and not can_maintain_data %} 
-                    {{snapshot.get_dispatch_aerial_display}}<br>{{snapshot.dispatch_aerial_date}}
+                {% if snapshot.is_init_authorised and not can_maintain_data %} 
+                    {% if snapshot.initial_snapshot.dispatch_aerial %} 
+                        {{snapshot.initial_snapshot.dispatch_aerial|yesno:"Yes,No"}}<br>{{snapshot.initial_snapshot.dispatch_aerial_date}}
+                        {{form.dispatch_aerial.as_hidden}}{{form.dispatch_aerial_date.as_hidden}}
+                    {% else %}
+                        {% comment %} {{snapshot.dispatch_aerial|yesno:"Yes,No"}}<br>{{snapshot.dispatch_aerial_date}} {% endcomment %}
+                        {{form.dispatch_aerial}}<br><div class=div_dispatch_aerial_date style="display: none;">{{form.dispatch_aerial_date}}</div>
+                    {% endif %}
                 {% else %}
                     {{form.dispatch_aerial}}<br><div class=div_dispatch_aerial_date style="display: none;">{{form.dispatch_aerial_date}}</div>
                 {% endif %}

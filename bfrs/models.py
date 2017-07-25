@@ -41,10 +41,13 @@ AUTH_MANDATORY_FIELDS= [
 ]
 
 AUTH_MANDATORY_FIELDS_FIRE_NOT_FOUND= [
-    #'duty_officer', 'field_officer', 'job_code',
     #'field_officer', 'job_code',
-    'field_officer',
+    'duty_officer', 'field_officer',
 ]
+AUTH_MANDATORY_DEP_FIELDS_FIRE_NOT_FOUND= {
+    'dispatch_pw': [[1, 'dispatch_pw_date']],
+    'dispatch_aerial': [['True', 'dispatch_aerial_date']],
+}
 
 AUTH_MANDATORY_DEP_FIELDS= {
     #'first_attack': [True, 'other_first_attack'],
@@ -52,10 +55,14 @@ AUTH_MANDATORY_DEP_FIELDS= {
     #'final_control': [True, 'other_final_control'],
 
     'dispatch_pw': [[1, 'field_officer']], # if 'dispatch_pw' == '1' then 'field_officer' is required
+    'dispatch_pw': [[1, 'dispatch_pw_date']],
+    'dispatch_aerial': [['True', 'dispatch_aerial_date']],
     #'fire_monitored_only': [[False, 'fire_contained_date'], [False, 'fire_controlled_date'], [False, 'field_officer'], [False, 'first_attack']],
     'fire_monitored_only': [[False, 'fire_contained_date'], [False, 'fire_controlled_date'], [False, 'first_attack']],
 
     'cause': [['Other (specify)', 'other_cause'], ['Escape P&W burning', 'prescribed_burn_id']],
+    'first_attack': [['OTHER', 'other_first_attack']],
+    'final_control': [['OTHER', 'other_final_control']],
     'area_limit': [[True, 'area']],
     'tenure': [['Other', 'other_tenure']],
     'field_officer': [['other', 'other_field_officer']], # username='other'
@@ -96,7 +103,7 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
 
     if obj.fire_not_found and obj.is_init_authorised:
         # no need to check these
-        dep_fields = {}
+        #dep_fields = {}
         formsets = []
 
     for field, dep_sets in dep_fields.iteritems():
@@ -125,21 +132,19 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
             if (obj.fire_behaviour_unknown):
                 continue
             elif getattr(obj, fs) is None or not getattr(obj, fs).all():
-                verbose_name = Bushfire._meta.get_field(fs).verbose_name
-                missing.append(fs)
+                #missing.append(fs)
+                missing.append('Fuel and fire behaviour')
 
         if fs == 'damages':
             if (obj.damage_unknown):
                 continue
             elif getattr(obj, fs) is None or not getattr(obj, fs).all():
-                verbose_name = Bushfire._meta.get_field(fs).verbose_name
                 missing.append(fs)
 
         if fs == 'injuries':
             if (obj.injury_unknown):
                 continue
             elif getattr(obj, fs) is None or not getattr(obj, fs).all():
-                verbose_name = Bushfire._meta.get_field(fs).verbose_name
                 missing.append(fs)
 
     # initial fire boundary required for fires > 2 ha

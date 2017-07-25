@@ -1,3 +1,5 @@
+from bfrs.models import Bushfire
+
 
 def create_view():
     """

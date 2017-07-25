@@ -5,7 +5,8 @@ from bfrs.models import (Bushfire, BushfireSnapshot, District, Region,
     SNAPSHOT_INITIAL, SNAPSHOT_FINAL,
     DamageSnapshot, InjurySnapshot, FireBehaviourSnapshot, AreaBurntSnapshot,
     SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS, SUBMIT_MANDATORY_FORMSETS,
-    AUTH_MANDATORY_FIELDS, AUTH_MANDATORY_FIELDS_FIRE_NOT_FOUND, AUTH_MANDATORY_DEP_FIELDS, AUTH_MANDATORY_FORMSETS,
+    AUTH_MANDATORY_FIELDS, AUTH_MANDATORY_FIELDS_FIRE_NOT_FOUND, 
+    AUTH_MANDATORY_DEP_FIELDS, AUTH_MANDATORY_DEP_FIELDS_FIRE_NOT_FOUND, AUTH_MANDATORY_FORMSETS,
     check_mandatory_fields,
     )
 #from bfrs.forms import (BaseAreaBurntFormSet)
@@ -262,7 +263,8 @@ def authorise_report(request, obj):
             context['action'] = action
             context['final'] = True
             fields = AUTH_MANDATORY_FIELDS_FIRE_NOT_FOUND if obj.fire_not_found else AUTH_MANDATORY_FIELDS
-            context['mandatory_fields'] = check_mandatory_fields(obj, fields, AUTH_MANDATORY_DEP_FIELDS, AUTH_MANDATORY_FORMSETS)
+            dep_fields = AUTH_MANDATORY_DEP_FIELDS_FIRE_NOT_FOUND if obj.fire_not_found else AUTH_MANDATORY_DEP_FIELDS
+            context['mandatory_fields'] = check_mandatory_fields(obj, fields, dep_fields, AUTH_MANDATORY_FORMSETS)
 
             if context['mandatory_fields']:
                 return TemplateResponse(request, template_mandatory_fields, context=context)
@@ -279,7 +281,8 @@ def authorise_report(request, obj):
             #import ipdb; ipdb.set_trace()
             context['mandatory_fields'] = check_mandatory_fields(obj, SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS, SUBMIT_MANDATORY_FORMSETS)
             fields = AUTH_MANDATORY_FIELDS_FIRE_NOT_FOUND if obj.fire_not_found else AUTH_MANDATORY_FIELDS
-            context['mandatory_fields'] = context['mandatory_fields'] + check_mandatory_fields(obj, fields, AUTH_MANDATORY_DEP_FIELDS, AUTH_MANDATORY_FORMSETS)
+            dep_fields = AUTH_MANDATORY_DEP_FIELDS_FIRE_NOT_FOUND if obj.fire_not_found else AUTH_MANDATORY_DEP_FIELDS
+            context['mandatory_fields'] = context['mandatory_fields'] + check_mandatory_fields(obj, fields, dep_fields, AUTH_MANDATORY_FORMSETS)
 
             if context['mandatory_fields']:
                 return TemplateResponse(request, template_mandatory_fields, context=context)
