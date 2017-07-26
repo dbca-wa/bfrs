@@ -389,6 +389,10 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
             if sss.has_key('area') and sss['area'].has_key('total_area') and sss['area'].get('total_area'):
                 initial['initial_area'] = round(float(sss['area']['total_area']), 2)
 
+            # NOTE initial area (and area) includes 'Other Area', but recording separately to allow for updates - since this is not always provided, if area is not updated
+            if sss.has_key('area') and sss['area'].has_key('other_area') and sss['area'].get('other_area'):
+                initial['other_area'] = round(float(sss['area']['other_area']), 2)
+
             if sss.has_key('origin_point') and isinstance(sss['origin_point'], list):
                 initial['origin_point_str'] = Point(sss['origin_point']).get_coords()
                 initial['origin_point'] = Point(sss['origin_point'])

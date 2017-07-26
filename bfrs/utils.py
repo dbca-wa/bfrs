@@ -294,7 +294,7 @@ def authorise_report(request, obj):
 
 def create_areas_burnt(bushfire, area_burnt_list):
     """
-    Creates the initial bushfire record together with AreaBurnt FormSet from BushfireCreateView (Operates on data dict from SSS)
+    Creates the initial bushfire record together with AreaBurnt FormSet from BushfireUpdateView (Operates on data dict from SSS)
     Uses sss_dict - used by get_context_data, to display initial sss_data supplied from SSS system
     """
     #t=Tenure.objects.all()[0]

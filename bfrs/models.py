@@ -32,7 +32,7 @@ SUBMIT_MANDATORY_FORMSETS= [
 AUTH_MANDATORY_FIELDS= [
     #'assistance_req',
     'cause_state', 'cause',
-    #'fire_contained_date', 'fire_controlled_date',
+    'fire_contained_date', 'fire_controlled_date',
     'fire_safe_date',
     #'first_attack', 'initial_control', 'final_control',
     'final_control',
@@ -47,6 +47,7 @@ AUTH_MANDATORY_FIELDS_FIRE_NOT_FOUND= [
 AUTH_MANDATORY_DEP_FIELDS_FIRE_NOT_FOUND= {
     'dispatch_pw': [[1, 'dispatch_pw_date']],
     'dispatch_aerial': [['True', 'dispatch_aerial_date']],
+    'field_officer': [['other', 'other_field_officer'], ['other', 'other_field_officer_agency']], # username='other'
 }
 
 AUTH_MANDATORY_DEP_FIELDS= {
@@ -58,14 +59,15 @@ AUTH_MANDATORY_DEP_FIELDS= {
     'dispatch_pw': [[1, 'dispatch_pw_date']],
     'dispatch_aerial': [['True', 'dispatch_aerial_date']],
     #'fire_monitored_only': [[False, 'fire_contained_date'], [False, 'fire_controlled_date'], [False, 'field_officer'], [False, 'first_attack']],
-    'fire_monitored_only': [[False, 'fire_contained_date'], [False, 'fire_controlled_date'], [False, 'first_attack']],
+    #'fire_monitored_only': [[False, 'fire_contained_date'], [False, 'fire_controlled_date'], [False, 'first_attack']],
+    'fire_monitored_only': [[False, 'first_attack']],
 
     'cause': [['Other (specify)', 'other_cause'], ['Escape P&W burning', 'prescribed_burn_id']],
     'first_attack': [['OTHER', 'other_first_attack']],
     'final_control': [['OTHER', 'other_final_control']],
     'area_limit': [[True, 'area']],
     'tenure': [['Other', 'other_tenure']],
-    'field_officer': [['other', 'other_field_officer']], # username='other'
+    'field_officer': [['other', 'other_field_officer'], ['other', 'other_field_officer_agency']], # username='other'
 }
 AUTH_MANDATORY_FORMSETS= [
     'fire_behaviour',
@@ -356,6 +358,7 @@ class BushfireBase(Audit):
     initial_area_unknown = models.BooleanField(default=False)
     area = models.FloatField(verbose_name="Final Fire Area (ha)", validators=[MinValueValidator(0)], null=True, blank=True)
     area_limit = models.BooleanField(verbose_name="Area < 2ha", default=False)
+    other_area = models.FloatField(verbose_name="Other Area (ha)", validators=[MinValueValidator(0)], null=True, blank=True)
     fire_behaviour_unknown = models.BooleanField(verbose_name="Fuel and fire behaviour", default=False)
     damage_unknown = models.BooleanField(verbose_name="Damages to report?", default=False)
     injury_unknown = models.BooleanField(verbose_name="Injuries to report?", default=False)

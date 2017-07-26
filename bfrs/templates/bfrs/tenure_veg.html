@@ -42,12 +42,13 @@
 
                 <tr>
                   <td>Other</td>
-                  {% if object.sss_data_to_dict %}
-                    <!-- Required for viewed snapshots -->
-                    <td>{{ object.sss_data_to_dict.area.other_area|floatformat:2 }}</td>
+                  {% if object %}
+                      <td>{{ object.other_area|floatformat:2 }}</td>
                   {% else %}
-                    <td>{{ sss_data.area.other_area|floatformat:2 }}</td>
+                      <td>{{ form.other_area.value }}</td>
                   {% endif %}
+                  {{form.other_area.as_hidden}}
+
                 </tr>
                 <tr>
 			      <td><input id="id_tenure_1" name="private_tenure" type="text" value="Private Property"></td>
@@ -55,7 +56,10 @@
                     <!-- Required for viewed snapshots -->
                     <td><input id="id_area_1" name="private_area" type="number" min="0" max="{{ object.sss_data_to_dict.area.other_area|floatformat:"0" }}" value="{{ object.tenures_burnt.all|tenures_burnt:"Private Property" }}"></td>
                   {% else %}
+                    {% comment %}
                     <td><input id="id_area_1" name="private_area" type="number" min="0" max="{{ sss_data.area.other_area|floatformat:"0" }}" value="{{ sss_data.area.other_area|floatformat:"0" }}"></td>
+                    {% endcomment %}
+                    <td><input id="id_area_1" name="private_area" type="number" min="0" max="{{ object.other_area|floatformat:"0" }}" value="{{ object.other_area|floatformat:"0" }}"></td>
                   {% endif %}
 			      <td><input id="id_area_perc_1" type="number" min="0" max="100" step="0.1"></td>
                 </tr>
@@ -65,7 +69,10 @@
                     <!-- Required for viewed snapshots -->
                     <td><input id="id_area_2" name="other_crown_area" type="number" min="0" max="{{ object.sss_data_to_dict.area.other_area|floatformat:"0" }}" value="{{ object.tenures_burnt.all|tenures_burnt:"Other Crown" }}"></td>
                   {% else %}
+                    {% comment %}
                     <td><input id="id_area_2" name="other_crown_area" type="number" min="0" max="{{ sss_data.area.other_area|floatformat:"0" }}" value="0"></td>
+                    {% endcomment %}
+                    <td><input id="id_area_2" name="other_crown_area" type="number" min="0" max="{{ object.other_area|floatformat:"0" }}" value="0"></td>
                   {% endif %}
 			      <td><input id="id_area_perc_2" type="number" min="0" max="100" step="0.1"></td>
                 </tr>
@@ -88,18 +95,13 @@
     });
 
 
-// Make formset records uneditable
-//$("#id_tenure_1,#id_tenure_2,#id_areas_burnt").mousedown(function(e){ e.preventDefault(); });
-
-
-{% if object.sss_data_to_dict %}
-    var total_other_area = {{ object.sss_data_to_dict.area.other_area|floatformat:"0" }};
+{% if object.other_area %}
+    var total_other_area = {{ object.other_area }};
+    console.log('AA')
 {% else %}
-    var total_other_area = {{ sss_data.area.other_area|floatformat:"0" }};
+    var total_other_area = {{ form.other_area.value }};
+    console.log('BB')
 {% endif %}
-
-//var total_other_area = 1000.0;
-//$("#id_area_1").val(total_other_area);
 
 
 $('#id_area_1').on('change', function() {
@@ -142,6 +144,8 @@ $('#id_area_perc_2').on('change', function() {
 $('[id^="id_area_burnt"][id$="tenure"]').css('background-color' , '#DEDEDE'); // starts with and ends with
 $('[id^="id_area_burnt"][id$="area"]').css('background-color' , '#DEDEDE');
 //$("#id_areas_burnt").not("#id_area_1,#id_area_2,#id_area_perc_1,#id_area_perc_2").mousedown(function(e){ e.preventDefault(); });
+$('[id^="id_area_burnt"]').mousedown(function(e){ e.preventDefault(); });
+$('[id^="id_tenure"]').mousedown(function(e){ e.preventDefault(); });
 
 </script>
 

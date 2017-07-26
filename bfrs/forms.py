@@ -188,7 +188,8 @@ class BushfireUpdateForm(forms.ModelForm):
                   'cause', 'cause_state', 'other_cause', 'prescribed_burn_id', 'tenure', 'other_tenure',
                   'dispatch_pw', 'dispatch_aerial',
                   'investigation_req', 'fire_behaviour_unknown',
-                  'initial_area', 'initial_area_unknown', 'area', 'area_limit', 'origin_point_str', 'origin_point', 'fire_boundary',
+                  'initial_area', 'initial_area_unknown', 'area', 'area_limit', 'other_area',
+                  'origin_point_str', 'origin_point', 'fire_boundary',
 
                   'fire_not_found', 'fire_monitored_only', 'invalid_details',
                   'fire_contained_date', 'fire_controlled_date', 'fire_safe_date',

@@ -223,19 +223,14 @@
         <tr>
             <th class="cbas">P&W Resource dispatched *<br><br><div class=div_dispatch_pw_date style="display: none;">Date and time of dispatch</div></th>
             <td colspan="2" class="cbas">
-                {% comment %}
-                {% if is_init_authorised %} 
-                    {{snapshot.get_dispatch_pw_display}}{% if snapshot.dispatch_pw == object.DISPATCH_PW_YES %}<br>{{snapshot.dispatch_pw_date}} {% endif %}
-                {% else %} 
-                    {{form.dispatch_pw}}<br><div class=div_dispatch_pw_date style="display: none;">{{form.dispatch_pw_date}}</div>
-                {% endif %}
-                {% endcomment %}
                 {% if snapshot.is_init_authorised and not can_maintain_data %} 
-                    {% if snapshot.initial_snapshot.dispatch_pw == snapshot.DISPATCH_PW_YES %} 
+                    {% if snapshot.dispatch_pw == snapshot.DISPATCH_PW_YES %} 
+                        {{snapshot.get_dispatch_pw_display}}<br>{{snapshot.dispatch_pw_date}}
+                        {{form.dispatch_pw.as_hidden}}{{form.dispatch_pw_date.as_hidden}}
+                    {% elif snapshot.initial_snapshot.dispatch_pw == snapshot.DISPATCH_PW_YES %} 
                         {{snapshot.initial_snapshot.get_dispatch_pw_display}}<br>{{snapshot.initial_snapshot.dispatch_pw_date}}
                         {{form.dispatch_pw.as_hidden}}{{form.dispatch_pw_date.as_hidden}}
                     {% else %}
-                        {% comment %}{{snapshot.get_dispatch_pw_display}}<br>{{snapshot.dispatch_pw_date}}{% endcomment %}
                         {{form.dispatch_pw}}<br><div class=div_dispatch_pw_date style="display: none;">{{form.dispatch_pw_date}}</div>
                     {% endif %}
                 {% else %}
@@ -245,19 +240,14 @@
 
             <th class="cbas">Aerial suppression dispatched *<br><br><div class=div_dispatch_aerial_date style="display: none;">Date and time of dispatch</div></th>
             <td colspan="2" class="cbas">
-                {% comment %}
-                {% if is_init_authorised %} 
-                    {{snapshot.dispatch_aerial|yesno:"Yes,No"}}{% if snapshot.dispatch_aerial|yesno:"Yes,No" == 'Yes' %}<br>{{snapshot.dispatch_aerial_date}}{% endif %}
-                {% else %} 
-                    {{form.dispatch_aerial}}<br><div class=div_dispatch_aerial_date style="display: none;">{{form.dispatch_aerial_date}}</div>
-                {% endif %} 
-                {% endcomment %}
                 {% if snapshot.is_init_authorised and not can_maintain_data %} 
-                    {% if snapshot.initial_snapshot.dispatch_aerial %} 
+                    {% if snapshot.dispatch_aerial_date %} 
+                        {{snapshot.dispatch_aerial|yesno:"Yes,No"}}<br>{{snapshot.dispatch_aerial_date}}
+                        {{form.dispatch_aerial.as_hidden}}{{form.dispatch_aerial_date.as_hidden}}
+                    {% elif snapshot.initial_snapshot.dispatch_aerial %} 
                         {{snapshot.initial_snapshot.dispatch_aerial|yesno:"Yes,No"}}<br>{{snapshot.initial_snapshot.dispatch_aerial_date}}
                         {{form.dispatch_aerial.as_hidden}}{{form.dispatch_aerial_date.as_hidden}}
                     {% else %}
-                        {% comment %} {{snapshot.dispatch_aerial|yesno:"Yes,No"}}<br>{{snapshot.dispatch_aerial_date}} {% endcomment %}
                         {{form.dispatch_aerial}}<br><div class=div_dispatch_aerial_date style="display: none;">{{form.dispatch_aerial_date}}</div>
                     {% endif %}
                 {% else %}
@@ -638,11 +628,13 @@ $('#id_fire_monitored_only').on('change', function() {
         $('#id_th_initial_attack_agency').css("font-weight", "normal");
         $("#id_th_initial_attack_agency").html("Initial attack agency");
 
+/*
         $('#id_th_fire_contained_date').css("font-weight", "normal");
         $("#id_th_fire_contained_date").html("Date fire contained <i class='icon-info-sign icon-white'>");
 
         $('#id_th_fire_controlled_date').css("font-weight", "normal");
         $("#id_th_fire_controlled_date").html("Date fire controlled <i class='icon-info-sign icon-white'>");
+*/
 
         {% if not object.fire_behaviour.all %}
             $('#id_fire_behaviour_unknown').prop('checked', true);
@@ -662,11 +654,13 @@ $('#id_fire_monitored_only').on('change', function() {
         $('#id_th_initial_attack_agency').css("font-weight", "bold");
         $("#id_th_initial_attack_agency").html("Initial attack agency *");
 
+/*
         $('#id_th_fire_contained_date').css("font-weight", "bold");
         $("#id_th_fire_contained_date").html("Date fire contained <i class='icon-info-sign icon-white'> *");
 
         $('#id_th_fire_controlled_date').css("font-weight", "bold");
         $("#id_th_fire_controlled_date").html("Date fire controlled <i class='icon-info-sign icon-white'> *");
+*/
 
         //$('#id_fire_behaviour_unknown').prop('checked', false);
 	    $('.div_fire_behaviour_unknown').show(); 

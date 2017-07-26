@@ -240,6 +240,9 @@ class BushfireResource(APIResource):
                 bundle.obj.area_limit = False
                 bundle.obj.area = round(float(bundle.data['area']['total_area']), 2)
 
+        if bundle.data.has_key('area') and bundle.data['area'].has_key('other_area') and bundle.data['area']['other_area']:
+            bundle.obj.other_area = round(float(bundle.data['area']['other_area']), 2)
+
         if bundle.data.has_key('fire_position') and bundle.data['fire_position']:
             # only update if user has not over-ridden
             if not bundle.obj.fire_position_override:
