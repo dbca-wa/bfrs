@@ -613,32 +613,69 @@ def fssdrs_email(bushfire, url, status='final'):
 def create_other_user():
     return User.objects.get_or_create(username='other', first_name='Other', last_name='Contact')
 
+def create_admin_user():
+    return User.objects.get_or_create(username='admin',
+        defaults={'is_active':'False', 'first_name':'Admin', 'last_name':'Admin', 'email':'admin@{}'.format(settings.INTERNAL_EMAIL[0]) }
+    )
 
-def update_users():
-    resp=requests.get(url=settings.URL_SSO, auth=HTTPBasicAuth(settings.USER_SSO, settings.PASS_SSO))
+def add_users_to_fssdrs_group():
 
     fssdrs_group, g_created = Group.objects.get_or_create(name=settings.FSSDRS_GROUP)
     if g_created:
         fssdrs_group.permissions = Permission.objects.filter(name__in=['Can add group', 'Can change group', 'Can add permission', 'Can change permission', 'Can add user', 'Can change user'])
 
+    for user in User.objects.filter(email__in=settings.FSSDRS_USERS):
+        if fssdrs_group not in user.groups.all():
+            user.groups.add(fssdrs_group)
+            logger.info('Adding user {} to group {}'.format(user.get_full_name(), fssdrs_group.name))
+
+        if not user.is_staff:
+            user.is_staff = True
+            user.save()
+
+def update_users_from_active_directory(sso_users):
+    """
+    Update Django users from Active Directory (AD)
+    For all Django users missing from AD, set them inactive - these users are assumed no longer employed at the dept.
+    we don't delete them since some may have FK relationships
+    """
+    ad_users  = []
+    dj_users = []
+    [ad_users.append(user['email']) for user in sso_users.json()['objects']]
+    [dj_users.append(user.email) for user in User.objects.all()]
+    #missing_from_dj = list(set(ad_users).difference(dj_users))
+    missing_from_ad = list(set(dj_users).difference(ad_users))
+
+    no_set_inactive = User.objects.filter(username__in=missing_from_ad).exclude(username='other').update(is_active=False)
+    logger.info('Users set inactive: {}'.format(no_set_inactive))
+
+
+def update_users():
+    resp=requests.get(url=settings.URL_SSO, auth=HTTPBasicAuth(settings.USER_SSO, settings.PASS_SSO))
+
     for user in resp.json()['objects']:
-        if user['email'] and user['email'].split('@')[-1].lower() in settings.INTERNAL_EMAIL:
-            u, created = User.objects.get_or_create(
-                username=user['username'],
-                defaults = {
-                    'first_name': user['given_name'],
-                    'last_name': user['surname'],
-                    'email': user['email']
-                }
-            )
+        try:
+            if user['email'] and user['email'].split('@')[-1].lower() in settings.INTERNAL_EMAIL:
+                if User.objects.filter(email=user['email']).count() == 0:
+                    u, created = User.objects.get_or_create(
+                        username=user['username'].lower(),
+                        defaults = {
+                            'first_name': user['given_name'].lower().capitalize(),
+                            'last_name': user['surname'].lower().capitalize(),
+                            'email': user['email']
+                        }
+                    )
 
-            if created and u.username in settings.FSSDRS_USERS:
-                u.groups.add(fssdrs_group)
-                u.is_staff = True
-                u.save()
+                    if created:
+                        logger.info('User {}, Created {}'.format(u.get_full_name(), created))
+        except Exception as e:
+            logger.error('Error creating user:  {}\n{}\n'.format(user, e))
 
-            if created:
-                logger.info('User {}, Created {}'.format(u.get_full_name(), created))
+
+    update_users_from_active_directory(resp)
+    add_users_to_fssdrs_group()
+    create_other_user()
+    create_admin_user()
 
 def update_email_domain():
     for u in User.objects.all():
