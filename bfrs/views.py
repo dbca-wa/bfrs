@@ -287,8 +287,9 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
         context['can_maintain_data'] = can_maintain_data(self.request.user)
         context['is_external_user'] = is_external_user(self.request.user)
 
+        #import ipdb; ipdb.set_trace()
         referrer = self.request.META.get('HTTP_REFERER')
-        if not ('initial' in referrer or 'final' in referrer or 'create' in referrer):
+        if referrer and not ('initial' in referrer or 'final' in referrer or 'create' in referrer):
             refresh_gokart(self.request) #, fire_number="") #, region=None, district=None, action='update')
         return context
 

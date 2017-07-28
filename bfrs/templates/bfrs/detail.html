@@ -434,6 +434,7 @@ $('.selectpicker').selectpicker({
 /* dispatch PW */
 $('#id_dispatch_pw_0').on('change', function() {
 	if($('#id_dispatch_pw_0').is(':checked')) { $('.div_dispatch_pw_date').show(); }
+	if({{snapshot.dispatch_pw|yesno:"true,false"}}) { $('.div_dispatch_pw_date').show(); }
 	$('#id_th_field_officer').css("font-weight", "bold");
 	$("#id_th_field_officer").html("Field Officer *");
 }).change();
@@ -444,6 +445,14 @@ $('#id_dispatch_pw_1').on('change', function() {
 	    $("#id_th_field_officer").html("Field Officer");
     }
 }).change();
+
+{% if snapshot.dispatch_pw == snapshot.DISPATCH_PW_YES %}
+	$('#id_th_field_officer').css("font-weight", "bold");
+	$("#id_th_field_officer").html("Field Officer *");
+{% else %}
+    $('#id_th_field_officer').css("font-weight", "normal");
+    $("#id_th_field_officer").html("Field Officer");
+{% endif %}
 
 /* dispatch Aerial */
 $('#id_dispatch_aerial_0').on('change', function() {

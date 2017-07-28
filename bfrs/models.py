@@ -55,8 +55,8 @@ AUTH_MANDATORY_DEP_FIELDS= {
     #'initial_control': [True, 'other_initial_control'],
     #'final_control': [True, 'other_final_control'],
 
-    'dispatch_pw': [[1, 'field_officer']], # if 'dispatch_pw' == '1' then 'field_officer' is required
-    'dispatch_pw': [[1, 'dispatch_pw_date']],
+    'dispatch_pw': [[1, 'field_officer'], [1, 'dispatch_pw_date']], # if 'dispatch_pw' == '1' then 'field_officer' is required
+    #'dispatch_pw': [[1, 'dispatch_pw_date']],
     'dispatch_aerial': [['True', 'dispatch_aerial_date']],
     #'fire_monitored_only': [[False, 'fire_contained_date'], [False, 'fire_controlled_date'], [False, 'field_officer'], [False, 'first_attack']],
     #'fire_monitored_only': [[False, 'fire_contained_date'], [False, 'fire_controlled_date'], [False, 'first_attack']],
