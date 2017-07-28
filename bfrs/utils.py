@@ -698,6 +698,13 @@ def refresh_gokart(request, fire_number=None, region=None, district=None, action
     else:
         request.session['action'] = 'create' if 'create' in request.get_full_path() else 'update'
 
+def clear_gokart_session(request):
+    #request.session['refreshGokart'] = 'null'
+    request.session['region'] = 'null'
+    request.session['district'] = 'null'
+    #request.session['id'] = 'null'
+    #request.session['action'] = 'null'
+
 def export_final_csv(request, queryset):
     #import csv
     filename = 'export_final-' + datetime.now().strftime('%Y-%m-%dT%H%M%S') + '.csv'

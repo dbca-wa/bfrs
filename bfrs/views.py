@@ -30,7 +30,7 @@ from bfrs.utils import (breadcrumbs_li,
         export_final_csv, export_excel, 
         update_status, serialize_bushfire,
         rdo_email, pvs_email, fpc_email, pica_email, pica_sms, police_email, dfes_email, fssdrs_email,
-        invalidate_bushfire, is_external_user, can_maintain_data, refresh_gokart,
+        invalidate_bushfire, is_external_user, can_maintain_data, refresh_gokart, clear_gokart_session, 
         authorise_report, check_district_changed,
     )
 from bfrs.reports import export_outstanding_fires 
@@ -168,7 +168,6 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
         return { 'region': profile.region, 'district': profile.district }
 
     def get(self, request, *args, **kwargs):
-        response = super(BushfireView, self).get(request, *args, **kwargs)
         template_confirm = 'bfrs/confirm.html'
         #template_mandatory = 'bfrs/mandatory_fields.html'
         template_initial = 'bfrs/detail.html'
@@ -200,7 +199,6 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
 #                qs = self.get_filterset(self.filterset_class).qs
 #                return TemplateResponse(request, template_snapshot_history, context=context)
 
-        #import ipdb; ipdb.set_trace()
         if self.request.GET.has_key('action'):
             action = self.request.GET.get('action')
             bushfire = Bushfire.objects.get(id=self.request.GET.get('bushfire_id'))
@@ -216,11 +214,14 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
 
             return TemplateResponse(request, template_confirm, context={'action': action, 'bushfire_id': bushfire.id})
 
-        return response
+#        return  super(BushfireView, self).get(request, *args, **kwargs)
+        try:
+            return  super(BushfireView, self).get(request, *args, **kwargs)
+        finally:
+            clear_gokart_session(request)
+            
 
     def post(self, request, *args, **kwargs):
-        #import ipdb; ipdb.set_trace()
-
         if self.request.POST.has_key('bushfire_id'):
             bushfire = Bushfire.objects.get(id=self.request.POST.get('bushfire_id'))
 
@@ -286,7 +287,9 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
         context['can_maintain_data'] = can_maintain_data(self.request.user)
         context['is_external_user'] = is_external_user(self.request.user)
 
-        refresh_gokart(self.request) #, fire_number="") #, region=None, district=None, action='update')
+        referrer = self.request.META.get('HTTP_REFERER')
+        if not ('initial' in referrer or 'final' in referrer or 'create' in referrer):
+            refresh_gokart(self.request) #, fire_number="") #, region=None, district=None, action='update')
         return context
 
 class BushfireInitialSnapshotView(LoginRequiredMixin, generic.DetailView):
@@ -539,6 +542,8 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
                 other_crown_area = self.request.POST.get('other_crown_area')
                 self.object.tenures_burnt.update_or_create(tenure=Tenure.objects.get(name=other_crown_tenure), defaults={"area": other_crown_area})
 
+        refresh_gokart(self.request, fire_number=self.object.fire_number, region=self.object.region.id, district=self.object.district.id)
+
         # This section to Submit/Authorise report, placed here to allow any changes to be cleaned and saved first - effectively the 'Submit' btn is a 'save and submit'
         if self.request.POST.has_key('submit_initial') or self.request.POST.has_key('authorise_final') or \
            (self.request.POST.has_key('_save') and self.request.POST.get('_save') and self.object.is_final_authorised):
@@ -555,7 +560,6 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
                 # update is occuring after report has already been authorised (action is undefined) - ie. it is being Reviewed by FSSDRS
                 serialize_bushfire('final', 'Review', self.object)
 
-        refresh_gokart(self.request, fire_number=self.object.fire_number, region=self.object.region.id, district=self.object.district.id)
 
         self.object.save()
 

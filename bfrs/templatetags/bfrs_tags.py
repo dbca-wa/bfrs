@@ -236,6 +236,16 @@ def is_none(string):
     """
     return '---' if string is None else string
 
+@register.filter
+def to_null(string):
+    """
+    Usage::
+
+        {{ string|to_null}}
+    """
+    return 'null' if string is None else string
+
+
 @register.filter(is_safe=False)
 def filter_tenures_burnt(qs, arg=None):
     """

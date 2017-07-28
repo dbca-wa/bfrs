@@ -96,13 +96,14 @@
 
 
 {% if object.other_area %}
-    var total_other_area = {{ object.other_area }};
-    console.log('AA')
+    var total_other_area = {{ object.other_area|to_null }};
 {% else %}
-    var total_other_area = {{ form.other_area.value }};
-    console.log('BB')
+    var total_other_area = {{ form.other_area.value|to_null }};
 {% endif %}
 
+if (total_other_area == null) {
+    $('[id^="id_area"]').mousedown(function(e){ e.preventDefault(); });
+}
 
 $('#id_area_1').on('change', function() {
     var area = $("#id_area_1").val() || 0;
