@@ -51,6 +51,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def reporting_years():
+    """ Returns: [[2016, '2016/2017'], [2017, '2017/2018']] """
+    yrs = list(Bushfire.objects.values_list('reporting_year', flat=True).distinct())
+    return [[yr, '/'.join([str(yr),str(yr+1)])] for yr in yrs]
+
+
 class BooleanFilter(django_filters.filters.Filter):
     field_class = forms.BooleanField
 
@@ -190,8 +196,9 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
             report = self.request.GET.get('export_excel_outstanding_fires')
             if eval(report):
                 # Only Reports that are Submitted, but not yet Authorised
+                #import ipdb;ipdb.set_trace()
                 qs = self.get_filterset(self.filterset_class).qs.filter(report_status__in=[Bushfire.STATUS_INITIAL_AUTHORISED])
-                return export_outstanding_fires(self.request, self.filterset.data['region'], qs)
+                return export_outstanding_fires(self.request, self.get_filterset(self.filterset_class).data['region'], qs)
 
 #        if self.request.GET.has_key('export_fires_to_excel'):
 #            report = self.request.GET.get('export_fires_to_excel')

@@ -14,7 +14,7 @@ class UserAdmin(AuthUserAdmin):
     form = UserForm
     fieldsets = (
         (None, {'fields': ('username', 'email', ('first_name', 'last_name'),
-                           'is_active', 'groups')}),
+                           'is_active', 'is_staff', 'groups')}),
 #                           'is_active', 'groups', 'user_permissions')}),
     )
     list_filter = ("is_active", "groups")

@@ -42,7 +42,8 @@ AUTH_MANDATORY_FIELDS= [
 
 AUTH_MANDATORY_FIELDS_FIRE_NOT_FOUND= [
     #'field_officer', 'job_code',
-    'duty_officer', 'field_officer',
+    #'duty_officer', 'field_officer',
+    'duty_officer',
 ]
 AUTH_MANDATORY_DEP_FIELDS_FIRE_NOT_FOUND= {
     'dispatch_pw': [[1, 'dispatch_pw_date']],
@@ -83,8 +84,14 @@ SNAPSHOT_TYPE_CHOICES = (
 )
 
 def current_finyear():
-    return datetime.now().year if datetime.now().month>7 else datetime.now().year-1
+    return datetime.now().year if datetime.now().month>6 else datetime.now().year-1
 
+def reporting_years():
+    """ Returns: [[2016, '2016/2017'], [2017, '2017/2018']] """
+    yrs = list(Bushfire.objects.values_list('reporting_year', flat=True).distinct())
+    if datetime.now().year + 1 not in yrs:
+        yrs.append(datetime.now().year + 1)
+    return [[yr, '/'.join([str(yr),str(yr+1)])] for yr in yrs]
 
 def check_mandatory_fields(obj, fields, dep_fields, formsets):
     """

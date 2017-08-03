@@ -1,7 +1,8 @@
 from django import forms
 from bfrs.models import (Bushfire, AreaBurnt, Damage, Injury, FireBehaviour,
         Region, District, Profile,
-        current_finyear,
+        #current_finyear,
+        reporting_years,
     )
 from datetime import datetime, timedelta
 from django.conf import settings
@@ -21,12 +22,14 @@ YESNO_CHOICES = (
     (False, 'No')
 )
 
-REPORTING_YEAR_CHOICES = (
-    #(current_finyear()-1, str(current_finyear()-1) + '/' + str(current_finyear())),
-    (current_finyear(), str(current_finyear()) + '/' + str(current_finyear() + 1)),
-    (current_finyear() + 1, str(current_finyear() + 1) + '/' + str(current_finyear() + 2)),
-)
+#REPORTING_YEAR_CHOICES = (
+#    (current_finyear()-2, str(current_finyear()-2) + '/' + str(current_finyear()-1)),
+#    (current_finyear()-1, str(current_finyear()-1) + '/' + str(current_finyear())),
+#    (current_finyear(), str(current_finyear()) + '/' + str(current_finyear()+1)),
+#    (current_finyear()+1, str(current_finyear()+1) + '/' + str(current_finyear()+2)),
+#)
 
+REPORTING_YEAR_CHOICES = ( reporting_years() )
 
 class HorizontalRadioRenderer(forms.RadioSelect.renderer):
     def render(self):
