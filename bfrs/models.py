@@ -71,7 +71,7 @@ AUTH_MANDATORY_DEP_FIELDS= {
     'field_officer': [['other', 'other_field_officer'], ['other', 'other_field_officer_agency']], # username='other'
 }
 AUTH_MANDATORY_FORMSETS= [
-    'fire_behaviour',
+    #'fire_behaviour',
     'damages',
     'injuries',
 ]
@@ -139,12 +139,12 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
 #                missing.append(dep_set[1])
 
     for fs in formsets:
-        if fs == 'fire_behaviour':
-            if (obj.fire_behaviour_unknown):
-                continue
-            elif getattr(obj, fs) is None or not getattr(obj, fs).all():
-                #missing.append(fs)
-                missing.append('Fuel and fire behaviour')
+#        if fs == 'fire_behaviour':
+#            if (obj.fire_behaviour_unknown):
+#                continue
+#            elif getattr(obj, fs) is None or not getattr(obj, fs).all():
+#                #missing.append(fs)
+#                missing.append('Fuel and fire behaviour')
 
         if fs == 'damages':
             if (obj.damage_unknown):
@@ -292,7 +292,6 @@ class BushfireBase(Audit):
         show_all=False, auto_choose=True)
 
     name = models.CharField(max_length=100, verbose_name="Fire Name")
-    fire_number = models.CharField(max_length=15, verbose_name="Fire Number")
     year = models.PositiveSmallIntegerField(verbose_name="Financial Year", default=current_finyear())
     reporting_year = models.PositiveSmallIntegerField(verbose_name="Reporting Year", default=current_finyear(), blank=True)
 
@@ -368,7 +367,7 @@ class BushfireBase(Audit):
     area = models.FloatField(verbose_name="Final Fire Area (ha)", validators=[MinValueValidator(0)], null=True, blank=True)
     area_limit = models.BooleanField(verbose_name="Area < 2ha", default=False)
     other_area = models.FloatField(verbose_name="Other Area (ha)", validators=[MinValueValidator(0)], null=True, blank=True)
-    fire_behaviour_unknown = models.BooleanField(verbose_name="Fuel and fire behaviour", default=False)
+    #fire_behaviour_unknown = models.BooleanField(verbose_name="Fuel and fire behaviour", default=False)
     damage_unknown = models.BooleanField(verbose_name="Damages to report?", default=False)
     injury_unknown = models.BooleanField(verbose_name="Injuries to report?", default=False)
 
@@ -389,6 +388,9 @@ class BushfireBase(Audit):
 
 class BushfireSnapshot(BushfireBase):
 
+    fire_number = models.CharField(max_length=15, verbose_name="Fire Number")
+    sss_id = models.CharField(verbose_name="Unique SSS ID", max_length=64, null=True, blank=True)
+
     snapshot_type = models.PositiveSmallIntegerField(choices=SNAPSHOT_TYPE_CHOICES)
     action = models.CharField(verbose_name="Action Type", max_length=50)
     bushfire = models.ForeignKey('Bushfire', related_name='snapshots')
@@ -398,6 +400,9 @@ class BushfireSnapshot(BushfireBase):
 
 
 class Bushfire(BushfireBase):
+
+    fire_number = models.CharField(max_length=15, verbose_name="Fire Number", unique=True)
+    sss_id = models.CharField(verbose_name="Unique SSS ID", max_length=64, null=True, blank=True, unique=True)
 
     def user_unicode_patch(self):
         """ overwrite the User model's __unicode__() method """
@@ -409,8 +414,9 @@ class Bushfire(BushfireBase):
     def __str__(self):
         return ', '.join([self.fire_number])
 
-    class Meta:
-        unique_together = ('district', 'year', 'fire_number')
+#    class Meta:
+#        #unique_together = ('district', 'year', 'fire_number', 'sss_id')
+#        unique_together = ('fire_number', 'sss_id')
 
     @property
     def initial_snapshot(self):
@@ -741,35 +747,36 @@ class DamageSnapshot(DamageBase, Audit):
         unique_together = ('damage_type', 'snapshot', 'snapshot_type',)
 
 
-@python_2_unicode_compatible
-class FireBehaviourBase(models.Model):
-    fuel_type = models.ForeignKey(FuelType)
-    ros = models.PositiveSmallIntegerField(verbose_name="ROS (m/h)")
-    flame_height = models.DecimalField(verbose_name="Flame height (m)", max_digits=6, decimal_places=1)
+#@python_2_unicode_compatible
+#class FireBehaviourBase(models.Model):
+#    fuel_type = models.ForeignKey(FuelType)
+#    ros = models.PositiveSmallIntegerField(verbose_name="ROS (m/h)")
+#    flame_height = models.DecimalField(verbose_name="Flame height (m)", max_digits=6, decimal_places=1)
+#
+#    def __str__(self):
+#        return 'Fuel type {}, ROS {}, Flame height {}'.format(self.fuel_type, self.ros, self.flame_height)
+#
+#    class Meta:
+#        abstract = True
+#
+#
+#class FireBehaviour(FireBehaviourBase):
+#    bushfire = models.ForeignKey(Bushfire, related_name='fire_behaviour')
+#
+#    class Meta:
+#        unique_together = ('bushfire', 'fuel_type',)
+#
+#
+#class FireBehaviourSnapshot(FireBehaviourBase, Audit):
+#    snapshot_type = models.PositiveSmallIntegerField(choices=SNAPSHOT_TYPE_CHOICES)
+#    snapshot = models.ForeignKey(BushfireSnapshot, related_name='fire_behaviour_snapshot')
+#
+#    class Meta:
+#        unique_together = ('fuel_type', 'snapshot', 'snapshot_type',)
 
-    def __str__(self):
-        return 'Fuel type {}, ROS {}, Flame height {}'.format(self.fuel_type, self.ros, self.flame_height)
 
-    class Meta:
-        abstract = True
-
-
-class FireBehaviour(FireBehaviourBase):
-    bushfire = models.ForeignKey(Bushfire, related_name='fire_behaviour')
-
-    class Meta:
-        unique_together = ('bushfire', 'fuel_type',)
-
-
-class FireBehaviourSnapshot(FireBehaviourBase, Audit):
-    snapshot_type = models.PositiveSmallIntegerField(choices=SNAPSHOT_TYPE_CHOICES)
-    snapshot = models.ForeignKey(BushfireSnapshot, related_name='fire_behaviour_snapshot')
-
-    class Meta:
-        unique_together = ('fuel_type', 'snapshot', 'snapshot_type',)
-
-
-reversion.register(Bushfire, follow=['fire_behaviour', 'tenures_burnt', 'injuries', 'damages'])
+#reversion.register(Bushfire, follow=['fire_behaviour', 'tenures_burnt', 'injuries', 'damages'])
+reversion.register(Bushfire, follow=['tenures_burnt', 'injuries', 'damages'])
 reversion.register(Profile)
 reversion.register(Region)
 reversion.register(District)
@@ -782,6 +789,6 @@ reversion.register(DamageType)
 reversion.register(AreaBurnt)       # related_name=tenures_burnt
 reversion.register(Injury)          # related_name=injuries
 reversion.register(Damage)          # related_name=damages
-reversion.register(FireBehaviour)   # related_name=fire_behaviour
+#reversion.register(FireBehaviour)   # related_name=fire_behaviour
 reversion.register(BushfireSnapshot) # related_name=snapshots
 

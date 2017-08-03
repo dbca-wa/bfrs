@@ -30,6 +30,7 @@
 <div class="div_form_invalidate">
 <table class="table table-bordered table-striped table-condensed">
     <tbody>
+        {% comment %}
         <tr>
             <th class="cbas">Fuel and fire behaviour *</th>
             <td colspan="5" class="cbas" > 
@@ -37,6 +38,7 @@
                 {% if not snapshot.fire_behaviour_unknown %} {% include "bfrs/fire_behaviour_fs_snapshot.html" %}{% endif %}
             </td>
         </tr>
+        {% endcomment %}
 
         <tr>
             <th class="cbas">Fire Cause *<br><br><br><br>

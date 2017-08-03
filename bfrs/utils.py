@@ -1,9 +1,11 @@
 from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
 from bfrs.models import (Bushfire, BushfireSnapshot, District, Region,
-    AreaBurnt, Damage, Injury, FireBehaviour, Tenure,
+    AreaBurnt, Damage, Injury, Tenure,
+    #FireBehaviour, 
     SNAPSHOT_INITIAL, SNAPSHOT_FINAL,
-    DamageSnapshot, InjurySnapshot, FireBehaviourSnapshot, AreaBurntSnapshot,
+    DamageSnapshot, InjurySnapshot, AreaBurntSnapshot,
+    #FireBehaviourSnapshot, 
     SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS, SUBMIT_MANDATORY_FORMSETS,
     AUTH_MANDATORY_FIELDS, AUTH_MANDATORY_FIELDS_FIRE_NOT_FOUND, 
     AUTH_MANDATORY_DEP_FIELDS, AUTH_MANDATORY_DEP_FIELDS_FIRE_NOT_FOUND, AUTH_MANDATORY_FORMSETS,
@@ -88,10 +90,10 @@ def serialize_bushfire(auth_type, action, obj):
             snapshot_id=s.id, snapshot_type=snapshot_type, injury_type=i.injury_type, number=i.number, creator=obj.modifier, modifier=obj.modifier
         )
 
-    for i in obj.fire_behaviour.all():
-        fire_behaviour_obj, created = FireBehaviourSnapshot.objects.update_or_create(
-            snapshot_id=s.id, snapshot_type=snapshot_type, fuel_type=i.fuel_type, ros=i.ros, flame_height=i.flame_height, creator=obj.modifier, modifier=obj.modifier
-        )
+#    for i in obj.fire_behaviour.all():
+#        fire_behaviour_obj, created = FireBehaviourSnapshot.objects.update_or_create(
+#            snapshot_id=s.id, snapshot_type=snapshot_type, fuel_type=i.fuel_type, ros=i.ros, flame_height=i.flame_height, creator=obj.modifier, modifier=obj.modifier
+#        )
 
     for i in obj.tenures_burnt.all():
         tenure_burnt_obj, created = AreaBurntSnapshot.objects.update_or_create(
@@ -177,7 +179,7 @@ def invalidate_bushfire(obj, new_district, user):
 
         copy_fk_records(obj.id, old_obj.damages)
         copy_fk_records(obj.id, old_obj.injuries)
-        copy_fk_records(obj.id, old_obj.fire_behaviour)
+        #copy_fk_records(obj.id, old_obj.fire_behaviour)
         copy_fk_records(obj.id, old_obj.tenures_burnt)
 
         # update Bushfire Snapshots to the new bushfire_id and then create a new snapshot
@@ -240,7 +242,7 @@ def authorise_report(request, obj):
         'snapshot': obj,
         'damages': obj.damages,
         'injuries': obj.injuries,
-        'fire_behaviour': obj.fire_behaviour,
+        #'fire_behaviour': obj.fire_behaviour,
         'tenures_burnt': obj.tenures_burnt.order_by('id'),
     }
 
@@ -441,30 +443,30 @@ def update_damage_fs(bushfire, damage_formset):
 
     return 1
 
-def update_fire_behaviour_fs(bushfire, fire_behaviour_formset):
-    if not fire_behaviour_formset:
-        return 1
-
-    new_fs_object = []
-    for form in fire_behaviour_formset:
-        if form.is_valid():
-            fuel_type = form.cleaned_data.get('fuel_type')
-            ros = form.cleaned_data.get('ros')
-            flame_height = form.cleaned_data.get('flame_height')
-            remove = form.cleaned_data.get('DELETE')
-
-            if not remove and (fuel_type and ros>=0 and flame_height>=0.0):
-                new_fs_object.append(FireBehaviour(bushfire=bushfire, fuel_type=fuel_type, ros=ros, flame_height=flame_height))
-
-    try:
-        with transaction.atomic():
-            FireBehaviour.objects.filter(bushfire=bushfire).delete()
-            if not bushfire.fire_behaviour_unknown:
-                FireBehaviour.objects.bulk_create(new_fs_object)
-    except IntegrityError:
-        return 0
-
-    return 1
+#def update_fire_behaviour_fs(bushfire, fire_behaviour_formset):
+#    if not fire_behaviour_formset:
+#        return 1
+#
+#    new_fs_object = []
+#    for form in fire_behaviour_formset:
+#        if form.is_valid():
+#            fuel_type = form.cleaned_data.get('fuel_type')
+#            ros = form.cleaned_data.get('ros')
+#            flame_height = form.cleaned_data.get('flame_height')
+#            remove = form.cleaned_data.get('DELETE')
+#
+#            if not remove and (fuel_type and ros>=0 and flame_height>=0.0):
+#                new_fs_object.append(FireBehaviour(bushfire=bushfire, fuel_type=fuel_type, ros=ros, flame_height=flame_height))
+#
+#    try:
+#        with transaction.atomic():
+#            FireBehaviour.objects.filter(bushfire=bushfire).delete()
+#            if not bushfire.fire_behaviour_unknown:
+#                FireBehaviour.objects.bulk_create(new_fs_object)
+#    except IntegrityError:
+#        return 0
+#
+#    return 1
 
 def mail_url(request, bushfire, status='initial'):
     if status == 'initial':
@@ -913,7 +915,7 @@ def export_excel(request, queryset):
         row.write(col_no(), smart_str( obj.fire_controlled_date.strftime('%Y-%m-%d %H:%M:%S') if obj.fire_controlled_date else None) )
         row.write(col_no(), smart_str( obj.fire_contained_date.strftime('%Y-%m-%d %H:%M:%S') if obj.fire_contained_date else None) )
         row.write(col_no(), smart_str( obj.fire_safe_date.strftime('%Y-%m-%d %H:%M:%S') if obj.fire_safe_date else None) )
-        row.write(col_no(), smart_str( '; '.join(['(fuel_type={}, ros={}, flame_height={})'.format(i.fuel_type, i.ros, i.flame_height) for i in obj.fire_behaviour.all()])) if obj.fire_behaviour.all() else None )
+        #row.write(col_no(), smart_str( '; '.join(['(fuel_type={}, ros={}, flame_height={})'.format(i.fuel_type, i.ros, i.flame_height) for i in obj.fire_behaviour.all()])) if obj.fire_behaviour.all() else None )
         row.write(col_no(), smart_str( obj.first_attack if obj.first_attack else None))
         row.write(col_no(), smart_str( obj.other_first_attack if obj.other_first_attack else None))
         row.write(col_no(), smart_str( obj.initial_control if obj.initial_control else None))

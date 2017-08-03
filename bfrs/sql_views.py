@@ -19,6 +19,7 @@ def create_view():
     b.name,
     b.fire_number,
     b.year,
+    b.sss_id,
     b.reporting_year,
     b.prob_fire_level,
     b.max_fire_level,
@@ -70,9 +71,6 @@ def create_view():
     CASE WHEN initial_area_unknown THEN 1
      	 ELSE 0
     END as initial_area_unknown,
-    CASE WHEN fire_behaviour_unknown THEN 1
-     	 ELSE 0
-    END as fire_behaviour_unknown,
     b.authorised_date,
     b.report_status,
     CASE WHEN archive THEN 1
@@ -161,9 +159,6 @@ def create_final_view():
     CASE WHEN initial_area_unknown THEN 1
      	 ELSE 0
     END as initial_area_unknown,
-    CASE WHEN fire_behaviour_unknown THEN 1
-     	 ELSE 0
-    END as fire_behaviour_unknown,
     b.authorised_date,
     b.report_status,
     CASE WHEN archive THEN 1
@@ -252,9 +247,6 @@ def create_fireboundary_view():
     CASE WHEN initial_area_unknown THEN 1
      	 ELSE 0
     END as initial_area_unknown,
-    CASE WHEN fire_behaviour_unknown THEN 1
-     	 ELSE 0
-    END as fire_behaviour_unknown,
     b.authorised_date,
     b.report_status,
     CASE WHEN archive THEN 1

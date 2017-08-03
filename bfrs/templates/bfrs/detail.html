@@ -52,6 +52,7 @@
   {% endif %}
 
   {% comment %}{% if fire_behaviour_formset.errors and fire_behaviour_formset.errors.0 %}{% endcomment %}
+  {% comment %}
   {% if fire_behaviour_formset.errors|check_errors %}
       <h1 class="errornote">
         <p>Fire Behaviour formset Errors</p>
@@ -70,6 +71,7 @@
         {% endif %}
       </h1>
   {% endif %}
+  {% endcomment %}
 
   {% if damage_formset.errors|check_errors %}
       <h1 class="errornote">
@@ -137,6 +139,7 @@
 <form action="" method="post">{% csrf_token %}
 
 {{ form.sss_data.as_hidden }}
+{{ form.sss_id.as_hidden }}
 <table class="table table-bordered table-striped table-condensed">
     <tbody>
         <tr>
@@ -350,7 +353,8 @@
         {% endif %}
       {% endif %}
 
-      {% if form.errors or fire_behaviour_formset.errors|check_errors or damage_formset.errors|check_errors or injury_formset.errors|check_errors %}
+      {% comment %}{% if form.errors or fire_behaviour_formset.errors|check_errors or damage_formset.errors|check_errors or injury_formset.errors|check_errors %}{% endcomment %}
+      {% if form.errors or damage_formset.errors|check_errors or injury_formset.errors|check_errors %}
         <a href="javascript: history.go(-1)" class="btn btn-danger">Cancel</a>
       {% else %}
         <a id="id_cancel_btn" href="{% url 'main' %}" class="btn btn-primary btn-danger">Cancel</a>
@@ -479,6 +483,7 @@ $('#id_park_trail_impacted_1').on('change', function() {
 }).change();
 
 /* Fire Behaviour Unknown */
+/*
 $('#id_fire_behaviour_unknown').on('change', function() {
 	if($('#id_fire_behaviour_unknown').is(':checked')) { 
 	    $('.div_fire_behaviour_unknown').hide(); 
@@ -486,6 +491,7 @@ $('#id_fire_behaviour_unknown').on('change', function() {
 	    $('.div_fire_behaviour_unknown').show(); 
 	}
 }).change();
+*/
 
 /* Damage Unknown */
 $('#id_damage_unknown').on('change', function() {
@@ -645,10 +651,12 @@ $('#id_fire_monitored_only').on('change', function() {
         $("#id_th_fire_controlled_date").html("Date fire controlled <i class='icon-info-sign icon-white'>");
 */
 
+/*
         {% if not object.fire_behaviour.all %}
             $('#id_fire_behaviour_unknown').prop('checked', true);
 	        $('.div_fire_behaviour_unknown').hide(); 
         {% endif %}
+*/
 
         /*
 	    $('#id_th_field_officer').css("font-weight", "normal");
@@ -671,8 +679,10 @@ $('#id_fire_monitored_only').on('change', function() {
         $("#id_th_fire_controlled_date").html("Date fire controlled <i class='icon-info-sign icon-white'> *");
 */
 
+/*
         //$('#id_fire_behaviour_unknown').prop('checked', false);
 	    $('.div_fire_behaviour_unknown').show(); 
+*/
 
         /*
         {% if object.report_status >= object.STATUS_INITIAL_AUTHORISED and object.initial_snapshot.dispatch_pw %}

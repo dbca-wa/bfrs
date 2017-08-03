@@ -23,10 +23,12 @@ from bfrs.models import (Profile, Bushfire, BushfireSnapshot,
         SNAPSHOT_INITIAL, SNAPSHOT_FINAL,
     )
 from bfrs.forms import (ProfileForm, BushfireFilterForm, BushfireUpdateForm,
-        AreaBurntFormSet, InjuryFormSet, DamageFormSet, FireBehaviourFormSet,
+        AreaBurntFormSet, InjuryFormSet, DamageFormSet, 
+        #FireBehaviourFormSet,
     )
 from bfrs.utils import (breadcrumbs_li,
-        create_areas_burnt, update_areas_burnt, update_areas_burnt_fs, update_damage_fs, update_injury_fs, update_fire_behaviour_fs,
+        create_areas_burnt, update_areas_burnt, update_areas_burnt_fs, update_damage_fs, update_injury_fs, 
+        #update_fire_behaviour_fs,
         export_final_csv, export_excel, 
         update_status, serialize_bushfire,
         rdo_email, pvs_email, fpc_email, pica_email, pica_sms, police_email, dfes_email, fssdrs_email,
@@ -318,7 +320,7 @@ class BushfireInitialSnapshotView(LoginRequiredMixin, generic.DetailView):
             'snapshot': self.object.initial_snapshot,
             'damages': self.object.initial_snapshot.damage_snapshot.exclude(snapshot_type=SNAPSHOT_FINAL),
             'injuries': self.object.initial_snapshot.injury_snapshot.exclude(snapshot_type=SNAPSHOT_FINAL),
-            'fire_behaviour': self.object.initial_snapshot.fire_behaviour_snapshot.exclude(snapshot_type=SNAPSHOT_FINAL),
+            #'fire_behaviour': self.object.initial_snapshot.fire_behaviour_snapshot.exclude(snapshot_type=SNAPSHOT_FINAL),
             'tenures_burnt': self.object.initial_snapshot.tenures_burnt_snapshot.exclude(snapshot_type=SNAPSHOT_FINAL).order_by('id'),
         })
         return context
@@ -341,7 +343,7 @@ class BushfireFinalSnapshotView(LoginRequiredMixin, generic.DetailView):
             'snapshot': self.object.final_snapshot,
             'damages': self.object.final_snapshot.damage_snapshot.exclude(snapshot_type=SNAPSHOT_INITIAL),
             'injuries': self.object.final_snapshot.injury_snapshot.exclude(snapshot_type=SNAPSHOT_INITIAL),
-            'fire_behaviour': self.object.final_snapshot.fire_behaviour_snapshot.exclude(snapshot_type=SNAPSHOT_INITIAL),
+            #'fire_behaviour': self.object.final_snapshot.fire_behaviour_snapshot.exclude(snapshot_type=SNAPSHOT_INITIAL),
             'tenures_burnt': self.object.final_snapshot.tenures_burnt_snapshot.exclude(snapshot_type=SNAPSHOT_INITIAL).order_by('id'),
             'can_maintain_data': can_maintain_data(self.request.user),
         })
@@ -396,6 +398,9 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         if self.request.POST.has_key('sss_create'):
             sss = json.loads(self.request.POST.get('sss_create'))
             initial['sss_data'] = self.request.POST.get('sss_create')
+
+            if sss.has_key('sss_id') and sss['sss_id']:
+                initial['sss_id'] = sss['sss_id']
 
             if sss.has_key('area') and sss['area'].has_key('total_area') and sss['area'].get('total_area'):
                 initial['initial_area'] = round(float(sss['area']['total_area']), 2)
@@ -477,35 +482,38 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         damage_formset          = DamageFormSet(self.request.POST, prefix='damage_fs')
 
         area_burnt_formset      = AreaBurntFormSet(self.request.POST, prefix='area_burnt_fs')
-        fire_behaviour_formset  = FireBehaviourFormSet(self.request.POST, prefix='fire_behaviour_fs')
+        #fire_behaviour_formset  = FireBehaviourFormSet(self.request.POST, prefix='fire_behaviour_fs')
 
         if form.is_valid():
-#            if (self.request.POST.has_key('submit_initial') and self.request.POST.get('submit_initial')) or (self.request.POST.has_key('authorise_final') and self.request.POST.get('authorise_final')):
-#                return self.form_valid(request, form, damage_formset)
-
-            #import ipdb; ipdb.set_trace()
             if form.cleaned_data['fire_not_found']:
                 return self.form_valid(request, form)
 
-            #import ipdb; ipdb.set_trace()
-            if fire_behaviour_formset.is_valid() and injury_formset.is_valid() and damage_formset.is_valid(): # No need to check area_burnt_formset since the fs is readonly
-                return self.form_valid(request, form, fire_behaviour_formset, area_burnt_formset, injury_formset, damage_formset)
-            else:
-                return self.form_invalid(request, form, fire_behaviour_formset, area_burnt_formset, injury_formset, damage_formset)
-        else:
-            return self.form_invalid(request, form, fire_behaviour_formset, area_burnt_formset, injury_formset, damage_formset)
+#            if fire_behaviour_formset.is_valid() and injury_formset.is_valid() and damage_formset.is_valid(): # No need to check area_burnt_formset since the fs is readonly
+#                return self.form_valid(request, form, fire_behaviour_formset, area_burnt_formset, injury_formset, damage_formset)
+#            else:
+#                return self.form_invalid(request, form, fire_behaviour_formset, area_burnt_formset, injury_formset, damage_formset)
+#        else:
+#            return self.form_invalid(request, form, fire_behaviour_formset, area_burnt_formset, injury_formset, damage_formset)
 
-    def form_invalid(self, request, form, fire_behaviour_formset, area_burnt_formset, injury_formset, damage_formset):
+            if injury_formset.is_valid() and damage_formset.is_valid(): # No need to check area_burnt_formset since the fs is readonly
+                return self.form_valid(request, form, area_burnt_formset, injury_formset, damage_formset)
+            else:
+                return self.form_invalid(request, form, area_burnt_formset, injury_formset, damage_formset)
+        else:
+            return self.form_invalid(request, form, area_burnt_formset, injury_formset, damage_formset)
+
+
+    def form_invalid(self, request, form, area_burnt_formset, injury_formset, damage_formset):
         context = self.get_context_data()
         context.update({'form': form})
         context.update({'area_burnt_formset': area_burnt_formset})
-        context.update({'fire_behaviour_formset': fire_behaviour_formset})
+        #context.update({'fire_behaviour_formset': fire_behaviour_formset})
         context.update({'injury_formset': injury_formset})
         context.update({'damage_formset': damage_formset})
         return self.render_to_response(context)
 
     @transaction.atomic
-    def form_valid(self, request, form, fire_behaviour_formset=None, area_burnt_formset=None, injury_formset=None, damage_formset=None):
+    def form_valid(self, request, form, area_burnt_formset=None, injury_formset=None, damage_formset=None):
         template_summary = 'bfrs/detail_summary.html'
         template_error = 'bfrs/error.html'
         #template_mandatory_fields = 'bfrs/mandatory_fields.html'
@@ -534,7 +542,7 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         if not self.get_object():
             #import ipdb; ipdb.set_trace()
             areas_burnt_updated = update_areas_burnt_fs(self.object, area_burnt_formset)
-        fire_behaviour_updated = update_fire_behaviour_fs(self.object, fire_behaviour_formset)
+        #fire_behaviour_updated = update_fire_behaviour_fs(self.object, fire_behaviour_formset)
         injury_updated = update_injury_fs(self.object, injury_formset)
         damage_updated = update_damage_fs(self.object, damage_formset)
 
@@ -598,7 +606,7 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         if not area_burnt_formset:
             area_burnt_formset      = AreaBurntFormSet(instance=bushfire, prefix='area_burnt_fs')
 
-        fire_behaviour_formset = FireBehaviourFormSet(instance=bushfire, prefix='fire_behaviour_fs')
+        #fire_behaviour_formset = FireBehaviourFormSet(instance=bushfire, prefix='fire_behaviour_fs')
         injury_formset = InjuryFormSet(instance=bushfire, prefix='injury_fs')
         damage_formset = DamageFormSet(instance=bushfire, prefix='damage_fs')
 
@@ -630,7 +638,7 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         #import ipdb; ipdb.set_trace()
         context.update({'form': form,
                         'area_burnt_formset': area_burnt_formset,
-                        'fire_behaviour_formset': fire_behaviour_formset,
+                        #'fire_behaviour_formset': fire_behaviour_formset,
                         'injury_formset': injury_formset,
                         'damage_formset': damage_formset,
                         'is_authorised': is_authorised, # If True, will make Report section of template read-only

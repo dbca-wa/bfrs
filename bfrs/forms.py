@@ -1,7 +1,8 @@
 from django import forms
-from bfrs.models import (Bushfire, AreaBurnt, Damage, Injury, FireBehaviour,
+from bfrs.models import (Bushfire, AreaBurnt, Damage, Injury, 
+        #FireBehaviour,
         Region, District, Profile,
-        #current_finyear,
+        current_finyear,
         reporting_years,
     )
 from datetime import datetime, timedelta
@@ -172,6 +173,7 @@ class BushfireUpdateForm(forms.ModelForm):
         active_users = User.objects.filter(is_active=True).extra(select={'other': "CASE WHEN username='other' THEN 0 ELSE 1 END"}).order_by('other', 'username')
         self.fields['field_officer'].queryset = active_users
         self.fields['duty_officer'].queryset = active_users.exclude(username='other')
+        self.fields['reporting_year'].initial = current_finyear()
 
         # For use when debugging outside SSS - need to create an origin_point manually
         #from django.contrib.gis.geos import Point, GEOSGeometry
@@ -181,7 +183,7 @@ class BushfireUpdateForm(forms.ModelForm):
 
     class Meta:
         model = Bushfire
-        fields = ('sss_data',
+        fields = ('sss_data', 'sss_id',
                   'region', 'district', 'dfes_incident_no',
                   'name', 'year', 'prob_fire_level', 'max_fire_level', 'duty_officer', #'init_authorised_by', 'init_authorised_date',
                   'field_officer', 'other_field_officer', 'other_field_officer_agency', 'other_field_officer_phone',
@@ -190,7 +192,8 @@ class BushfireUpdateForm(forms.ModelForm):
                   'other_info',
                   'cause', 'cause_state', 'other_cause', 'prescribed_burn_id', 'tenure', 'other_tenure',
                   'dispatch_pw', 'dispatch_aerial',
-                  'investigation_req', 'fire_behaviour_unknown',
+                  #'fire_behaviour_unknown',
+                  'investigation_req',
                   'initial_area', 'initial_area_unknown', 'area', 'area_limit', 'other_area',
                   'origin_point_str', 'origin_point', 'fire_boundary',
 
@@ -383,37 +386,37 @@ class BaseDamageFormSet(BaseInlineFormSet):
         return
 
 
-class BaseFireBehaviourFormSet(BaseInlineFormSet):
-    def clean(self):
-        """
-        Adds validation to check:
-            1. no duplicate (fuel_type) combination
-            2. all fields are filled
-        """
-        duplicates = False
-        fire_behaviour = []
-
-        for form in self.forms:
-            if form.cleaned_data:
-                fuel_type = form.cleaned_data['fuel_type'] if form.cleaned_data.has_key('fuel_type') else None
-                ros = form.cleaned_data['ros'] if form.cleaned_data.has_key('ros') else None
-                flame_height = form.cleaned_data['flame_height'] if form.cleaned_data.has_key('flame_height') else None
-                remove = form.cleaned_data['DELETE'] if form.cleaned_data.has_key('DELETE') else False
-
-                if not remove:
-                    if not fuel_type and not ros and not flame_height:
-                        form.cleaned_data['DELETE'] = True
-
-                    # Check that no two records have the same damage_type
-                    if fuel_type and ros and flame_height:
-                        if set([(fuel_type.name)]).issubset(fire_behaviour):
-                            duplicates = True
-                        fire_behaviour.append((fuel_type.name))
-
-                    if duplicates:
-                        form.add_error('fuel_type', 'Duplicate: Fuel type must be unique')
-
-        return
+#class BaseFireBehaviourFormSet(BaseInlineFormSet):
+#    def clean(self):
+#        """
+#        Adds validation to check:
+#            1. no duplicate (fuel_type) combination
+#            2. all fields are filled
+#        """
+#        duplicates = False
+#        fire_behaviour = []
+#
+#        for form in self.forms:
+#            if form.cleaned_data:
+#                fuel_type = form.cleaned_data['fuel_type'] if form.cleaned_data.has_key('fuel_type') else None
+#                ros = form.cleaned_data['ros'] if form.cleaned_data.has_key('ros') else None
+#                flame_height = form.cleaned_data['flame_height'] if form.cleaned_data.has_key('flame_height') else None
+#                remove = form.cleaned_data['DELETE'] if form.cleaned_data.has_key('DELETE') else False
+#
+#                if not remove:
+#                    if not fuel_type and not ros and not flame_height:
+#                        form.cleaned_data['DELETE'] = True
+#
+#                    # Check that no two records have the same damage_type
+#                    if fuel_type and ros and flame_height:
+#                        if set([(fuel_type.name)]).issubset(fire_behaviour):
+#                            duplicates = True
+#                        fire_behaviour.append((fuel_type.name))
+#
+#                    if duplicates:
+#                        form.add_error('fuel_type', 'Duplicate: Fuel type must be unique')
+#
+#        return
 
 
 class AreaBurntForm(forms.ModelForm):
@@ -430,7 +433,7 @@ class AreaBurntForm(forms.ModelForm):
 AreaBurntFormSet            = inlineformset_factory(Bushfire, AreaBurnt, extra=0, min_num=0, exclude=(), form=AreaBurntForm)
 InjuryFormSet               = inlineformset_factory(Bushfire, Injury, formset=BaseInjuryFormSet, extra=1, max_num=7, min_num=0, validate_min=False, exclude=())
 DamageFormSet               = inlineformset_factory(Bushfire, Damage, formset=BaseDamageFormSet, extra=1, max_num=7, min_num=0, validate_min=False, exclude=())
-FireBehaviourFormSet        = inlineformset_factory(Bushfire, FireBehaviour, formset=BaseFireBehaviourFormSet, extra=1, min_num=0, validate_min=False, exclude=())
+#FireBehaviourFormSet        = inlineformset_factory(Bushfire, FireBehaviour, formset=BaseFireBehaviourFormSet, extra=1, min_num=0, validate_min=False, exclude=())
 
 
 
