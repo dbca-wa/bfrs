@@ -52,27 +52,21 @@
                 </tr>
                 <tr>
 			      <td><input id="id_tenure_1" name="private_tenure" type="text" value="Private Property"></td>
-                  {% if object.sss_data_to_dict %}
+                  {% if object.tenures_burnt.all|tenures_burnt:"Private Property" > 0 %}
                     <!-- Required for viewed snapshots -->
-                    <td><input id="id_area_1" name="private_area" type="number" min="0" max="{{ object.sss_data_to_dict.area.other_area|floatformat:"0" }}" value="{{ object.tenures_burnt.all|tenures_burnt:"Private Property" }}"></td>
+                    <td><input id="id_area_1" name="private_area" type="number" step="0.01" min="0" max="{{ object.tenures_burnt.all|tenures_burnt:"Private Property" }}" value="{{ object.tenures_burnt.all|tenures_burnt:"Private Property" }}"></td>
                   {% else %}
-                    {% comment %}
-                    <td><input id="id_area_1" name="private_area" type="number" min="0" max="{{ sss_data.area.other_area|floatformat:"0" }}" value="{{ sss_data.area.other_area|floatformat:"0" }}"></td>
-                    {% endcomment %}
-                    <td><input id="id_area_1" name="private_area" type="number" min="0" max="{{ object.other_area|floatformat:"0" }}" value="{{ object.other_area|floatformat:"0" }}"></td>
+                    <td><input id="id_area_1" name="private_area" type="number" step="0.01" min="0" max="{{ object.other_area|floatformat:"2" }}" value="{{ object.other_area|floatformat:"2" }}"></td>
                   {% endif %}
 			      <td><input id="id_area_perc_1" type="number" min="0" max="100" step="0.1"></td>
                 </tr>
                 <tr>
 			      <td><input id="id_tenure_2" name="other_crown_tenure" type="text" value="Other Crown"></td>
-                  {% if object.sss_data_to_dict %}
+                  {% if object.tenures_burnt.all|tenures_burnt:"Other Crown" > 0 %}
                     <!-- Required for viewed snapshots -->
-                    <td><input id="id_area_2" name="other_crown_area" type="number" min="0" max="{{ object.sss_data_to_dict.area.other_area|floatformat:"0" }}" value="{{ object.tenures_burnt.all|tenures_burnt:"Other Crown" }}"></td>
+                    <td><input id="id_area_2" name="other_crown_area" type="number" step="0.01" min="0" max="{{ object.tenures_burnt.all|tenures_burnt:"Other Crown" }}" value="{{ object.tenures_burnt.all|tenures_burnt:"Other Crown" }}"></td>
                   {% else %}
-                    {% comment %}
-                    <td><input id="id_area_2" name="other_crown_area" type="number" min="0" max="{{ sss_data.area.other_area|floatformat:"0" }}" value="0"></td>
-                    {% endcomment %}
-                    <td><input id="id_area_2" name="other_crown_area" type="number" min="0" max="{{ object.other_area|floatformat:"0" }}" value="0"></td>
+                    <td><input id="id_area_2" name="other_crown_area" type="number" step="0.01" min="0" max="{{ object.other_area|floatformat:"2" }}" value="0"></td>
                   {% endif %}
 			      <td><input id="id_area_perc_2" type="number" min="0" max="100" step="0.1"></td>
                 </tr>
@@ -110,7 +104,7 @@ $('#id_area_1').on('change', function() {
     var area_perc = 100.0 * area/total_other_area
     $("#id_area_perc_1").val( (area_perc).toFixed(1) );
 
-    $("#id_area_2").val( ((100.0 - area_perc)/100.0 * total_other_area).toFixed(0) );
+    $("#id_area_2").val( ((100.0 - area_perc)/100.0 * total_other_area).toFixed(2) );
     $("#id_area_perc_2").val( (100.0 - area_perc).toFixed(1) );
 }).change();
 
@@ -119,25 +113,25 @@ $('#id_area_2').on('change', function() {
     var area_perc = 100.0 * area/total_other_area
     $("#id_area_perc_2").val((area_perc).toFixed(1));
 
-    $("#id_area_1").val( ((100.0 - area_perc)/100.0 * total_other_area).toFixed(0) );
+    $("#id_area_1").val( ((100.0 - area_perc)/100.0 * total_other_area).toFixed(2) );
     $("#id_area_perc_1").val( (100.0 - area_perc).toFixed(1) );
 }).change();
 
 $('#id_area_perc_1').on('change', function() {
     var area_perc = $("#id_area_perc_1").val() || 100.0 * $("#id_area_1").val()/total_other_area;
     var area = area_perc * total_other_area / 100.0
-    $("#id_area_1").val( (area).toFixed(0) );
+    $("#id_area_1").val( (area).toFixed(2) );
 
-    $("#id_area_2").val( ((100.0 - area_perc)/100.0 * total_other_area).toFixed(0) );
+    $("#id_area_2").val( ((100.0 - area_perc)/100.0 * total_other_area).toFixed(2) );
     $("#id_area_perc_2").val( (100.0 - area_perc).toFixed(1) );
 }).change();
 
 $('#id_area_perc_2').on('change', function() {
     var area_perc = $("#id_area_perc_2").val() || 100.0 * $("#id_area_2").val()/total_other_area;
     var area = area_perc * total_other_area / 100.0
-    $("#id_area_2").val( (area).toFixed(0) );
+    $("#id_area_2").val( (area).toFixed(2) );
 
-    $("#id_area_1").val( ((100.0 - area_perc)/100.0 * total_other_area).toFixed(0) );
+    $("#id_area_1").val( ((100.0 - area_perc)/100.0 * total_other_area).toFixed(2) );
     $("#id_area_perc_1").val( (100.0 - area_perc).toFixed(1) );
 }).change();
 

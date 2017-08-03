@@ -185,7 +185,8 @@ class BushfireResource(APIResource):
         if bundle.data.has_key('fire_boundary') and isinstance(bundle.data['fire_boundary'], list):
             bundle.data['fire_boundary'] = MultiPolygon([Polygon(*p) for p in bundle.data['fire_boundary']]).__str__()
 
-            if bundle.data.has_key('area') and bundle.data['area'].has_key('tenure_area') and bundle.data['area']['tenure_area'].has_key('areas') and bundle.data['area']['tenure_area']['areas']:
+            #if bundle.data.has_key('area') and bundle.data['area'].has_key('tenure_area') and bundle.data['area']['tenure_area'].has_key('areas') and bundle.data['area']['tenure_area']['areas']:
+            if bundle.data.has_key('area') and bundle.data['area'].has_key('tenure_area') and bundle.data['area']['tenure_area'].has_key('areas'):
                 bundle.obj.tenures_burnt.all().delete()
 
             if bundle.obj.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED:

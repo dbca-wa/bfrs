@@ -95,7 +95,8 @@
             <td colspan="2" class="cbas">{{snapshot.max_fire_level}}</td>
 
             <th class="cbas">Final fire size (ha) *</th>
-            <td colspan="2" class="cbas">{{snapshot.area}}<br>Is area < {{area_threshold}}ha? {{snapshot.area_limit|yesno:"Yes,No"}}</td>
+            <td colspan="2" class="cbas">{{snapshot.area}}</td>
+            {% comment %}<td colspan="2" class="cbas">{{snapshot.area}}<br>Is area < {{area_threshold}}ha? {{snapshot.area_limit|yesno:"Yes,No"}}</td>{% endcomment %}
         </tr>
 
 

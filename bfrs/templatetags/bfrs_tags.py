@@ -264,7 +264,7 @@ def tenures_burnt(qs, arg=None):
         {{ qs|filter_tenures_burnt:"string" }}
     """
     qs = qs.filter(tenure__name=arg) if qs else None
-    return round(qs[0].area, 0) if qs else 0
+    return round(qs[0].area, 2) if qs else 0
 
 @register.filter(is_safe=False)
 def qs_order_by(qs, arg=None):

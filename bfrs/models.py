@@ -163,8 +163,9 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
         if not obj.initial_area and obj.report_status < Bushfire.STATUS_INITIAL_AUTHORISED:
             missing.append("Must enter Area of Arrival, if area < {}ha".format(settings.AREA_THRESHOLD))
 
+    #import ipdb; ipdb.set_trace()
     if not obj.fire_not_found and obj.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED:
-        if not obj.area_limit and (obj.area < settings.AREA_THRESHOLD or obj.area is None):
+        if not obj.area_limit and (obj.area < settings.AREA_THRESHOLD or obj.area is None) and not obj.final_fire_boundary:
             missing.append("Final fire shape must be uploaded for fires > {}ha".format(settings.AREA_THRESHOLD))
 
     #import ipdb; ipdb.set_trace()
