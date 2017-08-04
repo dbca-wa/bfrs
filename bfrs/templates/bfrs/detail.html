@@ -407,12 +407,28 @@
 
 // $('[id^=""]').hide() // starts with --> http://xdsoft.net/jqplugins/datetimepicker/
 
+/*
 $('[id$="_date"]').datetimepicker({ 
     format: "Y-m-d H:i" ,
     maxDate:true,
+    step: 15,
     //maxTime:true,
 }); //ends with
+*/
 
+$("#id_fire_detected_date,#id_dispatch_pw_date,#id_dispatch_aerial_date").datetimepicker({ 
+    format: "Y-m-d H:i" ,
+    maxDate:true,
+    step: 15,
+}); 
+
+$("#id_fire_controlled_date,#id_fire_contained_date,#id_fire_safe_date").datetimepicker({ 
+    format: "Y-m-d H:i" ,
+    maxDate:true,
+    step: 30,
+}); 
+
+/*
 $('#id_fire_detected_date').on('change', function () {
         var d = $('#id_fire_detected_date').datetimepicker('getValue');
         var now = moment();
@@ -423,6 +439,29 @@ $('#id_fire_detected_date').on('change', function () {
             $('#id_fire_detected_date').val(now.format('YYYY-MM-DD H:mm'));
         }
 });
+*/
+
+$('#id_fire_detected_date').on('change', function () {
+    set_current_date('id_fire_detected_date', 'div_fire_detected_date');
+});
+
+$('#id_dispatch_pw_date').on('change', function () {
+    set_current_date('id_dispatch_pw_date', 'div_dispatch_pw_date');
+});
+
+$('#id_dispatch_aerial_date').on('change', function () {
+    set_current_date('id_dispatch_aerial_date', 'div_dispatch_aerial_date');
+});
+
+function set_current_date(idname, divname) {
+    var d = $('#' + idname).datetimepicker('getValue');
+    var now = moment();
+    $('#' + divname).remove();
+    if (d.valueOf() > now.valueOf()) {
+        $('#' + idname).after('<div id="' + divname  + '"><p><font color="red">Date/time cannot be in the future. Reseting to current date/time ...</font></p><div>');
+        $('#' + idname).val(now.format('YYYY-MM-DD H:mm'));
+    }
+}
 
 $('#id_field_officer').prop('class', 'selectpicker dropup');
 $('#id_duty_officer').prop('class', 'selectpicker dropup');

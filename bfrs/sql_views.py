@@ -14,6 +14,7 @@ def create_view():
     CASE WHEN b.report_status >= 2 THEN ST_AsGeoJSON(st_envelope(b.fire_boundary))
      	 ELSE ST_AsGeoJSON(b.fire_boundary)
     END as fire_boundary,
+    b.fb_validation_req,
     b.created,
     b.modified,
     b.name,
@@ -103,6 +104,7 @@ def create_final_view():
     CREATE OR REPLACE VIEW bfrs_bushfire_final_fireboundary_v AS
     SELECT b.id,
     b.fire_boundary,
+    b.fb_validation_req,
     b.created,
     b.modified,
     b.name,
@@ -191,6 +193,7 @@ def create_fireboundary_view():
     CREATE OR REPLACE VIEW bfrs_bushfire_fireboundary_v AS
     SELECT b.id,
     b.fire_boundary,
+    b.fb_validation_req,
     b.created,
     b.modified,
     b.name,

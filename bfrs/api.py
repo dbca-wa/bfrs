@@ -229,20 +229,22 @@ class BushfireResource(APIResource):
         elif bundle.data.has_key('tenure_ignition_point') and not bundle.data['tenure_ignition_point']:
             bundle.obj.tenure = Tenure.objects.get(name__iendswith='other')
 
-        #import ipdb;ipdb.set_trace()
         if bundle.data.has_key('area') and bundle.data['area'].has_key('tenure_area') and bundle.data['area']['tenure_area'].has_key('areas') and bundle.data['area']['tenure_area']['areas']:
             update_areas_burnt(bundle.obj, bundle.data['area']['tenure_area']['areas'])
 
         if bundle.data.has_key('area') and bundle.data['area'].has_key('total_area') and bundle.data['area']['total_area']:
             if bundle.obj.report_status < Bushfire.STATUS_INITIAL_AUTHORISED:
                 bundle.obj.area_unknown = False
-                bundle.obj.initial_area = round(float(bundle.data['area']['total_area']), 2)
+                initial_area = round(float(bundle.data['area']['total_area']), 2)
+                bundle.obj.initial_area = initial_area if initial_area > 0 else 0.01
             else:
                 bundle.obj.area_limit = False
-                bundle.obj.area = round(float(bundle.data['area']['total_area']), 2)
+                area = round(float(bundle.data['area']['total_area']), 2)
+                bundle.obj.area = area if area > 0 else 0.01
 
         if bundle.data.has_key('area') and bundle.data['area'].has_key('other_area') and bundle.data['area']['other_area']:
-            bundle.obj.other_area = round(float(bundle.data['area']['other_area']), 2)
+            other_area = round(float(bundle.data['area']['other_area']), 2)
+            bundle.obj.other_area = other_area if other_area > 0 else 0.01
 
         if bundle.data.has_key('fire_position') and bundle.data['fire_position']:
             # only update if user has not over-ridden

@@ -403,11 +403,13 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
                 initial['sss_id'] = sss['sss_id']
 
             if sss.has_key('area') and sss['area'].has_key('total_area') and sss['area'].get('total_area'):
-                initial['initial_area'] = round(float(sss['area']['total_area']), 2)
+                initial_area = round(float(sss['area']['total_area']), 2)
+                initial['initial_area'] = initial_area if initial_area > 0 else 0.01
 
             # NOTE initial area (and area) includes 'Other Area', but recording separately to allow for updates - since this is not always provided, if area is not updated
             if sss.has_key('area') and sss['area'].has_key('other_area') and sss['area'].get('other_area'):
-                initial['other_area'] = round(float(sss['area']['other_area']), 2)
+                other_area = round(float(sss['area']['other_area']), 2)
+                initial['other_area'] = other_area if other_area > 0 else 0.01
 
             if sss.has_key('origin_point') and isinstance(sss['origin_point'], list):
                 initial['origin_point_str'] = Point(sss['origin_point']).get_coords()
@@ -471,6 +473,7 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
             action = self.request.POST.get('action')
             if action == 'Submit' or action == 'Authorise':
                 update_status(self.request, self.object, action)
+                refresh_gokart(self.request, fire_number=self.object.fire_number, region=self.object.region.id, district=self.object.district.id)
                 return HttpResponseRedirect(self.get_success_url())
 
         # update district, if it has changed (invalidates the current report and creates another with a new fire number)

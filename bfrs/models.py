@@ -31,6 +31,7 @@ SUBMIT_MANDATORY_FORMSETS= [
 
 AUTH_MANDATORY_FIELDS= [
     #'assistance_req',
+    'area',
     'cause_state', 'cause',
     'fire_contained_date', 'fire_controlled_date',
     'fire_safe_date',
@@ -46,7 +47,7 @@ AUTH_MANDATORY_FIELDS_FIRE_NOT_FOUND= [
     'duty_officer',
 ]
 AUTH_MANDATORY_DEP_FIELDS_FIRE_NOT_FOUND= {
-    'dispatch_pw': [[1, 'dispatch_pw_date']],
+    'dispatch_pw': [[1, 'field_officer'], [1, 'dispatch_pw_date']], # if 'dispatch_pw' == '1' then 'field_officer' is required
     'dispatch_aerial': [['True', 'dispatch_aerial_date']],
     'field_officer': [['other', 'other_field_officer'], ['other', 'other_field_officer_agency']], # username='other'
 }
@@ -318,6 +319,7 @@ class BushfireBase(Audit):
     fire_not_found = models.BooleanField(default=False)
     fire_monitored_only = models.BooleanField(default=False)
     final_fire_boundary = models.BooleanField(default=False)
+    fb_validation_req = models.NullBooleanField(verbose_name="Fire Boundary Validation Required?", null=True)
 
     # TODO remove next 7 fields
     #assistance_req = models.PositiveSmallIntegerField(choices=ASSISTANCE_CHOICES, null=True, blank=True)
