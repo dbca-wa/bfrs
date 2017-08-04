@@ -377,6 +377,9 @@ class BushfireBase(Audit):
     authorised_by = models.ForeignKey(User, verbose_name="Authorised By", null=True, blank=True, related_name='%(class)s_authorised_by')
     authorised_date = models.DateTimeField(verbose_name="Authorised Date", null=True, blank=True)
 
+    reviewed_by = models.ForeignKey(User, verbose_name="Reviewed By", null=True, blank=True, related_name='%(class)s_reviewed_by')
+    reviewed_date = models.DateTimeField(verbose_name="Reviewed Date", null=True, blank=True)
+
     report_status = models.PositiveSmallIntegerField(choices=REPORT_STATUS_CHOICES, editable=False, default=1)
     sss_data = models.TextField(verbose_name="SSS REST Api Dict", null=True, blank=True)
 
@@ -504,12 +507,22 @@ class Bushfire(BushfireBase):
         return False
 
     @property
+    def can_review(self):
+        if not self.fire_not_found and self.area and self.final_fire_boundary and self.is_final_authorised:
+            return True
+        return False
+
+    @property
     def is_init_authorised(self):
         return True if self.init_authorised_by and self.init_authorised_date and self.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED else False
 
     @property
     def is_final_authorised(self):
         return True if self.authorised_by and self.authorised_date and self.report_status >= Bushfire.STATUS_FINAL_AUTHORISED else False
+
+    @property
+    def is_reviewed(self):
+        return True if self.reviewed_by and self.reviewed_date and self.report_status >= Bushfire.STATUS_REVIEWED else False
 
     @property
     def other_contact(self):

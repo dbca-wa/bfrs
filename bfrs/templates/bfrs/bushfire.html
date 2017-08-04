@@ -93,13 +93,13 @@
 
         {% if can_maintain_data %}
         <td align="center">
-          {% if bushfire.report_status == bushfire.STATUS_FINAL_AUTHORISED %}
+          {% if bushfire.report_status >= bushfire.STATUS_FINAL_AUTHORISED %}
 		  <a href="#" onclick='openGokart({"action": "select", "region":{{bushfire.region.id}},"district":{{bushfire.district.id}},"bushfireid":"{{bushfire.fire_number}}" });' title="Open report in SSS"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-link icon-white"></i></a>
           {% endif %}
 		</td>
 
          <td>
-           {% if bushfire.report_status == bushfire.STATUS_FINAL_AUTHORISED %}
+           {% if bushfire.report_status >= bushfire.STATUS_FINAL_AUTHORISED %}
 			 <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=delete_final_authorisation');" title="Delete authorisation"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-trash icon-white"></i></a>
 
              {% if not bushfire.archive %}
@@ -107,7 +107,12 @@
              {% else %}
 		       <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=unarchive');" title="Unarchive Report"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-folder-open"></i></a>
              {% endif %}
+           {% endif %}
 
+           {% if bushfire.is_reviewed %}
+			 <a href="#" title="Final fire report reviewed on {{bushfire.reviewed_date}} by {{bushfire.reviewed_by}}"><span style="display:none">{{bushfire.report_status}}</span><font color="green"><i class="icon-ok icon-white"></i></font></a>
+           {% elif bushfire.can_review %}
+		       <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=mark_reviewed');" title="Mark Report as Reviewed"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-thumbs-up"></i></a>
            {% endif %}
 
 		 </td>

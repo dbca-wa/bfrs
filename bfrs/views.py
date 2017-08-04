@@ -245,6 +245,10 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
                 bushfire.report_status = Bushfire.STATUS_INITIAL_AUTHORISED
                 serialize_bushfire(action, action, bushfire)
 
+            # Mark Final Report as Reviewed
+            if action == 'mark_reviewed' and bushfire.can_review:
+                update_status(request, bushfire, action)
+
             # Archive
             elif action == 'archive' and bushfire.report_status==Bushfire.STATUS_FINAL_AUTHORISED:
                 bushfire.archive = True

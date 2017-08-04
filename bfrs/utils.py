@@ -536,6 +536,20 @@ def update_status(request, bushfire, action):
 
         bushfire.save()
 
+    elif action == 'mark_reviewed' and bushfire.can_review:
+        bushfire.reviewed_by = request.user
+        bushfire.reviewed_date = datetime.now(tz=pytz.utc)
+        bushfire.report_status = Bushfire.STATUS_REVIEWED
+        bushfire.save()
+        serialize_bushfire('review', action, bushfire)
+
+        # send emails
+        resp = fssdrs_email(bushfire, mail_url(request, bushfire, status='review'), status='review')
+        notification['FSSDRS-Auth'] = 'Email Sent' if resp else 'Email failed'
+
+        bushfire.save()
+
+
     return notification
 
 def rdo_email(bushfire, url):
