@@ -198,7 +198,7 @@ class BushfireResource(APIResource):
             bundle.obj.final_fire_boundary = False
 
         if bundle.data.has_key('fb_validation_req'):
-            initial['fire_boundary'] = bundle.data['fb_validation_req']
+            initial['fb_validation_req'] = bundle.data['fb_validation_req']
 
         return bundle
 

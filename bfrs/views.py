@@ -427,7 +427,7 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
                 initial['fire_boundary'] = MultiPolygon([Polygon(*p) for p in sss['fire_boundary']])
 
             if sss.has_key('fb_validation_req'):
-                initial['fire_boundary'] = sss['fb_validation_req']
+                initial['fb_validation_req'] = sss['fb_validation_req']
 
             if sss.has_key('fire_position') and sss.get('fire_position'):
                 initial['fire_position'] = sss['fire_position']
