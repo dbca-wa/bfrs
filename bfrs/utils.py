@@ -246,9 +246,8 @@ def authorise_report(request, obj):
         'tenures_burnt': obj.tenures_burnt.order_by('id'),
     }
 
-    #import ipdb; ipdb.set_trace()
-    if request.POST.has_key('submit_initial'):
-        action = request.POST.get('submit_initial')
+    if request.POST.has_key('submit_initial') or request.POST.has_key('_save_and_submit'):
+        action = request.POST.get('submit_initial') if request.POST.has_key('submit_initial') else request.POST.get('_save_and_submit')
         if action == 'Submit':
             context['action'] = action
             context['initial'] = True

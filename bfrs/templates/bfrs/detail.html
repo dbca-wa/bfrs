@@ -343,9 +343,9 @@
           <input type="submit" value="Save draft" class="btn btn-primary btn-success" name="_save" {% if is_init_authorised %}title="Submitted Notification report cannot be edited" disabled{% endif %} />
 
           {% if create %}
-            <input type="submit" value="Save and continue" class="btn btn-primary btn-success" name="_save_continue" />
+            <input type="submit" value="Submit" class="btn btn-primary btn-success" name="_save_and_submit" />
           {% else %}
-          <input type="submit" value="Submit" class="btn btn-primary btn-success" name="submit_initial" {% if is_init_authorised %}title="Notification Report already submitted" disabled{% else %}title="Save and submit"{% endif %} />
+            <input type="submit" value="Submit" class="btn btn-primary btn-success" name="submit_initial" {% if is_init_authorised %}title="Notification Report already submitted" disabled{% else %}title="Save and submit"{% endif %} />
           {% comment %}
             <a id="id_submit_btn" href="{% url 'bushfire:initial_snapshot' snapshot.id %}?action=submit_initial" class="btn btn-primary btn-danger">Submit 2</a>
             <input formaction="{% url 'bushfire:initial_snapshot' snapshot.id %}" type="submit" value="Submit" class="btn btn-primary btn-success" name="submit_initial" />
