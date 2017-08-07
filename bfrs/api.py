@@ -192,13 +192,20 @@ class BushfireResource(APIResource):
             if bundle.obj.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED:
                 #import ipdb;ipdb.set_trace()
                 bundle.obj.final_fire_boundary = True
+
+            if bundle.obj.is_reviewed:
+                bundle.obj.reviewed_by = None
+                bundle.obj.reviewed_date = None
+                bundle.obj.report_status = Bushfire.STATUS_FINAL_AUTHORISED
+
         if not ( bundle.data.has_key('fire_boundary') and isinstance(bundle.data['fire_boundary'], (str, unicode)) ):
             # bundle.data['fire_boundary'] is a string/unicode, therefore spatial data not changed, probably origin has moved only
             bundle.obj.fire_boundary = None
             bundle.obj.final_fire_boundary = False
 
+        #import ipdb; ipdb.set_trace()
         if bundle.data.has_key('fb_validation_req'):
-            initial['fb_validation_req'] = bundle.data['fb_validation_req']
+            bundle.data['fb_validation_req'] = bundle.data['fb_validation_req']
 
         return bundle
 
