@@ -40,36 +40,40 @@
 
                 {% endif %}
 
-                <tr>
-                  <td>Other</td>
-                  {% if object %}
-                      <td>{{ object.other_area|floatformat:2 }}</td>
-                  {% else %}
-                      <td>{{ form.other_area.value }}</td>
-                  {% endif %}
-                  {{form.other_area.as_hidden}}
+                {% if object.other_area > 0 or form.other_area.value > 0 %}
+                    <tr>
+                      <td>Other</td>
+                      {% if object %}
+                          <td>{{ object.other_area|floatformat:2 }}</td>
+                      {% else %}
+                          <td>{{ form.other_area.value }}</td>
+                      {% endif %}
+                      {{form.other_area.as_hidden}}
 
-                </tr>
-                <tr>
-			      <td><input id="id_tenure_1" name="private_tenure" type="text" value="Private Property"></td>
-                  {% if object.tenures_burnt.all|tenures_burnt:"Private Property" > 0 %}
-                    <!-- Required for viewed snapshots -->
-                    <td><input id="id_area_1" name="private_area" type="number" step="0.01" min="0" max="{{ object.tenures_burnt.all|tenures_burnt:"Private Property" }}" value="{{ object.tenures_burnt.all|tenures_burnt:"Private Property" }}"></td>
-                  {% else %}
-                    <td><input id="id_area_1" name="private_area" type="number" step="0.01" min="0" max="{{ object.other_area|floatformat:"2" }}" value="{{ object.other_area|floatformat:"2" }}"></td>
-                  {% endif %}
-			      <td><input id="id_area_perc_1" type="number" min="0" max="100" step="0.1"></td>
-                </tr>
-                <tr>
-			      <td><input id="id_tenure_2" name="other_crown_tenure" type="text" value="Other Crown"></td>
-                  {% if object.tenures_burnt.all|tenures_burnt:"Other Crown" > 0 %}
-                    <!-- Required for viewed snapshots -->
-                    <td><input id="id_area_2" name="other_crown_area" type="number" step="0.01" min="0" max="{{ object.tenures_burnt.all|tenures_burnt:"Other Crown" }}" value="{{ object.tenures_burnt.all|tenures_burnt:"Other Crown" }}"></td>
-                  {% else %}
-                    <td><input id="id_area_2" name="other_crown_area" type="number" step="0.01" min="0" max="{{ object.other_area|floatformat:"2" }}" value="0"></td>
-                  {% endif %}
-			      <td><input id="id_area_perc_2" type="number" min="0" max="100" step="0.1"></td>
-                </tr>
+                    </tr>
+                    <tr>
+                      <td><input id="id_tenure_1" name="private_tenure" type="text" value="Private Property"></td>
+                      {% if object.tenures_burnt.all|tenures_burnt:"Private Property" > 0 %}
+                        <!-- Required for viewed snapshots -->
+                        <td><input id="id_area_1" name="private_area" type="number" step="0.01" min="0" max="{{ object.tenures_burnt.all|tenures_burnt:"Private Property" }}" value="{{ object.tenures_burnt.all|tenures_burnt:"Private Property" }}"></td>
+                      {% else %}
+                        <td><input id="id_area_1" name="private_area" type="number" step="0.01" min="0" max="{{ object.other_area|floatformat:"2" }}" value="{{ object.other_area|floatformat:"2" }}"></td>
+                      {% endif %}
+                      <td><input id="id_area_perc_1" type="number" min="0" max="100" step="0.1"></td>
+                    </tr>
+                    <tr>
+                      <td><input id="id_tenure_2" name="other_crown_tenure" type="text" value="Other Crown"></td>
+                      {% if object.tenures_burnt.all|tenures_burnt:"Other Crown" > 0 %}
+                        <!-- Required for viewed snapshots -->
+                        <td><input id="id_area_2" name="other_crown_area" type="number" step="0.01" min="0" max="{{ object.tenures_burnt.all|tenures_burnt:"Other Crown" }}" value="{{ object.tenures_burnt.all|tenures_burnt:"Other Crown" }}"></td>
+                      {% else %}
+                        <td><input id="id_area_2" name="other_crown_area" type="number" step="0.01" min="0" max="{{ object.other_area|floatformat:"2" }}" value="0"></td>
+                      {% endif %}
+                      <td><input id="id_area_perc_2" type="number" min="0" max="100" step="0.1"></td>
+                    </tr>
+                {% elif not object.tenures_burnt.all %}
+                    <tr><td>No burnt areas to report</td></tr>
+                {% endif %}
 
             </tbody>
         </table>

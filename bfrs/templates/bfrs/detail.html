@@ -220,7 +220,14 @@
             <td colspan="2" class="cbas">{{form.tenure}}<br><div class="div_tenure" style="visibility: hidden;">{{form.other_tenure}}</div></td>
                 
             <th class="cbas">Duty Officer *</th>
-            <td colspan="2" class="cbas">{{form.duty_officer}}</td>
+            <td colspan="2" class="cbas">
+                {% if is_init_authorised %} 
+                    {{snapshot.duty_officer}} {{form.duty_officer.as_hidden}}
+                {% else %} 
+                    {{form.duty_officer}} <br>
+                {% endif %} 
+            </td>
+
         </tr>
 
         <tr>
@@ -453,6 +460,14 @@ $('#id_dispatch_aerial_date').on('change', function () {
     set_current_date('id_dispatch_aerial_date', 'div_dispatch_aerial_date');
 });
 
+$('#id_fire_controlled_date').on('change', function () {
+    set_current_date('id_fire_controlled_date', 'div_fire_controlled_date');
+});
+
+$('#id_fire_safe_date').on('change', function () {
+    set_current_date('id_fire_safe_date', 'div_fire_safe_date');
+});
+
 function set_current_date(idname, divname) {
     var d = $('#' + idname).datetimepicker('getValue');
     var now = moment();
@@ -662,7 +677,7 @@ $('#id_initial_area_unknown').on('change', function() {
 }).change();
 {% endif %}
 
-$("#id_initial_area").prop('step', 0.5).prop('min', 0);
+$("#id_initial_area").prop('step', 0.1).prop('min', 0);
 /* END - Area Override */
 
 /* Fire Position Override */
