@@ -100,7 +100,11 @@
 
          <td>
            {% if bushfire.report_status >= bushfire.STATUS_FINAL_AUTHORISED %}
-			 <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=delete_final_authorisation');" title="Delete authorisation"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-trash icon-white"></i></a>
+             {% if bushfire.is_reviewed %}
+			   <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=delete_review');" title="Delete review"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-trash icon-white"></i></a>
+             {% else %}
+			   <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=delete_final_authorisation');" title="Delete authorisation"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-trash icon-white"></i></a>
+             {% endif %}
 
              {% if not bushfire.archive %}
 			   <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=archive');" title="Archive Report"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-folder-close"></i></a>
@@ -110,7 +114,7 @@
            {% endif %}
 
            {% if bushfire.is_reviewed %}
-			 <a href="#" title="Final fire report reviewed on {{bushfire.reviewed_date}} by {{bushfire.reviewed_by}}"><span style="display:none">{{bushfire.report_status}}</span><font color="green"><i class="icon-ok icon-white"></i></font></a>
+			 <a href="#" title="Final fire report reviewed on {{bushfire.reviewed_date}} by {{bushfire.reviewed_by}}"><span style="display:none">{{bushfire.report_status}}</span><div style="float:right;"><font color="green"><i class="icon-ok icon-white"></i></font></div></a>
            {% elif bushfire.can_review %}
 		       <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=mark_reviewed');" title="Mark Report as Reviewed"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-thumbs-up"></i></a>
            {% endif %}

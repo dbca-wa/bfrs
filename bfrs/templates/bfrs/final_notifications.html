@@ -258,7 +258,7 @@ $('#id_area_limit').on('change', function() {
 	}
 }).change();
 
-$("#id_area").prop('step', 0.5).prop('min', 0).prop('max',{{area_threshold|to_float}});
+$("#id_area").prop('step', 0.1).prop('min', 0).prop('max',{{area_threshold|to_float}});
 
 /* Job Code Validation */
 $("#id_job_code").prop('pattern', '[A-Z]{3}').prop('title', '3 letters and upper case');

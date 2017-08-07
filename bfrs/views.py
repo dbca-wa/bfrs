@@ -237,20 +237,26 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
         if self.request.POST.has_key('action'):
             action = self.request.POST.get('action')
 
+            # Delete Review
+            if action == 'delete_review' and bushfire.is_reviewed:
+                bushfire.reviewed_by = None
+                bushfire.reviewed_date = None
+                bushfire.report_status = Bushfire.STATUS_FINAL_AUTHORISED
+                serialize_bushfire(action, action, bushfire)
+
             # Delete Final Authorisation
-            if action == 'delete_final_authorisation' and bushfire.report_status==Bushfire.STATUS_FINAL_AUTHORISED:
+            elif action == 'delete_final_authorisation' and bushfire.report_status==Bushfire.STATUS_FINAL_AUTHORISED:
                 bushfire.authorised_by = None
                 bushfire.authorised_date = None
-                #bushfire.final_snapshot = None
                 bushfire.report_status = Bushfire.STATUS_INITIAL_AUTHORISED
                 serialize_bushfire(action, action, bushfire)
 
             # Mark Final Report as Reviewed
-            if action == 'mark_reviewed' and bushfire.can_review:
+            elif action == 'mark_reviewed' and bushfire.can_review:
                 update_status(request, bushfire, action)
 
             # Archive
-            elif action == 'archive' and bushfire.report_status==Bushfire.STATUS_FINAL_AUTHORISED:
+            elif action == 'archive' and bushfire.report_status>=Bushfire.STATUS_FINAL_AUTHORISED:
                 bushfire.archive = True
             elif action == 'unarchive' and bushfire.archive:
                 bushfire.archive = False
@@ -397,8 +403,6 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
             initial['region'] = profile.region
             initial['district'] = profile.district
 
-
-
         if self.request.POST.has_key('sss_create'):
             sss = json.loads(self.request.POST.get('sss_create'))
             initial['sss_data'] = self.request.POST.get('sss_create')
@@ -421,6 +425,9 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
 
             if sss.has_key('fire_boundary') and isinstance(sss['fire_boundary'], list):
                 initial['fire_boundary'] = MultiPolygon([Polygon(*p) for p in sss['fire_boundary']])
+
+            if sss.has_key('fb_validation_req'):
+                initial['fire_boundary'] = sss['fb_validation_req']
 
             if sss.has_key('fire_position') and sss.get('fire_position'):
                 initial['fire_position'] = sss['fire_position']

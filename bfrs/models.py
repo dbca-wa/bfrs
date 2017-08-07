@@ -508,6 +508,7 @@ class Bushfire(BushfireBase):
 
     @property
     def can_review(self):
+        # can only review if spatial data (final_fire_boundary == True) has been uploaded
         if not self.fire_not_found and self.area and self.final_fire_boundary and self.is_final_authorised:
             return True
         return False
