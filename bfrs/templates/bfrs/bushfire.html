@@ -56,13 +56,22 @@
 {% if object_list %}
 <table id="table" class="tablesorter table table-striped table-bordered table-hover table-condensed" style="cursor:pointer;">
   <thead>
+  <colgroup>
+    <col style="width:15%">
+    <col style="width:20%">
+    <col style="width:10%">
+    <col style="width:15%">
+    <col style="width:15%">
+    <col style="width:15%">
+    {% if can_maintain_data %}<col style="width:10%">{% endif %}
+  </colgroup>
 	  {%comment%}<td><input type="checkbox" name ="check_all" onClick=toggle(this) /></td>{%endcomment%}
 	  <th><font color="dodgerblue">Fire Number <i class="icon-sort"></i></font></th>
 	  <th><font color="dodgerblue">Name <i class="icon-sort"></i></font></th>
 	  <th><font color="dodgerblue">Job Code <i class="icon-sort"></i></font></th>
 	  <th><font color="dodgerblue">Notifications <i class="icon-sort"></font></i></th>
 	  <th><font color="dodgerblue">Report <i class="icon-sort"></i></font></th>
-	  {% if can_maintain_data %}<th><font color="dodgerblue">View fire in SSS <i class="icon-sort"></i></font></th>{% endif %}
+	  <th><font color="dodgerblue">View fire in SSS <i class="icon-sort"></i></font></th>
 	  {% if can_maintain_data %}<th><font color="dodgerblue">Admin <i class="icon-sort"></i></font></th>{% endif %}
 
   </thead>
@@ -91,13 +100,13 @@
 		    {% endif %}
 		</td>
 
-        {% if can_maintain_data %}
         <td align="center">
           {% if bushfire.report_status >= bushfire.STATUS_FINAL_AUTHORISED %}
 		  <a href="#" onclick='openGokart({"action": "select", "region":{{bushfire.region.id}},"district":{{bushfire.district.id}},"bushfireid":"{{bushfire.fire_number}}" });' title="Open report in SSS"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-link icon-white"></i></a>
           {% endif %}
 		</td>
 
+        {% if can_maintain_data %}
          <td>
            {% if bushfire.report_status >= bushfire.STATUS_FINAL_AUTHORISED %}
              {% if bushfire.is_reviewed %}
