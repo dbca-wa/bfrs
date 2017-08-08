@@ -463,9 +463,11 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
 
     def get_object(self, queryset=None):
         """ Overriding this method to allow UpdateView to both Create new object and Update an existing object"""
-        if not self.kwargs.get(self.pk_url_kwarg):
-            return None
-        return super(BushfireUpdateView, self).get_object(queryset)
+        if self.kwargs.get(self.pk_url_kwarg):
+            return super(BushfireUpdateView, self).get_object(queryset)
+        elif self.request.POST.has_key('bushfire_id') and self.request.POST.get('bushfire_id'):
+            return Bushfire.objects.get(id=self.request.POST.get('bushfire_id'))
+        return None
 
     def post(self, request, *args, **kwargs):
         #import ipdb; ipdb.set_trace()
@@ -532,7 +534,6 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         template_error = 'bfrs/error.html'
         #template_mandatory_fields = 'bfrs/mandatory_fields.html'
 
-        #import ipdb; ipdb.set_trace()
         if is_external_user(request.user):
             return TemplateResponse(request, template_error, context={'is_external_user': True, 'status':401}, status=401)
 
@@ -592,6 +593,7 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
 
 
         self.object.save()
+
 
         if self.request.POST.has_key('_save_and_submit'):
             response = authorise_report(self.request, self.object)
