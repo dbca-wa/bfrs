@@ -51,6 +51,9 @@ def create_view():
     b.dispatch_pw_date,
     b.dispatch_aerial_date,
     b.fire_detected_date,
+    CASE WHEN fire_detected_date IS NULL THEN created
+         ELSE fire_detected_date
+    END as fire_detected_or_created,
     b.fire_contained_date,
     b.fire_controlled_date,
     b.fire_safe_date,
@@ -140,6 +143,9 @@ def create_final_view():
     b.dispatch_pw_date,
     b.dispatch_aerial_date,
     b.fire_detected_date,
+    CASE WHEN fire_detected_date IS NULL THEN created
+         ELSE fire_detected_date
+    END as fire_detected_or_created,
     b.fire_contained_date,
     b.fire_controlled_date,
     b.fire_safe_date,
@@ -229,6 +235,9 @@ def create_fireboundary_view():
     b.dispatch_pw_date,
     b.dispatch_aerial_date,
     b.fire_detected_date,
+    CASE WHEN fire_detected_date IS NULL THEN created
+         ELSE fire_detected_date
+    END as fire_detected_or_created,
     b.fire_contained_date,
     b.fire_controlled_date,
     b.fire_safe_date,
