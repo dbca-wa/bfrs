@@ -29,7 +29,7 @@ from django.core import serializers
 from xlwt import Workbook
 from itertools import count
 from django.forms.models import inlineformset_factory
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from copy import deepcopy
 from django.core.urlresolvers import reverse
 import requests
@@ -551,14 +551,72 @@ def update_status(request, bushfire, action):
 
     return notification
 
+NOTIFICATION_FIELDS = [
+    'region', 'district', 'year',
+    'name', 'fire_detected_date',
+    'fire_number', 'dfes_incident_no',
+    'fire_position', 'origin_point',
+    'tenure', 'duty_officer',
+    'dispatch_pw', 'dispatch_pw_date', 'dispatch_aerial', 'dispatch_aerial_date',
+    'initial_control', 'initial_area',
+    'prob_fire_level', 'investigation_req',
+    'media_alert_req', 'park_trail_impacted',
+    'other_info',
+]
+#def _notifications_to_text(bushfire):
+#    d = [(bushfire._meta.get_field(i).verbose_name, str(getattr(bushfire, i))) for i in NOTIFICATION_FIELDS]
+#    ordered_dict = OrderedDict(d)
+#
+#    msg = ''
+#    for k,v in ordered_dict.iteritems():
+#        msg +=  '{}:\t{}\n'.format(k, v).expandtabs(60)
+#
+#    return msg
+
+def notifications_to_html(bushfire):
+    d = [(bushfire._meta.get_field(i).verbose_name, str(getattr(bushfire, i))) for i in NOTIFICATION_FIELDS]
+    ordered_dict = OrderedDict(d)
+
+    msg = ''
+    msg += '<table>'
+    for k,v in ordered_dict.iteritems():
+        if v == 'None' or not v:
+            v = '-'
+        elif v == 'False':
+            v = 'No'
+        elif v == 'True':
+            v = 'Yes'
+        elif k == bushfire._meta.get_field('dispatch_pw').verbose_name:
+            v = 'Yes' if v == '1' else 'No'
+            
+        msg += '<tr> <th style="text-align: left;">{}</th> <td>{}</td> </tr>'.format(k, v)
+    msg += '</table">'
+
+    return msg
+
 def rdo_email(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION:
        return
 
     subject = 'RDO Email - Initial report submitted - {}'.format(bushfire.fire_number)
-    message = 'RDO Email - {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.fire_number, url)
 
-    return send_mail(subject, message, settings.FROM_EMAIL, settings.RDO_EMAIL)
+    body = 'RDO Email - {0}\n\nInitial report has been submitted and is located at <a href="{1}">{1}</a><br><br>'.format(bushfire.fire_number, url)
+    body += notifications_to_html(bushfire)
+
+    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.RDO_EMAIL)
+    message.content_subtype = 'html'
+    message.send()
+
+#def _rdo_email(bushfire, url):
+#    if not settings.ALLOW_EMAIL_NOTIFICATION:
+#       return
+#
+#    subject = 'RDO Email - Initial report submitted - {}'.format(bushfire.fire_number)
+#    message = 'RDO Email - {}\n\nInitial report has been submitted and is located at {}\n\n{}'.format(
+#        bushfire.fire_number, url, notifications_to_text2(bushfire)
+#    )
+#
+#    return send_mail(subject, message, settings.FROM_EMAIL, settings.RDO_EMAIL)
 
 def pvs_email(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION:

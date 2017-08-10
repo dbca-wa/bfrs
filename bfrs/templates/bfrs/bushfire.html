@@ -69,7 +69,8 @@
     {% for bushfire in object_list %}
       <tr class="row-vm" data-toggle="myCollapse" data-target="#{{bushfire.id}}">
 		  {%comment%}<td><input type="checkbox" name="chkbox" value={{ bushfire.id }}  /></td>{%endcomment%}
-        <td>{{ bushfire.fire_number }}</td>
+        
+		<td><a href="#" onclick='openGokart({"action": "select", "region":{{bushfire.region.id}},"district":{{bushfire.district.id}},"bushfireid":"{{bushfire.fire_number}}" });' title="Open report in SSS">{{ bushfire.fire_number }}</a></td>
         <td>{{ bushfire.name }}</td>
 		<td>{% if bushfire.job_code %}{{ bushfire.job_code }}{% else %}  {% endif %}</td>
 		<td align="center">

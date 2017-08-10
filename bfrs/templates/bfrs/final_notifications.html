@@ -102,15 +102,15 @@
 
         <tr>
             <th class="cbas" title="Fire is no longer 'active' – refer to Glossary of Bushfire Preparedness and Response Manual for definition of 'active'">Date fire inactive <i class="icon-info-sign icon-white"></i> *</th>
-            <td colspan="5" class="cbas">{{form.fire_safe_date}}</td>
+            <td colspan="2" class="cbas">{{form.fire_safe_date}}</td>
+
+            <th class="cbas">Maximum Fire Level *</th>
+            <td colspan="2" class="cbas">{{form.max_fire_level}}</td>
         </tr>
 
         <tr>
-            <th class="cbas">Maximum Fire Level *</th>
-            <td colspan="2" class="cbas">{{form.max_fire_level}}</td>
-
             <th class="cbas">Final fire size (ha) *</th>
-            <td colspan="2" class="cbas">{{form.area}}<span id="div_area_limit" style="margin: 20px;">{{form.area_limit}} Area < {{area_threshold}}ha</span></td>
+            <td colspan="5" class="cbas"><span id="div_area_limit">{{form.area_limit}} Area < {{area_threshold}}ha<span style="margin: 20px;"></span></span>{{form.area}}</td>
         </tr>
 
 
@@ -251,14 +251,15 @@ if ({{object.final_fire_boundary|yesno:"true,false"}} == false) {
 
 $('#id_area_limit').on('change', function() {
     if($("#id_area_limit").is(':checked')) { 
+        $("#id_area").prop('step', 0.1).prop('min', 0).prop('max',{{area_threshold|to_float}});
 	    $("#id_area").removeAttr('readonly').removeAttr('style');
 	} else {
+        $("#id_area").prop('step', 0.1).prop('min', 0).width($("#id_dfes_incident_no").width());
         $("#id_area").val(orig_area);
 	    $("#id_area").attr('readonly','readonly').css('background-color' , '#DEDEDE');
 	}
 }).change();
 
-$("#id_area").prop('step', 0.1).prop('min', 0).prop('max',{{area_threshold|to_float}});
 
 /* Job Code Validation */
 $("#id_job_code").prop('pattern', '[A-Z]{3}').prop('title', '3 letters and upper case');

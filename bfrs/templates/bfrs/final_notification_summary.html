@@ -87,16 +87,15 @@
 
         <tr>
             <th class="cbas" title='Placeholder ...'>Date fire inactive <i class="icon-info-sign icon-white"></i> *</th>
-            <td colspan="5" class="cbas">{{snapshot.fire_safe_date}}</td>
+            <td colspan="2" class="cbas">{{snapshot.fire_safe_date}}</td>
+
+            <th class="cbas">Final fire size (ha) *</th>
+            <td colspan="2" class="cbas">{{snapshot.area}}</td>
         </tr>
 
         <tr>
             <th class="cbas">Maximum Fire Level *</th>
-            <td colspan="2" class="cbas">{{snapshot.max_fire_level}}</td>
-
-            <th class="cbas">Final fire size (ha) *</th>
-            <td colspan="2" class="cbas">{{snapshot.area}}</td>
-            {% comment %}<td colspan="2" class="cbas">{{snapshot.area}}<br>Is area < {{area_threshold}}ha? {{snapshot.area_limit|yesno:"Yes,No"}}</td>{% endcomment %}
+            <td colspan="5" class="cbas">{{snapshot.max_fire_level}}</td>
         </tr>
 
 
