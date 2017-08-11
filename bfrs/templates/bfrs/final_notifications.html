@@ -254,7 +254,7 @@ $('#id_area_limit').on('change', function() {
         $("#id_area").prop('step', 0.1).prop('min', 0).prop('max',{{area_threshold|to_float}});
 	    $("#id_area").removeAttr('readonly').removeAttr('style');
 	} else {
-        $("#id_area").prop('step', 0.1).prop('min', 0).width($("#id_dfes_incident_no").width());
+        $("#id_area").prop('step', 0.01).prop('min', 0).width($("#id_dfes_incident_no").width());
         $("#id_area").val(orig_area);
 	    $("#id_area").attr('readonly','readonly').css('background-color' , '#DEDEDE');
 	}

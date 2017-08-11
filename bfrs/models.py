@@ -25,6 +25,7 @@ SUBMIT_MANDATORY_DEP_FIELDS= {
     'dispatch_pw': [[1, 'dispatch_pw_date']], # if 'dispatch_pw' == 1 then 'dispatch_pw_date' is required
     'dispatch_aerial': [['True', 'dispatch_aerial_date']],
     'initial_control': [['OTHER', 'other_initial_control']],
+    'tenure': [['Other', 'other_tenure']],
 }
 SUBMIT_MANDATORY_FORMSETS= [
 ]
@@ -68,7 +69,6 @@ AUTH_MANDATORY_DEP_FIELDS= {
     'first_attack': [['OTHER', 'other_first_attack']],
     'final_control': [['OTHER', 'other_final_control']],
     'area_limit': [[True, 'area']],
-    'tenure': [['Other', 'other_tenure']],
     'field_officer': [['other', 'other_field_officer'], ['other', 'other_field_officer_agency']], # username='other'
 }
 AUTH_MANDATORY_FORMSETS= [
@@ -306,7 +306,7 @@ class BushfireBase(Audit):
     other_cause = models.CharField(verbose_name='Other Fire Cause', max_length=64, null=True, blank=True)
     prescribed_burn_id = models.CharField(verbose_name='Prescribed Burn ID', max_length=7, null=True, blank=True)
     tenure = models.ForeignKey('Tenure', verbose_name="Tenure of Ignition Point", null=True, blank=True)
-    other_tenure = models.PositiveSmallIntegerField(verbose_name="Other Tenure (Crown/Private)", choices=IGNITION_POINT_CHOICES, null=True, blank=True)
+    other_tenure = models.PositiveSmallIntegerField(verbose_name="Tenure of ignition point (crown/private)", choices=IGNITION_POINT_CHOICES, null=True, blank=True)
 
     dfes_incident_no = models.CharField(verbose_name='DFES Fire Number', max_length=32, null=True, blank=True)
     job_code = models.CharField(verbose_name="Job Code", max_length=12, null=True, blank=True)
