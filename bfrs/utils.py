@@ -2,16 +2,13 @@ from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
 from bfrs.models import (Bushfire, BushfireSnapshot, District, Region,
     AreaBurnt, Damage, Injury, Tenure,
-    #FireBehaviour, 
     SNAPSHOT_INITIAL, SNAPSHOT_FINAL,
     DamageSnapshot, InjurySnapshot, AreaBurntSnapshot,
-    #FireBehaviourSnapshot, 
     SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS, SUBMIT_MANDATORY_FORMSETS,
     AUTH_MANDATORY_FIELDS, AUTH_MANDATORY_FIELDS_FIRE_NOT_FOUND, 
     AUTH_MANDATORY_DEP_FIELDS, AUTH_MANDATORY_DEP_FIELDS_FIRE_NOT_FOUND, AUTH_MANDATORY_FORMSETS,
     check_mandatory_fields,
     )
-#from bfrs.forms import (BaseAreaBurntFormSet)
 from django.db import IntegrityError, transaction
 from django.http import HttpResponse
 from django.core.mail import send_mail
@@ -80,7 +77,6 @@ def serialize_bushfire(auth_type, action, obj):
 
     # create the formset snapshots and attach the bushfire_snapshot
     for i in obj.damages.all():
-        #import ipdb; ipdb.set_trace()
         damage_obj, created = DamageSnapshot.objects.update_or_create(
             snapshot_id=s.id, snapshot_type=snapshot_type, damage_type=i.damage_type, number=i.number, creator=obj.modifier, modifier=obj.modifier
         )
@@ -90,24 +86,10 @@ def serialize_bushfire(auth_type, action, obj):
             snapshot_id=s.id, snapshot_type=snapshot_type, injury_type=i.injury_type, number=i.number, creator=obj.modifier, modifier=obj.modifier
         )
 
-#    for i in obj.fire_behaviour.all():
-#        fire_behaviour_obj, created = FireBehaviourSnapshot.objects.update_or_create(
-#            snapshot_id=s.id, snapshot_type=snapshot_type, fuel_type=i.fuel_type, ros=i.ros, flame_height=i.flame_height, creator=obj.modifier, modifier=obj.modifier
-#        )
-
     for i in obj.tenures_burnt.all():
         tenure_burnt_obj, created = AreaBurntSnapshot.objects.update_or_create(
             snapshot_id=s.id, snapshot_type=snapshot_type, tenure_id=i.tenure_id, area=i.area, creator=obj.modifier, modifier=obj.modifier
         )
-
-#    d = model_to_dict(obj, exclude=['id', 'snapshot', 'fire_number', 'district', 'year'])
-#    snapshot_obj, created = BushfireSnapshot.objects.update_or_create(
-#        fire_number=obj.fire_number, district=obj.district, year=obj.year, created=obj.created, snapshot_type=snapshot_type,
-#        defaults=d
-#    )
-
-    #archive_snapshot(auth_type, action, obj)
-    #obj.save()
 
 def archive_snapshot(auth_type, action, obj):
         """ allows archicing of existing snapshot before overwriting """
@@ -179,7 +161,6 @@ def invalidate_bushfire(obj, new_district, user):
 
         copy_fk_records(obj.id, old_obj.damages)
         copy_fk_records(obj.id, old_obj.injuries)
-        #copy_fk_records(obj.id, old_obj.fire_behaviour)
         copy_fk_records(obj.id, old_obj.tenures_burnt)
 
         # update Bushfire Snapshots to the new bushfire_id and then create a new snapshot
@@ -194,15 +175,17 @@ def check_district_changed(request, obj, form):
     Checks if district is changed from within the bushfire reporting system (FSSDRS Group can do this)
     Further, primary use case is to update the district from SSS, which then executes the equiv code below from bfrs/api.py
     """
+    if request.POST.has_key('district') and not request.POST.get('district'):
+        return None
+
     if obj:
         cur_obj = Bushfire.objects.get(id=obj.id)
+        #import ipdb; ipdb.set_trace()
         district = District.objects.get(id=request.POST['district']) if request.POST.has_key('district') else None # get the district from the form
         if request.POST.has_key('action') and request.POST.get('action')=='invalidate' and cur_obj.report_status!=Bushfire.STATUS_INVALIDATED:
             obj.invalid_details = request.POST.get('invalid_details')
             obj.save()
             obj = invalidate_bushfire(obj, district, request.user)
-            #url_name = 'bushfire_initial' if self.object.report_status < Bushfire.STATUS_INITIAL_AUTHORISED else 'bushfire_final'
-            #return  HttpResponseRedirect(reverse('bushfire:' + url_name, kwargs={'pk': self.object.id}))
             return HttpResponseRedirect(reverse("home"))
 
         elif district != cur_obj.district and not request.POST.has_key('fire_not_found'):
@@ -242,7 +225,6 @@ def authorise_report(request, obj):
         'snapshot': obj,
         'damages': obj.damages,
         'injuries': obj.injuries,
-        #'fire_behaviour': obj.fire_behaviour,
         'tenures_burnt': obj.tenures_burnt.order_by('id'),
     }
 
@@ -279,13 +261,29 @@ def authorise_report(request, obj):
             context['action'] = action
             context['final'] = True
 
-            #import ipdb; ipdb.set_trace()
             context['mandatory_fields'] = check_mandatory_fields(obj, SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS, SUBMIT_MANDATORY_FORMSETS)
             fields = AUTH_MANDATORY_FIELDS_FIRE_NOT_FOUND if obj.fire_not_found else AUTH_MANDATORY_FIELDS
             dep_fields = AUTH_MANDATORY_DEP_FIELDS_FIRE_NOT_FOUND if obj.fire_not_found else AUTH_MANDATORY_DEP_FIELDS
             context['mandatory_fields'] = context['mandatory_fields'] + check_mandatory_fields(obj, fields, dep_fields, AUTH_MANDATORY_FORMSETS)
 
-            if context['mandatory_fields']:
+            #import ipdb; ipdb.set_trace()
+            if not obj.fire_not_found and context['mandatory_fields']:
+                logger.info('Delete Authorisation - FSSDRS user {} attempted to save an already Authorised/Reviewed report {}, with missing fields\n{}'.format(
+                    request.user.get_full_name(), obj.fire_number, context['mandatory_fields']
+                ))
+                update_status(request, obj, 'delete_authorisation_(missing_fields_-_FSSDRS)')
+                return HttpResponseRedirect(reverse("home"))
+
+#            if not obj.fire_not_found and context['mandatory_fields']:
+#                context.update({
+#                    'action': 'delete_final_authorisation',
+#                    'message': 'Fire not found has been reset to "No", and mandatory fields are missing. This action will save the report and also delete the existing {}'.format('authorisation and review' if obj.is_reviewed else 'authorisation'),
+#                    'fire_not_found_reset': True,
+#                    'snapshot': obj,
+#                })
+#                return TemplateResponse(request, 'bfrs/detail_summary.html', context=context)
+
+            elif context['mandatory_fields']:
                 return TemplateResponse(request, template_mandatory_fields, context=context)
 
             serialize_bushfire('Final', 'Post Authorised Update', obj)
@@ -442,31 +440,6 @@ def update_damage_fs(bushfire, damage_formset):
 
     return 1
 
-#def update_fire_behaviour_fs(bushfire, fire_behaviour_formset):
-#    if not fire_behaviour_formset:
-#        return 1
-#
-#    new_fs_object = []
-#    for form in fire_behaviour_formset:
-#        if form.is_valid():
-#            fuel_type = form.cleaned_data.get('fuel_type')
-#            ros = form.cleaned_data.get('ros')
-#            flame_height = form.cleaned_data.get('flame_height')
-#            remove = form.cleaned_data.get('DELETE')
-#
-#            if not remove and (fuel_type and ros>=0 and flame_height>=0.0):
-#                new_fs_object.append(FireBehaviour(bushfire=bushfire, fuel_type=fuel_type, ros=ros, flame_height=flame_height))
-#
-#    try:
-#        with transaction.atomic():
-#            FireBehaviour.objects.filter(bushfire=bushfire).delete()
-#            if not bushfire.fire_behaviour_unknown:
-#                FireBehaviour.objects.bulk_create(new_fs_object)
-#    except IntegrityError:
-#        return 0
-#
-#    return 1
-
 def mail_url(request, bushfire, status='initial'):
     if status == 'initial':
         return "http://" + request.get_host() + reverse('bushfire:bushfire_initial', kwargs={'pk':bushfire.id})
@@ -475,10 +448,6 @@ def mail_url(request, bushfire, status='initial'):
 
 
 def update_status(request, bushfire, action):
-
-    # when user Submits, without first Saving
-#    if not bushfire:
-#        bushfire = Bushfire.objects.get(id=request.POST.get('bushfire_id'))
 
     notification = {}
     if action == 'Submit' and bushfire.report_status==Bushfire.STATUS_INITIAL:
@@ -502,10 +471,6 @@ def update_status(request, bushfire, action):
             resp = pvs_email(bushfire, mail_url(request, bushfire))
             notification['PVS'] = 'Email Sent' if resp else 'Email failed'
 
-	# TODO awaiting item notification in SSS dictionary
-#            resp = fpc_email(bushfire, mail_url(request, bushfire))
-#            notification['FPC'] = 'Email Sent' if resp else 'Email failed'
-
         if bushfire.media_alert_req:
             resp = pica_email(bushfire, mail_url(request, bushfire))
             notification['PICA'] = 'Email Sent' if resp else 'Email failed'
@@ -513,12 +478,7 @@ def update_status(request, bushfire, action):
             resp = pica_sms(bushfire, mail_url(request, bushfire))
             notification['PICA SMS'] = 'SMS Sent' if resp else 'SMS failed'
 
-#        if bushfire.investigation_req:
-#            resp = police_email(bushfire, mail_url(request, bushfire))
-#            notification['POLICE'] = 'Email Sent' if resp else 'Email failed'
-
         bushfire.area = None # reset bushfire area
-        #bushfire.sss_data = None
         bushfire.final_fire_boundary = False # used to check if final boundary is updated in Final Report template - allows to toggle show()/hide() area_limit widget via js
         bushfire.save()
 
@@ -548,6 +508,26 @@ def update_status(request, bushfire, action):
 
         bushfire.save()
 
+    elif (action == 'delete_final_authorisation' or action == 'delete_authorisation_(missing_fields_-_FSSDRS)') and bushfire.is_final_authorised:
+        if bushfire.is_reviewed:
+            bushfire.reviewed_by = None
+            bushfire.reviewed_date = None
+
+        if not bushfire.area:
+            bushfire.final_fire_boundary = False
+
+        bushfire.authorised_by = None
+        bushfire.authorised_date = None
+        bushfire.report_status = Bushfire.STATUS_INITIAL_AUTHORISED
+        serialize_bushfire(action, action, bushfire)
+        bushfire.save()
+
+    elif action == 'delete_review' and bushfire.is_reviewed:
+        bushfire.reviewed_by = None
+        bushfire.reviewed_date = None
+        bushfire.report_status = Bushfire.STATUS_FINAL_AUTHORISED
+        serialize_bushfire(action, action, bushfire)
+        bushfire.save()
 
     return notification
 

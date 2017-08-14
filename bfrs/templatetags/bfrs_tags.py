@@ -281,11 +281,12 @@ def to_int(value):
 
 @register.filter()
 def to_float(value):
-    return round(float(value), 1)
+    #import ipdb; ipdb.set_trace()
+    return round(float(value), 1) if value else ''
 
 @register.filter()
 def check_errors(error_list):
-    return any(error_list)
+    return any(error_list) if error_list else False
 
 @register.simple_tag(takes_context=True)
 def _clear_session(context):

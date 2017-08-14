@@ -23,13 +23,6 @@ YESNO_CHOICES = (
     (False, 'No')
 )
 
-#REPORTING_YEAR_CHOICES = (
-#    (current_finyear()-2, str(current_finyear()-2) + '/' + str(current_finyear()-1)),
-#    (current_finyear()-1, str(current_finyear()-1) + '/' + str(current_finyear())),
-#    (current_finyear(), str(current_finyear()) + '/' + str(current_finyear()+1)),
-#    (current_finyear()+1, str(current_finyear()+1) + '/' + str(current_finyear()+2)),
-#)
-
 REPORTING_YEAR_CHOICES = ( reporting_years() )
 
 class HorizontalRadioRenderer(forms.RadioSelect.renderer):
@@ -61,11 +54,6 @@ class UserForm(forms.ModelForm):
         super(UserForm, self).__init__(*args, **kwargs)
         self.fields['is_active'].label = ("Approved User (i.e. enable login for this user?)")
         instance = getattr(self, 'instance', None)
-#        if instance and instance.pk:
-#            self.fields['username'].widget.attrs['readonly'] = True
-#            self.fields['email'].widget.attrs['readonly'] = True
-#            self.fields['first_name'].widget.attrs['readonly'] = True
-#            self.fields['last_name'].widget.attrs['readonly'] = True
 
     class Meta:
         model = User
@@ -110,7 +98,6 @@ class HelperModelForm(forms.ModelForm):
 
 
 class ProfileForm(HelperModelForm):
-#class ProfileForm(forms.ModelForm):
     def clean(self):
         """District must be child of Region.
         """
@@ -160,7 +147,6 @@ class BushfireUpdateForm(forms.ModelForm):
     origin_point_str = forms.CharField(required=False, widget=DisplayOnlyField())#, widget=forms.TextInput(attrs={'readonly':'readonly'}))
     media_alert_req = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
     park_trail_impacted = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
-    #dispatch_pw = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
     dispatch_pw = forms.ChoiceField(choices=Bushfire.DISPATCH_PW_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
     other_tenure = forms.ChoiceField(choices=Bushfire.IGNITION_POINT_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
     arson_squad_notified = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
@@ -185,31 +171,27 @@ class BushfireUpdateForm(forms.ModelForm):
         model = Bushfire
         fields = ('sss_data', 'sss_id',
                   'region', 'district', 'dfes_incident_no',
-                  'name', 'year', 'prob_fire_level', 'max_fire_level', 'duty_officer', #'init_authorised_by', 'init_authorised_date',
+                  'name', 'year', 'prob_fire_level', 'max_fire_level', 'duty_officer',
                   'field_officer', 'other_field_officer', 'other_field_officer_agency', 'other_field_officer_phone',
                   'media_alert_req', 'park_trail_impacted', 'fire_position', 'fire_position_override',
                   'fire_detected_date', 'dispatch_pw_date', 'dispatch_aerial_date',
                   'other_info',
                   'cause', 'cause_state', 'other_cause', 'prescribed_burn_id', 'tenure', 'other_tenure',
                   'dispatch_pw', 'dispatch_aerial',
-                  #'fire_behaviour_unknown',
                   'investigation_req',
                   'initial_area', 'initial_area_unknown', 'area', 'area_limit', 'other_area',
                   'origin_point_str', 'origin_point', 'fire_boundary',
-
                   'fire_not_found', 'fire_monitored_only', 'invalid_details',
                   'fire_contained_date', 'fire_controlled_date', 'fire_safe_date',
                   'first_attack', 'initial_control', 'final_control',
                   'other_first_attack', 'other_initial_control', 'other_final_control',
                   'arson_squad_notified', 'offence_no', 'job_code', 'reporting_year',
                   'damage_unknown','injury_unknown',
-
                  )
 
     def clean(self):
         cleaned_data = super(BushfireUpdateForm, self).clean()
 
-        #import ipdb; ipdb.set_trace()
         # Resetting forms fields declared above to None (from '') if None if not set in form
         if not self.cleaned_data['dispatch_pw']: self.cleaned_data['dispatch_pw'] = None
         if not self.cleaned_data['dispatch_aerial']: self.cleaned_data['dispatch_aerial'] = None
@@ -221,17 +203,6 @@ class BushfireUpdateForm(forms.ModelForm):
         if not self.cleaned_data['park_trail_impacted']: self.cleaned_data['park_trail_impacted'] = None
         if not self.cleaned_data['other_tenure']: self.cleaned_data['other_tenure'] = None
 
-#        if self.cleaned_data['dispatch_pw'] and eval(self.cleaned_data['dispatch_pw'])==Bushfire.DISPATCH_PW_YES:
-#            if not self.cleaned_data['dispatch_pw_date']:
-#                self.add_error('dispatch_pw_date', 'Must specify Date and Time of dispatch, if resource is dispatched.')
-#            if not self.cleaned_data['field_officer']:
-#                self.add_error('field_officer', 'Must specify Field Officer, if resource is dispatched.')
-
-#        if self.cleaned_data['dispatch_aerial'] and eval(self.cleaned_data['dispatch_aerial']):
-#            if not self.cleaned_data['dispatch_aerial_date']:
-#                self.add_error('dispatch_aerial_date', 'Must specify Date and Time of dispatch, if resource is dispatched.')
-
-        #import ipdb; ipdb.set_trace()
         if self.cleaned_data.has_key('job_code') and self.cleaned_data['job_code']:
             job_code = self.cleaned_data['job_code']
             if not job_code.isalpha() or len(job_code)!=3 or not job_code.isupper():
@@ -245,14 +216,12 @@ class BushfireUpdateForm(forms.ModelForm):
 
         # FINAL Form
         if self.cleaned_data['fire_not_found']:
-            #self.cleaned_data['prob_fire_level'] = None
             self.cleaned_data['max_fire_level'] = None
             self.cleaned_data['arson_squad_notified'] = None
             self.cleaned_data['fire_contained_date'] = None
             self.cleaned_data['fire_controlled_date'] = None
             self.cleaned_data['fire_safe_date'] = None
             self.cleaned_data['first_attack'] = None
-            #self.cleaned_data['initial_control'] = None
             self.cleaned_data['final_control'] = None
             self.cleaned_data['other_first_attack'] = None
             self.cleaned_data['other_initial_control'] = None
@@ -261,12 +230,9 @@ class BushfireUpdateForm(forms.ModelForm):
             self.cleaned_data['area_limit'] = False
             self.cleaned_data['arson_squad_notified'] = None
             self.cleaned_data['offence_no'] = None
-            #self.cleaned_data['job_code'] = None
             self.cleaned_data['reporting_year'] = None #current_finyear()
             self.cleaned_data['region_id'] = self.initial['region']
             self.cleaned_data['district_id'] = self.initial['district']
-            #self.errors.pop('region') # since these are required fields
-            #self.errors.pop('district')
             return cleaned_data
         if self.cleaned_data['fire_monitored_only']:
             self.cleaned_data['first_attack'] = None

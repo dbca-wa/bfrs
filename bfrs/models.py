@@ -31,20 +31,15 @@ SUBMIT_MANDATORY_FORMSETS= [
 ]
 
 AUTH_MANDATORY_FIELDS= [
-    #'assistance_req',
     'area',
     'cause_state', 'cause',
     'fire_contained_date', 'fire_controlled_date',
     'fire_safe_date',
-    #'first_attack', 'initial_control', 'final_control',
     'final_control',
     'max_fire_level', 'arson_squad_notified', 'job_code',
-    #'duty_officer',
 ]
 
 AUTH_MANDATORY_FIELDS_FIRE_NOT_FOUND= [
-    #'field_officer', 'job_code',
-    #'duty_officer', 'field_officer',
     'duty_officer',
 ]
 AUTH_MANDATORY_DEP_FIELDS_FIRE_NOT_FOUND= {
@@ -54,15 +49,8 @@ AUTH_MANDATORY_DEP_FIELDS_FIRE_NOT_FOUND= {
 }
 
 AUTH_MANDATORY_DEP_FIELDS= {
-    #'first_attack': [True, 'other_first_attack'],
-    #'initial_control': [True, 'other_initial_control'],
-    #'final_control': [True, 'other_final_control'],
-
     'dispatch_pw': [[1, 'field_officer'], [1, 'dispatch_pw_date']], # if 'dispatch_pw' == '1' then 'field_officer' is required
-    #'dispatch_pw': [[1, 'dispatch_pw_date']],
     'dispatch_aerial': [['True', 'dispatch_aerial_date']],
-    #'fire_monitored_only': [[False, 'fire_contained_date'], [False, 'fire_controlled_date'], [False, 'field_officer'], [False, 'first_attack']],
-    #'fire_monitored_only': [[False, 'fire_contained_date'], [False, 'fire_controlled_date'], [False, 'first_attack']],
     'fire_monitored_only': [[False, 'first_attack']],
 
     'cause': [['Other (specify)', 'other_cause'], ['Escape P&W burning', 'prescribed_burn_id']],
@@ -109,8 +97,6 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
     dep_field - dependent fields (if one field has a value, check that the other has been filled)
     formsets  - fields in formsets
     """
-    # getattr(obj, 'name') ==> obj.name (when property name is available as a string)
-
     missing = [Bushfire._meta.get_field(field).verbose_name for field in fields if getattr(obj, field) is None or getattr(obj, field)=='']
 
     if obj.fire_not_found and obj.is_init_authorised:
@@ -121,7 +107,6 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
     for field, dep_sets in dep_fields.iteritems():
         for dep_set in dep_sets:
             # next line checks for normal Field or Enumerated list field (i.e. '.name')
-            #import ipdb; ipdb.set_trace()
             try:
                 if hasattr(obj, field) and (
                    getattr(obj, field)==dep_set[0] or \
@@ -136,17 +121,7 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
                 #import ipdb; ipdb.set_trace()
                 pass
 
-#            elif not getattr(obj, field) and getattr(obj, field)==dep_set[0]: # and dep_set[0]==False:
-#                missing.append(dep_set[1])
-
     for fs in formsets:
-#        if fs == 'fire_behaviour':
-#            if (obj.fire_behaviour_unknown):
-#                continue
-#            elif getattr(obj, fs) is None or not getattr(obj, fs).all():
-#                #missing.append(fs)
-#                missing.append('Fuel and fire behaviour')
-
         if fs == 'damages':
             if (obj.damage_unknown):
                 continue
@@ -164,12 +139,10 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
         if not obj.initial_area and obj.report_status < Bushfire.STATUS_INITIAL_AUTHORISED:
             missing.append("Must enter Area of Arrival, if area < {}ha".format(settings.AREA_THRESHOLD))
 
-    #import ipdb; ipdb.set_trace()
     if not obj.fire_not_found and obj.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED:
         if not obj.area_limit and (obj.area < settings.AREA_THRESHOLD or obj.area is None) and not obj.final_fire_boundary:
             missing.append("Final fire shape must be uploaded for fires > {}ha".format(settings.AREA_THRESHOLD))
 
-    #import ipdb; ipdb.set_trace()
     return missing
 
 
@@ -195,9 +168,6 @@ class Profile(models.Model):
     def __str__(self):
         return 'username: {}, region: {}, district: {}'.format(self.user.username, self.region, self.district)
 
-#    class Meta:
-#        default_permissions = ('add', 'change', 'delete', 'view')
-
 
 @python_2_unicode_compatible
 class Region(models.Model):
@@ -211,7 +181,6 @@ class Region(models.Model):
 
     class Meta:
         ordering = ['name']
-#        default_permissions = ('add', 'change', 'delete', 'view')
 
     def __str__(self):
         return self.name
@@ -226,7 +195,6 @@ class District(models.Model):
 
     class Meta:
         ordering = ['name']
-#        default_permissions = ('add', 'change', 'delete', 'view')
 
     def __str__(self):
         return self.name
@@ -320,15 +288,6 @@ class BushfireBase(Audit):
     fire_monitored_only = models.BooleanField(default=False)
     final_fire_boundary = models.BooleanField(default=False)
     fb_validation_req = models.NullBooleanField(verbose_name="Fire Boundary Validation Required?", null=True)
-
-    # TODO remove next 7 fields
-    #assistance_req = models.PositiveSmallIntegerField(choices=ASSISTANCE_CHOICES, null=True, blank=True)
-    #assistance_details = models.CharField(max_length=250, null=True, blank=True)
-    #communications = models.CharField(verbose_name='Communication', max_length=250, null=True, blank=True)
-    #time_to_control = models.DurationField(verbose_name="Time to Control", null=True, blank=True)
-    #reviewed_by = models.ForeignKey(User, verbose_name="Reviewed By", null=True, blank=True, related_name='%(class)s_reviewed_by')
-    #reviewed_date = models.DateTimeField(verbose_name="Reviewed Date", null=True, blank=True)
-
     other_info = models.CharField(verbose_name='Other Information', max_length=250, null=True, blank=True)
 
     field_officer = models.ForeignKey(User, verbose_name="Field Officer", null=True, blank=True, related_name='%(class)s_init_field_officer')
@@ -345,10 +304,6 @@ class BushfireBase(Audit):
     dispatch_pw_date = models.DateTimeField(verbose_name='P&W Resource dispatch date', null=True, blank=True)
     dispatch_aerial_date = models.DateTimeField(verbose_name='Aerial suppression dispatch date', null=True, blank=True)
     fire_detected_date = models.DateTimeField(verbose_name='Date and time fire detected', null=True, blank=True)
-
-    # we serialise/snapshot the initial and final reports when authorised
-#    initial_snapshot = models.TextField(null=True, blank=True)
-#    final_snapshot = models.TextField(null=True, blank=True)
 
     # FINAL Fire Report Fields
     fire_contained_date = models.DateTimeField(verbose_name='Date fire Contained', null=True, blank=True)
@@ -370,7 +325,6 @@ class BushfireBase(Audit):
     area = models.FloatField(verbose_name="Final Fire Area (ha)", validators=[MinValueValidator(0)], null=True, blank=True)
     area_limit = models.BooleanField(verbose_name="Area < 2ha", default=False)
     other_area = models.FloatField(verbose_name="Other Area (ha)", validators=[MinValueValidator(0)], null=True, blank=True)
-    #fire_behaviour_unknown = models.BooleanField(verbose_name="Fuel and fire behaviour", default=False)
     damage_unknown = models.BooleanField(verbose_name="Damages to report?", default=False)
     injury_unknown = models.BooleanField(verbose_name="Injuries to report?", default=False)
 
@@ -467,6 +421,8 @@ class Bushfire(BushfireBase):
 
     def save(self, *args, **kwargs):
         self.full_clean(*args, **kwargs)
+#        if not self.fire_not_found and self.is_final_authorised:
+
         super(Bushfire, self).save(*args, **kwargs)
 
     @property
@@ -557,62 +513,12 @@ class Bushfire(BushfireBase):
 
         return 'Lat/Lon ' + lat_str + ', ' + lon_str
 
-#    def compare(self, obj):
-#        """
-#        Returns a dict of fields that have changed between a pair of snpshots (or the diff fields between two model instances)
-#
-#        Example usage:
-#            b=Bushfire.objects.get(id=18)
-#            b.snapshots.all().order_by('created')
-#            s1=b.snapshots.all().order_by('created')[0]
-#            s2=b.snapshots.all().order_by('created')[1]
-#            s1.deserialize().compare(s2.deserialize())
-#
-#        """
-#        excluded_keys = [
-#            '_initial', '_state', '_changed_data', 'id',
-#            'creator_id', 'modifier_id', 'created', 'modified',
-#            'init_authorised_date', 'authorised_date', 'reviewed_date', 'init_authorised_by_id', 'authorised_by_id', 'reviewed_by_id',
-#            'sss_data', 'initial_snapshot', 'final_snapshot', 'origin_point', 'fire_boundary'
-#        ]
-#
-#        return self._compare(self, obj, excluded_keys)
-#
-#    def _compare(self, obj1, obj2, excluded_keys):
-#        d1, d2 = obj1.__dict__, obj2.__dict__
-#
-#        old, new = {}, {}
-#        for k,v in d1.items():
-#            if k in excluded_keys:
-#                continue
-#            try:
-#                if v != d2[k]:
-#                    if hasattr(self, 'get_' + k  +'_display'):
-#                        #v2 = getattr(obj2, 'get_report_status_display')()
-#                        v1 = getattr(obj1, 'get_' + k + '_display')()
-#                        v2 = getattr(obj2, 'get_' + k + '_display')()
-#                    else:
-#                        v1 = v
-#                        v2 = d2[k]
-#                    field = ' '.join(k.split('_')).capitalize()
-#
-#                    old.update({field: [v1, v2]})
-#                    #old.update({k: [v, d2[k]]})
-#                    #new.update({k: d2[k]})
-#            except KeyError:
-#                old.update({k: v})
-#
-#        #return old, new
-#        return old
-
-
 @python_2_unicode_compatible
 class Tenure(models.Model):
     name = models.CharField(verbose_name='Tenure category', max_length=200)
 
     class Meta:
         ordering = ['id']
-#        default_permissions = ('add', 'change', 'delete', 'view')
 
     def __str__(self):
         return self.name
@@ -624,7 +530,6 @@ class FuelType(models.Model):
 
     class Meta:
         ordering = ['id']
-#        default_permissions = ('add', 'change', 'delete', 'view')
 
     def __str__(self):
         return self.name
@@ -636,7 +541,6 @@ class Cause(models.Model):
 
     class Meta:
         ordering = ['id']
-#        default_permissions = ('add', 'change', 'delete', 'view')
 
     def __str__(self):
         return self.name
@@ -649,7 +553,6 @@ class Agency(models.Model):
 
     class Meta:
         ordering = ['id']
-#        default_permissions = ('add', 'change', 'delete', 'view')
 
     def __str__(self):
         return self.name
@@ -661,7 +564,6 @@ class InjuryType(models.Model):
 
     class Meta:
         ordering = ['id']
-#        default_permissions = ('add', 'change', 'delete', 'view')
 
     def __str__(self):
         return self.name
@@ -673,7 +575,6 @@ class DamageType(models.Model):
 
     class Meta:
         ordering = ['id']
-#        default_permissions = ('add', 'change', 'delete', 'view')
 
     def __str__(self):
         return self.name
@@ -764,35 +665,6 @@ class DamageSnapshot(DamageBase, Audit):
         unique_together = ('damage_type', 'snapshot', 'snapshot_type',)
 
 
-#@python_2_unicode_compatible
-#class FireBehaviourBase(models.Model):
-#    fuel_type = models.ForeignKey(FuelType)
-#    ros = models.PositiveSmallIntegerField(verbose_name="ROS (m/h)")
-#    flame_height = models.DecimalField(verbose_name="Flame height (m)", max_digits=6, decimal_places=1)
-#
-#    def __str__(self):
-#        return 'Fuel type {}, ROS {}, Flame height {}'.format(self.fuel_type, self.ros, self.flame_height)
-#
-#    class Meta:
-#        abstract = True
-#
-#
-#class FireBehaviour(FireBehaviourBase):
-#    bushfire = models.ForeignKey(Bushfire, related_name='fire_behaviour')
-#
-#    class Meta:
-#        unique_together = ('bushfire', 'fuel_type',)
-#
-#
-#class FireBehaviourSnapshot(FireBehaviourBase, Audit):
-#    snapshot_type = models.PositiveSmallIntegerField(choices=SNAPSHOT_TYPE_CHOICES)
-#    snapshot = models.ForeignKey(BushfireSnapshot, related_name='fire_behaviour_snapshot')
-#
-#    class Meta:
-#        unique_together = ('fuel_type', 'snapshot', 'snapshot_type',)
-
-
-#reversion.register(Bushfire, follow=['fire_behaviour', 'tenures_burnt', 'injuries', 'damages'])
 reversion.register(Bushfire, follow=['tenures_burnt', 'injuries', 'damages'])
 reversion.register(Profile)
 reversion.register(Region)
@@ -806,6 +678,5 @@ reversion.register(DamageType)
 reversion.register(AreaBurnt)       # related_name=tenures_burnt
 reversion.register(Injury)          # related_name=injuries
 reversion.register(Damage)          # related_name=damages
-#reversion.register(FireBehaviour)   # related_name=fire_behaviour
 reversion.register(BushfireSnapshot) # related_name=snapshots
 

@@ -774,6 +774,11 @@ function fire_not_found() {
 
 	  $('#id_th_job_code').css("font-weight", "bold");
 	  $("#id_th_job_code").html("Job code *");
+
+      {% if not object.area %}
+        $("#div_area_limit").show()
+        $("#id_area").attr('readonly','readonly').css('background-color' , '#DEDEDE');
+      {% endif %}
   }
 }
 /* END - Fire not Found */

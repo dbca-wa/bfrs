@@ -24,11 +24,9 @@ from bfrs.models import (Profile, Bushfire, BushfireSnapshot,
     )
 from bfrs.forms import (ProfileForm, BushfireFilterForm, BushfireUpdateForm,
         AreaBurntFormSet, InjuryFormSet, DamageFormSet, 
-        #FireBehaviourFormSet,
     )
 from bfrs.utils import (breadcrumbs_li,
         create_areas_burnt, update_areas_burnt, update_areas_burnt_fs, update_damage_fs, update_injury_fs, 
-        #update_fire_behaviour_fs,
         export_final_csv, export_excel, 
         update_status, serialize_bushfire,
         rdo_email, pvs_email, fpc_email, pica_email, pica_sms, police_email, dfes_email, fssdrs_email,
@@ -121,9 +119,6 @@ class BushfireFilter(django_filters.FilterSet):
         if not can_maintain_data(self.request.user):
             # pop the 'Reviewed' option
             self.filters['report_status'].extra['choices'] = [(u'', '---------'), (1, 'Initial'), (2, 'Initial Authorised'), (3, 'Final Authorised'), (5, 'Invalidated'), (6, 'Missing Final')]
-
-        # pop the 'Reviewed' option
-        #self.filters['report_status'].extra['choices'] = [(u'', '---------'), (1, 'Initial'), (2, 'Initial Authorised'), (3, 'Final Authorised'), (5, 'Invalidated'), (6, 'Missing Final')]
 
 
 class ProfileView(LoginRequiredMixin, generic.FormView):
@@ -223,7 +218,6 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
 
             return TemplateResponse(request, template_confirm, context={'action': action, 'bushfire_id': bushfire.id})
 
-#        return  super(BushfireView, self).get(request, *args, **kwargs)
         try:
             return  super(BushfireView, self).get(request, *args, **kwargs)
         finally:
@@ -239,17 +233,13 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
 
             # Delete Review
             if action == 'delete_review' and bushfire.is_reviewed:
-                bushfire.reviewed_by = None
-                bushfire.reviewed_date = None
-                bushfire.report_status = Bushfire.STATUS_FINAL_AUTHORISED
-                serialize_bushfire(action, action, bushfire)
+                logger.info('Action Delete Review {} - FSSDRS user {}'.format(obj.fire_number, request.user.get_full_name()))
+                update_status(request, bushfire, action)
 
             # Delete Final Authorisation
             elif action == 'delete_final_authorisation' and bushfire.report_status==Bushfire.STATUS_FINAL_AUTHORISED:
-                bushfire.authorised_by = None
-                bushfire.authorised_date = None
-                bushfire.report_status = Bushfire.STATUS_INITIAL_AUTHORISED
-                serialize_bushfire(action, action, bushfire)
+                logger.info('Action Delete Authorisation {} - FSSDRS user {}'.format(obj.fire_number, request.user.get_full_name()))
+                update_status(request, bushfire, action)
 
             # Mark Final Report as Reviewed
             elif action == 'mark_reviewed' and bushfire.can_review:
@@ -306,7 +296,6 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
         context['can_maintain_data'] = can_maintain_data(self.request.user)
         context['is_external_user'] = is_external_user(self.request.user)
 
-        #import ipdb; ipdb.set_trace()
         referrer = self.request.META.get('HTTP_REFERER')
         if referrer and not ('initial' in referrer or 'final' in referrer or 'create' in referrer):
             refresh_gokart(self.request) #, fire_number="") #, region=None, district=None, action='update')
@@ -323,14 +312,12 @@ class BushfireInitialSnapshotView(LoginRequiredMixin, generic.DetailView):
     def get_context_data(self, **kwargs):
         context = super(BushfireInitialSnapshotView, self).get_context_data(**kwargs)
         self.object = self.get_object()
-        #import ipdb; ipdb.set_trace()
 
         context.update({
             'initial': True,
             'snapshot': self.object.initial_snapshot,
             'damages': self.object.initial_snapshot.damage_snapshot.exclude(snapshot_type=SNAPSHOT_FINAL),
             'injuries': self.object.initial_snapshot.injury_snapshot.exclude(snapshot_type=SNAPSHOT_FINAL),
-            #'fire_behaviour': self.object.initial_snapshot.fire_behaviour_snapshot.exclude(snapshot_type=SNAPSHOT_FINAL),
             'tenures_burnt': self.object.initial_snapshot.tenures_burnt_snapshot.exclude(snapshot_type=SNAPSHOT_FINAL).order_by('id'),
         })
         return context
@@ -346,14 +333,12 @@ class BushfireFinalSnapshotView(LoginRequiredMixin, generic.DetailView):
     def get_context_data(self, **kwargs):
         context = super(BushfireFinalSnapshotView, self).get_context_data(**kwargs)
         self.object = self.get_object()
-        #import ipdb; ipdb.set_trace()
 
         context.update({
             'final': True,
             'snapshot': self.object.final_snapshot,
             'damages': self.object.final_snapshot.damage_snapshot.exclude(snapshot_type=SNAPSHOT_INITIAL),
             'injuries': self.object.final_snapshot.injury_snapshot.exclude(snapshot_type=SNAPSHOT_INITIAL),
-            #'fire_behaviour': self.object.final_snapshot.fire_behaviour_snapshot.exclude(snapshot_type=SNAPSHOT_INITIAL),
             'tenures_burnt': self.object.final_snapshot.tenures_burnt_snapshot.exclude(snapshot_type=SNAPSHOT_INITIAL).order_by('id'),
             'can_maintain_data': can_maintain_data(self.request.user),
         })
@@ -371,7 +356,6 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
     #template_name = 'bfrs/basic.html'
 
     def get_template_names(self):
-        #import ipdb; ipdb.set_trace()
         obj = self.get_object()
         if is_external_user(self.request.user):
             return [self.template_summary]
@@ -387,16 +371,6 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
     def get_initial(self):
 
         initial = {}
-#        if self.get_object(): #hasattr(self, 'object') and self.object:
-#            # if updating object ...
-#            initial['hours'] = self.object.time_to_control_hours_part if self.object.time_to_control_hours_part > 0 else ''
-#            initial['days']  = self.object.time_to_control_days_part if self.object.time_to_control_days_part > 0 else ''
-#        else:
-#            # if creating object ...
-#            profile, created = Profile.objects.get_or_create(user=self.request.user)
-#            initial['region'] = profile.region
-#            initial['district'] = profile.district
-
         if not self.get_object():
             # if creating object ...
             profile, created = Profile.objects.get_or_create(user=self.request.user)
@@ -437,7 +411,6 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
                 try:
                     initial['tenure'] = Tenure.objects.get(name__istartswith=sss['tenure_ignition_point']['category'])
                 except:
-                    #initial['tenure'] = Tenure.objects.get(name__istartswith='other')
                     initial['tenure'] = Tenure.objects.get(name='Other')
             else:
                 initial['tenure'] = Tenure.objects.get(name='Other')
@@ -454,7 +427,6 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         return initial
 
     def get(self, request, *args, **kwargs):
-        #import ipdb; ipdb.set_trace()
         if not self.get_object() and is_external_user(self.request.user):
             # external user cannot create bushfire
             return TemplateResponse(request, 'bfrs/error.html', context={'is_external_user': True, 'status':401}, status=401)
@@ -470,8 +442,6 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         return None
 
     def post(self, request, *args, **kwargs):
-        #import ipdb; ipdb.set_trace()
-
         if self.request.POST.has_key('sss_create'):
             return self.render_to_response(self.get_context_data())
 
@@ -479,7 +449,6 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         form_class = self.get_form_class()
         form = self.get_form(form_class)
 
-        #import ipdb; ipdb.set_trace()
         if self.request.POST.has_key('action'): # and 'create' not in self.request.get_full_path():
             # the 'initial_submit' already cleaned and saved the form, no need to save again
             # we are here because the redirected page confirmed this action
@@ -496,21 +465,11 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
 
         injury_formset          = InjuryFormSet(self.request.POST, prefix='injury_fs')
         damage_formset          = DamageFormSet(self.request.POST, prefix='damage_fs')
-
         area_burnt_formset      = AreaBurntFormSet(self.request.POST, prefix='area_burnt_fs')
-        #fire_behaviour_formset  = FireBehaviourFormSet(self.request.POST, prefix='fire_behaviour_fs')
 
         if form.is_valid():
             if form.cleaned_data['fire_not_found']:
                 return self.form_valid(request, form)
-
-#            if fire_behaviour_formset.is_valid() and injury_formset.is_valid() and damage_formset.is_valid(): # No need to check area_burnt_formset since the fs is readonly
-#                return self.form_valid(request, form, fire_behaviour_formset, area_burnt_formset, injury_formset, damage_formset)
-#            else:
-#                return self.form_invalid(request, form, fire_behaviour_formset, area_burnt_formset, injury_formset, damage_formset)
-#        else:
-#            return self.form_invalid(request, form, fire_behaviour_formset, area_burnt_formset, injury_formset, damage_formset)
-
             if injury_formset.is_valid() and damage_formset.is_valid(): # No need to check area_burnt_formset since the fs is readonly
                 return self.form_valid(request, form, area_burnt_formset, injury_formset, damage_formset)
             else:
@@ -523,7 +482,6 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         context = self.get_context_data()
         context.update({'form': form})
         context.update({'area_burnt_formset': area_burnt_formset})
-        #context.update({'fire_behaviour_formset': fire_behaviour_formset})
         context.update({'injury_formset': injury_formset})
         context.update({'damage_formset': damage_formset})
         return self.render_to_response(context)
@@ -532,7 +490,6 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
     def form_valid(self, request, form, area_burnt_formset=None, injury_formset=None, damage_formset=None):
         template_summary = 'bfrs/detail_summary.html'
         template_error = 'bfrs/error.html'
-        #template_mandatory_fields = 'bfrs/mandatory_fields.html'
 
         if is_external_user(request.user):
             return TemplateResponse(request, template_error, context={'is_external_user': True, 'status':401}, status=401)
@@ -543,7 +500,6 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         self.object.modifier = request.user
 
         # reset fields
-        #import ipdb; ipdb.set_trace()
         if self.object.cause and not self.object.cause.name.startswith('Other'):
             self.object.other_cause = None
         if self.object.cause and not self.object.cause.name.startswith('Escape P&W'):
@@ -555,9 +511,7 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         self.object.save()
 
         if not self.get_object():
-            #import ipdb; ipdb.set_trace()
             areas_burnt_updated = update_areas_burnt_fs(self.object, area_burnt_formset)
-        #fire_behaviour_updated = update_fire_behaviour_fs(self.object, fire_behaviour_formset)
         injury_updated = update_injury_fs(self.object, injury_formset)
         damage_updated = update_damage_fs(self.object, damage_formset)
 
@@ -594,13 +548,11 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
 
         self.object.save()
 
-
         if self.request.POST.has_key('_save_and_submit'):
             response = authorise_report(self.request, self.object)
             if response:
                 return response
 
-        #import ipdb; ipdb.set_trace()
         return HttpResponseRedirect(self.get_success_url())
 
     def get_context_data(self, **kwargs):
@@ -622,7 +574,6 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         if not area_burnt_formset:
             area_burnt_formset      = AreaBurntFormSet(instance=bushfire, prefix='area_burnt_fs')
 
-        #fire_behaviour_formset = FireBehaviourFormSet(instance=bushfire, prefix='fire_behaviour_fs')
         injury_formset = InjuryFormSet(instance=bushfire, prefix='injury_fs')
         damage_formset = DamageFormSet(instance=bushfire, prefix='damage_fs')
 
@@ -651,15 +602,12 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
             # don't validate the form when initially displaying
             form.is_bound = False
 
-        #import ipdb; ipdb.set_trace()
         context.update({'form': form,
                         'area_burnt_formset': area_burnt_formset,
-                        #'fire_behaviour_formset': fire_behaviour_formset,
                         'injury_formset': injury_formset,
                         'damage_formset': damage_formset,
                         'is_authorised': is_authorised, # If True, will make Report section of template read-only
                         'is_init_authorised': is_init_authorised, # If True, will make Notifications section of template read-only
-                        #'snapshot': bushfire.initial_snapshot if 'final' in self.request.get_full_path() else bushfire, #snapshot,
                         'snapshot': bushfire,
                         'create': True if 'create' in self.request.get_full_path() else False,
                         'initial': True if 'initial' in self.request.get_full_path() else False,
@@ -672,7 +620,6 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
                         'sss_url': settings.SSS_URL,
 			'test': [{'damage_type': 'Other Property', 'number': '1'}],
             })
-        #import ipdb; ipdb.set_trace()
         return context
 
 
