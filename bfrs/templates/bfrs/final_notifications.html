@@ -134,7 +134,13 @@
     </thead>
     <tbody>
         <tr>
-            <td class="cbas">{% include "bfrs/tenure_veg.html" %}</td>
+            <td class="cbas">
+                {% if bushfire.final_fire_boundary %}
+                    {% include "bfrs/tenure_veg.html" %}
+                {% else %}
+                    No final fire boundary available
+                {% endif %}
+            </td>
             <td class="cbas">
                 {{form.damage_unknown}} No damage to report
                 {% include "bfrs/damage_fs.html" %}
