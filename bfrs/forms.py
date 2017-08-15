@@ -180,7 +180,7 @@ class BushfireUpdateForm(forms.ModelForm):
                   'dispatch_pw', 'dispatch_aerial',
                   'investigation_req',
                   'initial_area', 'initial_area_unknown', 'area', 'area_limit', 'other_area',
-                  'origin_point_str', 'origin_point', 'fire_boundary',
+                  'origin_point_str', 'origin_point', 'origin_point_mga', 'fire_boundary',
                   'fire_not_found', 'fire_monitored_only', 'invalid_details',
                   'fire_contained_date', 'fire_controlled_date', 'fire_safe_date',
                   'first_attack', 'initial_control', 'final_control',

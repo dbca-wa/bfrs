@@ -179,6 +179,10 @@ class BushfireResource(APIResource):
         """
         if bundle.data.has_key('origin_point') and isinstance(bundle.data['origin_point'], list):
             bundle.data['origin_point'] = Point(bundle.data['origin_point']).__str__()
+
+        #import ipdb;ipdb.set_trace()
+        if bundle.data.has_key('origin_point_mga'):
+            bundle.data['origin_point_mga'] = bundle.data['origin_point_mga']
         return bundle
 
     def hydrate_fire_boundary(self, bundle):
@@ -227,7 +231,14 @@ class BushfireResource(APIResource):
             raise ImmediateHttpResponse(response=HttpUnauthorized())
 
         self.full_hydrate(bundle)
-        bundle.obj.sss_data = json.dumps(bundle.data)
+        #bundle.obj.sss_data = json.dumps(bundle.data)
+        sss_data = bundle.data
+        #import ipdb; ipdb.set_trace()
+        if sss_data.has_key('fire_boundary'):
+            sss_data.pop('fire_boundary')
+        #if sss_data.has_key('area') and sss_data.get('area').has_key('tenure_area'):
+        #    sss_data.get('area').pop('tenure_area') # necessary for the initial create stagei for display in form, since object not yet saved
+        bundle.obj.sss_data = json.dumps(sss_data)
 
         #import ipdb; ipdb.set_trace()
         if bundle.data.has_key('tenure_ignition_point') and bundle.data['tenure_ignition_point'] and \

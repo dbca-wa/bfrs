@@ -283,6 +283,7 @@ class BushfireBase(Audit):
 
     # Point of Origin
     origin_point = models.PointField(editable=True)
+    origin_point_mga = models.CharField(verbose_name='Point of Origin (MGA)', max_length=64, null=True, blank=True)
     fire_boundary = models.MultiPolygonField(srid=4326, null=True, blank=True, editable=True, help_text='Optional.')
     fire_not_found = models.BooleanField(default=False)
     fire_monitored_only = models.BooleanField(default=False)
@@ -345,6 +346,68 @@ class BushfireBase(Audit):
 
     class Meta:
         abstract = True
+
+    @property
+    def can_submit(self):
+        return True if not self.missing_initial() else False
+
+    @property
+    def can_authorise(self):
+        if not self.missing_final() and self.report_status == self.STATUS_INITIAL_AUTHORISED:
+            return True
+        return False
+
+    @property
+    def can_review(self):
+        # can only review if spatial data (final_fire_boundary == True) has been uploaded
+        if not self.fire_not_found and self.area and self.final_fire_boundary and self.is_final_authorised:
+            return True
+        return False
+
+    @property
+    def is_init_authorised(self):
+        return True if self.init_authorised_by and self.init_authorised_date and self.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED else False
+
+    @property
+    def is_final_authorised(self):
+        return True if self.authorised_by and self.authorised_date and self.report_status >= Bushfire.STATUS_FINAL_AUTHORISED else False
+
+    @property
+    def is_reviewed(self):
+        return True if self.reviewed_by and self.reviewed_date and self.report_status >= Bushfire.STATUS_REVIEWED else False
+
+    @property
+    def other_contact(self):
+        return 'Name: {}, Agency: {}, Phone: {}'.format(self.other_field_officer, self.other_field_officer_agency, self.other_field_officer_phone)
+
+    @property
+    def can_create_final(self):
+        return self.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED
+
+    @property
+    def origin_coords(self):
+        return 'Lon/Lat ({}, {})'.format(round(self.origin_point.get_x(), 2), round(self.origin_point.get_y(), 2)) if self.origin_point else None
+
+    @property
+    def origin_geo(self):
+        if not self.origin_point:
+            return None
+
+        c=LatLon.LatLon(LatLon.Longitude(round(self.origin_point.get_x(), 2)), LatLon.Latitude(round(self.origin_point.get_y(), 2)))
+        latlon = c.to_string('d% %m% %S% %H')
+        lon = latlon[0].split(' ')
+        lat = latlon[1].split(' ')
+
+        # need to format float number (seconds) to 1 dp
+        lon[2] = str(round(eval(lon[2]), 1))
+        lat[2] = str(round(eval(lat[2]), 1))
+
+        # Degrees Minutes Seconds Hemisphere
+        lat_str = lat[0] + u'\N{DEGREE SIGN} ' + lat[1].zfill(2) + '\' ' + lat[2].zfill(4) + '\" ' + lat[3]
+        lon_str = lon[0] + u'\N{DEGREE SIGN} ' + lon[1].zfill(2) + '\' ' + lon[2].zfill(4) + '\" ' + lon[3]
+
+        return 'Lat/Lon ' + lat_str + ', ' + lon_str
+
 
 class BushfireSnapshot(BushfireBase):
 
@@ -451,67 +514,6 @@ class Bushfire(BushfireBase):
                 ' '.join([i.capitalize() for i in field.split('_')])
             )
         return l
-
-    @property
-    def can_submit(self):
-        return True if not self.missing_initial() else False
-
-    @property
-    def can_authorise(self):
-        if not self.missing_final() and self.report_status == self.STATUS_INITIAL_AUTHORISED:
-            return True
-        return False
-
-    @property
-    def can_review(self):
-        # can only review if spatial data (final_fire_boundary == True) has been uploaded
-        if not self.fire_not_found and self.area and self.final_fire_boundary and self.is_final_authorised:
-            return True
-        return False
-
-    @property
-    def is_init_authorised(self):
-        return True if self.init_authorised_by and self.init_authorised_date and self.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED else False
-
-    @property
-    def is_final_authorised(self):
-        return True if self.authorised_by and self.authorised_date and self.report_status >= Bushfire.STATUS_FINAL_AUTHORISED else False
-
-    @property
-    def is_reviewed(self):
-        return True if self.reviewed_by and self.reviewed_date and self.report_status >= Bushfire.STATUS_REVIEWED else False
-
-    @property
-    def other_contact(self):
-        return 'Name: {}, Agency: {}, Phone: {}'.format(self.other_field_officer, self.other_field_officer_agency, self.other_field_officer_phone)
-
-    @property
-    def can_create_final(self):
-        return self.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED
-
-    @property
-    def origin_coords(self):
-        return 'Lon/Lat ({}, {})'.format(round(self.origin_point.get_x(), 2), round(self.origin_point.get_y(), 2)) if self.origin_point else None
-
-    @property
-    def origin_geo(self):
-        if not self.origin_point:
-            return None
-
-        c=LatLon.LatLon(LatLon.Longitude(round(self.origin_point.get_x(), 2)), LatLon.Latitude(round(self.origin_point.get_y(), 2)))
-        latlon = c.to_string('d% %m% %S% %H')
-        lon = latlon[0].split(' ')
-        lat = latlon[1].split(' ')
-
-        # need to format float number (seconds) to 1 dp
-        lon[2] = str(round(eval(lon[2]), 1))
-        lat[2] = str(round(eval(lat[2]), 1))
-
-        # Degrees Minutes Seconds Hemisphere
-        lat_str = lat[0] + u'\N{DEGREE SIGN} ' + lat[1].zfill(2) + '\' ' + lat[2].zfill(4) + '\" ' + lat[3]
-        lon_str = lon[0] + u'\N{DEGREE SIGN} ' + lon[1].zfill(2) + '\' ' + lon[2].zfill(4) + '\" ' + lon[3]
-
-        return 'Lat/Lon ' + lat_str + ', ' + lon_str
 
 @python_2_unicode_compatible
 class Tenure(models.Model):

@@ -201,11 +201,12 @@
             <th class="cbas" style="font-weight:normal;">Point of origin</th>
             <td colspan="5" class="cbas">
                 {% if is_init_authorised %} 
-                    {{object.origin_geo|is_none}} <br>
-                    {{object.sss_data_to_dict.origin_point_mga|is_none}}
+                    {{snapshot.origin_geo|is_none}} <br>
+                    {{snapshot.origin_point_mga}}
                 {% else %}
                     {{form.origin_point.value|deg_min_sec}} <br>
-                    {{object.sss_data_to_dict.origin_point_mga|is_none}}
+                    {{form.origin_point_mga.value}}
+                    {{form.origin_point_mga.as_hidden}}
                 {% endif %}
             </td>
         </tr>

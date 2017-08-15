@@ -96,17 +96,7 @@
             <th class="cbas" style="font-weight:normal;">Point of origin</th>
             <td colspan="5" class="cbas">
                 {{snapshot.origin_geo|is_none}} <br>
-                {{snapshot.sss_data_to_dict.origin_point_mga|is_none}}
-
-                {% comment %}
-                {% if is_init_authorised %} 
-                   {{snapshot.origin_geo|is_none}} <br>
-                   {{snapshot.sss_data_to_dict.origin_point_mga|is_none}}
-                {% else %} 
-                    {{form.origin_point.value|deg_min_sec}} <br>
-                    {{object.sss_data_to_dict.origin_point_mga|is_none}}
-                {% endif %}
-                {% endcomment %}
+                {{snapshot.origin_point_mga}}
             </td>
         </tr>
 

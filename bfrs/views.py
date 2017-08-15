@@ -295,6 +295,8 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
         context['sss_url'] = settings.SSS_URL
         context['can_maintain_data'] = can_maintain_data(self.request.user)
         context['is_external_user'] = is_external_user(self.request.user)
+        if paginator.num_pages == 1: 
+            context['is_paginated'] = False
 
         referrer = self.request.META.get('HTTP_REFERER')
         if referrer and not ('initial' in referrer or 'final' in referrer or 'create' in referrer):
@@ -379,7 +381,7 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
 
         if self.request.POST.has_key('sss_create'):
             sss = json.loads(self.request.POST.get('sss_create'))
-            initial['sss_data'] = self.request.POST.get('sss_create')
+            #initial['sss_data'] = self.request.POST.get('sss_create')
 
             if sss.has_key('sss_id') and sss['sss_id']:
                 initial['sss_id'] = sss['sss_id']
@@ -396,6 +398,10 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
             if sss.has_key('origin_point') and isinstance(sss['origin_point'], list):
                 initial['origin_point_str'] = Point(sss['origin_point']).get_coords()
                 initial['origin_point'] = Point(sss['origin_point'])
+
+            #import ipdb; ipdb.set_trace()
+            if sss.has_key('origin_point_mga'):
+                initial['origin_point_mga'] = sss['origin_point_mga']
 
             if sss.has_key('fire_boundary') and isinstance(sss['fire_boundary'], list):
                 initial['fire_boundary'] = MultiPolygon([Polygon(*p) for p in sss['fire_boundary']])
@@ -423,6 +429,13 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         #initial['origin_point'] = GEOSGeometry(Point(122.45, -33.15))
         #initial['region'] = 1
         #initial['district'] = 1
+
+            # Must have this at the end
+            if sss.has_key('fire_boundary'):
+                sss.pop('fire_boundary')
+            #if sss.has_key('area') and sss.get('area').has_key('tenure_area'):
+            #    sss.get('area').pop('tenure_area')
+            initial['sss_data'] = json.dumps(sss)
 
         return initial
 

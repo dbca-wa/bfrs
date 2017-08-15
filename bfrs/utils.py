@@ -330,6 +330,21 @@ def create_areas_burnt(bushfire, area_burnt_list):
 
     return area_burnt_formset
 
+def create_areas_burnt_fs(bushfire):
+    """
+    Currently not used
+    """
+    area_burnt_list = {}
+    [d.update({'tenure': i.tenure, 'area': round(i.area,2)}) for i in bushfire.tenures_burnt.all()]
+
+    AreaBurntFormSet = inlineformset_factory(Bushfire, AreaBurnt, extra=len(area_burnt_list), min_num=0, validate_min=True, exclude=())
+    area_burnt_formset = AreaBurntFormSet(instance=bushfire, prefix='area_burnt_fs')
+    for subform, data in zip(area_burnt_formset.forms, area_burnt_list):
+        subform.initial = data
+
+    return area_burnt_formset
+
+
 def update_areas_burnt(bushfire, area_burnt_list):
     """
     Updates AreaBurnt model attached to the bushfire record from api.py, via REST API (Operates on data dict from SSS)
