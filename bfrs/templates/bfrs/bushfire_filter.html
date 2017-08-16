@@ -73,8 +73,13 @@
                   <div id="div_id_archive" class="form-group"> 
                     <label class="nowrap" for="{{ filter.form.archive.id_for_archive  }}">Include archived</label>
                     <div class="controls ">{{ form.include_archived }}</div>
+                    {% if can_maintain_data %}
+                      <label class="wrap">Exclude missing fire boundary</label>
+                      <div class="controls ">{{ form.exclude_missing_final_fire_boundary }}</div>
+                    {% endif %}
                   </div>
                 </div>
+
 
 				{% comment %}
                 <div class="col-sm-2" > 

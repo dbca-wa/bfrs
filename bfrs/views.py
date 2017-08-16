@@ -277,7 +277,11 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
         if not self.request.GET.has_key('include_archived'):
             self.object_list = self.object_list.exclude(archive=True)
         else:
-            initial.update({'include_archived': self.request.GET['include_archived']})
+            initial.update({'include_archived': self.request.GET.get('include_archived')})
+
+        if self.request.GET.has_key('exclude_missing_final_fire_boundary'):
+            self.object_list = self.object_list.filter(final_fire_boundary=True)
+        initial.update({'exclude_missing_final_fire_boundary': self.request.GET.get('exclude_missing_final_fire_boundary')})
 
         bushfire_list = self.object_list.order_by('-modified')
         paginator = Paginator(bushfire_list, self.paginate_by)

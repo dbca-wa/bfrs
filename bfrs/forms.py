@@ -127,6 +127,7 @@ class BushfireFilterForm(forms.ModelForm):
     """
 
     include_archived = forms.BooleanField(required=False)
+    exclude_missing_final_fire_boundary = forms.BooleanField(required=False)
     def __init__(self, *args, **kwargs):
         super(BushfireFilterForm, self).__init__(*args, **kwargs)
 
@@ -134,7 +135,7 @@ class BushfireFilterForm(forms.ModelForm):
         self.fields['district'].required = False
 
     class Meta:
-        fields = ('region', 'district', 'include_archived')
+        fields = ('region', 'district', 'include_archived', 'exclude_missing_final_fire_boundary')
         model = Bushfire
 
 

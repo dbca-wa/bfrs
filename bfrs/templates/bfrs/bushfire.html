@@ -280,6 +280,11 @@ $(function(){
 			url += postfix + 'include_archived=True'
 		}
 
+		if($('#id_exclude_missing_final_fire_boundary').is(':checked')) {
+            var postfix = (count==0 ? "?" : "&");
+			url += postfix + 'exclude_missing_final_fire_boundary=True'
+		}
+
 		/* Append the additional parameters such as "export_to_csv=final&stuff=ABC" */
 		if (params) {
             var postfix = (count==0 ? "?" : "&");

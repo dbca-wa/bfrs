@@ -201,19 +201,19 @@ class District(models.Model):
 
 
 class BushfireBase(Audit):
-    STATUS_INITIAL            = 1
-    STATUS_INITIAL_AUTHORISED = 2
-    STATUS_FINAL_AUTHORISED   = 3
-    STATUS_REVIEWED           = 4
-    STATUS_INVALIDATED        = 5
-    STATUS_MISSING_FINAL      = 6 # This is not really a status, and is never set - used for filtering qs only
+    STATUS_INITIAL                = 1
+    STATUS_INITIAL_AUTHORISED     = 2
+    STATUS_FINAL_AUTHORISED       = 3
+    STATUS_REVIEWED               = 4
+    STATUS_INVALIDATED            = 5
+    STATUS_MISSING_FINAL          = 6 # This is not really a status, and is never set - used for filtering qs only
     REPORT_STATUS_CHOICES = (
-        (STATUS_INITIAL, 'Initial'),
-        (STATUS_INITIAL_AUTHORISED, 'Initial Authorised'),
-        (STATUS_FINAL_AUTHORISED, 'Final Authorised'),
+        (STATUS_INITIAL, 'Initial Fire Report'),
+        (STATUS_INITIAL_AUTHORISED, 'Notifications Submitted'),
+        (STATUS_FINAL_AUTHORISED, 'Report Authorised'),
         (STATUS_REVIEWED, 'Reviewed'),
         (STATUS_INVALIDATED, 'Invalidated'),
-        (STATUS_MISSING_FINAL, 'Missing Final'), # This is not really a status, and is never set - used for filtering qs only
+        (STATUS_MISSING_FINAL, 'Outstanding Fires'), # This is not really a status, and is never set - used for filtering qs only
     )
 
     FIRE_LEVEL_CHOICES = (
