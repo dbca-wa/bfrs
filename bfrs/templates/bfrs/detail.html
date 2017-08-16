@@ -176,7 +176,7 @@
             <td colspan="2" class="cbas"> {% if is_init_authorised %} {{snapshot.name}} {{form.name.as_hidden}}{% else %} {{form.name}} {% endif %} </td>
 
             <th class="cbas">Date and time fire detected *</th>
-            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.fire_detected_date}} {{form.fire_detected_date.as_hidden}} {% else %} {{form.fire_detected_date}} {% endif %}</td>
+            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.fire_detected_date|date:'Y-m-d H:i'}} {{form.fire_detected_date.as_hidden}} {% else %} {{form.fire_detected_date}} {% endif %}</td>
         </tr>
 
         <tr>
@@ -236,10 +236,10 @@
             <td colspan="2" class="cbas">
                 {% if snapshot.is_init_authorised and not can_maintain_data %} 
                     {% if snapshot.dispatch_pw == snapshot.DISPATCH_PW_YES %} 
-                        {{snapshot.get_dispatch_pw_display}}<br>{{snapshot.dispatch_pw_date}}
+                        {{snapshot.get_dispatch_pw_display}}<br>{{snapshot.dispatch_pw_date|date:'Y-m-d H:i'}}
                         {{form.dispatch_pw.as_hidden}}{{form.dispatch_pw_date.as_hidden}}
                     {% elif snapshot.initial_snapshot.dispatch_pw == snapshot.DISPATCH_PW_YES %} 
-                        {{snapshot.initial_snapshot.get_dispatch_pw_display}}<br>{{snapshot.initial_snapshot.dispatch_pw_date}}
+                        {{snapshot.initial_snapshot.get_dispatch_pw_display}}<br>{{snapshot.initial_snapshot.dispatch_pw_date|date:'Y-m-d H:i'}}
                         {{form.dispatch_pw.as_hidden}}{{form.dispatch_pw_date.as_hidden}}
                     {% else %}
                         {{form.dispatch_pw}}<br><div class=div_dispatch_pw_date style="display: none;">{{form.dispatch_pw_date}}</div>
@@ -253,10 +253,10 @@
             <td colspan="2" class="cbas">
                 {% if snapshot.is_init_authorised and not can_maintain_data %} 
                     {% if snapshot.dispatch_aerial_date %} 
-                        {{snapshot.dispatch_aerial|yesno:"Yes,No"}}<br>{{snapshot.dispatch_aerial_date}}
+                        {{snapshot.dispatch_aerial|yesno:"Yes,No"}}<br>{{snapshot.dispatch_aerial_date|date:'Y-m-d H:i'}}
                         {{form.dispatch_aerial.as_hidden}}{{form.dispatch_aerial_date.as_hidden}}
                     {% elif snapshot.initial_snapshot.dispatch_aerial %} 
-                        {{snapshot.initial_snapshot.dispatch_aerial|yesno:"Yes,No"}}<br>{{snapshot.initial_snapshot.dispatch_aerial_date}}
+                        {{snapshot.initial_snapshot.dispatch_aerial|yesno:"Yes,No"}}<br>{{snapshot.initial_snapshot.dispatch_aerial_date|date:'Y-m-d H:i'}}
                         {{form.dispatch_aerial.as_hidden}}{{form.dispatch_aerial_date.as_hidden}}
                     {% else %}
                         {{form.dispatch_aerial}}<br><div class=div_dispatch_aerial_date style="display: none;">{{form.dispatch_aerial_date}}</div>
@@ -356,7 +356,7 @@
         {% else %}
 
           <input type="submit" {% if object.report_status and object.report_status >= object.STATUS_INITIAL_AUTHORISED %}value="Save final"{% else %} value="Save draft"{% endif %} class="btn btn-primary btn-success" name="_save" {% if bushfire.is_final_authorised and not can_maintain_data %}title="Final Report cannot be edited" disabled{% endif %} />
-          <input type="submit" value="Authorise" class="btn btn-primary btn-success" name="authorise_final" {% if object.report_status >= object.STATUS_FINAL_AUTHORISED %}title="Final Report already authorised on {{object.authorised_date}} by {{object.authorised_by}}" disabled{% elif bushfire.is_final_authorised and not can_maintain_data %}disabled{% else %}title="Save and authorise"{% endif %} />
+          <input type="submit" value="Authorise" class="btn btn-primary btn-success" name="authorise_final" {% if object.report_status >= object.STATUS_FINAL_AUTHORISED %}title="Final Report already authorised on {{object.authorised_date|date:'Y-m-d H:i'}} by {{object.authorised_by}}" disabled{% elif bushfire.is_final_authorised and not can_maintain_data %}disabled{% else %}title="Save and authorise"{% endif %} />
 
         {% endif %}
       {% endif %}

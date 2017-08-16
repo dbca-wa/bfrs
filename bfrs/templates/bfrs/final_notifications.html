@@ -81,7 +81,7 @@
             <td colspan="2" class="cbas">{{object.init_authorised_by}}</td>
 
             <th class="cbas" style="font-weight:normal;">Authorised Date</th>
-            <td colspan="2" class="cbas">{{object.init_authorised_date|date_fmt}}</td>
+            <td colspan="2" class="cbas">{{object.init_authorised_date|date:'Y-m-d H:i'}}</td>
         </tr>
         {% endif %}
 

@@ -76,7 +76,7 @@
             <td colspan="2" class="cbas">{{snapshot.name}}</td>
 
             <th class="cbas">Date and time fire detected *</th>
-            <td colspan="2" class="cbas">{{snapshot.fire_detected_date}}</td>
+            <td colspan="2" class="cbas">{{snapshot.fire_detected_date|date:'Y-m-d H:i'}}</td>
         </tr>
 
         <tr>
@@ -109,10 +109,10 @@
         </tr>
         <tr>
             <th class="cbas">P&W Resource dispatched *{% if snapshot.dispatch_pw == object.DISPATCH_PW_YES %}<br>Date and time of dispatch{% endif %}</th>
-            <td colspan="2" class="cbas">{{snapshot.get_dispatch_pw_display}}{% if snapshot.dispatch_pw == object.DISPATCH_PW_YES %}<br>{{snapshot.dispatch_pw_date}} {% endif %}</td>
+            <td colspan="2" class="cbas">{{snapshot.get_dispatch_pw_display}}{% if snapshot.dispatch_pw == object.DISPATCH_PW_YES %}<br>{{snapshot.dispatch_pw_date|date:'Y-m-d H:i'}} {% endif %}</td>
 
 	    <th class="cbas">Aerial support dispatched *<br><br><div class=div_dispatch_aerial_date style="display: none;">Date and time of dispatch</div></th>
-            <td colspan="2" class="cbas">{{snapshot.dispatch_aerial|yesno:"Yes,No"}}{% if snapshot.dispatch_aerial|yesno:"Yes,No" == 'Yes' %}<br>{{snapshot.dispatch_aerial_date}} {% endif %}</td>
+            <td colspan="2" class="cbas">{{snapshot.dispatch_aerial|yesno:"Yes,No"}}{% if snapshot.dispatch_aerial|yesno:"Yes,No" == 'Yes' %}<br>{{snapshot.dispatch_aerial_date|date:'Y-m-d H:i'}} {% endif %}</td>
         </tr>
 
         <tr>
@@ -171,7 +171,7 @@
       <p class="pull-right">
 
       {% if final and can_maintain_data %}
-          <a id="id_edit_btn" href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Final fire report authorised on {{bushfire.authorised_date}} by {{bushfire.authorised_by}}" class="btn btn-primary btn-info">Edit Authorised</a>
+          <a id="id_edit_btn" href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Final fire report authorised on {{bushfire.authorised_date|date:'Y-m-d H:i'}} by {{bushfire.authorised_by}}" class="btn btn-primary btn-info">Edit Authorised</a>
       {% endif %}
       <a id="id_cancel_btn" href="{% url 'main' %}" class="btn btn-primary btn-info">Return</a>
 

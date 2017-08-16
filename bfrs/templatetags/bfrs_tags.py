@@ -42,7 +42,7 @@ def date_fmt(dt):
         ...
         {% endif %}
     """
-    return dt.strftime('%Y-%m-%d %H:%M:%S') if dt else None
+    return dt.strftime('%Y-%m-%d %H:%M') if dt else None
 
 @register.filter
 def deg_min_sec(value):
