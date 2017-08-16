@@ -31,6 +31,7 @@ from copy import deepcopy
 from django.core.urlresolvers import reverse
 import requests
 from requests.auth import HTTPBasicAuth
+from dateutil import tz
 
 import logging
 logger = logging.getLogger(__name__)
@@ -550,7 +551,7 @@ NOTIFICATION_FIELDS = [
     'region', 'district', 'year',
     'name', 'fire_detected_date',
     'fire_number', 'dfes_incident_no',
-    'fire_position', 'origin_point',
+    'fire_position', 'origin_point', 'origin_point_mga',
     'tenure', 'duty_officer',
     'dispatch_pw', 'dispatch_pw_date', 'dispatch_aerial', 'dispatch_aerial_date',
     'initial_control', 'initial_area',
@@ -573,7 +574,7 @@ def notifications_to_html(bushfire):
     ordered_dict = OrderedDict(d)
 
     msg = ''
-    msg += '<table>'
+    msg += '<table style="border:1px solid black;">'
     for k,v in ordered_dict.iteritems():
         if v == 'None' or not v:
             v = '-'
@@ -583,8 +584,12 @@ def notifications_to_html(bushfire):
             v = 'Yes'
         elif k == bushfire._meta.get_field('dispatch_pw').verbose_name:
             v = 'Yes' if v == '1' else 'No'
+        elif k == bushfire._meta.get_field('origin_point').verbose_name:
+            v = bushfire.origin_geo
+        elif k == bushfire._meta.get_field('fire_detected_date').verbose_name:
+            v = bushfire.fire_detected_date.astimezone(tz.gettz('Australia/Perth')).strftime('%Y-%m-%d %H:%M')
             
-        msg += '<tr> <th style="text-align: left;">{}</th> <td>{}</td> </tr>'.format(k, v)
+        msg += '<tr> <th style="border-bottom:1px solid; border-right:1px solid; text-align: left;">' + k + '</th> <td style="border-bottom:1px solid;">' + v + '</td> </tr>'
     msg += '</table">'
 
     return msg

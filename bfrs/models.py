@@ -256,10 +256,10 @@ class BushfireBase(Audit):
     )
 
     # Common Fields
-    region = models.ForeignKey(Region)
+    region = models.ForeignKey(Region, verbose_name="Region")
     district = ChainedForeignKey(
         District, chained_field="region", chained_model_field="region",
-        show_all=False, auto_choose=True)
+        show_all=False, auto_choose=True, verbose_name="District")
 
     name = models.CharField(max_length=100, verbose_name="Fire Name")
     year = models.PositiveSmallIntegerField(verbose_name="Financial Year", default=current_finyear())
@@ -282,7 +282,7 @@ class BushfireBase(Audit):
     fire_position_override = models.BooleanField(verbose_name="SSS override", default=False)
 
     # Point of Origin
-    origin_point = models.PointField(editable=True)
+    origin_point = models.PointField(verbose_name="Point of Origin", editable=True)
     origin_point_mga = models.CharField(verbose_name='Point of Origin (MGA)', max_length=64, null=True, blank=True)
     fire_boundary = models.MultiPolygonField(srid=4326, null=True, blank=True, editable=True, help_text='Optional.')
     fire_not_found = models.BooleanField(default=False)
@@ -393,7 +393,8 @@ class BushfireBase(Audit):
         if not self.origin_point:
             return None
 
-        c=LatLon.LatLon(LatLon.Longitude(round(self.origin_point.get_x(), 2)), LatLon.Latitude(round(self.origin_point.get_y(), 2)))
+        #c=LatLon.LatLon(LatLon.Longitude(round(self.origin_point.get_x(), 2)), LatLon.Latitude(round(self.origin_point.get_y(), 2)))
+        c=LatLon.LatLon(LatLon.Longitude(self.origin_point.get_x()), LatLon.Latitude(self.origin_point.get_y()))
         latlon = c.to_string('d% %m% %S% %H')
         lon = latlon[0].split(' ')
         lat = latlon[1].split(' ')
