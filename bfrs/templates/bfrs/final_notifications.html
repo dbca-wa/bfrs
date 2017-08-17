@@ -261,19 +261,13 @@ $('#id_area_limit').on('change', function() {
 
 
 /* Job Code Validation */
-$("#id_job_code").prop('pattern', '[A-Z]{3}').toUpperCase().prop('title', '3 letters and upper case');
+//$("#id_job_code").prop('pattern', '[A-Z]{3}').toUpperCase().prop('title', '3 letters and upper case');
 
-//$('#id_job_code').click(function(){
-//    $("#id_job_code").toUpperCase();
-//});
-
-/*
-$('#id_job_code').click(function () {
-  $("#id_job_code").val(function(i,val) {
-    return val.toUpperCase();
-  });
+$("#id_job_code").keyup( function (e) {
+  // change to upper case as user types
+  var str = $(this).val();
+  $("#id_job_code").val(str.toUpperCase()).prop('pattern', '[A-Z]{3}').prop('title', '3 letters and upper case');
 });
-*/
 
 </script>
 

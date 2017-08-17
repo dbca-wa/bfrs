@@ -676,7 +676,7 @@ def dfes_email(bushfire, url):
        return
 
     subject = 'DFES Email - Initial report submitted - {}'.format(bushfire.fire_number)
-    body = '---- PLEASE REPLY ABOVE THIS LINE ----\n\nDFES Email\n\nFire Number:{0}\n\n(Lat/Lon) {1}\n\nInitial report has been submitted and is located at <a href="{2}">{2}</a><br><br>'.format(bushfire.fire_number, bushfire.origin_point, url)
+    body = '---- PLEASE REPLY ABOVE THIS LINE ----<br><br>DFES Email<br><br>Fire Number:{0}<br><br>(Lat/Lon) {1}<br><br>Initial report has been submitted and is located at <a href="{2}">{2}</a><br><br>'.format(bushfire.fire_number, bushfire.origin_point, url)
     body += notifications_to_html(bushfire, url)
 
     message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.DFES_EMAIL)
