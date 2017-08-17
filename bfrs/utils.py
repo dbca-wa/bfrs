@@ -51,16 +51,25 @@ def breadcrumbs_li(links):
     crumbs += li_str_last.format(links[-1][1])
     return crumbs
 
+def users_group():
+    return Group.objects.get(name='Users')
+
 def fssdrs_group():
     return Group.objects.get(name='FSS Datasets and Reporting Services')
 
 def can_maintain_data(user):
     return fssdrs_group() in user.groups.all() and not is_external_user(user)
 
+def is_internal_user(user):
+    """ Created to prevent role-based internal users from having edit/sav rights """
+    try:
+        return user.email.split('@')[1].lower() in settings.INTERNAL_EMAIL and users_group() in user.groups.all()
+    except:
+        return False
 
 def is_external_user(user):
     try:
-        return user.email.split('@')[1].lower() not in settings.INTERNAL_EMAIL #['dpaw.wa.gov.au']
+        return user.email.split('@')[1].lower() not in settings.INTERNAL_EMAIL or users_group() not in user.groups.all()
     except:
         return True
 
@@ -669,7 +678,8 @@ def pica_sms(bushfire, url):
        return
 
     message = 'PICA SMS - {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.fire_number, url)
-    return send_mail('', message, settings.EMAIL_TO_SMS_FROMADDRESS, settings.MEDIA_ALERT_SMS_TOADDRESS)
+    TO_SMS_ADDRESS = [phone_no + '@' + settings.SMS_POSTFIX for phone_no in settings.MEDIA_ALERT_SMS_TOADDRESS_MAP.values()]
+    return send_mail('', message, settings.EMAIL_TO_SMS_FROMADDRESS, TO_SMS_ADDRESS)
 
 def dfes_email(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION:
@@ -734,6 +744,17 @@ def add_users_to_fssdrs_group():
             user.is_staff = True
             user.save()
 
+def add_users_to_users_group():
+    users_group, users_group_created = Group.objects.get_or_create(name='Users')
+    for user in User.objects.all():
+        try:
+            if users_group not in user.groups.all():
+                user.groups.add(users_group)
+                logger.info('Adding user {} to group {}'.format(user.get_full_name(), users_group.name))
+
+        except Exception as e:
+            logger.error('Error creating user:  {}\n{}\n'.format(user, e))
+
 def update_users_from_active_directory(sso_users):
     """
     Update Django users from Active Directory (AD)
@@ -769,12 +790,14 @@ def update_users():
 
                     if created:
                         logger.info('User {}, Created {}'.format(u.get_full_name(), created))
+
         except Exception as e:
             logger.error('Error creating user:  {}\n{}\n'.format(user, e))
 
 
     update_users_from_active_directory(resp)
     add_users_to_fssdrs_group()
+    add_users_to_users_group()
     create_other_user()
     create_admin_user()
 

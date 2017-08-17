@@ -30,7 +30,7 @@ from bfrs.utils import (breadcrumbs_li,
         export_final_csv, export_excel, 
         update_status, serialize_bushfire,
         rdo_email, pvs_email, fpc_email, pica_email, pica_sms, police_email, dfes_email, fssdrs_email,
-        invalidate_bushfire, is_external_user, can_maintain_data, refresh_gokart, clear_gokart_session, 
+        invalidate_bushfire, is_external_user, is_internal_user, can_maintain_data, refresh_gokart, clear_gokart_session, 
         authorise_report, check_district_changed,
     )
 from bfrs.reports import export_outstanding_fires 

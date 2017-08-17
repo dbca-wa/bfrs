@@ -33,7 +33,8 @@ POLICE_EMAIL = env('POLICE_EMAIL', 'police_email')
 DFES_EMAIL = env('DFES_EMAIL', 'dfes_email')
 FSSDRS_EMAIL = env('FSSDRS_EMAIL', 'fssdrs_email')
 EMAIL_TO_SMS_FROMADDRESS = env('EMAIL_TO_SMS_FROMADDRESS', 'pics_sms_from')
-MEDIA_ALERT_SMS_TOADDRESS = env('MEDIA_ALERT_SMS_TOADDRESS', 'pica_sms_to')
+SMS_POSTFIX = env('SMS_POSTFIX', 'sms_postfix')
+MEDIA_ALERT_SMS_TOADDRESS_MAP = env('MEDIA_ALERT_SMS_TOADDRESS_MAP', 'pica_sms_to')
 ALLOW_EMAIL_NOTIFICATION = os.environ.get('ALLOW_EMAIL_NOTIFICATION', None) in ["True", "on", "1", "DEBUG"]
 
 INTERNAL_EMAIL = env('INTERNAL_EMAIL', ['dpaw.wa.gov.au'])
