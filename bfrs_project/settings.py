@@ -26,7 +26,6 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880 * 4 # 5.0MB * 4
 EMAIL_HOST = env('EMAIL_HOST', 'email.host')
 EMAIL_PORT = env('EMAIL_PORT', 25)
 FROM_EMAIL = env('FROM_EMAIL', 'from_email')
-RDO_EMAIL = env('RDO_EMAIL', 'rdo_email')
 PICA_EMAIL = env('PICA_EMAIL', 'pica_email')
 PVS_EMAIL = env('PVS_EMAIL', 'pvs_email')
 FPC_EMAIL = env('FPC_EMAIL', 'fpc_email')
@@ -61,7 +60,6 @@ SOUTH_WEST_EMAIL = env('SOUTH_WEST_EMAIL', 'south_west_email')
 SWAN_EMAIL = env('SWAN_EMAIL', 'swan_email')
 WARREN_EMAIL = env('WARREN_EMAIL', 'warren_email')
 WHEATBELT_EMAIL = env('WHEATBELT_EMAIL', 'wheatbelt_email')
-ALL_REGIONS_EMAIL = env('ALL_REGIONS_EMAIL', None)
 OUTSTANDING_FIRES_EMAIL=[ 
     {"Goldfields": GOLDFIELDS_EMAIL}, 
     {"Kimberley": KIMBERLEY_EMAIL},

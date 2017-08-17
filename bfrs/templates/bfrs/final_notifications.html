@@ -261,7 +261,19 @@ $('#id_area_limit').on('change', function() {
 
 
 /* Job Code Validation */
-$("#id_job_code").prop('pattern', '[A-Z]{3}').prop('title', '3 letters and upper case');
+$("#id_job_code").prop('pattern', '[A-Z]{3}').toUpperCase().prop('title', '3 letters and upper case');
+
+//$('#id_job_code').click(function(){
+//    $("#id_job_code").toUpperCase();
+//});
+
+/*
+$('#id_job_code').click(function () {
+  $("#id_job_code").val(function(i,val) {
+    return val.toUpperCase();
+  });
+});
+*/
 
 </script>
 

@@ -559,6 +559,8 @@ NOTIFICATION_FIELDS = [
     'media_alert_req', 'park_trail_impacted',
     'other_info',
 ]
+#RDO_LIST = [GOLDFIELDS, KIMBERLEY, MIDWEST, PILBARA, SOUTH_COAST_EMAIL, SOUTH_WEST_EMAIL, SWAN_EMAIL, WARREN_EMAIL, WHEATBELT_EMAIL]
+
 #def _notifications_to_text(bushfire):
 #    d = [(bushfire._meta.get_field(i).verbose_name, str(getattr(bushfire, i))) for i in NOTIFICATION_FIELDS]
 #    ordered_dict = OrderedDict(d)
@@ -598,12 +600,15 @@ def rdo_email(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION:
        return
 
-    subject = 'RDO Email - Initial report submitted - {}'.format(bushfire.fire_number)
+    #for email_name in [i.name.upper() for i in Region.objects.all()]:
+    region_name = bushfire.region.name.upper()
+    to_email = getattr(settings, region_name.replace(' ', '_') + '_EMAIL')
+    subject = 'RDO Email - {}, Initial report submitted - {}'.format(region_name, bushfire.fire_number)
 
-    body = 'RDO Email - {0}\n\nInitial report has been submitted and is located at <a href="{1}">{1}</a><br><br>'.format(bushfire.fire_number, url)
+    body = 'RDO Email - {0}, {1}\n\nInitial report has been submitted and is located at <a href="{2}">{2}</a><br><br>'.format(region_name, bushfire.fire_number, url)
     body += notifications_to_html(bushfire)
 
-    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.RDO_EMAIL)
+    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=to_email)
     message.content_subtype = 'html'
     message.send()
 
