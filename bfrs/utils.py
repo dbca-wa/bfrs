@@ -571,14 +571,16 @@ NOTIFICATION_FIELDS = [
 #
 #    return msg
 
-def notifications_to_html(bushfire):
+def notifications_to_html(bushfire, url):
     d = [(bushfire._meta.get_field(i).verbose_name, str(getattr(bushfire, i))) for i in NOTIFICATION_FIELDS]
     ordered_dict = OrderedDict(d)
 
-    msg = ''
+    msg = '<div>'
     msg += '<table style="border:1px solid black;">'
     for k,v in ordered_dict.iteritems():
-        if v == 'None' or not v:
+        if k == bushfire._meta.get_field('dfes_incident_no').verbose_name:
+            v = '<font color="red">Not available</font>' if not v else v
+        elif v == 'None' or not v:
             v = '-'
         elif v == 'False':
             v = 'No'
@@ -589,10 +591,13 @@ def notifications_to_html(bushfire):
         elif k == bushfire._meta.get_field('origin_point').verbose_name:
             v = bushfire.origin_geo
         elif k == bushfire._meta.get_field('fire_detected_date').verbose_name:
-            v = bushfire.fire_detected_date.astimezone(tz.gettz('Australia/Perth')).strftime('%Y-%m-%d %H:%M')
+            v = bushfire.fire_detected_date.astimezone(tz.gettz(settings.TIME_ZONE)).strftime('%Y-%m-%d %H:%M')
             
         msg += '<tr> <th style="border-bottom:1px solid; border-right:1px solid; text-align: left;">' + k + '</th> <td style="border-bottom:1px solid;">' + v + '</td> </tr>'
-    msg += '</table">'
+    msg += '</table"><br>'
+    if not bushfire.dfes_incident_no:
+        msg += '<div><p>DFES incident number not available, please check the bushfire reporting system for updates to the DFES incident number <a href="{0}">{1}</a></p></div>'.format(url, bushfire.fire_number)
+    msg += '</div>'
 
     return msg
 
@@ -606,7 +611,7 @@ def rdo_email(bushfire, url):
     subject = 'RDO Email - {}, Initial report submitted - {}'.format(region_name, bushfire.fire_number)
 
     body = 'RDO Email - {0}, {1}\n\nInitial report has been submitted and is located at <a href="{2}">{2}</a><br><br>'.format(region_name, bushfire.fire_number, url)
-    body += notifications_to_html(bushfire)
+    body += notifications_to_html(bushfire, url)
 
     message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=to_email)
     message.content_subtype = 'html'
@@ -628,34 +633,42 @@ def pvs_email(bushfire, url):
        return
 
     subject = 'PVS Email - Initial report submitted - {}'.format(bushfire.fire_number)
-    message = 'PVS Email - {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.fire_number, url)
+    body = 'PVS Email - {0}\n\nInitial report has been submitted and is located at <a href="{1}">{1}</a><br><br>'.format(bushfire.fire_number, url)
+    body += notifications_to_html(bushfire, url)
 
-    return send_mail(subject, message, settings.FROM_EMAIL, settings.PVS_EMAIL)
+    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.PVS_EMAIL)
+    message.content_subtype = 'html'
+    message.send()
 
 def fpc_email(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION:
        return
 
     subject = 'FPC Email - Initial report submitted - {}'.format(bushfire.fire_number)
-    message = 'FPC Email - {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.fire_number, url)
+    body = 'FPC Email - {0}\n\nInitial report has been submitted and is located at <a href="{1}">{1}</a><br><br>'.format(bushfire.fire_number, url)
+    body += notifications_to_html(bushfire, url)
 
-    return send_mail(subject, message, settings.FROM_EMAIL, settings.FPC_EMAIL)
+    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.FPC_EMAIL)
+    message.content_subtype = 'html'
+    message.send()
 
 def pica_email(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION:
        return
 
     subject = 'PICA Email - Initial report submitted - {}'.format(bushfire.fire_number)
-    message = 'PICA Email - {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.fire_number, url)
+    body = 'PICA Email - {0}\n\nInitial report has been submitted and is located at <a href="{1}">{1}</a><br><br>'.format(bushfire.fire_number, url)
+    body += notifications_to_html(bushfire, url)
 
-    return send_mail(subject, message, settings.FROM_EMAIL, settings.PICA_EMAIL)
+    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.PICA_EMAIL)
+    message.content_subtype = 'html'
+    message.send()
 
 def pica_sms(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION:
        return
 
     message = 'PICA SMS - {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.fire_number, url)
-
     return send_mail('', message, settings.EMAIL_TO_SMS_FROMADDRESS, settings.MEDIA_ALERT_SMS_TOADDRESS)
 
 def dfes_email(bushfire, url):
@@ -663,30 +676,40 @@ def dfes_email(bushfire, url):
        return
 
     subject = 'DFES Email - Initial report submitted - {}'.format(bushfire.fire_number)
-    message = '---- PLEASE REPLY ABOVE THIS LINE ----\n\nDFES Email\n\nFire Number:{}\n\n(Lat/Lon) {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.fire_number, bushfire.origin_point, url)
+    body = '---- PLEASE REPLY ABOVE THIS LINE ----\n\nDFES Email\n\nFire Number:{0}\n\n(Lat/Lon) {1}\n\nInitial report has been submitted and is located at <a href="{2}">{2}</a><br><br>'.format(bushfire.fire_number, bushfire.origin_point, url)
+    body += notifications_to_html(bushfire, url)
 
-    return send_mail(subject, message, settings.FROM_EMAIL, settings.DFES_EMAIL)
+    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.DFES_EMAIL)
+    message.content_subtype = 'html'
+    message.send()
 
 def police_email(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION:
        return
 
-    subject = 'POLICE Email - Initial report submitted and an investigation is required- {}'.format(bushfire.fire_number)
-    message = 'POLICE Email - {}\n\nInitial report has been submitted and is located at {}\n\nInvestigation Required: {}'.format(
+    subject = 'POLICE Email - Initial report submitted {}, and an investigation is required - {}'.format(bushfire.fire_number, 'Yes' if bushfire.investigation_req else 'No')
+    body = 'POLICE Email - {0}\n\nInitial report has been submitted and is located at <a href="{1}">{1}</a><br><br>\n\nInvestigation Required: {2}'.format(
         bushfire.fire_number, url, 'Yes' if bushfire.investigation_req else 'No'
     )
+    body += notifications_to_html(bushfire, url)
 
-    return send_mail(subject, message, settings.FROM_EMAIL, settings.POLICE_EMAIL)
+    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.POLICE_EMAIL)
+    message.content_subtype = 'html'
+    message.send()
 
 def fssdrs_email(bushfire, url, status='final'):
     if not settings.ALLOW_EMAIL_NOTIFICATION:
        return
 
     subject = 'FSSDRS Email - Final Fire report has been authorised - {}'.format(bushfire.fire_number)
-    message = 'FSSDRS Email - {}\n\nreport has been authorised. User {}, at {}.\n\nThe report is located at {}'.format(
-        bushfire.fire_number, bushfire.authorised_by, bushfire.authorised_date, url
+    body = 'FSSDRS Email - {0}\n\nreport has been authorised. User {1}, at {2}.\n\nThe report is located at <a href="{3}">{3}</a><br><br>'.format(
+        bushfire.fire_number, bushfire.authorised_by, bushfire.authorised_date.astimezone(tz.gettz(settings.TIME_ZONE)).strftime('%Y-%m-%d %H:%M'), url
     )
-    return send_mail(subject, message, settings.FROM_EMAIL, settings.FSSDRS_EMAIL)
+    body += notifications_to_html(bushfire, url)
+
+    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.FSSDRS_EMAIL)
+    message.content_subtype = 'html'
+    message.send()
 
 def create_other_user():
     return User.objects.get_or_create(username='other', first_name='Other', last_name='Contact')

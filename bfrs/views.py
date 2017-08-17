@@ -233,12 +233,12 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
 
             # Delete Review
             if action == 'delete_review' and bushfire.is_reviewed:
-                logger.info('Action Delete Review {} - FSSDRS user {}'.format(obj.fire_number, request.user.get_full_name()))
+                logger.info('Action Delete Review {} - FSSDRS user {}'.format(bushfire.fire_number, request.user.get_full_name()))
                 update_status(request, bushfire, action)
 
             # Delete Final Authorisation
             elif action == 'delete_final_authorisation' and bushfire.report_status==Bushfire.STATUS_FINAL_AUTHORISED:
-                logger.info('Action Delete Authorisation {} - FSSDRS user {}'.format(obj.fire_number, request.user.get_full_name()))
+                logger.info('Action Delete Authorisation {} - FSSDRS user {}'.format(bushfire.fire_number, request.user.get_full_name()))
                 update_status(request, bushfire, action)
 
             # Mark Final Report as Reviewed
