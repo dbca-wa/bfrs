@@ -35,7 +35,7 @@
       <tr class="row-vm" data-toggle="myCollapse" data-target="#{{snapshot.id}}">
         <td>{{ forloop.counter  }}</td>
         <td>{{ snapshot.action|split_capitalize }}</td>
-        <td>{{ snapshot.modified }}</td>
+        <td>{{ snapshot.modified|date:'Y-m-d H:i' }}</td>
         <td>{{ snapshot.modifier }}</td>
       </tr>
 

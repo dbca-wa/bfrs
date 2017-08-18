@@ -33,16 +33,17 @@ def is_init_authorised(context, bushfire_id):
     obj = Bushfire.objects.get(id=bushfire_id)
     return obj.is_init_authorised
 
-@register.filter
-def date_fmt(dt):
-    """
-    Usage::
-
-        {% if object.authorised_date|date_fmt %}
-        ...
-        {% endif %}
-    """
-    return dt.strftime('%Y-%m-%d %H:%M') if dt else None
+#@register.filter
+#def date_fmt(dt):
+#    """
+#    NOTE: Does not prreserve the timezone - gives UTC
+#    Usage::
+#
+#        {% if object.authorised_date|date_fmt %}
+#        ...
+#        {% endif %}
+#    """
+#    return dt.strftime('%Y-%m-%d %H:%M') if dt else None
 
 @register.filter
 def deg_min_sec(value):

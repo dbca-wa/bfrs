@@ -60,16 +60,18 @@ def fssdrs_group():
 def can_maintain_data(user):
     return fssdrs_group() in user.groups.all() and not is_external_user(user)
 
-def is_internal_user(user):
-    """ Created to prevent role-based internal users from having edit/sav rights """
-    try:
-        return user.email.split('@')[1].lower() in settings.INTERNAL_EMAIL and users_group() in user.groups.all()
-    except:
-        return False
+#def is_internal_user(user):
+#    """ Created to prevent role-based internal users from having edit/sav rights """
+#    try:
+#        return user.email.split('@')[1].lower() in settings.INTERNAL_EMAIL and users_group() in user.groups.all()
+#    except:
+#        return False
 
 def is_external_user(user):
+    """ User group check added to prevent role-based internal users from having write access """
     try:
-        return user.email.split('@')[1].lower() not in settings.INTERNAL_EMAIL or users_group() not in user.groups.all()
+        return user.email.split('@')[1].lower() not in settings.INTERNAL_EMAIL or not user.groups.filter(name='Users').exists()
+        #return user.email.split('@')[1].lower() not in settings.INTERNAL_EMAIL
     except:
         return True
 
@@ -467,9 +469,11 @@ def update_damage_fs(bushfire, damage_formset):
 
 def mail_url(request, bushfire, status='initial'):
     if status == 'initial':
-        return "http://" + request.get_host() + reverse('bushfire:bushfire_initial', kwargs={'pk':bushfire.id})
+        #return "http://" + request.get_host() + reverse('bushfire:bushfire_initial', kwargs={'pk':bushfire.id})
+        return "http://" + request.get_host() + reverse('bushfire:initial_snapshot', kwargs={'pk':bushfire.id})
     if status == 'final':
-        return "http://" + request.get_host() + reverse('bushfire:bushfire_final', kwargs={'pk':bushfire.id})
+        #return "http://" + request.get_host() + reverse('bushfire:bushfire_final', kwargs={'pk':bushfire.id})
+        return "http://" + request.get_host() + reverse('bushfire:final_snapshot', kwargs={'pk':bushfire.id})
 
 
 def update_status(request, bushfire, action):
@@ -568,6 +572,8 @@ NOTIFICATION_FIELDS = [
     'media_alert_req', 'park_trail_impacted',
     'other_info',
 ]
+
+
 #RDO_LIST = [GOLDFIELDS, KIMBERLEY, MIDWEST, PILBARA, SOUTH_COAST_EMAIL, SOUTH_WEST_EMAIL, SWAN_EMAIL, WARREN_EMAIL, WHEATBELT_EMAIL]
 
 #def _notifications_to_text(bushfire):
@@ -584,8 +590,7 @@ def notifications_to_html(bushfire, url):
     d = [(bushfire._meta.get_field(i).verbose_name, str(getattr(bushfire, i))) for i in NOTIFICATION_FIELDS]
     ordered_dict = OrderedDict(d)
 
-    msg = '<div>'
-    msg += '<table style="border:1px solid black;">'
+    msg = '<table style="border:1px solid black;">'
     for k,v in ordered_dict.iteritems():
         if k == bushfire._meta.get_field('dfes_incident_no').verbose_name:
             v = '<font color="red">Not available</font>' if not v else v
@@ -603,10 +608,15 @@ def notifications_to_html(bushfire, url):
             v = bushfire.fire_detected_date.astimezone(tz.gettz(settings.TIME_ZONE)).strftime('%Y-%m-%d %H:%M')
             
         msg += '<tr> <th style="border-bottom:1px solid; border-right:1px solid; text-align: left;">' + k + '</th> <td style="border-bottom:1px solid;">' + v + '</td> </tr>'
-    msg += '</table"><br>'
+    msg += '</table><br>'
+
     if not bushfire.dfes_incident_no:
-        msg += '<div><p>DFES incident number not available, please check the bushfire reporting system for updates to the DFES incident number <a href="{0}">{1}</a></p></div>'.format(url, bushfire.fire_number)
-    msg += '</div>'
+        msg += 'DFES incident number not available, please check the bushfire reporting system for updates to the DFES incident number <a href="{0}">{1}</a>'.format(url, bushfire.fire_number)
+
+    msg += '<br><br>'
+    msg += '<font face="Calibri" color="gray">The information contained in this email was the best available at the time. For updated information please contact the relevant Duty Officer</font>'
+    #import ipdb; ipdb.set_trace()
+
 
     return msg
 
@@ -617,13 +627,14 @@ def rdo_email(bushfire, url):
     #for email_name in [i.name.upper() for i in Region.objects.all()]:
     region_name = bushfire.region.name.upper()
     to_email = getattr(settings, region_name.replace(' ', '_') + '_EMAIL')
-    subject = 'RDO Email - {}, Initial report submitted - {}'.format(region_name, bushfire.fire_number)
+    subject = 'RDO Email - {}, Initial Bushfire submitted - {}'.format(region_name, bushfire.fire_number)
 
-    body = 'RDO Email - {0}, {1}\n\nInitial report has been submitted and is located at <a href="{2}">{2}</a><br><br>'.format(region_name, bushfire.fire_number, url)
+    body = 'RDO Email - {0}, {1}\n\nInitial Bushfire has been submitted and is located at <a href="{2}">{2}</a><br><br>'.format(region_name, bushfire.fire_number, url)
     body += notifications_to_html(bushfire, url)
 
     message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=to_email)
     message.content_subtype = 'html'
+
     message.send()
 
 #def _rdo_email(bushfire, url):
@@ -641,8 +652,8 @@ def pvs_email(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION:
        return
 
-    subject = 'PVS Email - Initial report submitted - {}'.format(bushfire.fire_number)
-    body = 'PVS Email - {0}\n\nInitial report has been submitted and is located at <a href="{1}">{1}</a><br><br>'.format(bushfire.fire_number, url)
+    subject = 'PVS Email - Initial Bushfire submitted - {}'.format(bushfire.fire_number)
+    body = 'PVS Email - {0}\n\nInitial Bushfire has been submitted and is located at <a href="{1}">{1}</a><br><br>'.format(bushfire.fire_number, url)
     body += notifications_to_html(bushfire, url)
 
     message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.PVS_EMAIL)
@@ -653,8 +664,8 @@ def fpc_email(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION:
        return
 
-    subject = 'FPC Email - Initial report submitted - {}'.format(bushfire.fire_number)
-    body = 'FPC Email - {0}\n\nInitial report has been submitted and is located at <a href="{1}">{1}</a><br><br>'.format(bushfire.fire_number, url)
+    subject = 'FPC Email - Initial Bushfire submitted - {}'.format(bushfire.fire_number)
+    body = 'FPC Email - {0}\n\nInitial Bushfire has been submitted and is located at <a href="{1}">{1}</a><br><br>'.format(bushfire.fire_number, url)
     body += notifications_to_html(bushfire, url)
 
     message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.FPC_EMAIL)
@@ -665,8 +676,8 @@ def pica_email(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION:
        return
 
-    subject = 'PICA Email - Initial report submitted - {}'.format(bushfire.fire_number)
-    body = 'PICA Email - {0}\n\nInitial report has been submitted and is located at <a href="{1}">{1}</a><br><br>'.format(bushfire.fire_number, url)
+    subject = 'PICA Email - Initial Bushfire submitted - {}'.format(bushfire.fire_number)
+    body = 'PICA Email - {0}\n\nInitial Bushfire has been submitted and is located at <a href="{1}">{1}</a><br><br>'.format(bushfire.fire_number, url)
     body += notifications_to_html(bushfire, url)
 
     message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.PICA_EMAIL)
@@ -677,7 +688,7 @@ def pica_sms(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION:
        return
 
-    message = 'PICA SMS - {}\n\nInitial report has been submitted and is located at {}'.format(bushfire.fire_number, url)
+    message = 'PICA SMS - {}\n\nInitial Bushfire has been submitted and is located at {}'.format(bushfire.fire_number, url)
     TO_SMS_ADDRESS = [phone_no + '@' + settings.SMS_POSTFIX for phone_no in settings.MEDIA_ALERT_SMS_TOADDRESS_MAP.values()]
     return send_mail('', message, settings.EMAIL_TO_SMS_FROMADDRESS, TO_SMS_ADDRESS)
 
@@ -685,8 +696,8 @@ def dfes_email(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION:
        return
 
-    subject = 'DFES Email - Initial report submitted - {}'.format(bushfire.fire_number)
-    body = '---- PLEASE REPLY ABOVE THIS LINE ----<br><br>DFES Email<br><br>Fire Number:{0}<br><br>(Lat/Lon) {1}<br><br>Initial report has been submitted and is located at <a href="{2}">{2}</a><br><br>'.format(bushfire.fire_number, bushfire.origin_point, url)
+    subject = 'DFES Email - Initial Bushfire submitted - {}'.format(bushfire.fire_number)
+    body = '---- PLEASE REPLY ABOVE THIS LINE ----<br><br>DFES Email<br><br>Fire Number:{0}<br><br>(Lat/Lon) {1}<br><br>Initial Bushfire has been submitted and is located at <a href="{2}">{2}</a><br><br>'.format(bushfire.fire_number, bushfire.origin_point, url)
     body += notifications_to_html(bushfire, url)
 
     message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.DFES_EMAIL)
@@ -697,8 +708,8 @@ def police_email(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION:
        return
 
-    subject = 'POLICE Email - Initial report submitted {}, and an investigation is required - {}'.format(bushfire.fire_number, 'Yes' if bushfire.investigation_req else 'No')
-    body = 'POLICE Email - {0}\n\nInitial report has been submitted and is located at <a href="{1}">{1}</a><br><br>\n\nInvestigation Required: {2}'.format(
+    subject = 'POLICE Email - Initial Bushfire submitted {}, and an investigation is required - {}'.format(bushfire.fire_number, 'Yes' if bushfire.investigation_req else 'No')
+    body = 'POLICE Email - {0}\n\nInitial Bushfire has been submitted and is located at <a href="{1}">{1}</a><br><br>\n\nInvestigation Required: {2}'.format(
         bushfire.fire_number, url, 'Yes' if bushfire.investigation_req else 'No'
     )
     body += notifications_to_html(bushfire, url)
@@ -744,13 +755,15 @@ def add_users_to_fssdrs_group():
             user.is_staff = True
             user.save()
 
-def add_users_to_users_group():
+def add_users_to_users_group(resp):
     users_group, users_group_created = Group.objects.get_or_create(name='Users')
-    for user in User.objects.all():
+    for user in resp.json()['objects']:
         try:
-            if users_group not in user.groups.all():
-                user.groups.add(users_group)
-                logger.info('Adding user {} to group {}'.format(user.get_full_name(), users_group.name))
+            if user['email'] and user['email'].split('@')[-1].lower() in settings.INTERNAL_EMAIL:
+                u = User.objects.get(username=user['username'].lower())
+                if users_group not in u.groups.all():
+                    u.groups.add(users_group)
+                    logger.info('Adding user {} to group {}'.format(u.get_full_name(), users_group.name))
 
         except Exception as e:
             logger.error('Error creating user:  {}\n{}\n'.format(user, e))
@@ -797,7 +810,7 @@ def update_users():
 
     update_users_from_active_directory(resp)
     add_users_to_fssdrs_group()
-    add_users_to_users_group()
+    add_users_to_users_group(resp)
     create_other_user()
     create_admin_user()
 

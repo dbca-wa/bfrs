@@ -79,7 +79,7 @@
             {% elif bushfire.report_status == bushfire.STATUS_INVALIDATED %}
 			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="View the invalidated initial fire report"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-ban-circle icon-white"></i></a>
 		    {% else %}
-			<a href="{% url 'bushfire:initial_snapshot' bushfire.id %}" title="Notifications fire report submitted on {{bushfire.init_authorised_date|date_fmt}} by {{bushfire.init_authorised_by}}"><span style="display:none">{{bushfire.report_status}}</span><font color="green"><i class="icon-ok icon-white"></i></font></a>
+			<a href="{% url 'bushfire:initial_snapshot' bushfire.id %}" title="Notifications fire report submitted on {{bushfire.init_authorised_date|date:'Y-m-d H:i'}} by {{bushfire.init_authorised_by}}"><span style="display:none">{{bushfire.report_status}}</span><font color="green"><i class="icon-ok icon-white"></i></font></a>
 		    {% endif %}
 		</td>
 
@@ -136,7 +136,7 @@
                 <th colspan="1">Creator</th>
                 <td>{{ bushfire.creator }}</td>
                 <th colspan="1">Created</th>
-                <td>{{ bushfire.created }}</td>
+                <td>{{ bushfire.created|date:'Y-m-d H:i' }}</td>
               </tr>
               <tr>
                 <th colspan="1">Field Officer</th>
@@ -165,7 +165,7 @@
                       {% for linked_obj in bushfire.bushfire_invalidated.all|dictsortreversed:"modified" %}
                       <tr>
 				        <td><a href="{% url 'bushfire:bushfire_initial' linked_obj.id %}">{{linked_obj.fire_number}}</a></td>
-				        <td>{{linked_obj.modified|date_fmt}}</td>
+				        <td>{{linked_obj.modified|date:'Y-m-d H:i'}}</td>
 				        <td>{{linked_obj.modifier}}</td>
 				        <td>{{linked_obj.get_report_status_display}}</td>
 				        <td>{{linked_obj.invalid_details}}</td>
@@ -174,7 +174,7 @@
                     {% else %}
                       <tr>
 				        <td><a href="{% url 'bushfire:bushfire_initial' bushfire.valid_bushfire.id %}">{{bushfire.valid_bushfire.fire_number}}</a></td>
-				        <td>{{bushfire.valid_bushfire.modified|date_fmt}}</td>
+				        <td>{{bushfire.valid_bushfire.modified|date:'Y-m-d H:i'}}</td>
 				        <td>{{bushfire.valid_bushfire.modifier}}</td>
 				        <td>{{bushfire.valid_bushfire.get_report_status_display}}</td>
 				        <td>{{bushfire.valid_bushfire.invalid_details}}</td>
