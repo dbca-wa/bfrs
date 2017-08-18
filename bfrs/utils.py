@@ -70,7 +70,7 @@ def can_maintain_data(user):
 def is_external_user(user):
     """ User group check added to prevent role-based internal users from having write access """
     try:
-        return user.email.split('@')[1].lower() not in settings.INTERNAL_EMAIL or not user.groups.filter(name='Users').exists()
+        return user.email.split('@')[1].lower() not in settings.INTERNAL_EMAIL or not user.groups.filter(name__in=['Users', 'FSS Datasets and Reporting Services']).exists()
         #return user.email.split('@')[1].lower() not in settings.INTERNAL_EMAIL
     except:
         return True
@@ -709,10 +709,10 @@ def police_email(bushfire, url):
        return
 
     subject = 'POLICE Email - Initial Bushfire submitted {}, and an investigation is required - {}'.format(bushfire.fire_number, 'Yes' if bushfire.investigation_req else 'No')
-    body = 'POLICE Email - {0}\n\nInitial Bushfire has been submitted and is located at <a href="{1}">{1}</a><br><br>\n\nInvestigation Required: {2}'.format(
-        bushfire.fire_number, url, 'Yes' if bushfire.investigation_req else 'No'
+    body = 'POLICE Email - {0}. Initial Bushfire has been submitted.<br><br>Investigation Required: {1}'.format(
+        bushfire.fire_number, 'Yes' if bushfire.investigation_req else 'No'
     )
-    body += notifications_to_html(bushfire, url)
+    body += notifications_to_html(bushfire, None)
 
     message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.POLICE_EMAIL)
     message.content_subtype = 'html'
