@@ -18,6 +18,7 @@ from datetime import datetime
 import lxml.html
 
 from bfrs.models import Bushfire
+from bfrs.utils import serialize_bushfire
 
 logger = logging.getLogger(__name__)
 BATCH_SIZE = 600
@@ -123,6 +124,7 @@ def save_bushfire_emails(queueitem):
             logger.info('Updating DFES Incident Number - ' + incident_num + ' - ' + fire_num)
             bf = Bushfire.objects.get(fire_number=fire_num)
             bf.dfes_incident_no = incident_num
+            serialize_bushfire('Final', 'DFES Incident No. Update', bf) 
             bf.save()
         else:
             raise Exception('Incident: and Fire Number: text missing from email')

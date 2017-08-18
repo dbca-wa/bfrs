@@ -807,6 +807,9 @@ def update_users():
     for user in resp.json()['objects']:
         try:
             if user['email'] and user['email'].split('@')[-1].lower() in settings.INTERNAL_EMAIL:
+                #if user['email'].lower() == 'rod.simmonds@dbca.wa.gov.au':
+                #    import ipdb; ipdb.set_trace()
+                    
                 if User.objects.filter(email=user['email']).count() == 0:
                     u, created = User.objects.get_or_create(
                         username=user['username'].lower(),
