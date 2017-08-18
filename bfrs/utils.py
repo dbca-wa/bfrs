@@ -29,6 +29,7 @@ from django.forms.models import inlineformset_factory
 from collections import defaultdict, OrderedDict
 from copy import deepcopy
 from django.core.urlresolvers import reverse
+from django.db.models import Q
 import requests
 from requests.auth import HTTPBasicAuth
 from dateutil import tz
@@ -740,7 +741,7 @@ def create_admin_user():
         defaults={'is_active':'False', 'first_name':'Admin', 'last_name':'Admin', 'email':'admin@{}'.format(settings.INTERNAL_EMAIL[0]) }
     )
 
-def add_users_to_fssdrs_group():
+def _add_users_to_fssdrs_group():
 
     fssdrs_group, g_created = Group.objects.get_or_create(name=settings.FSSDRS_GROUP)
     if g_created:
@@ -755,7 +756,7 @@ def add_users_to_fssdrs_group():
             user.is_staff = True
             user.save()
 
-def add_users_to_users_group(resp):
+def _add_users_to_users_group(resp):
     users_group, users_group_created = Group.objects.get_or_create(name='Users')
     for user in resp.json()['objects']:
         try:
@@ -768,7 +769,7 @@ def add_users_to_users_group(resp):
         except Exception as e:
             logger.error('Error creating user:  {}\n{}\n'.format(user, e))
 
-def update_users_from_active_directory(sso_users):
+def _update_users_from_active_directory(sso_users):
     """
     Update Django users from Active Directory (AD)
     For all Django users missing from AD, set them inactive - these users are assumed no longer employed at the dept.
@@ -784,6 +785,21 @@ def update_users_from_active_directory(sso_users):
     no_set_inactive = User.objects.filter(username__in=missing_from_ad).exclude(username='other').update(is_active=False)
     logger.info('Users set inactive: {}'.format(no_set_inactive))
 
+def _delete_duplicate_users():
+    """ Delete all duplicate users, keeping the lowercase emails - Assumes emails are unique (which they are in AD) """
+    for u in User.objects.all():
+        qs =User.objects.filter(email__iexact=u.email)
+        if qs.count() > 1:
+            for user in qs:
+                if user.email.islower():
+                    pass
+                else:
+                    qs_fires = Bushfire.objects.filter(Q(creator=user) | Q(modifier=user) | Q(duty_officer=user) | Q(field_officer=user))
+                    if qs_fires.count() == 0:
+                        user.delete()
+                    else:
+                        logger.info('Cannot Delete Duplicate User. User {} has Bushfire(s) associated'.format(user))
+                        
 
 def update_users():
     resp=requests.get(url=settings.URL_SSO, auth=HTTPBasicAuth(settings.USER_SSO, settings.PASS_SSO))
@@ -808,9 +824,10 @@ def update_users():
             logger.error('Error creating user:  {}\n{}\n'.format(user, e))
 
 
-    update_users_from_active_directory(resp)
-    add_users_to_fssdrs_group()
-    add_users_to_users_group(resp)
+    _update_users_from_active_directory(resp)
+    _add_users_to_fssdrs_group()
+    _add_users_to_users_group(resp)
+    _delete_duplicate_users()
     create_other_user()
     create_admin_user()
 
