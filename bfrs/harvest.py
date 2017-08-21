@@ -133,6 +133,8 @@ def save_bushfire_emails(queueitem):
         dimap.flag(msgid)
         return
 
+    dimap.flag(msgid)
+
 
 
 def cron(request=None):

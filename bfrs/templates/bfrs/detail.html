@@ -218,7 +218,7 @@
                 <div class="div_tenure" style="visibility: hidden;">{{form.other_tenure}}</div>
             </td>
                 {% endcomment %}
-            <td colspan="2" class="cbas">{{form.tenure}}<br><div class="div_tenure" style="visibility: hidden;">{{form.other_tenure}}</div></td>
+            <td colspan="2" class="cbas">{{form.tenure}}<br><div class="div_tenure" style="visibility: hidden;">{% if is_init_authorised %}{{snapshot.get_other_tenure_display}} {{form.other_tenure.as_hidden}}{% else %}{{form.other_tenure}}{% endif %}</div></td>
                 
             <th class="cbas">Duty Officer *</th>
             <td colspan="2" class="cbas">

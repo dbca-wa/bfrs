@@ -322,9 +322,9 @@ class BushfireInitialSnapshotView(LoginRequiredMixin, generic.DetailView):
         context.update({
             'initial': True,
             'snapshot': self.object.initial_snapshot,
-            'damages': self.object.initial_snapshot.damage_snapshot.exclude(snapshot_type=SNAPSHOT_FINAL),
-            'injuries': self.object.initial_snapshot.injury_snapshot.exclude(snapshot_type=SNAPSHOT_FINAL),
-            'tenures_burnt': self.object.initial_snapshot.tenures_burnt_snapshot.exclude(snapshot_type=SNAPSHOT_FINAL).order_by('id'),
+            'damages': self.object.initial_snapshot.damage_snapshot.exclude(snapshot_type=SNAPSHOT_FINAL) if hasattr(self.object.initial_snapshot, 'damage_snapshot') else None,
+            'injuries': self.object.initial_snapshot.injury_snapshot.exclude(snapshot_type=SNAPSHOT_FINAL) if hasattr(self.object.initial_snapshot, 'injury_snapshot') else None,
+            'tenures_burnt': self.object.initial_snapshot.tenures_burnt_snapshot.exclude(snapshot_type=SNAPSHOT_FINAL).order_by('id') if hasattr(self.object.initial_snapshot, 'tenures_burnt_snapshot') else None,
         })
         return context
 
@@ -343,9 +343,9 @@ class BushfireFinalSnapshotView(LoginRequiredMixin, generic.DetailView):
         context.update({
             'final': True,
             'snapshot': self.object.final_snapshot,
-            'damages': self.object.final_snapshot.damage_snapshot.exclude(snapshot_type=SNAPSHOT_INITIAL),
-            'injuries': self.object.final_snapshot.injury_snapshot.exclude(snapshot_type=SNAPSHOT_INITIAL),
-            'tenures_burnt': self.object.final_snapshot.tenures_burnt_snapshot.exclude(snapshot_type=SNAPSHOT_INITIAL).order_by('id'),
+            'damages': self.object.final_snapshot.damage_snapshot.exclude(snapshot_type=SNAPSHOT_INITIAL) if hasattr(self.object.final_snapshot, 'damage_snapshot') else None,
+            'injuries': self.object.final_snapshot.injury_snapshot.exclude(snapshot_type=SNAPSHOT_INITIAL) if hasattr(self.object.final_snapshot, 'injury_snapshot') else None,
+            'tenures_burnt': self.object.final_snapshot.tenures_burnt_snapshot.exclude(snapshot_type=SNAPSHOT_INITIAL).order_by('id') if hasattr(self.object.final_snapshot, 'tenures_burnt_snapshot') else None,
             'can_maintain_data': can_maintain_data(self.request.user),
         })
         return context
@@ -484,6 +484,7 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         damage_formset          = DamageFormSet(self.request.POST, prefix='damage_fs')
         area_burnt_formset      = AreaBurntFormSet(self.request.POST, prefix='area_burnt_fs')
 
+        #import ipdb; ipdb.set_trace()
         if form.is_valid():
             if form.cleaned_data['fire_not_found']:
                 return self.form_valid(request, form)
@@ -533,7 +534,7 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         damage_updated = update_damage_fs(self.object, damage_formset)
 
         # append/update 'Other' areas_burnt
-        if self.request.POST.has_key('private_area') and self.request.POST.has_key('other_crown_area'):
+        if self.request.POST.has_key('private_area') and self.request.POST.has_key('other_crown_area'): # and self.object.final_fire_boundary:
             if self.request.POST.get('private_area'):
                 private_tenure = self.request.POST.get('private_tenure')
                 private_area = self.request.POST.get('private_area')
@@ -543,6 +544,16 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
                 other_crown_tenure = self.request.POST.get('other_crown_tenure')
                 other_crown_area = self.request.POST.get('other_crown_area')
                 self.object.tenures_burnt.update_or_create(tenure=Tenure.objects.get(name=other_crown_tenure), defaults={"area": other_crown_area})
+        elif self.object.area_limit:
+            # if user selects there own final area, set the area to the tenure of ignition point (Tenure, Other Crown, (Other) Private Property)
+            self.object.tenures_burnt.all().delete()
+            if self.object.other_tenure == Bushfire.IGNITION_POINT_PRIVATE:
+                self.object.tenures_burnt.update_or_create(tenure=Tenure.objects.get(name='Private Property'), defaults={"area": self.object.area})
+            elif self.object.other_tenure == Bushfire.IGNITION_POINT_CROWN:
+                self.object.tenures_burnt.update_or_create(tenure=Tenure.objects.get(name='Other Crown'), defaults={"area": self.object.area})
+            elif not self.object.other_tenure:
+                self.object.tenures_burnt.update_or_create(tenure=self.object.tenure, defaults={"area": self.object.area})
+
 
         refresh_gokart(self.request, fire_number=self.object.fire_number, region=self.object.region.id, district=self.object.district.id)
 

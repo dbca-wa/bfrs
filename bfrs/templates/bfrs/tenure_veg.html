@@ -1,6 +1,6 @@
 {% load bfrs_tags %}
 
-{% if True %}
+{% if bushfire.final_fire_boundary %}
     <div id="id_areas_burnt" class="row formset area-burnt-formset">
         <table class="table_fs" border="0">
             <tbody>
@@ -79,10 +79,23 @@
             </tbody>
         </table>
     </div>
+
+{% comment %}
+{% elif form. %}
+
+    <div class="div_invalid_details"><p id=""> <style="display: none; margin: 20px;">
+
+    {% if object.other_tenure == object.IGNITION_POINT_PRIVATE %}
+      Private Property<span style="margin: 20px;">
+      {{ form.area.value }}
+    {% elif object.other_tenure == object.IGNITION_POINT_CROWN %}
+      Other Crown<span style="margin: 20px;">
+      {{ form.area.value }}
+    {% endif %}
+{% endcomment %}
+
 {% else %}
-
-    No final fire boundary available
-
+      No final fire boundary available
 {% endif %}
 {{ area_burnt_formset.management_form }}
 

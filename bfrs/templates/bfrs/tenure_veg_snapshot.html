@@ -1,15 +1,21 @@
+{% load bfrs_tags %}
 
 <div class="row formset area-burnt-formset">
     <table class="table_fs" border="0" >
         <tbody>
             <th>Tenure</th>
             <th>Area (ha)</th>
-            {% for area in tenures_burnt.all %}
-            <tr>
-                <td>{{ area.tenure }}</td>
-                <td>{{ area.area }}</td>
-            </tr>
-            {% endfor %}
+
+
+              {% for area in tenures_burnt.all %}
+                {% if area.area > 0 %}
+                  <tr>
+                    <td>{{ area.tenure }}</td>
+                    <td>{{ area.area }}</td>
+                  </tr>
+                {% endif %}
+              {% endfor %}
+
         </tbody>
     </table>
 </div>
