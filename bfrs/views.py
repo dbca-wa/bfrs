@@ -118,7 +118,7 @@ class BushfireFilter(django_filters.FilterSet):
         self.filters['reporting_year'].extra['choices'] = [[None, '---------']] + [[i['reporting_year'], str(i['reporting_year']) + '/' + str(i['reporting_year']+1)] for i in Bushfire.objects.all().values('reporting_year').distinct().order_by('reporting_year')]
         if not can_maintain_data(self.request.user):
             # pop the 'Reviewed' option
-            self.filters['report_status'].extra['choices'] = [(u'', '---------'), (1, 'Initial'), (2, 'Initial Authorised'), (3, 'Final Authorised'), (5, 'Invalidated'), (6, 'Missing Final')]
+            self.filters['report_status'].extra['choices'] = [(u'', '---------'), (1, 'Initial Fire Report'), (2, 'Notifications Submitted'), (3, 'Report Authorised'), (5, 'Invalidated'), (6, 'Outstanding Fires')]
 
 
 class ProfileView(LoginRequiredMixin, generic.FormView):
