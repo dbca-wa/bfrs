@@ -734,7 +734,9 @@ def fssdrs_email(bushfire, url, status='final'):
     message.send()
 
 def create_other_user():
-    return User.objects.get_or_create(username='other', first_name='Other', last_name='Contact')
+    user, created = User.objects.get_or_create(username='other', first_name='Other', last_name='Contact')
+    users_group, users_group_created = Group.objects.get_or_create(name='Users')
+    user.groups.add(users_group)
 
 def create_admin_user():
     return User.objects.get_or_create(username='admin',

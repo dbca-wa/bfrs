@@ -157,7 +157,7 @@ class BushfireUpdateForm(forms.ModelForm):
         super (BushfireUpdateForm,self ).__init__(*args,**kwargs)
         #active_users = User.objects.filter(is_active=True).order_by('username')
         # order alphabetically, but with username='other', as first item in list
-        active_users = User.objects.filter(groups__name__in=['Users', settings.FSSDRS_GROUP]).filter(is_active=True).exclude(username__icontains='admin').extra(select={'other': "CASE WHEN username='other' THEN 0 ELSE 1 END"}).order_by('other', 'username')
+        active_users = User.objects.filter(groups__name='Users').filter(is_active=True).exclude(username__icontains='admin').extra(select={'other': "CASE WHEN username='other' THEN 0 ELSE 1 END"}).order_by('other', 'username')
         self.fields['field_officer'].queryset = active_users
         self.fields['duty_officer'].queryset = active_users.exclude(username='other')
         self.fields['reporting_year'].initial = current_finyear()
