@@ -33,6 +33,7 @@ from django.db.models import Q
 import requests
 from requests.auth import HTTPBasicAuth
 from dateutil import tz
+import os
 
 import logging
 logger = logging.getLogger(__name__)
@@ -588,7 +589,15 @@ NOTIFICATION_FIELDS = [
 #    return msg
 
 def notifications_to_html(bushfire, url):
-    d = [(bushfire._meta.get_field(i).verbose_name, str(getattr(bushfire, i))) for i in NOTIFICATION_FIELDS]
+    #import ipdb; ipdb.set_trace()
+    #d = [(bushfire._meta.get_field(i).verbose_name, str(getattr(bushfire, i))) for i in NOTIFICATION_FIELDS]
+    d = []
+    for i in NOTIFICATION_FIELDS:
+        try:
+            d.append( (bushfire._meta.get_field(i).verbose_name, str(getattr(bushfire, i))) )
+        except:
+            d.append( (bushfire._meta.get_field(i).verbose_name, getattr(bushfire, i)) )
+
     ordered_dict = OrderedDict(d)
 
     msg = '<table style="border:1px solid black;">'
@@ -611,12 +620,12 @@ def notifications_to_html(bushfire, url):
         msg += '<tr> <th style="border-bottom:1px solid; border-right:1px solid; text-align: left;">' + k + '</th> <td style="border-bottom:1px solid;">' + v + '</td> </tr>'
     msg += '</table><br>'
 
-    if not bushfire.dfes_incident_no:
-        msg += 'DFES incident number not available, please check the bushfire reporting system for updates to the DFES incident number <a href="{0}">{1}</a>'.format(url, bushfire.fire_number)
+    if url and not bushfire.dfes_incident_no:
+        url_final = url.replace('initial/snapshot', 'final')
+        msg += 'DFES incident number not available, please check the bushfire reporting system for updates to the DFES incident number <a href="{0}">{1}</a>'.format(url_final, bushfire.fire_number)
 
     msg += '<br><br>'
     msg += '<font face="Calibri" color="gray">The information contained in this email was the best available at the time. For updated information please contact the relevant Duty Officer</font>'
-    #import ipdb; ipdb.set_trace()
 
 
     return msg
@@ -629,6 +638,9 @@ def rdo_email(bushfire, url):
     region_name = bushfire.region.name.upper()
     to_email = getattr(settings, region_name.replace(' ', '_') + '_EMAIL')
     subject = 'RDO Email - {}, Initial Bushfire submitted - {}'.format(region_name, bushfire.fire_number)
+    if 'bfrs-prod' not in os.getcwd():
+        env = os.getcwd().split('-')[1].split('.')[0] # will return either 'dev' or 'uat'
+        subject += ' ({})'.format(env.upper() if env != 'uat' or env != 'dev' else 'Test')
 
     body = 'RDO Email - {0}, {1}\n\nInitial Bushfire has been submitted and is located at <a href="{2}">{2}</a><br><br>'.format(region_name, bushfire.fire_number, url)
     body += notifications_to_html(bushfire, url)
@@ -654,6 +666,10 @@ def pvs_email(bushfire, url):
        return
 
     subject = 'PVS Email - Initial Bushfire submitted - {}'.format(bushfire.fire_number)
+    if 'bfrs-prod' not in os.getcwd():
+        env = os.getcwd().split('-')[1].split('.')[0] # will return either 'dev' or 'uat'
+        subject += ' ({})'.format(env.upper() if env != 'uat' or env != 'dev' else 'Test')
+
     body = 'PVS Email - {0}\n\nInitial Bushfire has been submitted and is located at <a href="{1}">{1}</a><br><br>'.format(bushfire.fire_number, url)
     body += notifications_to_html(bushfire, url)
 
@@ -666,6 +682,10 @@ def fpc_email(bushfire, url):
        return
 
     subject = 'FPC Email - Initial Bushfire submitted - {}'.format(bushfire.fire_number)
+    if 'bfrs-prod' not in os.getcwd():
+        env = os.getcwd().split('-')[1].split('.')[0] # will return either 'dev' or 'uat'
+        subject += ' ({})'.format(env.upper() if env != 'uat' or env != 'dev' else 'Test')
+
     body = 'FPC Email - {0}\n\nInitial Bushfire has been submitted and is located at <a href="{1}">{1}</a><br><br>'.format(bushfire.fire_number, url)
     body += notifications_to_html(bushfire, url)
 
@@ -678,6 +698,10 @@ def pica_email(bushfire, url):
        return
 
     subject = 'PICA Email - Initial Bushfire submitted - {}'.format(bushfire.fire_number)
+    if 'bfrs-prod' not in os.getcwd():
+        env = os.getcwd().split('-')[1].split('.')[0] # will return either 'dev' or 'uat'
+        subject += ' ({})'.format(env.upper() if env != 'uat' or env != 'dev' else 'Test')
+
     body = 'PICA Email - {0}\n\nInitial Bushfire has been submitted and is located at <a href="{1}">{1}</a><br><br>'.format(bushfire.fire_number, url)
     body += notifications_to_html(bushfire, url)
 
@@ -698,6 +722,10 @@ def dfes_email(bushfire, url):
        return
 
     subject = 'DFES Email - Initial Bushfire submitted - {}'.format(bushfire.fire_number)
+    if 'bfrs-prod' not in os.getcwd():
+        env = os.getcwd().split('-')[1].split('.')[0] # will return either 'dev' or 'uat'
+        subject += ' ({})'.format(env.upper() if env != 'uat' or env != 'dev' else 'Test')
+
     body = '---- PLEASE REPLY WITH INCIDENT NUMBER, Example "Incident: ABCDE12345" - on a single line without quotes (alphanumeric max. 32 chars) ----<br><br>DFES Email<br><br>Fire Number:{0}<br><br>(Lat/Lon) {1}<br><br>Initial Bushfire has been submitted and is located at <a href="{2}">{2}</a><br><br>'.format(bushfire.fire_number, bushfire.origin_point, url)
     body += notifications_to_html(bushfire, url)
 
@@ -710,6 +738,10 @@ def police_email(bushfire, url):
        return
 
     subject = 'POLICE Email - Initial Bushfire submitted {}, and an investigation is required - {}'.format(bushfire.fire_number, 'Yes' if bushfire.investigation_req else 'No')
+    if 'bfrs-prod' not in os.getcwd():
+        env = os.getcwd().split('-')[1].split('.')[0] # will return either 'dev' or 'uat'
+        subject += ' ({})'.format(env.upper() if env != 'uat' or env != 'dev' else 'Test')
+
     body = 'POLICE Email - {0}. Initial Bushfire has been submitted.<br><br>Investigation Required: {1}'.format(
         bushfire.fire_number, 'Yes' if bushfire.investigation_req else 'No'
     )
@@ -724,6 +756,10 @@ def fssdrs_email(bushfire, url, status='final'):
        return
 
     subject = 'FSSDRS Email - Final Fire report has been authorised - {}'.format(bushfire.fire_number)
+    if 'bfrs-prod' not in os.getcwd():
+        env = os.getcwd().split('-')[1].split('.')[0] # will return either 'dev' or 'uat'
+        subject += ' ({})'.format(env.upper() if env != 'uat' or env != 'dev' else 'Test')
+
     body = 'FSSDRS Email - {0}\n\nreport has been authorised. User {1}, at {2}.\n\nThe report is located at <a href="{3}">{3}</a><br><br>'.format(
         bushfire.fire_number, bushfire.authorised_by, bushfire.authorised_date.astimezone(tz.gettz(settings.TIME_ZONE)).strftime('%Y-%m-%d %H:%M'), url
     )

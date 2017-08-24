@@ -16,6 +16,8 @@ import requests
 from imaplib import IMAP4_SSL
 from datetime import datetime
 import lxml.html
+import sys
+import os
 
 from bfrs.models import Bushfire
 from bfrs.utils import serialize_bushfire, create_admin_user
@@ -32,15 +34,28 @@ class DeferredIMAP():
     '''
     def __init__(self, host, user, password):
         self.deletions = []
+        self.moved_uat = []
+        self.moved_dev = []
+        self.moved_test = []
         self.flags = []
         self.host = host
         self.user = user
         self.password = password
 
     def login(self):
+        #mport ipdb; ipdb.set_trace()
         self.imp = IMAP4_SSL(self.host)
         self.imp.login(self.user, self.password)
-        self.imp.select("INBOX")
+        #self.imp.select("INBOX")
+        resp = self.imp.select(settings.MAIL_FOLDER)
+        if resp[0] != 'OK':
+            logger.error("Could not get Mail Folder: {}".format(resp[1]))
+            sys.exit()
+        if 'bfrs-prod' not in os.getcwd() and settings.MAIL_FOLDER.lower() == 'inbox':
+            logger.error("NON PROD BFRS Server accessing BFRS Email Inbox: {}".format(os.getcwd()))
+            sys.exit()
+
+
 
     def logout(self, expunge=False):
         if expunge:
@@ -50,6 +65,18 @@ class DeferredIMAP():
 
     def flush(self):
         self.login()
+        if self.moved_uat:
+            logger.info("Moving {} NON-PROD emails to UAT folder.".format(len(self.moved_uat)))
+            self.imp.copy(",".join(self.moved_uat), 'INBOX/UAT')
+            self.imp.store(",".join(self.moved_uat), '+FLAGS', r'(\Deleted)')
+        if self.moved_dev:
+            logger.info("Moving {} NON-PROD emails to DEV folder.".format(len(self.moved_dev)))
+            self.imp.copy(",".join(self.moved_dev), 'INBOX/DEV')
+            self.imp.store(",".join(self.moved_dev), '+FLAGS', r'(\Deleted)')
+        if self.moved_test:
+            logger.info("Moving {} NON-PROD emails to TEST folder.".format(len(self.moved_test)))
+            self.imp.copy(",".join(self.moved_test), 'INBOX/Test')
+            self.imp.store(",".join(self.moved_test), '+FLAGS', r'(\Deleted)')
         if self.flags:
             logger.info("Flagging {} unprocessable emails.".format(len(self.flags)))
             self.imp.store(",".join(self.flags), '+FLAGS', r'(\Flagged)')
@@ -57,9 +84,18 @@ class DeferredIMAP():
             logger.info("Deleting {} processed emails.".format(len(self.deletions)))
             self.imp.store(",".join(self.deletions), '+FLAGS', r'(\Deleted)')
             self.logout(expunge=True)
+
         else:
             self.logout()
-        self.flags, self.deletions = [], []
+        self.flags, self.deletions, self.moved = [], [], []
+
+    def move(self, msgid, env):
+        if env.lower() == 'uat':
+            self.moved_uat.append(str(msgid))
+        if env.lower() == 'dev':
+            self.moved_dev.append(str(msgid))
+        if env.lower() == 'test':
+            self.moved_test.append(str(msgid))
 
     def delete(self, msgid):
         self.deletions.append(str(msgid))
@@ -121,13 +157,23 @@ def save_bushfire_emails(queueitem):
             incident_num = msg_text.split('Incident:')[1].split('\r')[0].strip()
             fire_num = msg_text.split('Fire Number:')[1].split('\r')[0].strip()
         except: pass
-        if ('Incident:' in msg_text and 'Fire Number:' in msg_text):
+        #if ('UAT' in msg_subject or 'DEV:' in msg_subject or 'TEST:' in msg_subject):
+        if settings.MAIL_FOLDER.lower() == 'inbox':
+            if any(x in msg_subject for x in ['uat', 'UAT']):
+                dimap.move(msgid, 'uat')
+            elif any(x in msg_subject for x in ['dev', 'DEV']):
+                dimap.move(msgid, 'dev')
+            elif any(x in msg_subject for x in ['test', 'TEST']):
+                dimap.move(msgid, 'test')
+
+        elif ('Incident:' in msg_text and 'Fire Number:' in msg_text):
             logger.info('Updating DFES Incident Number - ' + incident_num + ' - ' + fire_num)
             bf = Bushfire.objects.get(fire_number=fire_num)
             bf.dfes_incident_no = incident_num
             bf.modifier = admin_user
             serialize_bushfire('Final', 'DFES Incident No. Update', bf) 
             bf.save()
+            dimap.flag(msgid)
         else:
             raise Exception('Incident: and Fire Number: text missing from email')
     except Exception as e:
@@ -135,7 +181,6 @@ def save_bushfire_emails(queueitem):
         dimap.flag(msgid)
         return
 
-    dimap.flag(msgid)
 
 
 
