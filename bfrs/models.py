@@ -77,12 +77,16 @@ def current_finyear():
 
 def reporting_years():
     """ Returns: [[2016, '2016/2017'], [2017, '2017/2018']] """
-    yrs = list(Bushfire.objects.values_list('reporting_year', flat=True).distinct())
-    if current_finyear() not in yrs:
-        yrs.append(datetime.now().year)
-    if current_finyear() + 1 not in yrs:
-        yrs.append(datetime.now().year + 1)
-    return [[yr, '/'.join([str(yr),str(yr+1)])] for yr in yrs]
+    try:
+        yrs = list(Bushfire.objects.values_list('reporting_year', flat=True).distinct())
+        if current_finyear() not in yrs:
+            yrs.append(datetime.now().year)
+        if current_finyear() + 1 not in yrs:
+            yrs.append(datetime.now().year + 1)
+        return [[yr, '/'.join([str(yr),str(yr+1)])] for yr in yrs]
+    except:
+        return [[None, None]]
+        #return [[2016, '2016/2017'], [2017, '2017/2018']]
 
 def check_mandatory_fields(obj, fields, dep_fields, formsets):
     """
