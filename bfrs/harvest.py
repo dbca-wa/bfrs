@@ -47,11 +47,11 @@ class DeferredIMAP():
         self.imp = IMAP4_SSL(self.host)
         self.imp.login(self.user, self.password)
         #self.imp.select("INBOX")
-        resp = self.imp.select(settings.MAIL_FOLDER)
+        resp = self.imp.select(settings.HARVEST_EMAIL_FOLDER)
         if resp[0] != 'OK':
             logger.error("Could not get Mail Folder: {}".format(resp[1]))
             sys.exit()
-        if 'bfrs-prod' not in os.getcwd() and settings.MAIL_FOLDER.lower() == 'inbox':
+        if 'bfrs-prod' not in os.getcwd() and settings.HARVEST_EMAIL_FOLDER.lower() == 'inbox':
             logger.error("NON PROD BFRS Server accessing BFRS Email Inbox: {}".format(os.getcwd()))
             sys.exit()
 
@@ -158,12 +158,13 @@ def save_bushfire_emails(queueitem):
             fire_num = msg_text.split('Fire Number:')[1].split('\r')[0].strip()
         except: pass
         #if ('UAT' in msg_subject or 'DEV:' in msg_subject or 'TEST:' in msg_subject):
-        if settings.MAIL_FOLDER.lower() == 'inbox':
+        #if settings.HARVEST_EMAIL_FOLDER.lower() == 'inbox':
+        if any(x in msg_subject for x in ['uat', 'UAT', 'dev', 'DEV', 'test', 'Test', 'TEST']):
             if any(x in msg_subject for x in ['uat', 'UAT']):
                 dimap.move(msgid, 'uat')
             elif any(x in msg_subject for x in ['dev', 'DEV']):
                 dimap.move(msgid, 'dev')
-            elif any(x in msg_subject for x in ['test', 'TEST']):
+            elif any(x in msg_subject for x in ['test', 'Test', 'TEST']):
                 dimap.move(msgid, 'test')
 
         elif ('Incident:' in msg_text and 'Fire Number:' in msg_text):

@@ -713,6 +713,9 @@ def pica_sms(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION:
        return
 
+    if 'bfrs-prod' not in os.getcwd():
+       return
+
     message = 'PICA SMS - {}\n\nInitial Bushfire has been submitted and is located at {}'.format(bushfire.fire_number, url)
     TO_SMS_ADDRESS = [phone_no + '@' + settings.SMS_POSTFIX for phone_no in settings.MEDIA_ALERT_SMS_TOADDRESS_MAP.values()]
     return send_mail('', message, settings.EMAIL_TO_SMS_FROMADDRESS, TO_SMS_ADDRESS)
