@@ -62,13 +62,6 @@ def fssdrs_group():
 def can_maintain_data(user):
     return fssdrs_group() in user.groups.all() and not is_external_user(user)
 
-#def is_internal_user(user):
-#    """ Created to prevent role-based internal users from having edit/sav rights """
-#    try:
-#        return user.email.split('@')[1].lower() in settings.INTERNAL_EMAIL and users_group() in user.groups.all()
-#    except:
-#        return False
-
 def is_external_user(user):
     """ User group check added to prevent role-based internal users from having write access """
     try:
@@ -113,7 +106,6 @@ def archive_snapshot(auth_type, action, obj):
             modifier = obj.modifier,
             auth_type = auth_type,
             action = action if action else 'Update',
-            #snapshot = obj.initial_snapshot if auth_type =='initial' else obj.final_snapshot if obj.final_snapshot else '{"Deleted": True}',
             snapshot = obj.initial_snapshot if auth_type =='initial' else obj.final_snapshot if obj.final_snapshot else '{"Deleted": True}',
             prev_snapshot = cur_snapshot_history.latest('created') if cur_snapshot_history else None,
             bushfire_id = obj.id
@@ -280,22 +272,12 @@ def authorise_report(request, obj):
             dep_fields = AUTH_MANDATORY_DEP_FIELDS_FIRE_NOT_FOUND if obj.fire_not_found else AUTH_MANDATORY_DEP_FIELDS
             context['mandatory_fields'] = context['mandatory_fields'] + check_mandatory_fields(obj, fields, dep_fields, AUTH_MANDATORY_FORMSETS)
 
-            #import ipdb; ipdb.set_trace()
             if not obj.fire_not_found and context['mandatory_fields']:
                 logger.info('Delete Authorisation - FSSDRS user {} attempted to save an already Authorised/Reviewed report {}, with missing fields\n{}'.format(
                     request.user.get_full_name(), obj.fire_number, context['mandatory_fields']
                 ))
                 update_status(request, obj, 'delete_authorisation_(missing_fields_-_FSSDRS)')
                 return HttpResponseRedirect(reverse("home"))
-
-#            if not obj.fire_not_found and context['mandatory_fields']:
-#                context.update({
-#                    'action': 'delete_final_authorisation',
-#                    'message': 'Fire not found has been reset to "No", and mandatory fields are missing. This action will save the report and also delete the existing {}'.format('authorisation and review' if obj.is_reviewed else 'authorisation'),
-#                    'fire_not_found_reset': True,
-#                    'snapshot': obj,
-#                })
-#                return TemplateResponse(request, 'bfrs/detail_summary.html', context=context)
 
             elif context['mandatory_fields']:
                 return TemplateResponse(request, template_mandatory_fields, context=context)
@@ -310,11 +292,6 @@ def create_areas_burnt(bushfire, area_burnt_list):
     Creates the initial bushfire record together with AreaBurnt FormSet from BushfireUpdateView (Operates on data dict from SSS)
     Uses sss_dict - used by get_context_data, to display initial sss_data supplied from SSS system
     """
-    #t=Tenure.objects.all()[0]
-    #initial = [{'tenure': t, 'area':0.0, 'name':'ABC', 'other':'Other'}]
-
-    #if not area_burnt_list:
-    #    return 1
 
     # aggregate the area's in like tenure types
     aggregated_sums = defaultdict(float)
@@ -364,8 +341,6 @@ def update_areas_burnt(bushfire, area_burnt_list):
     Updates AreaBurnt model attached to the bushfire record from api.py, via REST API (Operates on data dict from SSS)
     Uses sss_dict
     """
-    #if not area_burnt_list:
-    #    return 1
 
     # aggregate the area's in like tenure types
     aggregated_sums = defaultdict(float)
@@ -399,8 +374,6 @@ def update_areas_burnt_fs(bushfire, area_burnt_formset):
 
     At first object create time, formset values are saved to the newly created bushfire object
     """
-#    if not area_burnt_formset:
-#        return 1
 
     new_fs_object = []
     for form in area_burnt_formset:
@@ -471,10 +444,8 @@ def update_damage_fs(bushfire, damage_formset):
 
 def mail_url(request, bushfire, status='initial'):
     if status == 'initial':
-        #return "http://" + request.get_host() + reverse('bushfire:bushfire_initial', kwargs={'pk':bushfire.id})
         return "http://" + request.get_host() + reverse('bushfire:initial_snapshot', kwargs={'pk':bushfire.id})
     if status == 'final':
-        #return "http://" + request.get_host() + reverse('bushfire:bushfire_final', kwargs={'pk':bushfire.id})
         return "http://" + request.get_host() + reverse('bushfire:final_snapshot', kwargs={'pk':bushfire.id})
 
 
@@ -576,20 +547,7 @@ NOTIFICATION_FIELDS = [
 ]
 
 
-#RDO_LIST = [GOLDFIELDS, KIMBERLEY, MIDWEST, PILBARA, SOUTH_COAST_EMAIL, SOUTH_WEST_EMAIL, SWAN_EMAIL, WARREN_EMAIL, WHEATBELT_EMAIL]
-
-#def _notifications_to_text(bushfire):
-#    d = [(bushfire._meta.get_field(i).verbose_name, str(getattr(bushfire, i))) for i in NOTIFICATION_FIELDS]
-#    ordered_dict = OrderedDict(d)
-#
-#    msg = ''
-#    for k,v in ordered_dict.iteritems():
-#        msg +=  '{}:\t{}\n'.format(k, v).expandtabs(60)
-#
-#    return msg
-
 def notifications_to_html(bushfire, url):
-    #import ipdb; ipdb.set_trace()
     #d = [(bushfire._meta.get_field(i).verbose_name, str(getattr(bushfire, i))) for i in NOTIFICATION_FIELDS]
     d = []
     for i in NOTIFICATION_FIELDS:
@@ -649,17 +607,6 @@ def rdo_email(bushfire, url):
     message.content_subtype = 'html'
 
     message.send()
-
-#def _rdo_email(bushfire, url):
-#    if not settings.ALLOW_EMAIL_NOTIFICATION:
-#       return
-#
-#    subject = 'RDO Email - Initial report submitted - {}'.format(bushfire.fire_number)
-#    message = 'RDO Email - {}\n\nInitial report has been submitted and is located at {}\n\n{}'.format(
-#        bushfire.fire_number, url, notifications_to_text2(bushfire)
-#    )
-#
-#    return send_mail(subject, message, settings.FROM_EMAIL, settings.RDO_EMAIL)
 
 def pvs_email(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION:

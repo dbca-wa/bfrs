@@ -56,9 +56,9 @@
                       <td><input id="id_tenure_1" name="private_tenure" type="text" value="Private Property"></td>
                       {% if object.tenures_burnt.all|tenures_burnt:"Private Property" > 0 %}
                         <!-- Required for viewed snapshots -->
-                        <td><input id="id_area_1" name="private_area" type="number" step="0.01" min="0" max="{{ object.tenures_burnt.all|tenures_burnt:"Private Property" }}" value="{{ object.tenures_burnt.all|tenures_burnt:"Private Property" }}"></td>
+                        <td><input id="id_area_1" name="private_area" type="number" step="0.01" min="0" max="{{ object.other_area|floatformat:'2' }}" value="{{ object.tenures_burnt.all|tenures_burnt:"Private Property" }}"></td>
                       {% else %}
-                        <td><input id="id_area_1" name="private_area" type="number" step="0.01" min="0" max="{{ object.other_area|floatformat:"2" }}" value="{{ object.other_area|floatformat:"2" }}"></td>
+                        <td><input id="id_area_1" name="private_area" type="number" step="0.01" min="0" max="{{ object.other_area|floatformat:'2' }}" value="{{ object.other_area|floatformat:"2" }}"></td>
                       {% endif %}
                       <td><input id="id_area_perc_1" type="number" min="0" max="100" step="0.1"></td>
                     </tr>
@@ -66,9 +66,9 @@
                       <td><input id="id_tenure_2" name="other_crown_tenure" type="text" value="Other Crown"></td>
                       {% if object.tenures_burnt.all|tenures_burnt:"Other Crown" > 0 %}
                         <!-- Required for viewed snapshots -->
-                        <td><input id="id_area_2" name="other_crown_area" type="number" step="0.01" min="0" max="{{ object.tenures_burnt.all|tenures_burnt:"Other Crown" }}" value="{{ object.tenures_burnt.all|tenures_burnt:"Other Crown" }}"></td>
+                        <td><input id="id_area_2" name="other_crown_area" type="number" step="0.01" min="0" max="{{ object.other_area|floatformat:'2' }}" value="{{ object.tenures_burnt.all|tenures_burnt:"Other Crown" }}"></td>
                       {% else %}
-                        <td><input id="id_area_2" name="other_crown_area" type="number" step="0.01" min="0" max="{{ object.other_area|floatformat:"2" }}" value="0"></td>
+                        <td><input id="id_area_2" name="other_crown_area" type="number" step="0.01" min="0" max="{{ object.other_area|floatformat:'2' }}" value="0"></td>
                       {% endif %}
                       <td><input id="id_area_perc_2" type="number" min="0" max="100" step="0.1"></td>
                     </tr>
@@ -80,19 +80,6 @@
         </table>
     </div>
 
-{% comment %}
-{% elif form. %}
-
-    <div class="div_invalid_details"><p id=""> <style="display: none; margin: 20px;">
-
-    {% if object.other_tenure == object.IGNITION_POINT_PRIVATE %}
-      Private Property<span style="margin: 20px;">
-      {{ form.area.value }}
-    {% elif object.other_tenure == object.IGNITION_POINT_CROWN %}
-      Other Crown<span style="margin: 20px;">
-      {{ form.area.value }}
-    {% endif %}
-{% endcomment %}
 
 {% else %}
       No final fire boundary available

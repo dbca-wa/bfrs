@@ -122,7 +122,6 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
                         verbose_name = Bushfire._meta.get_field(dep_set[1]).verbose_name
                         missing.append(verbose_name)
             except:
-                #import ipdb; ipdb.set_trace()
                 pass
 
     for fs in formsets:
@@ -397,7 +396,6 @@ class BushfireBase(Audit):
         if not self.origin_point:
             return None
 
-        #c=LatLon.LatLon(LatLon.Longitude(round(self.origin_point.get_x(), 2)), LatLon.Latitude(round(self.origin_point.get_y(), 2)))
         c=LatLon.LatLon(LatLon.Longitude(self.origin_point.get_x()), LatLon.Latitude(self.origin_point.get_y()))
         latlon = c.to_string('d% %m% %S% %H')
         lon = latlon[0].split(' ')
@@ -442,10 +440,6 @@ class Bushfire(BushfireBase):
     def __str__(self):
         return ', '.join([self.fire_number])
 
-#    class Meta:
-#        #unique_together = ('district', 'year', 'fire_number', 'sss_id')
-#        unique_together = ('fire_number', 'sss_id')
-
     @property
     def initial_snapshot(self):
         qs = self.snapshots.filter(snapshot_type=SNAPSHOT_INITIAL)
@@ -489,8 +483,6 @@ class Bushfire(BushfireBase):
 
     def save(self, *args, **kwargs):
         self.full_clean(*args, **kwargs)
-#        if not self.fire_not_found and self.is_final_authorised:
-
         super(Bushfire, self).save(*args, **kwargs)
 
     @property

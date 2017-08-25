@@ -1,6 +1,5 @@
 from django import forms
 from bfrs.models import (Bushfire, AreaBurnt, Damage, Injury, 
-        #FireBehaviour,
         Region, District, Profile,
         current_finyear,
         reporting_years,
@@ -155,7 +154,6 @@ class BushfireUpdateForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super (BushfireUpdateForm,self ).__init__(*args,**kwargs)
-        #active_users = User.objects.filter(is_active=True).order_by('username')
         # order alphabetically, but with username='other', as first item in list
         active_users = User.objects.filter(groups__name='Users').filter(is_active=True).exclude(username__icontains='admin').extra(select={'other': "CASE WHEN username='other' THEN 0 ELSE 1 END"}).order_by('other', 'username')
         self.fields['field_officer'].queryset = active_users

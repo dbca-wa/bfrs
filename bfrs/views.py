@@ -172,7 +172,6 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
 
     def get(self, request, *args, **kwargs):
         template_confirm = 'bfrs/confirm.html'
-        #template_mandatory = 'bfrs/mandatory_fields.html'
         template_initial = 'bfrs/detail.html'
         template_final = 'bfrs/final.html'
         template_snapshot_history = 'bfrs/snapshot_history.html'
@@ -193,7 +192,6 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
             report = self.request.GET.get('export_excel_outstanding_fires')
             if eval(report):
                 # Only Reports that are Submitted, but not yet Authorised
-                #import ipdb;ipdb.set_trace()
                 qs = self.get_filterset(self.filterset_class).qs.filter(report_status__in=[Bushfire.STATUS_INITIAL_AUTHORISED])
                 return export_outstanding_fires(self.request, self.get_filterset(self.filterset_class).data['region'], qs)
 
@@ -359,7 +357,6 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
     form_class = BushfireUpdateForm
     template_name = 'bfrs/detail.html'
     template_summary = 'bfrs/detail_summary.html'
-    #template_name = 'bfrs/basic.html'
 
     def get_template_names(self):
         obj = self.get_object()
@@ -385,7 +382,6 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
 
         if self.request.POST.has_key('sss_create'):
             sss = json.loads(self.request.POST.get('sss_create'))
-            #initial['sss_data'] = self.request.POST.get('sss_create')
 
             if sss.has_key('sss_id') and sss['sss_id']:
                 initial['sss_id'] = sss['sss_id']
@@ -403,7 +399,6 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
                 initial['origin_point_str'] = Point(sss['origin_point']).get_coords()
                 initial['origin_point'] = Point(sss['origin_point'])
 
-            #import ipdb; ipdb.set_trace()
             if sss.has_key('origin_point_mga'):
                 initial['origin_point_mga'] = sss['origin_point_mga']
 
@@ -429,17 +424,16 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
                 initial['region'] = Region.objects.get(id=sss['region_id'])
                 initial['district'] = District.objects.get(id=sss['district_id'])
 
+
+            # Must pop this at the end - not needed, and can be very large
+            if sss.has_key('fire_boundary'):
+                sss.pop('fire_boundary')
+            initial['sss_data'] = json.dumps(sss)
+
         # below for testing
         #initial['origin_point'] = GEOSGeometry(Point(122.45, -33.15))
         #initial['region'] = 1
         #initial['district'] = 1
-
-            # Must have this at the end
-            if sss.has_key('fire_boundary'):
-                sss.pop('fire_boundary')
-            #if sss.has_key('area') and sss.get('area').has_key('tenure_area'):
-            #    sss.get('area').pop('tenure_area')
-            initial['sss_data'] = json.dumps(sss)
 
         return initial
 
@@ -484,7 +478,6 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         damage_formset          = DamageFormSet(self.request.POST, prefix='damage_fs')
         area_burnt_formset      = AreaBurntFormSet(self.request.POST, prefix='area_burnt_fs')
 
-        #import ipdb; ipdb.set_trace()
         if form.is_valid():
             if form.cleaned_data['fire_not_found']:
                 return self.form_valid(request, form)

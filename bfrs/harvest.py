@@ -44,7 +44,6 @@ class DeferredIMAP():
         self.email_folder = email_folder
 
     def login(self):
-        #mport ipdb; ipdb.set_trace()
         self.imp = IMAP4_SSL(self.host)
         self.imp.login(self.user, self.password)
         #self.imp.select("INBOX")
@@ -158,8 +157,6 @@ def save_bushfire_emails(queueitem):
             incident_num = msg_text.split('Incident:')[1].split('\r')[0].strip()
             fire_num = msg_text.split('Fire Number:')[1].split('\r')[0].strip()
         except: pass
-        #if ('UAT' in msg_subject or 'DEV:' in msg_subject or 'TEST:' in msg_subject):
-        #if settings.HARVEST_EMAIL_FOLDER.lower() == 'inbox':
         if settings.HARVEST_EMAIL_FOLDER.lower() == 'inbox' and any(x in msg_subject for x in ['uat', 'UAT', 'dev', 'DEV', 'test', 'Test', 'TEST']):
             if any(x in msg_subject for x in ['uat', 'UAT']):
                 dimap.move(msgid, 'uat')
