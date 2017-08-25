@@ -160,7 +160,7 @@ def save_bushfire_emails(queueitem):
         except: pass
         #if ('UAT' in msg_subject or 'DEV:' in msg_subject or 'TEST:' in msg_subject):
         #if settings.HARVEST_EMAIL_FOLDER.lower() == 'inbox':
-        if any(x in msg_subject for x in ['uat', 'UAT', 'dev', 'DEV', 'test', 'Test', 'TEST']):
+        if settings.HARVEST_EMAIL_FOLDER.lower() == 'inbox' and any(x in msg_subject for x in ['uat', 'UAT', 'dev', 'DEV', 'test', 'Test', 'TEST']):
             if any(x in msg_subject for x in ['uat', 'UAT']):
                 dimap.move(msgid, 'uat')
             elif any(x in msg_subject for x in ['dev', 'DEV']):
