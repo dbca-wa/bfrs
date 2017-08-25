@@ -323,7 +323,7 @@ class BushfireBase(Audit):
 
     arson_squad_notified = models.NullBooleanField(verbose_name="Arson Squad Notified", null=True)
     investigation_req = models.NullBooleanField(verbose_name="Investigation Required", null=True)
-    offence_no = models.CharField(verbose_name="Police Offence No.", max_length=10, null=True, blank=True)
+    offence_no = models.CharField(verbose_name="Police Offence No.", max_length=13, null=True, blank=True)
     initial_area = models.FloatField(verbose_name="Area of fire at arrival (ha)", validators=[MinValueValidator(0)], null=True, blank=True)
     initial_area_unknown = models.BooleanField(default=False)
     area = models.FloatField(verbose_name="Final Fire Area (ha)", validators=[MinValueValidator(0)], null=True, blank=True)
