@@ -32,7 +32,7 @@ class DeferredIMAP():
     and handling logins/logouts.
     Note instances aren't threadsafe.
     '''
-    def __init__(self, host, user, password):
+    def __init__(self, host, user, password, email_folder):
         self.deletions = []
         self.moved_uat = []
         self.moved_dev = []
@@ -41,13 +41,14 @@ class DeferredIMAP():
         self.host = host
         self.user = user
         self.password = password
+        self.email_folder = email_folder
 
     def login(self):
         #mport ipdb; ipdb.set_trace()
         self.imp = IMAP4_SSL(self.host)
         self.imp.login(self.user, self.password)
         #self.imp.select("INBOX")
-        resp = self.imp.select(settings.HARVEST_EMAIL_FOLDER)
+        resp = self.imp.select(self.email_folder)
         if resp[0] != 'OK':
             logger.error("Could not get Mail Folder: {}".format(resp[1]))
             sys.exit()
@@ -113,7 +114,7 @@ class DeferredIMAP():
 
 
 
-dimap = DeferredIMAP(settings.HARVEST_EMAIL_HOST, settings.HARVEST_EMAIL_USER, settings.HARVEST_EMAIL_PASSWORD)
+dimap = DeferredIMAP(settings.HARVEST_EMAIL_HOST, settings.HARVEST_EMAIL_USER, settings.HARVEST_EMAIL_PASSWORD, settings.HARVEST_EMAIL_FOLDER)
 
 
 def retrieve_emails(search):
