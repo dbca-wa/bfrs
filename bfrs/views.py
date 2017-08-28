@@ -63,23 +63,27 @@ class BooleanFilter(django_filters.filters.Filter):
 
 class BushfireFilter(django_filters.FilterSet):
 
-    YEAR_CHOICES = [[i['year'], i['year']] for i in Bushfire.objects.all().values('year').distinct()]
-    RPT_YEAR_CHOICES = [[i['reporting_year'], i['reporting_year']] for i in Bushfire.objects.all().values('reporting_year').distinct()]
+    # try/except block hack added here to allow initial migration before the model exists - else migration fails
+    try:
+        YEAR_CHOICES = [[i['year'], i['year']] for i in Bushfire.objects.all().values('year').distinct()]
+        RPT_YEAR_CHOICES = [[i['reporting_year'], i['reporting_year']] for i in Bushfire.objects.all().values('reporting_year').distinct()]
 
-    REGION_CHOICES = []
-    for region in Region.objects.distinct('name'):
-        REGION_CHOICES.append([region.id, region.name])
+        REGION_CHOICES = []
+        for region in Region.objects.distinct('name'):
+            REGION_CHOICES.append([region.id, region.name])
 
-    DISTRICT_CHOICES = []
-    for district in District.objects.distinct('name'):
-        DISTRICT_CHOICES.append([district.id, district.name])
+        DISTRICT_CHOICES = []
+        for district in District.objects.distinct('name'):
+            DISTRICT_CHOICES.append([district.id, district.name])
 
-    region = django_filters.ChoiceFilter(choices=REGION_CHOICES, label='Region')
-    district = django_filters.ChoiceFilter(choices=DISTRICT_CHOICES, label='District')
-    year = django_filters.ChoiceFilter(choices=YEAR_CHOICES, label='Year')
-    reporting_year = django_filters.ChoiceFilter(choices=RPT_YEAR_CHOICES, label='Reporting Year')
-    report_status = django_filters.ChoiceFilter(choices=Bushfire.REPORT_STATUS_CHOICES, label='Report Status', name='report_status', method='filter_report_status')
-    fire_number = django_filters.CharFilter(name='fire_number', label='Search', method='filter_fire_number')
+        region = django_filters.ChoiceFilter(choices=REGION_CHOICES, label='Region')
+        district = django_filters.ChoiceFilter(choices=DISTRICT_CHOICES, label='District')
+        year = django_filters.ChoiceFilter(choices=YEAR_CHOICES, label='Year')
+        reporting_year = django_filters.ChoiceFilter(choices=RPT_YEAR_CHOICES, label='Reporting Year')
+        report_status = django_filters.ChoiceFilter(choices=Bushfire.REPORT_STATUS_CHOICES, label='Report Status', name='report_status', method='filter_report_status')
+        fire_number = django_filters.CharFilter(name='fire_number', label='Search', method='filter_fire_number')
+    except:
+        pass
 
     def filter_report_status(self, queryset, name, value):
         if int(value) == Bushfire.STATUS_MISSING_FINAL:
@@ -113,12 +117,15 @@ class BushfireFilter(django_filters.FilterSet):
     def __init__(self, *args, **kwargs):
         super(BushfireFilter, self).__init__(*args, **kwargs)
 
-        # allows dynamic update of the filter set, on page refresh
-        self.filters['year'].extra['choices'] = [[None, '---------']] + [[i['year'], str(i['year']) + '/' + str(i['year']+1)] for i in Bushfire.objects.all().values('year').distinct().order_by('year')]
-        self.filters['reporting_year'].extra['choices'] = [[None, '---------']] + [[i['reporting_year'], str(i['reporting_year']) + '/' + str(i['reporting_year']+1)] for i in Bushfire.objects.all().values('reporting_year').distinct().order_by('reporting_year')]
-        if not can_maintain_data(self.request.user):
-            # pop the 'Reviewed' option
-            self.filters['report_status'].extra['choices'] = [(u'', '---------'), (1, 'Initial Fire Report'), (2, 'Notifications Submitted'), (3, 'Report Authorised'), (5, 'Invalidated'), (6, 'Outstanding Fires')]
+        try:
+            # allows dynamic update of the filter set, on page refresh
+            self.filters['year'].extra['choices'] = [[None, '---------']] + [[i['year'], str(i['year']) + '/' + str(i['year']+1)] for i in Bushfire.objects.all().values('year').distinct().order_by('year')]
+            self.filters['reporting_year'].extra['choices'] = [[None, '---------']] + [[i['reporting_year'], str(i['reporting_year']) + '/' + str(i['reporting_year']+1)] for i in Bushfire.objects.all().values('reporting_year').distinct().order_by('reporting_year')]
+            if not can_maintain_data(self.request.user):
+                # pop the 'Reviewed' option
+                self.filters['report_status'].extra['choices'] = [(u'', '---------'), (1, 'Initial Fire Report'), (2, 'Notifications Submitted'), (3, 'Report Authorised'), (5, 'Invalidated'), (6, 'Outstanding Fires')]
+        except:
+            pass
 
 
 class ProfileView(LoginRequiredMixin, generic.FormView):

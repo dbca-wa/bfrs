@@ -1,4 +1,5 @@
 from bfrs.models import Bushfire
+from django.db import connection
 
 
 def create_view():
@@ -283,39 +284,42 @@ def create_fireboundary_view():
 
 
 def test_view():
-    from django.db import connection
     cursor=connection.cursor()
     cursor.execute('''select fire_number, year, district_id from bfrs_bushfire_v''')
     return cursor.fetchall()
 
 def test_final_view():
-    from django.db import connection
     cursor=connection.cursor()
     cursor.execute('''select fire_number, year, district_id from bfrs_bushfire_final_fireboundary_v''')
     return cursor.fetchall()
 
 def test_fireboundary_view():
-    from django.db import connection
     cursor=connection.cursor()
     cursor.execute('''select fire_number, year, district_id from bfrs_bushfire_fireboundary_v''')
     return cursor.fetchall()
 
 def drop_view():
-    from django.db import connection
-    cursor=connection.cursor()
-    cursor.execute('''drop view bfrs_bushfire_v''')
-    return cursor.fetchall()
+    try:
+        cursor=connection.cursor()
+        cursor.execute('''drop view bfrs_bushfire_v''')
+        return cursor.fetchall()
+    except:
+        pass
 
 def drop_final_view():
-    from django.db import connection
-    cursor=connection.cursor()
-    cursor.execute('''drop view bfrs_bushfire_final_fireboundary_v''')
-    return cursor.fetchall()
+    try:
+        cursor=connection.cursor()
+        cursor.execute('''drop view bfrs_bushfire_final_fireboundary_v''')
+        return cursor.fetchall()
+    except:
+        pass
 
 def drop_fireboundary_view():
-    from django.db import connection
-    cursor=connection.cursor()
-    cursor.execute('''drop view bfrs_bushfire_fireboundary_v''')
-    return cursor.fetchall()
+    try:
+        cursor=connection.cursor()
+        cursor.execute('''drop view bfrs_bushfire_fireboundary_v''')
+        return cursor.fetchall()
+    except:
+        pass
 
 

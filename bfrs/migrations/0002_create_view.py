@@ -14,9 +14,9 @@ class Migration(migrations.Migration):
         """ from https://docs.djangoproject.com/en/1.10/topics/migrations/ """
         call_command('loaddata', 'districts.json')
         call_command('loaddata', 'enum.json')
-        create_view()
-        create_final_view()
-        create_fireboundary_view()
+        #create_view()
+        #create_final_view()
+        #create_fireboundary_view()
         create_other_user()
         update_users()
 
