@@ -318,6 +318,13 @@ class BaseInjuryFormSet(BaseInlineFormSet):
 
         return
 
+    def is_valid(self, injury_unknown):
+        if injury_unknown:
+            # no need to validate formset
+            self.errors.pop()
+            self.is_bound = False
+            return True
+        return super(BaseInjuryFormSet, self).is_valid()
 
 class BaseDamageFormSet(BaseInlineFormSet):
     def clean(self):
@@ -349,6 +356,14 @@ class BaseDamageFormSet(BaseInlineFormSet):
                         form.add_error('damage_type', 'Duplicate: Damage type must be unique')
 
         return
+
+    def is_valid(self, damage_unknown):
+        if damage_unknown:
+            # no need to validate formset
+            self.errors.pop()
+            self.is_bound = False
+            return True
+        return super(BaseDamageFormSet, self).is_valid()
 
 
 #class BaseFireBehaviourFormSet(BaseInlineFormSet):

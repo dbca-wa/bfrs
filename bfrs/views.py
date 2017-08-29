@@ -488,7 +488,7 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         if form.is_valid():
             if form.cleaned_data['fire_not_found']:
                 return self.form_valid(request, form)
-            if injury_formset.is_valid() and damage_formset.is_valid(): # No need to check area_burnt_formset since the fs is readonly
+            if injury_formset.is_valid(form.cleaned_data['injury_unknown']) and damage_formset.is_valid(form.cleaned_data['damage_unknown']): # No need to check area_burnt_formset since the fs is readonly
                 return self.form_valid(request, form, area_burnt_formset, injury_formset, damage_formset)
             else:
                 return self.form_invalid(request, form, area_burnt_formset, injury_formset, damage_formset)

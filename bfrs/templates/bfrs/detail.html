@@ -73,7 +73,7 @@
   {% endif %}
   {% endcomment %}
 
-  {% if damage_formset.errors|check_errors %}
+  {% if not object.damage_unknown and damage_formset.errors|check_errors %}
       <h1 class="errornote">
         <p>Damage formset Errors</p>
         <button type="button" class="close" data-dismiss="alert">×</button>
@@ -92,7 +92,7 @@
       </h1>
   {% endif %}
 
-  {% if injury_formset.errors|check_errors %}
+  {% if not object.injury_unknown and injury_formset.errors|check_errors %}
       <h1 class="errornote">
         <p>Injury formset Errors</p>
         <button type="button" class="close" data-dismiss="alert">×</button>
