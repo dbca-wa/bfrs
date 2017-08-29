@@ -298,7 +298,7 @@ def create_areas_burnt(bushfire, area_burnt_list):
     for d in area_burnt_list:
         aggregated_sums[d["category"]] += d["area"]
 
-    area_other = 0.0
+    area_unknown = 0.0
     new_area_burnt_list = []
     for category, area in aggregated_sums.iteritems():
         tenure_qs = Tenure.objects.filter(name=category)
@@ -309,10 +309,12 @@ def create_areas_burnt(bushfire, area_burnt_list):
             })
 
         elif area:
-            area_other += area
+            area_unknown += area
+            logger.info('Unknown Tenure category: ({}). May need to add this new category to the Tenure Table'.format(category))
 
-    if area_other > 0:
-        new_area_burnt_list.append({'tenure': Tenure.objects.get(name='Other'), 'area': round(area_other, 2)})
+    if area_unknown > 0:
+        #new_area_burnt_list.append({'tenure': Tenure.objects.get(name='Other'), 'area': round(area_unknown, 2)})
+        new_area_burnt_list.append({'tenure': Tenure.objects.get(name='Unknown'), 'area': round(area_unknown, 2)})
 
     AreaBurntFormSet = inlineformset_factory(Bushfire, AreaBurnt, extra=len(new_area_burnt_list), min_num=0, validate_min=True, exclude=())
     area_burnt_formset = AreaBurntFormSet(instance=bushfire, prefix='area_burnt_fs')
@@ -347,17 +349,18 @@ def update_areas_burnt(bushfire, area_burnt_list):
     for d in area_burnt_list:
         aggregated_sums[d["category"]] += d["area"]
 
-    area_other = 0.0
+    area_unknown = 0.0
     new_area_burnt_object = []
     for category, area in aggregated_sums.iteritems():
         tenure_qs = Tenure.objects.filter(name=category)
         if tenure_qs:
             new_area_burnt_object.append(AreaBurnt(bushfire=bushfire, tenure=tenure_qs[0], area=round(area, 2)))
         elif area:
-            area_other += area
+            area_unknown += area
 
-    if area_other > 0:
-        new_area_burnt_object.append(AreaBurnt(bushfire=bushfire, tenure=Tenure.objects.get(name='Other'), area=round(area, 2)))
+    if area_unknown > 0:
+        new_area_burnt_object.append(AreaBurnt(bushfire=bushfire, tenure=Tenure.objects.get(name='Unknown'), area=round(area_unknown, 2)))
+        logger.info('Unknown Tenure category: ({}). May need to add this new category to the Tenure Table'.format(category))
 
     try:
         with transaction.atomic():
@@ -589,7 +592,7 @@ def notifications_to_html(bushfire, url):
     return msg
 
 def rdo_email(bushfire, url):
-    if not settings.ALLOW_EMAIL_NOTIFICATION:
+    if not settings.ALLOW_EMAIL_NOTIFICATION or bushfire.fire_number in settings.EMAIL_EXCLUSIONS:
        return
 
     #for email_name in [i.name.upper() for i in Region.objects.all()]:
@@ -609,7 +612,7 @@ def rdo_email(bushfire, url):
     message.send()
 
 def pvs_email(bushfire, url):
-    if not settings.ALLOW_EMAIL_NOTIFICATION:
+    if not settings.ALLOW_EMAIL_NOTIFICATION or bushfire.fire_number in settings.EMAIL_EXCLUSIONS:
        return
 
     subject = 'PVS Email - Initial Bushfire submitted - {}'.format(bushfire.fire_number)
@@ -625,7 +628,7 @@ def pvs_email(bushfire, url):
     message.send()
 
 def fpc_email(bushfire, url):
-    if not settings.ALLOW_EMAIL_NOTIFICATION:
+    if not settings.ALLOW_EMAIL_NOTIFICATION or bushfire.fire_number in settings.EMAIL_EXCLUSIONS:
        return
 
     subject = 'FPC Email - Initial Bushfire submitted - {}'.format(bushfire.fire_number)
@@ -641,7 +644,7 @@ def fpc_email(bushfire, url):
     message.send()
 
 def pica_email(bushfire, url):
-    if not settings.ALLOW_EMAIL_NOTIFICATION:
+    if not settings.ALLOW_EMAIL_NOTIFICATION or bushfire.fire_number in settings.EMAIL_EXCLUSIONS:
        return
 
     subject = 'PICA Email - Initial Bushfire submitted - {}'.format(bushfire.fire_number)
@@ -657,7 +660,7 @@ def pica_email(bushfire, url):
     message.send()
 
 def pica_sms(bushfire, url):
-    if not settings.ALLOW_EMAIL_NOTIFICATION:
+    if not settings.ALLOW_EMAIL_NOTIFICATION or bushfire.fire_number in settings.EMAIL_EXCLUSIONS:
        return
 
     if 'bfrs-prod' not in os.getcwd():
@@ -668,7 +671,7 @@ def pica_sms(bushfire, url):
     return send_mail('', message, settings.EMAIL_TO_SMS_FROMADDRESS, TO_SMS_ADDRESS)
 
 def dfes_email(bushfire, url):
-    if not settings.ALLOW_EMAIL_NOTIFICATION:
+    if not settings.ALLOW_EMAIL_NOTIFICATION or bushfire.fire_number in settings.EMAIL_EXCLUSIONS:
        return
 
     subject = 'DFES Email - Initial Bushfire submitted - {}'.format(bushfire.fire_number)
@@ -684,7 +687,7 @@ def dfes_email(bushfire, url):
     message.send()
 
 def police_email(bushfire, url):
-    if not settings.ALLOW_EMAIL_NOTIFICATION:
+    if not settings.ALLOW_EMAIL_NOTIFICATION or bushfire.fire_number in settings.EMAIL_EXCLUSIONS:
        return
 
     subject = 'POLICE Email - Initial Bushfire submitted {}, and an investigation is required - {}'.format(bushfire.fire_number, 'Yes' if bushfire.investigation_req else 'No')
