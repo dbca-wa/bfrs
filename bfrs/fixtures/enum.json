@@ -225,21 +225,21 @@
     "pk": 4,
     "model": "bfrs.tenure",
     "fields": {
-        "name": "Unallocated Crown Land - Dept Interest"
+        "name": "UCL - Section 33(2)"
     }
 },
 {
     "pk": 5,
     "model": "bfrs.tenure",
     "fields": {
-        "name": "Crown Freehold - Dept Interest"
+        "name": "Crown Freehold - Dept Managed"
     }
 },
 {
     "pk": 6,
     "model": "bfrs.tenure",
     "fields": {
-        "name": "Miscellaneous Reserve"
+        "name": "BGPA - Reserve"
     }
 },
 {
@@ -253,7 +253,7 @@
     "pk": 8,
     "model": "bfrs.tenure",
     "fields": {
-        "name": "SRT - River Reserve"
+        "name": "ZPA - Reserve"
     }
 },
 {
@@ -267,56 +267,56 @@
     "pk": 10,
     "model": "bfrs.tenure",
     "fields": {
-        "name": "Section 16A agreement"
+        "name": "Marine Management Area"
     }
 },
 {
     "pk": 11,
     "model": "bfrs.tenure",
     "fields": {
-        "name": "5(1)(h) Reserve"
+        "name": "Marine Nature Reserve"
     }
 },
 {
     "pk": 12,
     "model": "bfrs.tenure",
     "fields": {
-        "name": "5(1)(g) Reserve"
+        "name": "RIA - Reserve"
     }
 },
 {
     "pk": 13,
     "model": "bfrs.tenure",
     "fields": {
-        "name": "Marine Nature Reserve"
+        "name": "SCRM ACT - River Reserve"
     }
 },
 {
     "pk": 14,
     "model": "bfrs.tenure",
     "fields": {
-        "name": "Section 33(2)"
+        "name": "Section 34A Freehold"
     }
 },
 {
     "pk": 15,
     "model": "bfrs.tenure",
     "fields": {
-        "name": "Marine Management Area"
+        "name": "Section 5(1)(g) Reserve"
     }
 },
 {
     "pk": 16,
     "model": "bfrs.tenure",
     "fields": {
-        "name": "Timber Reserve"
+        "name": "Section 5(1)(h) Reserve"
     }
 },
 {
     "pk": 17,
     "model": "bfrs.tenure",
     "fields": {
-        "name": "CALM Exec Body Freehold"
+        "name": "Timber Reserve"
     }
 },
 {
@@ -340,6 +340,14 @@
         "name": "Other"
     }
 },
+{
+    "pk": 21,
+    "model": "bfrs.tenure",
+    "fields": {
+        "name": "Unknown"
+    }
+},
+
 
 
 {
