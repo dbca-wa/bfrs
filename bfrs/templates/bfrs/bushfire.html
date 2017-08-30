@@ -62,7 +62,7 @@
 	  <th style="width:10%"><font color="dodgerblue">Job Code <i class="icon-sort"></i></font></th>
 	  <th style="width:15%"><font color="dodgerblue">Notifications <i class="icon-sort"></font></i></th>
 	  <th style="width:15%"><font color="dodgerblue">Report <i class="icon-sort"></i></font></th>
-	  <th style="width:15%"><font color="dodgerblue">View fire in SSS <i class="icon-sort"></i></font></th>
+	  <!--<th style="width:15%"><font color="dodgerblue">View fire in SSS <i class="icon-sort"></i></font></th>-->
 	  {% if can_maintain_data %}<th style="width:10%"><font color="dodgerblue">Admin <i class="icon-sort"></i></font></th>{% endif %}
   </thead>
   <tbody>
@@ -91,9 +91,11 @@
 		    {% endif %}
 		</td>
 
+        {% comment %}
         <td align="center">
 		  <a href="#" onclick='openGokart({"action": "select", "region":{{bushfire.region.id}},"district":{{bushfire.district.id}},"bushfireid":"{{bushfire.fire_number}}" });' title="Open report in SSS"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-link icon-white"></i></a>
 		</td>
+        {% endcomment %}
 
         {% if can_maintain_data %}
          <td>
