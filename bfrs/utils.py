@@ -615,7 +615,7 @@ def rdo_email(bushfire, url):
     body = 'RDO Email - {0}, {1}\n\nInitial Bushfire has been submitted and is located at <a href="{2}">{2}</a><br><br>'.format(region_name, bushfire.fire_number, url)
     body += notifications_to_html(bushfire, url)
 
-    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=to_email)
+    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=to_email, cc=settings.CC_EMAIL, bcc=settings.BCC_EMAIL)
     message.content_subtype = 'html'
 
     message.send()
@@ -632,7 +632,7 @@ def pvs_email(bushfire, url):
     body = 'PVS Email - {0}\n\nInitial Bushfire has been submitted and is located at <a href="{1}">{1}</a><br><br>'.format(bushfire.fire_number, url)
     body += notifications_to_html(bushfire, url)
 
-    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.PVS_EMAIL)
+    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.PVS_EMAIL, cc=settings.CC_EMAIL, bcc=settings.BCC_EMAIL)
     message.content_subtype = 'html'
     message.send()
 
@@ -648,7 +648,7 @@ def fpc_email(bushfire, url):
     body = 'FPC Email - {0}\n\nInitial Bushfire has been submitted and is located at <a href="{1}">{1}</a><br><br>'.format(bushfire.fire_number, url)
     body += notifications_to_html(bushfire, url)
 
-    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.FPC_EMAIL)
+    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.FPC_EMAIL, cc=settings.CC_EMAIL, bcc=settings.BCC_EMAIL)
     message.content_subtype = 'html'
     message.send()
 
@@ -664,7 +664,7 @@ def pica_email(bushfire, url):
     body = 'PICA Email - {0}\n\nInitial Bushfire has been submitted and is located at <a href="{1}">{1}</a><br><br>'.format(bushfire.fire_number, url)
     body += notifications_to_html(bushfire, url)
 
-    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.PICA_EMAIL)
+    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.PICA_EMAIL, cc=settings.CC_EMAIL, bcc=settings.BCC_EMAIL)
     message.content_subtype = 'html'
     message.send()
 
@@ -691,7 +691,7 @@ def dfes_email(bushfire, url):
     body = '---- PLEASE REPLY WITH INCIDENT NUMBER, Example "Incident: ABCDE12345" - on a single line without quotes (alphanumeric max. 32 chars) ----<br><br>DFES Email<br><br>Fire Number:{0}<br><br>(Lat/Lon) {1}<br><br>Initial Bushfire has been submitted and is located at <a href="{2}">{2}</a><br><br>'.format(bushfire.fire_number, bushfire.origin_point, url)
     body += notifications_to_html(bushfire, url)
 
-    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.DFES_EMAIL)
+    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.DFES_EMAIL, cc=settings.CC_EMAIL, bcc=settings.BCC_EMAIL)
     message.content_subtype = 'html'
     message.send()
 
@@ -709,7 +709,7 @@ def police_email(bushfire, url):
     )
     body += notifications_to_html(bushfire, None)
 
-    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.POLICE_EMAIL)
+    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.POLICE_EMAIL, cc=settings.CC_EMAIL, bcc=settings.BCC_EMAIL)
     message.content_subtype = 'html'
     message.send()
 
@@ -727,7 +727,7 @@ def fssdrs_email(bushfire, url, status='final'):
     )
     body += notifications_to_html(bushfire, url)
 
-    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.FSSDRS_EMAIL)
+    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.FSSDRS_EMAIL, cc=settings.CC_EMAIL, bcc=settings.BCC_EMAIL)
     message.content_subtype = 'html'
     message.send()
 
