@@ -287,7 +287,7 @@ def authorise_report(request, obj):
 
     return None
 
-def create_areas_burnt(bushfire, area_burnt_list):
+def create_areas_burnt(bushfire, tenure_layers):
     """
     Creates the initial bushfire record together with AreaBurnt FormSet from BushfireUpdateView (Operates on data dict from SSS)
     Uses sss_dict - used by get_context_data, to display initial sss_data supplied from SSS system
@@ -295,10 +295,13 @@ def create_areas_burnt(bushfire, area_burnt_list):
 
     # aggregate the area's in like tenure types
     aggregated_sums = defaultdict(float)
-    for d in area_burnt_list:
-        aggregated_sums[d["category"]] += d["area"]
+    for layer in tenure_layers:
+        for d in tenure_layers[layer]['areas']:
+            aggregated_sums[d["category"]] += d["area"]
+
 
     area_unknown = 0.0
+    category_unknown = []
     new_area_burnt_list = []
     for category, area in aggregated_sums.iteritems():
         tenure_qs = Tenure.objects.filter(name=category)
@@ -310,11 +313,13 @@ def create_areas_burnt(bushfire, area_burnt_list):
 
         elif area:
             area_unknown += area
-            logger.info('Unknown Tenure category: ({}). May need to add this new category to the Tenure Table'.format(category))
+            if category not in category_unknown:
+                category_unknown.append(category)
 
     if area_unknown > 0:
         #new_area_burnt_list.append({'tenure': Tenure.objects.get(name='Other'), 'area': round(area_unknown, 2)})
         new_area_burnt_list.append({'tenure': Tenure.objects.get(name='Unknown'), 'area': round(area_unknown, 2)})
+        logger.info('Unknown Tenure categories: ({}). May need to add these categories to the Tenure Table'.format(category_unknown))
 
     AreaBurntFormSet = inlineformset_factory(Bushfire, AreaBurnt, extra=len(new_area_burnt_list), min_num=0, validate_min=True, exclude=())
     area_burnt_formset = AreaBurntFormSet(instance=bushfire, prefix='area_burnt_fs')
@@ -338,7 +343,7 @@ def create_areas_burnt_fs(bushfire):
     return area_burnt_formset
 
 
-def update_areas_burnt(bushfire, area_burnt_list):
+def update_areas_burnt(bushfire, tenure_layers):
     """
     Updates AreaBurnt model attached to the bushfire record from api.py, via REST API (Operates on data dict from SSS)
     Uses sss_dict
@@ -346,10 +351,12 @@ def update_areas_burnt(bushfire, area_burnt_list):
 
     # aggregate the area's in like tenure types
     aggregated_sums = defaultdict(float)
-    for d in area_burnt_list:
-        aggregated_sums[d["category"]] += d["area"]
+    for layer in tenure_layers:
+        for d in tenure_layers[layer]['areas']:
+            aggregated_sums[d["category"]] += d["area"]
 
     area_unknown = 0.0
+    category_unknown = []
     new_area_burnt_object = []
     for category, area in aggregated_sums.iteritems():
         tenure_qs = Tenure.objects.filter(name=category)
@@ -357,10 +364,12 @@ def update_areas_burnt(bushfire, area_burnt_list):
             new_area_burnt_object.append(AreaBurnt(bushfire=bushfire, tenure=tenure_qs[0], area=round(area, 2)))
         elif area:
             area_unknown += area
+            if category not in category_unknown:
+                category_unknown.append(category)
 
     if area_unknown > 0:
         new_area_burnt_object.append(AreaBurnt(bushfire=bushfire, tenure=Tenure.objects.get(name='Unknown'), area=round(area_unknown, 2)))
-        logger.info('Unknown Tenure category: ({}). May need to add this new category to the Tenure Table'.format(category))
+        logger.info('Unknown Tenure categories: ({}). May need to add these categories to the Tenure Table'.format(category_unknown))
 
     try:
         with transaction.atomic():

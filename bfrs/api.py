@@ -180,7 +180,6 @@ class BushfireResource(APIResource):
         if bundle.data.has_key('origin_point') and isinstance(bundle.data['origin_point'], list):
             bundle.data['origin_point'] = Point(bundle.data['origin_point']).__str__()
 
-        #import ipdb;ipdb.set_trace()
         if bundle.data.has_key('origin_point_mga'):
             bundle.data['origin_point_mga'] = bundle.data['origin_point_mga']
         return bundle
@@ -189,12 +188,11 @@ class BushfireResource(APIResource):
         if bundle.data.has_key('fire_boundary') and isinstance(bundle.data['fire_boundary'], list):
             bundle.data['fire_boundary'] = MultiPolygon([Polygon(*p) for p in bundle.data['fire_boundary']]).__str__()
 
-            #if bundle.data.has_key('area') and bundle.data['area'].has_key('tenure_area') and bundle.data['area']['tenure_area'].has_key('areas') and bundle.data['area']['tenure_area']['areas']:
-            if bundle.data.has_key('area') and bundle.data['area'].has_key('tenure_area') and bundle.data['area']['tenure_area'].has_key('areas'):
+            #if bundle.data.has_key('area') and bundle.data['area'].has_key('total_area') and bundle.data['area']['total_area']:
+            if bundle.data.has_key('area') and bundle.data['area'].has_key('total_area'):
                 bundle.obj.tenures_burnt.all().delete()
 
             if bundle.obj.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED:
-                #import ipdb;ipdb.set_trace()
                 bundle.obj.final_fire_boundary = True
 
             if bundle.obj.is_reviewed:
@@ -207,7 +205,6 @@ class BushfireResource(APIResource):
             bundle.obj.fire_boundary = None
             bundle.obj.final_fire_boundary = False
 
-        #import ipdb; ipdb.set_trace()
         if bundle.data.has_key('fb_validation_req'):
             bundle.data['fb_validation_req'] = bundle.data['fb_validation_req']
 
@@ -240,7 +237,6 @@ class BushfireResource(APIResource):
         #    sss_data.get('area').pop('tenure_area') # necessary for the initial create stagei for display in form, since object not yet saved
         bundle.obj.sss_data = json.dumps(sss_data)
 
-        #import ipdb; ipdb.set_trace()
         if bundle.data.has_key('tenure_ignition_point') and bundle.data['tenure_ignition_point'] and \
             bundle.data['tenure_ignition_point'].has_key('category') and bundle.data['tenure_ignition_point']['category']:
             try:
@@ -250,8 +246,9 @@ class BushfireResource(APIResource):
         elif bundle.data.has_key('tenure_ignition_point') and not bundle.data['tenure_ignition_point']:
             bundle.obj.tenure = Tenure.objects.get(name__iendswith='other')
 
-        if bundle.data.has_key('area') and bundle.data['area'].has_key('tenure_area') and bundle.data['area']['tenure_area'].has_key('areas') and bundle.data['area']['tenure_area']['areas']:
-            update_areas_burnt(bundle.obj, bundle.data['area']['tenure_area']['areas'])
+        if bundle.data.has_key('area') and bundle.data['area'].has_key('layers') and bundle.data['area']['layers']:
+            update_areas_burnt(bundle.obj, bundle.data['area']['layers'])
+
 
         if bundle.data.has_key('area') and bundle.data['area'].has_key('total_area') and bundle.data['area']['total_area']:
             if bundle.obj.report_status < Bushfire.STATUS_INITIAL_AUTHORISED:

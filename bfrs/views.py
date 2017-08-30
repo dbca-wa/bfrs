@@ -26,7 +26,7 @@ from bfrs.forms import (ProfileForm, BushfireFilterForm, BushfireUpdateForm,
         AreaBurntFormSet, InjuryFormSet, DamageFormSet, 
     )
 from bfrs.utils import (breadcrumbs_li,
-        create_areas_burnt, update_areas_burnt, update_areas_burnt_fs, update_damage_fs, update_injury_fs, 
+        create_areas_burnt, update_areas_burnt_fs, update_damage_fs, update_injury_fs, 
         export_final_csv, export_excel, 
         update_status, serialize_bushfire,
         rdo_email, pvs_email, fpc_email, pica_email, pica_sms, police_email, dfes_email, fssdrs_email,
@@ -596,8 +596,10 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         area_burnt_formset = None
         if self.request.POST.has_key('sss_create'):
             sss = json.loads( self.request.POST['sss_create'] )
-            if sss.has_key('area') and sss['area'].has_key('tenure_area') and sss['area']['tenure_area'].has_key('areas') and sss['area']['tenure_area']['areas']:
-                area_burnt_formset = create_areas_burnt(None, sss['area']['tenure_area']['areas'])
+            #if sss.has_key('area') and sss['area'].has_key('tenure_area') and sss['area']['tenure_area'].has_key('areas') and sss['area']['tenure_area']['areas']:
+            if sss.has_key('area') and sss['area'].has_key('total_area') and sss['area']['total_area'] > 0:
+                #area_burnt_formset = create_areas_burnt(None, sss['area']['tenure_area']['areas'])
+                area_burnt_formset = create_areas_burnt(None, sss['area']['layers'])
 
         if not area_burnt_formset:
             area_burnt_formset      = AreaBurntFormSet(instance=bushfire, prefix='area_burnt_fs')

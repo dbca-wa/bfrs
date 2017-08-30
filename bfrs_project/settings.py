@@ -36,7 +36,7 @@ EMAIL_TO_SMS_FROMADDRESS = env('EMAIL_TO_SMS_FROMADDRESS', 'pics_sms_from')
 SMS_POSTFIX = env('SMS_POSTFIX', 'sms_postfix')
 MEDIA_ALERT_SMS_TOADDRESS_MAP = env('MEDIA_ALERT_SMS_TOADDRESS_MAP', 'pica_sms_to')
 ALLOW_EMAIL_NOTIFICATION = os.environ.get('ALLOW_EMAIL_NOTIFICATION', None) in ["True", "on", "1", "DEBUG"]
-EMAIL_EXCLUSIONS = env('EMAIL_EXCLUSIONS', None)
+EMAIL_EXCLUSIONS = env('EMAIL_EXCLUSIONS', [])
 
 INTERNAL_EMAIL = env('INTERNAL_EMAIL', ['dpaw.wa.gov.au'])
 SSS_URL = env('SSS_URL', 'sss_redirect_url')

@@ -347,6 +347,28 @@
         "name": "Unknown"
     }
 },
+{
+    "pk": 22,
+    "model": "bfrs.tenure",
+    "fields": {
+        "name": "Crown Freehold - Dept Interest"
+    }
+},
+{
+    "pk": 23,
+    "model": "bfrs.tenure",
+    "fields": {
+        "name": "Crown Reserve - Dept Interest"
+    }
+},
+{
+    "pk": 24,
+    "model": "bfrs.tenure",
+    "fields": {
+        "name": "Unallocated Crown Land - Dept Interest"
+    }
+},
+
 
 
 
