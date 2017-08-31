@@ -217,7 +217,7 @@ def email_outstanding_fires(region_id=None):
                 filename = 'outstanding_fires_{}_{}.xls'.format(region_name.replace(' ', '').lower(), rpt_date.strftime('%d-%b-%Y'))
 
                 #import ipdb; ipdb.set_trace()
-                message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=email_to)
+                message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=email_to, cc=settings.CC_EMAIL, bcc=settings.BCC_EMAIL)
                 message.attach(filename, f.getvalue(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") #get the stream and set the correct mimetype
                 message.send()
 
