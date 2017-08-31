@@ -51,28 +51,6 @@
       </h1>
   {% endif %}
 
-  {% comment %}{% if fire_behaviour_formset.errors and fire_behaviour_formset.errors.0 %}{% endcomment %}
-  {% comment %}
-  {% if fire_behaviour_formset.errors|check_errors %}
-      <h1 class="errornote">
-        <p>Fire Behaviour formset Errors</p>
-        <button type="button" class="close" data-dismiss="alert">×</button>
-        {% for form in fire_behaviour_formset %} 
-          {% for field in form %} 
-            {% if field.errors %}
-              <li>{{ field.label }}: {{ field.errors|striptags }}</li>
-              {{ field.meta  }}
-            {% endif %}
-          {% endfor %}
-        {% endfor %}
-
-        {% if fire_behaviour_formset.non_field_errors %}
-          {{ fire_behaviour_formset.non_field_errors }}
-        {% endif %}
-      </h1>
-  {% endif %}
-  {% endcomment %}
-
   {% if not object.damage_unknown and damage_formset.errors|check_errors %}
       <h1 class="errornote">
         <p>Damage formset Errors</p>
@@ -219,11 +197,6 @@
 
         <tr>
             <th class="cbas">Tenure of ignition point *<br><br><div class=div_tenure style="visibility: hidden;">Other Tenure *</div></th>
-                {% comment %}
-            <td colspan="2" class="cbas">{% if is_init_authorised %} {{snapshot.tenure}} <br>{% if snapshot.other_tenure %} {{snapshot.get_other_tenure_display}} {% endif %} {{form.tenure.as_hidden}} {{form.other_tenure.as_hidden}} {% else %} {{form.tenure}} {% endif %}
-                <div class="div_tenure" style="visibility: hidden;">{{form.other_tenure}}</div>
-            </td>
-                {% endcomment %}
             <td colspan="2" class="cbas">{{form.tenure}}<br><div class="div_tenure" style="visibility: hidden;">{% if is_init_authorised %}{{snapshot.get_other_tenure_display}} {{form.other_tenure.as_hidden}}{% else %}{{form.other_tenure}}{% endif %}</div></td>
                 
             <th class="cbas">Duty Officer *</th>
@@ -353,10 +326,6 @@
             <input type="submit" value="Submit" class="btn btn-primary btn-success" name="_save_and_submit" />
           {% else %}
             <input type="submit" value="Submit" class="btn btn-primary btn-success" name="submit_initial" {% if is_init_authorised %}title="Notification Report already submitted" disabled{% else %}title="Save and submit"{% endif %} />
-          {% comment %}
-            <a id="id_submit_btn" href="{% url 'bushfire:initial_snapshot' snapshot.id %}?action=submit_initial" class="btn btn-primary btn-danger">Submit 2</a>
-            <input formaction="{% url 'bushfire:initial_snapshot' snapshot.id %}" type="submit" value="Submit" class="btn btn-primary btn-success" name="submit_initial" />
-          {% endcomment %}
           {% endif %}
 
         {% else %}
@@ -367,7 +336,6 @@
         {% endif %}
       {% endif %}
 
-      {% comment %}{% if form.errors or fire_behaviour_formset.errors|check_errors or damage_formset.errors|check_errors or injury_formset.errors|check_errors %}{% endcomment %}
       {% if form.errors or damage_formset.errors|check_errors or injury_formset.errors|check_errors %}
         <a href="javascript: history.go(-1)" class="btn btn-danger">Cancel</a>
       {% else %}
@@ -391,10 +359,6 @@
     <input type="hidden" name="action" value="{{action}}" />
     <input type="hidden" name="confirm_action" value="yes" />
     <input type="submit" class="btn" value="{% trans "Yes, I'm sure" %}" />
-	{% comment %}
-	<!-- Below line causes an error in the Django Formset -->
-    <a href="javascript: history.go(-1)" class="btn btn-danger">Cancel</a>
-	{% endcomment %}
     {% if object.report_status < object.STATUS_INITIAL_AUTHORISED %}
         <a id="id_cancel_btn" href="{% url 'bushfire:bushfire_initial' bushfire.id %}" class="btn btn-primary btn-danger">Cancel</a>
     {% else %}
@@ -419,17 +383,8 @@
   });
 {% endif %}
 
-// $('[id^=""]').hide() // starts with --> http://xdsoft.net/jqplugins/datetimepicker/
 
-/*
-$('[id$="_date"]').datetimepicker({ 
-    format: "Y-m-d H:i" ,
-    maxDate:true,
-    step: 15,
-    //maxTime:true,
-}); //ends with
-*/
-
+// starts with --> http://xdsoft.net/jqplugins/datetimepicker/
 $("#id_fire_detected_date,#id_dispatch_pw_date,#id_dispatch_aerial_date").datetimepicker({ 
     format: "Y-m-d H:i" ,
     maxDate:true,
@@ -442,18 +397,6 @@ $("#id_fire_controlled_date,#id_fire_contained_date,#id_fire_safe_date").datetim
     step: 30,
 }); 
 
-/*
-$('#id_fire_detected_date').on('change', function () {
-        var d = $('#id_fire_detected_date').datetimepicker('getValue');
-        var now = moment();
-        //console.log('d ' + d +  ' - moment() ', now)
-        $('#div_fire_detected_date').remove();
-        if (d.valueOf() > now.valueOf()) {
-            $('#id_fire_detected_date').after('<div id="div_fire_detected_date"><p><font color="red">Date/time cannot be in the future. Reseting to current date/time ...</font></p><div>');
-            $('#id_fire_detected_date').val(now.format('YYYY-MM-DD H:mm'));
-        }
-});
-*/
 
 $('#id_fire_detected_date').on('change', function () {
     set_current_date('id_fire_detected_date', 'div_fire_detected_date');
@@ -543,17 +486,6 @@ $('#id_park_trail_impacted_1').on('change', function() {
 	if($('#id_park_trail_impacted_1').is(':checked')) { $('.div_pvs').hide(); }
 }).change();
 
-/* Fire Behaviour Unknown */
-/*
-$('#id_fire_behaviour_unknown').on('change', function() {
-	if($('#id_fire_behaviour_unknown').is(':checked')) { 
-	    $('.div_fire_behaviour_unknown').hide(); 
-	} else {
-	    $('.div_fire_behaviour_unknown').show(); 
-	}
-}).change();
-*/
-
 /* Damage Unknown */
 $('#id_damage_unknown').on('change', function() {
 	if($('#id_damage_unknown').is(':checked')) { 
@@ -572,35 +504,6 @@ $('#id_injury_unknown').on('change', function() {
 	}
 }).change();
 
-
-/* Damage Unknown */
-/*
-$('#id_damage_unknown').on('change', function() {
-	if($('#id_damage_unknown').is(':checked')) { 
-        $('.div_damage_unknown *').prop('disabled',true).css({ opacity: 0.8  });
-        $(".div_damage_unknown a").css('visibility','hidden');
-
-	} else {
-        $('.div_damage_unknown *').prop('disabled',false).css({ opacity: 1.0  });
-        $(".div_damage_unknown a").css('visibility','visible');
-	}
-}).change();
-*/
-
-/* Injury Unknown */
-/*
-$('#id_injury_unknown').on('change', function() {
-	if($('#id_injury_unknown').is(':checked')) { 
-        //alert('** 1')
-        $('.div_injury_unknown *').prop('disabled',true).css({ opacity: 0.8 });
-        $('.div_injury_unknown a').css('visibility','hidden');
-	} else {
-        //alert('** 2')
-        $('.div_injury_unknown *').prop('disabled',false).css({ opacity: 1.0 });
-        $('.div_injury_unknown a').css('visibility','visible');
-	}
-}).change();
-*/
 
 /* Fire Cause */
 $('#id_cause').on('change', function() {
@@ -627,7 +530,6 @@ $('#id_cause').on('change', function() {
 /* Tenure */
 $('#id_tenure').on('change', function() {
 	var tenure = $('#id_tenure :selected').text();
-    //$("#id_tenure").replaceWith('<input id="id_tenure" type="text" value=' + tenure + ' />');
     
     if (tenure.indexOf('Other') > -1) {
 		$('.div_tenure').css('visibility','visible');
@@ -640,25 +542,6 @@ $('#id_tenure').on('change', function() {
     $('#id_tenure').mousedown(function(e){ e.preventDefault(); });
 
 }).change();
-
-// default is to collapse all on page load
-/*
-$('.collapse').collapse()
-
-$('.close-all').click(function(){
-  $('.panel-collapse.in').collapse('hide');
-  // toggle the buttons also
-  $(".close-all").hide();
-  $(".open-all").show();
-});
-
-$('.open-all').click(function(){
-  $('.panel-collapse:not(".in")').collapse('show');
-  // toggle the buttons also
-  $(".close-all").show();
-  $(".open-all").hide();
-});
-*/
 
 /* Initial Area Override */
 // Only allow override if no fire_boundary supllied
@@ -704,58 +587,9 @@ $('#id_fire_monitored_only').on('change', function() {
         $('#id_th_initial_attack_agency').css("font-weight", "normal");
         $("#id_th_initial_attack_agency").html("Initial attack agency");
 
-/*
-        $('#id_th_fire_contained_date').css("font-weight", "normal");
-        $("#id_th_fire_contained_date").html("Date fire contained <i class='icon-info-sign icon-white'>");
-
-        $('#id_th_fire_controlled_date').css("font-weight", "normal");
-        $("#id_th_fire_controlled_date").html("Date fire controlled <i class='icon-info-sign icon-white'>");
-*/
-
-/*
-        {% if not object.fire_behaviour.all %}
-            $('#id_fire_behaviour_unknown').prop('checked', true);
-	        $('.div_fire_behaviour_unknown').hide(); 
-        {% endif %}
-*/
-
-        /*
-	    $('#id_th_field_officer').css("font-weight", "normal");
-	    $("#id_th_field_officer").html("Field Officer");
-
-        $('#id_th_initial_controlling_agency').css("font-weight", "normal");
-        $("#id_th_initial_controlling_agency").html("Initial controlling agency");
-        $('#id_th_final_controlling_agency').css("font-weight", "normal");
-        $("#id_th_final_controlling_agency").html("Final controlling agency");
-        */
     } else {
         $('#id_th_initial_attack_agency').css("font-weight", "bold");
         $("#id_th_initial_attack_agency").html("Initial attack agency *");
-
-/*
-        $('#id_th_fire_contained_date').css("font-weight", "bold");
-        $("#id_th_fire_contained_date").html("Date fire contained <i class='icon-info-sign icon-white'> *");
-
-        $('#id_th_fire_controlled_date').css("font-weight", "bold");
-        $("#id_th_fire_controlled_date").html("Date fire controlled <i class='icon-info-sign icon-white'> *");
-*/
-
-/*
-        //$('#id_fire_behaviour_unknown').prop('checked', false);
-	    $('.div_fire_behaviour_unknown').show(); 
-*/
-
-        /*
-        {% if object.report_status >= object.STATUS_INITIAL_AUTHORISED and object.initial_snapshot.dispatch_pw %}
-	        $('#id_th_field_officer').css("font-weight", "bold");
-	        $("#id_th_field_officer").html("Field Officer *");
-        {% endif %}
-
-        $('#id_th_initial_controlling_agency').css("font-weight", "bold");
-        $("#id_th_initial_controlling_agency").html("Initial controlling agency *");
-        $('#id_th_final_controlling_agency').css("font-weight", "bold");
-        $("#id_th_final_controlling_agency").html("Final controlling agency *");
-        */
     }
 }).change();
 

@@ -186,7 +186,6 @@ def check_district_changed(request, obj, form):
 
     if obj:
         cur_obj = Bushfire.objects.get(id=obj.id)
-        #import ipdb; ipdb.set_trace()
         district = District.objects.get(id=request.POST['district']) if request.POST.has_key('district') else None # get the district from the form
         if request.POST.has_key('action') and request.POST.get('action')=='invalidate' and cur_obj.report_status!=Bushfire.STATUS_INVALIDATED:
             obj.invalid_details = request.POST.get('invalid_details')
@@ -317,7 +316,6 @@ def create_areas_burnt(bushfire, tenure_layers):
                 category_unknown.append(category)
 
     if area_unknown > 0:
-        #new_area_burnt_list.append({'tenure': Tenure.objects.get(name='Other'), 'area': round(area_unknown, 2)})
         new_area_burnt_list.append({'tenure': Tenure.objects.get(name='Unknown'), 'area': round(area_unknown, 2)})
         logger.info('Unknown Tenure categories: ({}). May need to add these categories to the Tenure Table'.format(category_unknown))
 
@@ -604,7 +602,6 @@ def rdo_email(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION or bushfire.fire_number in settings.EMAIL_EXCLUSIONS:
        return
 
-    #for email_name in [i.name.upper() for i in Region.objects.all()]:
     region_name = bushfire.region.name.upper()
     to_email = getattr(settings, region_name.replace(' ', '_') + '_EMAIL')
     subject = 'RDO Email - {}, Initial Bushfire submitted - {}'.format(region_name, bushfire.fire_number)

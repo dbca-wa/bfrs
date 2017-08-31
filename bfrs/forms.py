@@ -302,11 +302,6 @@ class BaseInjuryFormSet(BaseInlineFormSet):
                     if not injury_type and not number:
                         form.cleaned_data['DELETE'] = True
 
-#                    if not injury_type:
-#                        form.add_error('injury_type', 'Injury type required')
-#                    if not number:
-#                        form.add_error('number', 'Number required')
-
                     # Check that no two records have the same injury_type
                     if injury_type and number:
                         if set([(injury_type.name)]).issubset(injuries):

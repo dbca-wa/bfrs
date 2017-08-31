@@ -45,6 +45,7 @@ from django.utils.dateparse import parse_duration
 import django_filters
 from django_filters import views as filter_views
 from django_filters.widgets import BooleanWidget
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from reversion_compare.views import HistoryCompareDetailView
 
 import logging
@@ -156,7 +157,6 @@ class ProfileView(LoginRequiredMixin, generic.FormView):
         return TemplateResponse(request, self.template_name)
 
 
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 class BushfireView(LoginRequiredMixin, filter_views.FilterView):
 #class BushfireView(LoginRequiredMixin, generic.ListView):
     #model = Bushfire
@@ -431,16 +431,10 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
                 initial['region'] = Region.objects.get(id=sss['region_id'])
                 initial['district'] = District.objects.get(id=sss['district_id'])
 
-
             # Must pop this at the end - not needed, and can be very large
             if sss.has_key('fire_boundary'):
                 sss.pop('fire_boundary')
             initial['sss_data'] = json.dumps(sss)
-
-        # below for testing
-        #initial['origin_point'] = GEOSGeometry(Point(122.45, -33.15))
-        #initial['region'] = 1
-        #initial['district'] = 1
 
         return initial
 
@@ -554,7 +548,6 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
             elif not self.object.other_tenure:
                 self.object.tenures_burnt.update_or_create(tenure=self.object.tenure, defaults={"area": self.object.area})
 
-
         refresh_gokart(self.request, fire_number=self.object.fire_number, region=self.object.region.id, district=self.object.district.id)
 
         # This section to Submit/Authorise report, placed here to allow any changes to be cleaned and saved first - effectively the 'Submit' btn is a 'save and submit'
@@ -572,7 +565,6 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
             except NameError:
                 # update is occuring after report has already been authorised (action is undefined) - ie. it is being Reviewed by FSSDRS
                 serialize_bushfire('final', 'Review', self.object)
-
 
         self.object.save()
 
@@ -596,9 +588,7 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         area_burnt_formset = None
         if self.request.POST.has_key('sss_create'):
             sss = json.loads( self.request.POST['sss_create'] )
-            #if sss.has_key('area') and sss['area'].has_key('tenure_area') and sss['area']['tenure_area'].has_key('areas') and sss['area']['tenure_area']['areas']:
             if sss.has_key('area') and sss['area'].has_key('total_area') and sss['area']['total_area'] > 0:
-                #area_burnt_formset = create_areas_burnt(None, sss['area']['tenure_area']['areas'])
                 area_burnt_formset = create_areas_burnt(None, sss['area']['layers'])
 
         if not area_burnt_formset:
