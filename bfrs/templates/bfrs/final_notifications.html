@@ -250,7 +250,7 @@ if ({{object.final_fire_boundary|yesno:"true,false"}} == false) {
 
 $('#id_area_limit').on('change', function() {
     if($("#id_area_limit").is(':checked')) { 
-        $("#id_area").prop('step', 0.1).prop('min', 0).prop('max',{{area_threshold|to_float}});
+        $("#id_area").prop('step', 0.01).prop('min', 0).prop('max',{{area_threshold|to_float}});
 	    $("#id_area").removeAttr('readonly').removeAttr('style');
 	} else {
         $("#id_area").prop('step', 0.01).prop('min', 0).width($("#id_date_fire_safe").width());
