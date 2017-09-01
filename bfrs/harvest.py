@@ -21,6 +21,7 @@ import os
 
 from bfrs.models import Bushfire
 from bfrs.utils import serialize_bushfire, create_admin_user
+from django.core.mail import EmailMessage
 
 logger = logging.getLogger(__name__)
 BATCH_SIZE = 600
@@ -138,6 +139,7 @@ def retrieve_emails(search):
 def save_bushfire_emails(queueitem):
     msgid, msg = queueitem
     msg_meta = {}
+    msg_subject = ''
     incident_num = ''
     fire_num = ''
     try:
@@ -177,10 +179,21 @@ def save_bushfire_emails(queueitem):
             raise Exception('Incident: and Fire Number: text missing from email')
     except Exception as e:
         logger.warning("Couldn't parse {}, error: {}".format(msg_meta, e))
+        support_email(msg_subject, msg_meta, e)
         dimap.flag(msgid)
         return
 
 
+def support_email(subject, msg_meta, e):
+    if not settings.SUPPORT_EMAIL:
+       return
+
+    subject = 'DFES HARVEST ERROR: Incident No - Auto Update Failed - {}'.format(subject)
+    body = 'Subject: {}<br><br>Could not parse {}<br><br>{}'.format(subject, msg_meta, e)
+
+    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.SUPPORT_EMAIL)
+    message.content_subtype = 'html'
+    message.send()
 
 
 def cron(request=None):

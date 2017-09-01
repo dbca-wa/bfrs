@@ -39,6 +39,7 @@ ALLOW_EMAIL_NOTIFICATION = os.environ.get('ALLOW_EMAIL_NOTIFICATION', None) in [
 EMAIL_EXCLUSIONS = env('EMAIL_EXCLUSIONS', [])
 CC_EMAIL = env('CC_EMAIL', None)
 BCC_EMAIL = env('BCC_EMAIL', None)
+SUPPORT_EMAIL = env('SUPPORT_EMAIL', None)
 
 INTERNAL_EMAIL = env('INTERNAL_EMAIL', ['dpaw.wa.gov.au'])
 SSS_URL = env('SSS_URL', 'sss_redirect_url')
