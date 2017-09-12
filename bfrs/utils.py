@@ -582,6 +582,10 @@ def notifications_to_html(bushfire, url):
             v = 'Yes' if v == '1' else 'No'
         elif k == bushfire._meta.get_field('origin_point').verbose_name:
             v = bushfire.origin_geo
+        elif k == bushfire._meta.get_field('dispatch_pw_date').verbose_name:
+            v = bushfire.dispatch_pw_date.astimezone(tz.gettz(settings.TIME_ZONE)).strftime('%Y-%m-%d %H:%M')
+        elif k == bushfire._meta.get_field('dispatch_aerial_date').verbose_name:
+            v = bushfire.dispatch_aerial_date.astimezone(tz.gettz(settings.TIME_ZONE)).strftime('%Y-%m-%d %H:%M')
         elif k == bushfire._meta.get_field('fire_detected_date').verbose_name:
             v = bushfire.fire_detected_date.astimezone(tz.gettz(settings.TIME_ZONE)).strftime('%Y-%m-%d %H:%M')
             
@@ -677,7 +681,9 @@ def pica_sms(bushfire, url):
     return send_mail('', message, settings.EMAIL_TO_SMS_FROMADDRESS, TO_SMS_ADDRESS)
 
 def dfes_email(bushfire, url):
-    if not settings.ALLOW_EMAIL_NOTIFICATION or bushfire.fire_number in settings.EMAIL_EXCLUSIONS:
+    if (not settings.ALLOW_EMAIL_NOTIFICATION or
+        bushfire.fire_number in settings.EMAIL_EXCLUSIONS or
+        bushfire.dfes_incident_no != ''):
        return
 
     subject = 'DFES Email - Initial Bushfire submitted - {}'.format(bushfire.fire_number)
@@ -685,7 +691,7 @@ def dfes_email(bushfire, url):
         env = os.getcwd().split('-')[1].split('.')[0] # will return either 'dev' or 'uat'
         subject += ' ({})'.format(env.upper() if env != 'uat' or env != 'dev' else 'Test')
 
-    body = '---- PLEASE REPLY WITH INCIDENT NUMBER, Example "Incident: ABCDE12345" - on a single line without quotes (alphanumeric max. 32 chars) ----<br><br>DFES Email<br><br>Fire Number:{0}<br><br>(Lat/Lon) {1}<br><br>Initial Bushfire has been submitted and is located at <a href="{2}">{2}</a><br><br>'.format(bushfire.fire_number, bushfire.origin_point, url)
+    body = '---- PLEASE REPLY AS FOLLOWS: "<span style="color:red;">Incident: ABCDE12345</span>" on a single line without quotes (alphanumeric max. 32 chars) ----<br><br>DFES Email<br><br>Fire Number:{0}<br><br>(Lat/Lon) {1}<br><br>Initial Bushfire has been submitted and is located at <a href="{2}">{2}</a><br><br>'.format(bushfire.fire_number, bushfire.origin_point, url)
     body += notifications_to_html(bushfire, url)
 
     message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.DFES_EMAIL, cc=settings.CC_EMAIL, bcc=settings.BCC_EMAIL)
