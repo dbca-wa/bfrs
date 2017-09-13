@@ -147,7 +147,7 @@ def save_bushfire_emails(queueitem):
         msg_date = msg.get('Date')
         msg_from = msg.get('From')
         msg_to = msg.get('To')
-        msg_subject = msg.get('Subject')
+        msg_subject = msg.get('Subject').replace('\r\n','')
         msg_text = lxml.html.document_fromstring(msg.get_payload(decode=True)).text_content()
         msg_meta = {
             'date': msg_date,
