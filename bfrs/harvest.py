@@ -18,10 +18,12 @@ from datetime import datetime
 import lxml.html
 import sys
 import os
+import re
 
 from bfrs.models import Bushfire
 from bfrs.utils import serialize_bushfire, create_admin_user
 from django.core.mail import EmailMessage
+from django.core.exceptions import ObjectDoesNotExist
 
 logger = logging.getLogger(__name__)
 BATCH_SIZE = 600
@@ -55,8 +57,6 @@ class DeferredIMAP():
         if 'bfrs-prod' not in os.getcwd() and settings.HARVEST_EMAIL_FOLDER.lower() == 'inbox':
             logger.error("NON PROD BFRS Server accessing BFRS Email Inbox: {}".format(os.getcwd()))
             sys.exit()
-
-
 
     def logout(self, expunge=False):
         if expunge:
@@ -148,7 +148,15 @@ def save_bushfire_emails(queueitem):
         msg_from = msg.get('From')
         msg_to = msg.get('To')
         msg_subject = msg.get('Subject').replace('\r\n','')
-        msg_text = lxml.html.document_fromstring(msg.get_payload(decode=True)).text_content()
+        try:
+            msg_text = lxml.html.document_fromstring(msg.get_payload(decode=True)).text_content()
+        except:
+            if msg.is_multipart() and msg.get_payload():
+                msg_part = msg.get_payload()[0].get_payload(decode=True)
+                msg_text = lxml.html.document_fromstring(msg_part).text_content()
+            else:
+                msg_text = lxml.html.document_fromstring(msg.as_string()).text_content()
+
         msg_meta = {
             'date': msg_date,
             'from': msg_from,
@@ -156,9 +164,19 @@ def save_bushfire_emails(queueitem):
             'subject': msg_subject
         }
         try:
-            incident_num = msg_text.split('Incident:')[1].split('\r')[0].strip()
+            msg_text_reply = msg_text.split('REPLY')[0] # ignore the body content after the string 'REPLY'
+            #incident_num = msg_text_reply.split('Incident:')[1].split('\r')[0].strip()
+            incident_num = re.split('\s*[Ii]ncident:', msg_text_reply)[1].split('\r')[0].strip()
             fire_num = msg_text.split('Fire Number:')[1].split('\r')[0].strip()
-        except: pass
+            if not incident_num or not fire_num:
+                raise Exception('Failed to parse incident number or fire number from email')
+        except: 
+            err_msg = "Failed to parse incident number or fire number from email"
+            logger.warning(err_msg)
+            support_email(msg_subject, err_msg, None)
+            dimap.flag(msgid)
+            return
+
         if settings.HARVEST_EMAIL_FOLDER.lower() == 'inbox' and any(x in msg_subject for x in ['uat', 'UAT', 'dev', 'DEV', 'test', 'Test', 'TEST']):
             if any(x in msg_subject for x in ['uat', 'UAT']):
                 dimap.move(msgid, 'uat')
@@ -177,6 +195,14 @@ def save_bushfire_emails(queueitem):
             dimap.flag(msgid)
         else:
             raise Exception('Incident: and Fire Number: text missing from email')
+
+    except ObjectDoesNotExist as e:
+        err_msg = "{}\nFailed to update incident no. {} - Bushfire.objects.get(fire_number='{}') query failed".format(e, incident_num, fire_num)
+        logger.warning(err_msg)
+        support_email(msg_subject, err_msg, e)
+        dimap.flag(msgid)
+        return
+
     except Exception as e:
         logger.warning("Couldn't parse {}, error: {}".format(msg_meta, e))
         if not ('automatic reply' in msg_subject.lower() or 'spam notification' in msg_subject.lower()):
