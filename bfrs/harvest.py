@@ -179,7 +179,8 @@ def save_bushfire_emails(queueitem):
             raise Exception('Incident: and Fire Number: text missing from email')
     except Exception as e:
         logger.warning("Couldn't parse {}, error: {}".format(msg_meta, e))
-        support_email(msg_subject, msg_meta, e)
+        if not ('automatic reply' in msg_subject.lower() or 'spam notification' in msg_subject.lower()):
+            support_email(msg_subject, msg_meta, e)
         dimap.flag(msgid)
         return
 
