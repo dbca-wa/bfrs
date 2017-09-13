@@ -21,6 +21,7 @@ node_modules/
 
 # logs
 log/
+logs/
 *.log
 
 # Environment settings
