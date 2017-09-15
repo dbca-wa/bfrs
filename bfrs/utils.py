@@ -764,13 +764,13 @@ def _add_users_to_users_group(resp):
     for user in resp.json()['objects']:
         try:
             if user['email'] and user['email'].split('@')[-1].lower() in settings.INTERNAL_EMAIL:
-                u = User.objects.get(username=user['username'].lower())
+                u = User.objects.get(username__iexact=user['username'].lower())
                 if users_group not in u.groups.all():
                     u.groups.add(users_group)
                     logger.info('Adding user {} to group {}'.format(u.get_full_name(), users_group.name))
 
         except Exception as e:
-            logger.error('Error creating user:  {}\n{}\n'.format(user, e))
+            logger.error('Error Adding Group to user:  {}\n{}\n'.format(user, e))
 
 def _update_users_from_active_directory(sso_users):
     """
@@ -810,7 +810,8 @@ def update_users():
     for user in resp.json()['objects']:
         try:
             if user['email'] and user['email'].split('@')[-1].lower() in settings.INTERNAL_EMAIL:
-                #if user['email'].lower() == 'rod.simmonds@dbca.wa.gov.au':
+                #if user['email'].lower() == 'imt1_imt@dbca.wa.gov.au' or user['email'].lower() == 'ops_computers@dbca.wa.gov.au':
+                #if 'imt' in user['email'].lower() or 'ops_computers' in user['email'].lower():
                 #    import ipdb; ipdb.set_trace()
                     
                 if User.objects.filter(email=user['email']).count() == 0:
