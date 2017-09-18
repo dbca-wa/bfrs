@@ -173,7 +173,8 @@ def save_bushfire_emails(queueitem):
         except: 
             err_msg = "Failed to parse incident number or fire number from email"
             logger.warning(err_msg)
-            support_email(msg_subject, err_msg, None)
+            if not ('automatic reply' in msg_subject.lower() or 'spam notification' in msg_subject.lower()):
+                support_email(msg_subject, err_msg, None)
             dimap.flag(msgid)
             return
 
