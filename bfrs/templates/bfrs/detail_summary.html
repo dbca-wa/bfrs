@@ -114,7 +114,7 @@
             <th class="cbas">P&W Resource dispatched *{% if snapshot.dispatch_pw == object.DISPATCH_PW_YES %}<br>Date and time of dispatch{% endif %}</th>
             <td colspan="2" class="cbas">{{snapshot.get_dispatch_pw_display}}{% if snapshot.dispatch_pw == object.DISPATCH_PW_YES %}<br>{{snapshot.dispatch_pw_date|date:'Y-m-d H:i'}} {% endif %}</td>
 
-	    <th class="cbas">Aerial support dispatched *<br><br><div class=div_dispatch_aerial_date style="display: none;">Date and time of dispatch</div></th>
+	    <th class="cbas">Aerial support requested *<br><br><div class=div_dispatch_aerial_date style="display: none;">Date and time of request</div></th>
             <td colspan="2" class="cbas">{{snapshot.dispatch_aerial|yesno:"Yes,No"}}{% if snapshot.dispatch_aerial|yesno:"Yes,No" == 'Yes' %}<br>{{snapshot.dispatch_aerial_date|date:'Y-m-d H:i'}} {% endif %}</td>
         </tr>
 

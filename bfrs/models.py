@@ -303,9 +303,9 @@ class BushfireBase(Audit):
     init_authorised_date = models.DateTimeField(verbose_name='Initial Authorised Date', null=True, blank=True)
 
     dispatch_pw = models.PositiveSmallIntegerField(verbose_name="P&W Resource dispatched", choices=DISPATCH_PW_CHOICES, null=True, blank=True)
-    dispatch_aerial = models.NullBooleanField(verbose_name="Aerial suppression dispatched", null=True)
+    dispatch_aerial = models.NullBooleanField(verbose_name="Aerial support requested", null=True)
     dispatch_pw_date = models.DateTimeField(verbose_name='P&W Resource dispatch date', null=True, blank=True)
-    dispatch_aerial_date = models.DateTimeField(verbose_name='Aerial suppression dispatch date', null=True, blank=True)
+    dispatch_aerial_date = models.DateTimeField(verbose_name='Aerial support request date', null=True, blank=True)
     fire_detected_date = models.DateTimeField(verbose_name='Date and time fire detected', null=True, blank=True)
 
     # FINAL Fire Report Fields
