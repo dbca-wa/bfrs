@@ -91,9 +91,18 @@ class BushfireFilter(django_filters.FilterSet):
             return queryset.filter(report_status__in=[Bushfire.STATUS_INITIAL_AUTHORISED])
         return queryset.filter(report_status=value)
 
-    def filter_fire_number(self, queryset, name, value):
-        """ Works because 'fire_number' present in self.data (from <input> field in base.html) """
-        return queryset.filter(Q(fire_number__icontains=value) | Q(name=value))
+    def filter_fire_number(self, queryset, filter_name, value):
+        """ 
+        Filter for Global Search Box in main page
+        Searches on:
+            1. fire_number
+            2. name (fire name)
+            3. dfes_incident_no
+
+        Works because 'fire_number' present in self.data (from <input> field in base.html) 
+        NOTE: filter_name in arg is a required dummy arg, not used.
+        """
+        return queryset.filter(Q(fire_number__icontains=value) | Q(name__icontains=value) | Q(dfes_incident_no__icontains=value))
 
 
     class Meta:
