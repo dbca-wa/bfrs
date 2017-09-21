@@ -1021,7 +1021,7 @@ def export_excel(request, queryset):
     hdr.write(col_no(), "Fire Controlled")
     hdr.write(col_no(), "Fire Contained")
     hdr.write(col_no(), "Fire Safe")
-    hdr.write(col_no(), "Fuel Type")
+    #hdr.write(col_no(), "Fuel Type")
     hdr.write(col_no(), "First Attack")
     hdr.write(col_no(), "Other First Attack")
     hdr.write(col_no(), "Initial Control")

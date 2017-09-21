@@ -1,8 +1,8 @@
 from django.db import connection
-from bfrs.models import Bushfire, Region
+from bfrs.models import Bushfire, Region, current_finyear
 from django.db.models import Count, Sum
 from datetime import datetime
-from xlwt import Workbook
+from xlwt import Workbook, Font, XFStyle
 from itertools import count
 import unicodecsv
 
@@ -19,8 +19,8 @@ class MinisterialReport():
 
     def create(self):
         # Group By Region
-        qs=Bushfire.objects.values('region_id')
-        qs1=qs.filter(initial_control_id=1).annotate(dbca_count=Count('region_id'), dbca_sum=Sum('area') )
+        qs=Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, year=current_finyear()).values('region_id')
+        qs1=qs.filter(initial_control__name='DBCA P&W').annotate(dbca_count=Count('region_id'), dbca_sum=Sum('area') )
         qs2=qs.exclude(initial_control__isnull=True).annotate(total_count=Count('region_id'), total_sum=Sum('area') )
 
         net_pw_tenure      = 0
@@ -28,23 +28,26 @@ class MinisterialReport():
         net_total_all_area = 0
         net_total_area     = 0
         rpt_map = []
-        for region in Region.objects.all().order_by('id'):
-            row1 = qs1.get(region_id=region.id)
-            row2 = qs2.get(region_id=region.id)
+        try:
+            for region in Region.objects.all().order_by('id'):
+                row1 = qs1.get(region_id=region.id) if qs1.filter(region_id=region.id).count() > 0 else {}
+                row2 = qs2.get(region_id=region.id) if qs2.filter(region_id=region.id).count() > 0 else {}
 
-            pw_tenure      = row1['dbca_count'] if row1['dbca_count'] else 0
-            area_pw_tenure = round(row1['dbca_sum'], 2) if row1['dbca_sum'] else 0
-            total_all_area = row2['total_count'] if row2['total_count'] else 0
-            total_area     = round(row2['total_sum'], 2) if row2['total_sum'] else 0
+                pw_tenure      = row1['dbca_count'] if row1.has_key('dbca_count') and row1['dbca_count'] else 0
+                area_pw_tenure = round(row1['dbca_sum'], 2) if row1.has_key('dbca_sum') and row1['dbca_sum'] else 0
+                total_all_area = row2['total_count'] if row2.has_key('total_count') and row2['total_count'] else 0
+                total_area     = round(row2['total_sum'], 2) if row2.has_key('total_sum') and row2['total_sum'] else 0
 
-            rpt_map.append(
-                {region.name: dict(pw_tenure=pw_tenure, area_pw_tenure=area_pw_tenure, total_all_tenure=total_all_area, total_area=total_area)}
-            )
-                
-            net_pw_tenure      += pw_tenure 
-            net_area_pw_tenure += area_pw_tenure
-            net_total_all_area += total_all_area
-            net_total_area     += total_area
+                rpt_map.append(
+                    {region.name: dict(pw_tenure=pw_tenure, area_pw_tenure=area_pw_tenure, total_all_tenure=total_all_area, total_area=total_area)}
+                )
+                    
+                net_pw_tenure      += pw_tenure 
+                net_area_pw_tenure += area_pw_tenure
+                net_total_all_area += total_all_area
+                net_total_area     += total_area
+        except:
+            import ipdb; ipdb.set_trace()
 
         rpt_map.append(
             {'Total': dict(pw_tenure=net_pw_tenure, area_pw_tenure=net_area_pw_tenure, total_all_tenure=net_total_all_area, total_area=net_total_area)}
@@ -80,6 +83,12 @@ class MinisterialReport():
         sheet1 = book.add_sheet('Ministerial Report')
         sheet1 = book.get_sheet('Ministerial Report')
 
+        style = XFStyle()
+        # font
+        font = Font()
+        font.bold = True
+        style.font = font
+
         col_no = lambda c=count(): next(c)
         row_no = lambda c=count(): next(c)
 
@@ -92,24 +101,39 @@ class MinisterialReport():
         hdr.write(1, 'Ministerial Report')
 
         hdr = sheet1.row(row_no())
+        hdr.write(0, 'Fin Year')
+        hdr.write(1, current_finyear())
+
         hdr = sheet1.row(row_no())
-        hdr.write(col_no(), "Region")
-        hdr.write(col_no(), "PW Tenure")
-        hdr.write(col_no(), "Area PW Tenure")
-        hdr.write(col_no(), "Total All Area")
-        hdr.write(col_no(), "Total Area")
+        hdr.write(0, 'Missing Final')
+        hdr.write(1, Bushfire.objects.filter(report_status=Bushfire.STATUS_INITIAL_AUTHORISED, year=current_finyear()).count() )
+
+        hdr = sheet1.row(row_no())
+        hdr = sheet1.row(row_no())
+        hdr.write(col_no(), "Region", style=style)
+        hdr.write(col_no(), "PW Tenure", style=style)
+        hdr.write(col_no(), "Area PW Tenure", style=style)
+        hdr.write(col_no(), "Total All Area", style=style)
+        hdr.write(col_no(), "Total Area", style=style)
 
         for row in self.rpt_map:
             for region, data in row.iteritems():
 
                 row = sheet1.row(row_no())
                 col_no = lambda c=count(): next(c)
-
-                row.write(col_no(), region )
-                row.write(col_no(), data['pw_tenure'])
-                row.write(col_no(), data['area_pw_tenure'])
-                row.write(col_no(), data['total_all_tenure'])
-                row.write(col_no(), data['total_area'])
+                if region == 'Total':
+                    row = sheet1.row(row_no())
+                    row.write(col_no(), region, style=style)
+                    row.write(col_no(), data['pw_tenure'], style=style)
+                    row.write(col_no(), data['area_pw_tenure'], style=style)
+                    row.write(col_no(), data['total_all_tenure'], style=style)
+                    row.write(col_no(), data['total_area'], style=style)
+                else:
+                    row.write(col_no(), region )
+                    row.write(col_no(), data['pw_tenure'])
+                    row.write(col_no(), data['area_pw_tenure'])
+                    row.write(col_no(), data['total_all_tenure'])
+                    row.write(col_no(), data['total_area'])
 
         #book.save("/tmp/foobar.xls")
         #return sheet1
@@ -120,6 +144,22 @@ class MinisterialReport():
         self.get_excel_sheet(rpt_date, book)
         filename = '/tmp/ministerial_report_{}.xls'.format(rpt_date.strftime('%d-%b-%Y'))
         book.save(filename)
+
+    def export(self):
+        """ Executed from the Overview page in BFRS, returns an Excel WB as a HTTP Response object """
+
+        rpt_date = datetime.now()
+        filename = 'ministerial_report_{}.xls'.format(rpt_date.strftime('%d%b%Y'))
+        response = HttpResponse(content_type='application/vnd.ms-excel')
+        response['Content-Disposition'] = 'attachment; filename=' + filename
+
+        book = Workbook()
+        self.get_excel_sheet(rpt_date, book)
+
+        book.add_sheet('Sheet 2')
+        book.save(response)
+
+        return response
 
     def display(self):
         print '{}\t{}\t{}\t{}\t{}'.format('Region', 'PW Tenure', 'Area PW Tenure', 'Total All Area', 'Total Area').expandtabs(20)
