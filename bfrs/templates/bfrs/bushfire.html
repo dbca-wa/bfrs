@@ -33,9 +33,9 @@
 <table id="table" class="tablesorter table table-striped table-bordered table-hover table-condensed" style="cursor:pointer;">
   <thead>
 	  <th style="width:15%"><font color="dodgerblue">Fire Number <i class="icon-sort"></i></font></th>
+	  <th style="width:10%"><font color="dodgerblue">DFES Incident No <i class="icon-sort"></i></font></th>
 	  <th style="width:20%"><font color="dodgerblue">Name <i class="icon-sort"></i></font></th>
 	  <th style="width:10%"><font color="dodgerblue">Job Code <i class="icon-sort"></i></font></th>
-	  <th style="width:10%"><font color="dodgerblue">DFES Incident No <i class="icon-sort"></i></font></th>
 	  <th style="width:15%"><font color="dodgerblue">Notifications <i class="icon-sort"></font></i></th>
 	  <th style="width:15%"><font color="dodgerblue">Report <i class="icon-sort"></i></font></th>
 	  {% if can_maintain_data %}<th style="width:10%"><font color="dodgerblue">Admin <i class="icon-sort"></i></font></th>{% endif %}
@@ -45,9 +45,9 @@
       <tr class="row-vm" data-toggle="myCollapse" data-target="#{{bushfire.id}}">
         
 		<td><a href="#" onclick='openGokart({"action": "select", "region":{{bushfire.region.id}},"district":{{bushfire.district.id}},"bushfireid":"{{bushfire.fire_number}}" });' title="Open report in SSS">{{ bushfire.fire_number }}</a></td>
+		<td>{% if bushfire.dfes_incident_no %}{{ bushfire.dfes_incident_no }}{% else %}  {% endif %}</td>
         <td>{{ bushfire.name }}</td>
 		<td>{% if bushfire.job_code %}{{ bushfire.job_code }}{% else %}  {% endif %}</td>
-		<td>{% if bushfire.dfes_incident_no %}{{ bushfire.dfes_incident_no }}{% else %}  {% endif %}</td>
 		<td align="center">
             {% if bushfire.report_status == bushfire.STATUS_INITIAL %}
 			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="Edit initial fire report"><font color="red"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-edit icon-white"></i></font></a>
