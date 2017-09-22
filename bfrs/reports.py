@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 class MinisterialReport():
     def __init__(self):
-        self.rpt_map = self.create()
+        self.rpt_map, self.item_map = self.create()
 
     def create(self):
         # Group By Region
@@ -31,37 +31,84 @@ class MinisterialReport():
         qs1=qs.filter(initial_control__name='DBCA P&W').annotate(dbca_count=Count('region_id'), dbca_sum=Sum('area') )
         qs2=qs.exclude(initial_control__isnull=True).annotate(total_count=Count('region_id'), total_sum=Sum('area') )
 
-        net_pw_tenure      = 0
-        net_area_pw_tenure = 0
-        net_total_all_area = 0
-        net_total_area     = 0
         rpt_map = []
-        try:
-            for region in Region.objects.all().order_by('id'):
-                row1 = qs1.get(region_id=region.id) if qs1.filter(region_id=region.id).count() > 0 else {}
-                row2 = qs2.get(region_id=region.id) if qs2.filter(region_id=region.id).count() > 0 else {}
+        item_map = {}
+        net_forest_pw_tenure      = 0
+        net_forest_area_pw_tenure = 0
+        net_forest_total_all_area = 0
+        net_forest_total_area     = 0
 
-                pw_tenure      = row1['dbca_count'] if row1.has_key('dbca_count') and row1['dbca_count'] else 0
-                area_pw_tenure = round(row1['dbca_sum'], 2) if row1.has_key('dbca_sum') and row1['dbca_sum'] else 0
-                total_all_area = row2['total_count'] if row2.has_key('total_count') and row2['total_count'] else 0
-                total_area     = round(row2['total_sum'], 2) if row2.has_key('total_sum') and row2['total_sum'] else 0
+        for region in Region.objects.filter(forest_region=True).order_by('id'):
+            row1 = qs1.get(region_id=region.id) if qs1.filter(region_id=region.id).count() > 0 else {}
+            row2 = qs2.get(region_id=region.id) if qs2.filter(region_id=region.id).count() > 0 else {}
 
-                rpt_map.append(
-                    {region.name: dict(pw_tenure=pw_tenure, area_pw_tenure=area_pw_tenure, total_all_tenure=total_all_area, total_area=total_area)}
-                )
-                    
-                net_pw_tenure      += pw_tenure 
-                net_area_pw_tenure += area_pw_tenure
-                net_total_all_area += total_all_area
-                net_total_area     += total_area
-        except:
-            import ipdb; ipdb.set_trace()
+            pw_tenure      = row1['dbca_count'] if row1.has_key('dbca_count') and row1['dbca_count'] else 0
+            area_pw_tenure = round(row1['dbca_sum'], 2) if row1.has_key('dbca_sum') and row1['dbca_sum'] else 0
+            total_all_area = row2['total_count'] if row2.has_key('total_count') and row2['total_count'] else 0
+            total_area     = round(row2['total_sum'], 2) if row2.has_key('total_sum') and row2['total_sum'] else 0
+
+            rpt_map.append(
+                {region.name: dict(pw_tenure=pw_tenure, area_pw_tenure=area_pw_tenure, total_all_tenure=total_all_area, total_area=total_area)}
+            )
+                
+            net_forest_pw_tenure      += pw_tenure 
+            net_forest_area_pw_tenure += area_pw_tenure
+            net_forest_total_all_area += total_all_area
+            net_forest_total_area     += total_area
 
         rpt_map.append(
-            {'Total': dict(pw_tenure=net_pw_tenure, area_pw_tenure=net_area_pw_tenure, total_all_tenure=net_total_all_area, total_area=net_total_area)}
+            {'Sub Total (Forest)': dict(pw_tenure=net_forest_pw_tenure, area_pw_tenure=net_forest_area_pw_tenure, total_all_tenure=net_forest_total_all_area, total_area=net_forest_total_area)}
+        )
+
+        item_map['forest_pw_tenure'] = net_forest_pw_tenure
+        item_map['forest_area_pw_tenure'] = net_forest_area_pw_tenure
+        item_map['forest_total_all_tenure'] = net_forest_total_all_area
+        item_map['forest_total_area'] = net_forest_total_area
+                
+        rpt_map.append(
+            {'': ''}
+        )
+
+        net_nonforest_pw_tenure      = 0
+        net_nonforest_area_pw_tenure = 0
+        net_nonforest_total_all_area = 0
+        net_nonforest_total_area     = 0
+        for region in Region.objects.filter(forest_region=False).order_by('id'):
+            row1 = qs1.get(region_id=region.id) if qs1.filter(region_id=region.id).count() > 0 else {}
+            row2 = qs2.get(region_id=region.id) if qs2.filter(region_id=region.id).count() > 0 else {}
+
+            pw_tenure      = row1['dbca_count'] if row1.has_key('dbca_count') and row1['dbca_count'] else 0
+            area_pw_tenure = round(row1['dbca_sum'], 2) if row1.has_key('dbca_sum') and row1['dbca_sum'] else 0
+            total_all_area = row2['total_count'] if row2.has_key('total_count') and row2['total_count'] else 0
+            total_area     = round(row2['total_sum'], 2) if row2.has_key('total_sum') and row2['total_sum'] else 0
+
+            rpt_map.append(
+                {region.name: dict(pw_tenure=pw_tenure, area_pw_tenure=area_pw_tenure, total_all_tenure=total_all_area, total_area=total_area)}
+            )
+                
+            net_nonforest_pw_tenure      += pw_tenure 
+            net_nonforest_area_pw_tenure += area_pw_tenure
+            net_nonforest_total_all_area += total_all_area
+            net_nonforest_total_area     += total_area
+
+
+        rpt_map.append(
+            {'Sub Total (Non Forest)': dict(pw_tenure=net_nonforest_pw_tenure, area_pw_tenure=net_nonforest_area_pw_tenure, total_all_tenure=net_nonforest_total_all_area, total_area=net_nonforest_total_area)}
+        )
+
+        item_map['nonforest_total_all_tenure'] = net_nonforest_total_all_area
+        item_map['nonforest_total_area'] = net_nonforest_total_area
+                
+        rpt_map.append(
+            {'GRAND TOTAL': dict(
+                pw_tenure=net_forest_pw_tenure + net_nonforest_pw_tenure, 
+                area_pw_tenure=net_forest_area_pw_tenure + net_nonforest_area_pw_tenure, 
+                total_all_tenure=net_forest_total_all_area + net_nonforest_total_all_area, 
+                total_area=net_forest_total_area + net_nonforest_total_area
+            )}
         )
                 
-        return rpt_map
+        return rpt_map, item_map
 
     def export_final_csv(self, request, queryset):
         writer = unicodecsv.writer(response, quoting=unicodecsv.QUOTE_ALL)
@@ -129,8 +176,11 @@ class MinisterialReport():
 
                 row = sheet1.row(row_no())
                 col_no = lambda c=count(): next(c)
-                if region == 'Total':
-                    row = sheet1.row(row_no())
+                if region == '':
+                    #row = sheet1.row(row_no())
+                    continue
+                elif 'total' in region.lower():
+                    #row = sheet1.row(row_no())
                     row.write(col_no(), region, style=style)
                     row.write(col_no(), data['pw_tenure'], style=style)
                     row.write(col_no(), data['area_pw_tenure'], style=style)
@@ -182,7 +232,6 @@ class MinisterialReport():
         #report_date = now.strptime(request.GET.get('date'), '%Y-%m-%d').date()
         report_date = now
 
-        obj = Bushfire.objects.all()[0]
         #template = request.GET.get("template", "pfp")
         template = "ministerial_report"
         response = HttpResponse(content_type='application/pdf')
@@ -207,13 +256,14 @@ class MinisterialReport():
             #"form268a": "268a - Planned Burns",
         }
         embed = False if request.GET.get("embed") == "false" else True
+
         context = {
             'user': request.user.get_full_name(),
-            'date': datetime.now().strftime('%d %b %Y'),
-            'time': datetime.now().strftime('%H:%M'),
             'report_date': report_date.strftime('%d %b %Y'),
-            'current': obj,
-            'bushfire': obj,
+            'time': report_date.strftime('%H:%M'),
+            'current_finyear': current_finyear(),
+            'rpt_map': self.rpt_map,
+            'item_map': self.item_map,
             'embed': embed,
             'headers': request.GET.get("headers", True),
             'title': request.GET.get("title", "Bushfire Reporting System"),
@@ -253,6 +303,7 @@ class MinisterialReport():
         #import ipdb; ipdb.set_trace()
         logger.debug("Starting PDF rendering process ...")
         cmd = ['latexmk', '-cd', '-f', '-silent', '-pdf', directory + texname]
+        #cmd = ['latexmk', '-cd', '-f', '-pdf', directory + texname]
         logger.debug("Running: {0}".format(" ".join(cmd)))
         subprocess.call(cmd)
 
