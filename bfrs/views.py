@@ -216,6 +216,12 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
             if eval(report):
                 return MinisterialReport().export()
 
+        if self.request.GET.has_key('pdf_ministerial_report'):
+            report = self.request.GET.get('pdf_ministerial_report')
+            if eval(report):
+                return MinisterialReport().pdflatex(request)
+
+
         if self.request.GET.has_key('action'):
             action = self.request.GET.get('action')
             bushfire = Bushfire.objects.get(id=self.request.GET.get('bushfire_id'))

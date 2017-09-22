@@ -1,0 +1,93 @@
+  \fancyhead[R] {
+    {\bfseries FIRE268a} \break
+    {\bfseries Fire Management Services Branch} \break
+    \textsc{\Small
+    17 Dick Perry Ave \break
+    Kensington WA 6151 \break
+    Phone: (08) 9219 9108 Fax: (08) 9367 9913 \break
+    }
+  }
+
+\fancyfoot[L]{ \leftmark\newline {{date}} {{time}} \\ \footnotesize Web link to the Parks and Wildlife Service Daily Burn Program: \url{% templatetag openbrace %}http://www.dbca.wa.gov.au/todaysburns}}
+\noindent Date: {{report_date}}\hfill Region: {{region}}
+\subsubsection{Part A: TODAY'S PLANNED BURN PROGRAM}
+
+\begin{table}[h]
+\begin{tabular}{cc}
+    \begin{minipage}{.4\linewidth}
+        \raggedright
+        \begin{tabular} { | l | r | }
+        \hline
+        \textbf{No. of Active Burns} & {{ active_records.active_burns_region }} \\
+        \hline
+        \end{tabular}
+    \end{minipage} &
+
+    \begin{minipage}{.45\linewidth}
+        \raggedleft
+        \begin{tabular} { | l | r | }
+        \hline
+        \textbf{No. of Active Fires} & {{ active_records.active_fires_region }} \\
+        \hline
+        \end{tabular}
+
+    \end{minipage} 
+\end{tabular}
+\end{table}
+
+The following Burns are proposed for ignition today subject to the approval of the State Duty Officer. The burns will be conducted in accordance with the approved burn plan.
+\footnotesize
+\begin{longtabu} to \linewidth { | X[0.7] | X[2.0] | X[1.0] | X[2.0] | X[0.8] | X[0.5] | }
+\hline
+\textbf{Burn ID} & \textbf{Name} & \textbf{Location} & \bfseries\makecell[c]{Burn \\ Purpose} & \bfseries\makecell[c]{Todays \\ treatment \\ area/km} & \bfseries\makecell[c]{Est Start \\ WST}
+\hline
+\endhead
+{% for pb in qs_planned_burns %}
+\textbf{ {{ pb.short_str|texify|safe }}} & {{ pb.name|texify|safe }} & {{ pb.location|texify|safe }} & {{ pb.prescription.purposes_list|texify|safe }} & {{ pb.planned_area_str }} & {{ pb.est_start }} \\
+\hline
+{% empty %}
+\multicolumn{6}{|X|}{No Burns Planned for Today} \\
+\hline
+{% endfor %}
+\end{longtabu}
+
+\subsubsection{Endorsement}
+\begin{tabu} to \linewidth { | X[0.4] | X | }
+\hline
+\textbf{for Regional Manager} & \textbf{ {{ acknow_records.srm_A }} } \\
+\hline
+\end{tabu}\\%%[\baselineskip]
+
+\begin{table}[h]
+\subsubsection{Part B: SPECIAL CONDITIONS}
+\footnotsize
+\begin{longtabu} to \linewidth { | X[0.4] | X | }
+\hline
+\textbf{Burn ID} & \textbf{Special conditions of approval as specified by the SDO (in addition to the compliance of the approved burn plan)} \\
+\hline
+\endhead
+{% for pb in qs_planned_burns %}
+  {% if pb.conditions %}
+    \textbf{ {{ pb.short_str|texify|safe }}} & {{ pb.conditions|texify|safe }} \\
+     \hline
+  {% endif %}
+{% empty %}
+\multicolumn{6}{|X|}{None} \\
+{% endfor %}
+\hline
+& \\
+\hline
+& \\
+\hline
+\end{longtabu}
+
+\subsubsection{Approval}
+The planned burns listed in Part A are approved subject to the conditions stipulated in Part B (where applicable).
+\begin{tabu} to \linewidth { | X[0.4] | X | }
+\hline
+\textbf{by State Duty Officer} & \textbf{ {{ acknow_records.sdo_A }} } \\
+\hline
+\end{tabu}\\%%[\baselineskip]
+\end{table}
+
+\clearpage

@@ -174,6 +174,7 @@ class Profile(models.Model):
 @python_2_unicode_compatible
 class Region(models.Model):
     name = models.CharField(max_length=64, unique=True)
+    forest_region = models.BooleanField(default=False)
 
     def to_dict(self):
         """ Returns a dict of regions with their corresponding districts

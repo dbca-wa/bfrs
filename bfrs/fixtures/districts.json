@@ -38,21 +38,24 @@
     "pk": 6,
     "model": "bfrs.region",
     "fields": {
-        "name": "South West"
+        "name": "South West",
+        "forest_region": true
     }
 },
 {
     "pk": 7,
     "model": "bfrs.region",
     "fields": {
-        "name": "Swan"
+        "name": "Swan",
+        "forest_region": true
     }
 },
 {
     "pk": 8,
     "model": "bfrs.region",
     "fields": {
-        "name": "Warren"
+        "name": "Warren",
+        "forest_region": true
     }
 },
 {
