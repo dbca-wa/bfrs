@@ -405,6 +405,27 @@ class AreaBurntForm(forms.ModelForm):
             self.fields['tenure'].widget.attrs['readonly'] = True
             self.fields['area'].widget.attrs['readonly'] = True
 
+
+RECOMMENDATION_CHOICES = (
+    (1, 'Noted'),
+    (2, 'Noted/Endorsed'),
+    (3, 'Noted/Endorsed with Amendment'),
+    (4, 'Accept/Attending'),
+)
+
+class PDFReportForm(forms.Form):
+    author = forms.CharField(max_length=50)
+    your_ref = forms.CharField(max_length=20, required=False)
+    our_ref = forms.CharField(max_length=20, required=False)
+    title = forms.CharField(max_length=20)
+
+    cost_implications = forms.CharField(max_length=100, widget=forms.Textarea(), required=False)
+    urgency = forms.CharField(max_length=50, widget=forms.Textarea(), required=False)
+    contentious_issues = forms.CharField(max_length=50, widget=forms.Textarea(), required=False)
+    #recommendation = forms.ChoiceField(choices=RECOMMENDATION_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
+    recommendation = forms.ChoiceField(choices=RECOMMENDATION_CHOICES, widget=forms.RadioSelect(), required=True)
+
+
 AreaBurntFormSet            = inlineformset_factory(Bushfire, AreaBurnt, extra=0, min_num=0, exclude=(), form=AreaBurntForm)
 InjuryFormSet               = inlineformset_factory(Bushfire, Injury, formset=BaseInjuryFormSet, extra=1, max_num=7, min_num=0, validate_min=False, exclude=())
 DamageFormSet               = inlineformset_factory(Bushfire, Damage, formset=BaseDamageFormSet, extra=1, max_num=7, min_num=0, validate_min=False, exclude=())

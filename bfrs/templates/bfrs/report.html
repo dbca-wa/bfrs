@@ -1,0 +1,15 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+{% load static from staticfiles %}
+{% load bfrs_tags %}
+{% load humanize %}
+
+{% block content %}
+
+<form action="" method="post">{% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit" value="Create PDF" />
+</form>
+
+{% endblock %}
+

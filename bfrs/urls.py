@@ -11,6 +11,7 @@ urlpatterns = [
 #    url(r'^export/$', views.BushfireView.as_view(), name='export'),
 
     url(r'^history/(?P<pk>\d+)/$', views.BushfireHistoryCompareView.as_view(), name='bushfire_history'),
+    url(r'report/$', views.ReportView.as_view(), name='bushfire_report'),
 
 ]
 

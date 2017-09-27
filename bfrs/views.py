@@ -23,7 +23,7 @@ from bfrs.models import (Profile, Bushfire, BushfireSnapshot,
         SNAPSHOT_INITIAL, SNAPSHOT_FINAL,
     )
 from bfrs.forms import (ProfileForm, BushfireFilterForm, BushfireUpdateForm,
-        AreaBurntFormSet, InjuryFormSet, DamageFormSet, 
+        AreaBurntFormSet, InjuryFormSet, DamageFormSet, PDFReportForm,
     )
 from bfrs.utils import (breadcrumbs_li,
         create_areas_burnt, update_areas_burnt_fs, update_damage_fs, update_injury_fs, 
@@ -664,5 +664,30 @@ class BushfireHistoryCompareView(HistoryCompareDetailView):
     model = Bushfire
     template_name = 'bfrs/history.html'
 
+
+class ReportView(FormView):
+    """
+    View for reversion_compare
+    """
+    model = Bushfire
+    template_name = 'bfrs/report.html'
+    form_class = PDFReportForm
+    success_url = '/'
+
+    def get_initial(self):
+        initial = {}
+        initial['author'] = self.request.user.get_full_name() + ', Fire Management Services Branch'
+        initial['your_ref'] = '62-XXXX'
+        initial['our_ref'] = 'MINXXXX/YY'
+        initial['title'] = 'BUSHFIRE SUPPRESSION'
+
+        return initial
+
+
+    def form_valid(self, form):
+        valid = super(ReportView, self).form_valid(form)
+        if valid.status_code == 302:
+            return MinisterialReport().pdflatex2(self.request, form.cleaned_data)
+        return super(ReportView, self).form_valid(form)
 
 
