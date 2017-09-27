@@ -150,11 +150,14 @@ def save_bushfire_emails(queueitem):
         msg_subject = msg.get('Subject').replace('\r\n','')
         try:
             msg_text = lxml.html.document_fromstring(msg.get_payload(decode=True)).text_content()
-        except:
-            if msg.is_multipart() and msg.get_payload():
-                msg_part = msg.get_payload()[0].get_payload(decode=True)
-                msg_text = lxml.html.document_fromstring(msg_part).text_content()
-            else:
+        except ValueError:
+            try:
+                if msg.is_multipart() and msg.get_payload():
+                    msg_part = msg.get_payload()[0].get_payload(decode=True)
+                    msg_text = lxml.html.document_fromstring(msg_part).text_content()
+                else:
+                    msg_text = lxml.html.document_fromstring(msg.as_string()).text_content()
+            except ValueError:
                 msg_text = lxml.html.document_fromstring(msg.as_string()).text_content()
 
         msg_meta = {

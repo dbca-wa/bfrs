@@ -64,7 +64,8 @@ class MinisterialReport():
         item_map['forest_area_pw_tenure'] = net_forest_area_pw_tenure
         item_map['forest_total_all_tenure'] = net_forest_total_all_area
         item_map['forest_total_area'] = net_forest_total_area
-                
+
+        # add a white space/line between forest and non-forest region tabulated info
         rpt_map.append(
             {'': ''}
         )
