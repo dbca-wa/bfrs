@@ -419,6 +419,7 @@ class PDFReportForm(forms.Form):
     our_ref = forms.CharField(max_length=20, required=False)
     title = forms.CharField(max_length=20)
 
+    supplementary_text = forms.CharField(max_length=200, widget=forms.Textarea(), required=False)
     cost_implications = forms.CharField(max_length=100, widget=forms.Textarea(), required=False)
     urgency = forms.CharField(max_length=50, widget=forms.Textarea(), required=False)
     contentious_issues = forms.CharField(max_length=50, widget=forms.Textarea(), required=False)

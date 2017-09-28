@@ -1,15 +1,12 @@
+{% load latex_tags %}
 {% load humanize %}
 
-  \fancyhead[R] {
-    {\bfseries Fire Management Services Division} \break
-    \textsc{\Small
-    17 Dick Perry Ave \break
-    Kensington WA 6151 \break
-    Phone: (08) 9219 9108 Fax: (08) 9367 9913 \break
-    }
-  }
+% override the base header
+\fancyhead[L]{\href{http://www.dbca.wa.gov.au}{\includegraphics[scale=0.975]{% templatetag openbrace %}{% base_dir %}/staticfiles/img/ministerial_rpt_hdr.png}}}
+\fancyhead[R] {}
 
 \fancyfoot[L]{ \leftmark\newline {{report_date}} {{time}} \\ \footnotesize Web link to the Parks and Wildlife Service Daily Burn Program: \url{% templatetag openbrace %}http://www.dbca.wa.gov.au/todaysburns}}
+
 \begin{minipage}[t]{0.2\textwidth}
     Author: \\
     Office of Origin: \\
@@ -32,6 +29,12 @@ Records as at {{report_date}} show {{ item.map.forest_total_all_tenure }} bushfi
 Outside the south-west forest regions, records show {{ item_map.nonforest_total_all_tenure }} bushfires attended by Department staff have burnt through an area of {{ item_map.nonforest_total_area|intcomma }} hectares. 
 \\~\\
 A breakdown of the records to date by Parks and Wildlife regions for bushfires since 1 July {{ current_finyear}} is shown below.
+
+{% if form.supplementary_text %}
+\\~\\
+\normalsize {{form.supplementary_text}}
+{% endif %}
+
 
 %\footnotesize
 \scriptsize
