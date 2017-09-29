@@ -414,15 +414,15 @@ RECOMMENDATION_CHOICES = (
 )
 
 class PDFReportForm(forms.Form):
-    author = forms.CharField(max_length=50)
+    author = forms.CharField(max_length=100)
     your_ref = forms.CharField(max_length=20, required=False)
     our_ref = forms.CharField(max_length=20, required=False)
-    title = forms.CharField(max_length=20)
+    title = forms.CharField(max_length=50)
 
-    supplementary_text = forms.CharField(max_length=200, widget=forms.Textarea(), required=False)
-    cost_implications = forms.CharField(max_length=100, widget=forms.Textarea(), required=False)
-    urgency = forms.CharField(max_length=50, widget=forms.Textarea(), required=False)
-    contentious_issues = forms.CharField(max_length=50, widget=forms.Textarea(), required=False)
+    supplementary_text = forms.CharField(max_length=500, widget=forms.Textarea(), required=False)
+    cost_implications = forms.CharField(max_length=250, widget=forms.Textarea(), required=False)
+    urgency = forms.CharField(max_length=2500, widget=forms.Textarea(), required=False)
+    contentious_issues = forms.CharField(max_length=250, widget=forms.Textarea(), required=False)
     #recommendation = forms.ChoiceField(choices=RECOMMENDATION_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
     recommendation = forms.ChoiceField(choices=RECOMMENDATION_CHOICES, widget=forms.RadioSelect(), required=True)
 

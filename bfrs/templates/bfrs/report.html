@@ -6,10 +6,68 @@
 
 {% block content %}
 
+{% comment %}
 <form action="" method="post">{% csrf_token %}
     {{ form.as_p }}
     <input type="submit" value="Create PDF" />
 </form>
+{% endcomment %}
+
+
+<form action="" method="post">{% csrf_token %}
+<table class="table table-bordered table-striped table-condensed">
+  <tbody>
+        <tr>
+            <th colspan="1" class="cbas">Author *</th>
+            <td colspan="3" class="cbas"> {{form.author}} </td>
+        </tr>
+
+        <tr>
+            <th colspan="1" class="cbas">Your Ref</th>
+            <td colspan="1" class="cbas"> {{form.your_ref}} </td>
+
+            <th colspan="1" class="cbas">Our Ref</th>
+            <td colspan="1" class="cbas"> {{form.our_ref}} </td>
+        </tr>
+
+        <tr>
+            <th colspan="1" class="cbas">Title</th>
+            <td colspan="3" class="cbas"> {{form.title}} </td>
+        </tr>
+
+        <tr>
+            <th colspan="1" class="cbas">Supplementary text</th>
+            <td colspan="3" class="cbas"> {{form.supplementary_text}} </td>
+        </tr>
+
+        <tr>
+            <th colspan="1" class="cbas">Cost implications</th>
+            <td colspan="3" class="cbas"> {{form.cost_implications}} </td>
+        </tr>
+
+        <tr>
+            <th colspan="1" class="cbas">Urgency</th>
+            <td colspan="3" class="cbas"> {{form.urgency}} </td>
+        </tr>
+
+        <tr>
+            <th colspan="1" class="cbas">Contentious issues</th>
+            <td colspan="3" class="cbas"> {{form.contentious_issues}} </td>
+        </tr>
+
+        <tr>
+            <th colspan="1" class="cbas">Recommendation *</th>
+            <td colspan="3" class="cbas"> {{form.recommendation}} </td>
+        </tr>
+
+
+
+  </tbody>
+</table>
+
+  <input type="submit" value="Create PDF" />
+</form>
+
 
 {% endblock %}
 
