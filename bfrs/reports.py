@@ -1,5 +1,5 @@
 from django.db import connection
-from bfrs.models import Bushfire, Region, Tenure, current_finyear
+from bfrs.models import Bushfire, Region, Tenure, Cause, current_finyear
 from django.db.models import Count, Sum
 from datetime import datetime
 from xlwt import Workbook, Font, XFStyle, Alignment
@@ -26,6 +26,9 @@ class Report():
         self.ministerial = MinisterialReport()
         self.quarterly = QuarterlyReport()
         self.by_tenure = BushfireByTenureReport()
+        self.by_cause = BushfireByCauseReport()
+        self.indicator = BushfireIndicator()
+        self.by_cause_10YrAverage = Bushfire10YrAverageReport()
 
     def write_excel(self):
         rpt_date = datetime.now()
@@ -33,6 +36,9 @@ class Report():
         self.ministerial.get_excel_sheet(rpt_date, book)
         self.quarterly.get_excel_sheet(rpt_date, book)
         self.by_tenure.get_excel_sheet(rpt_date, book)
+        self.by_cause.get_excel_sheet(rpt_date, book)
+        self.indicator.get_excel_sheet(rpt_date, book)
+        self.by_cause_10YrAverage.get_excel_sheet(rpt_date, book)
         filename = '/tmp/bushfire_report_{}.xls'.format(rpt_date.strftime('%d-%b-%Y'))
         book.save(filename)
 
@@ -48,6 +54,9 @@ class Report():
         self.ministerial.get_excel_sheet(rpt_date, book)
         self.quarterly.get_excel_sheet(rpt_date, book)
         self.by_tenure.get_excel_sheet(rpt_date, book)
+        self.by_cause.get_excel_sheet(rpt_date, book)
+        self.indicator.get_excel_sheet(rpt_date, book)
+        self.by_cause_10YrAverage.get_excel_sheet(rpt_date, book)
 
         book.add_sheet('Sheet 2')
         book.save(response)
@@ -767,7 +776,7 @@ class BushfireByTenureReport():
 
         hdr = sheet1.row(row_no())
         hdr.write(0, 'Fin Year', style=style)
-        hdr.write(1, current_finyear())
+        hdr.write(1, year)
 
         hdr = sheet1.row(row_no())
         hdr.write(0, 'Missing Final', style=style)
@@ -779,7 +788,7 @@ class BushfireByTenureReport():
         sheet1.write_merge(row, row, 1, 3, "Number", style_center)
         sheet1.write_merge(row, row, 4, 6, "Area (ha)", style_center)
         hdr = sheet1.row(row_no())
-        hdr.write(col_no(), "Tenure", style=style)
+        hdr.write(col_no(), "ALL REGIONS", style=style)
         hdr.write(col_no(), year2, style=style)
         hdr.write(col_no(), year1, style=style)
         hdr.write(col_no(), year0, style=style)
@@ -799,19 +808,19 @@ class BushfireByTenureReport():
                 elif 'total' in tenure.lower():
                     #row = sheet1.row(row_no())
                     row.write(col_no(), tenure, style=style)
-                    row.write(col_no(), data['count2'], style=style)
-                    row.write(col_no(), data['count1'], style=style)
+                    row.write(col_no(), data['count2'] if data['count2'] > 0 else '', style=style)
+                    row.write(col_no(), data['count1'] if data['count1'] > 0 else '', style=style)
                     row.write(col_no(), data['count0'], style=style)
-                    row.write(col_no(), data['area2'], style=style)
-                    row.write(col_no(), data['area1'], style=style)
+                    row.write(col_no(), data['area2'] if data['area2'] > 0 else '', style=style)
+                    row.write(col_no(), data['area1'] if data['area1'] > 0 else '', style=style)
                     row.write(col_no(), data['area0'], style=style)
                 else:
                     row.write(col_no(), tenure )
-                    row.write(col_no(), data['count2'])
-                    row.write(col_no(), data['count1'])
+                    row.write(col_no(), data['count2'] if data['count2'] > 0 else '')
+                    row.write(col_no(), data['count1'] if data['count1'] > 0 else '')
                     row.write(col_no(), data['count0'])
-                    row.write(col_no(), data['area2'])
-                    row.write(col_no(), data['area1'])
+                    row.write(col_no(), data['area2'] if data['area2'] > 0 else '')
+                    row.write(col_no(), data['area1'] if data['area1'] > 0 else '')
                     row.write(col_no(), data['area0'])
 
     def write_excel(self):
@@ -849,6 +858,650 @@ class BushfireByTenureReport():
                     print '{}\t{}\t{}\t{}\t{}\t{}\t{}'.format(tenure, data['count2'], data['count1'], data['count0'], data['area2'], data['area1'], data['area0']).expandtabs(20)
                 else:
                     print
+
+class BushfireByCauseReport():
+    def __init__(self):
+        self.rpt_map, self.item_map = self.create()
+
+    def create(self):
+        # Group By Region
+        year = current_finyear()
+        qs = Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED)
+        qs0 = qs.filter(year=year).values('cause_id').annotate(count=Count('cause_id'), area=Sum('area') )
+        qs1 = qs.filter(year=year-1).values('cause_id').annotate(count=Count('cause_id'), area=Sum('area') )
+        qs2 = qs.filter(year=year-2).values('cause_id').annotate(count=Count('cause_id'), area=Sum('area') )
+
+        qs0_total = qs.filter(year=year).aggregate(count_total=Count('cause_id'), area_total=Sum('area') )
+        qs1_total = qs.filter(year=year-1).aggregate(count_total=Count('cause_id'), area_total=Sum('area') )
+        qs2_total = qs.filter(year=year-2).aggregate(count_total=Count('cause_id'), area_total=Sum('area') )
+        count_total0 = qs0_total.get('count_total') if qs0_total.get('count_total') else 0
+        count_total1 = qs1_total.get('count_total') if qs1_total.get('count_total') else 0
+        count_total2 = qs2_total.get('count_total') if qs2_total.get('count_total') else 0
+
+        rpt_map = []
+        item_map = {}
+        net_count0 = 0
+        net_count1 = 0
+        net_count2 = 0
+        net_perc0 = 0
+        net_perc1 = 0
+        net_perc2 = 0
+        net_area0  = 0
+        net_area1  = 0
+        net_area2  = 0
+
+        for cause in Cause.objects.all().order_by('id'):
+            row0 = qs0.get(cause_id=cause.id) if qs0.filter(cause_id=cause.id).count() > 0 else {}
+            row1 = qs1.get(cause_id=cause.id) if qs1.filter(cause_id=cause.id).count() > 0 else {}
+            row2 = qs2.get(cause_id=cause.id) if qs2.filter(cause_id=cause.id).count() > 0 else {}
+
+            count0 = row0.get('count') if row0.get('count') else 0
+            perc0  = round(count0 * 100. / count_total0, 2) if count_total0 > 0 else 0
+            area0  = row0.get('area') if row0.get('area') else 0
+
+            count1 = row1.get('count') if row1.get('count') else 0
+            perc1  = round(count1 * 100. / count_total1, 2) if count_total1 > 0 else 0
+            area1  = row1.get('area') if row1.get('area') else 0
+
+            count2 = row2.get('count') if row2.get('count') else 0
+            perc2  = round(count2 * 100. / count_total2, 2) if count_total2 > 0 else 0
+            area2  = row2.get('area') if row2.get('area') else 0
+
+            rpt_map.append(
+                {cause.name: dict(
+                    count2=count2, count1=count1, count0=count0, 
+                    perc2=perc2, perc1=perc1, perc0=perc0, 
+                    area2=area2, area1=area1, area0=area0
+                )}
+            )
+                
+            net_count0 += count0 
+            net_count1 += count1 
+            net_count2 += count2 
+            net_perc0  += perc0 
+            net_perc1  += perc1 
+            net_perc2  += perc2 
+            net_area0  += area0 
+            net_area1  += area1 
+            net_area2  += area2 
+
+        rpt_map.append(
+            {'Total': dict(
+                count2=net_count2, count1=net_count1, count0=net_count0, 
+                perc2=round(net_perc2, 0), perc1=round(net_perc1, 0), perc0=round(net_perc0, 0), 
+                area2=net_area2, area1=net_area1, area0=net_area0
+            )}
+        )
+
+        return rpt_map, item_map
+
+    def get_excel_sheet(self, rpt_date, book=Workbook()):
+
+        year = current_finyear()
+        year0 = str(year-1) + '/' + str(year)
+        year1 = str(year-2) + '/' + str(year-1)
+        year2 = str(year-3) + '/' + str(year-2)
+        # book = Workbook()
+        sheet1 = book.add_sheet('Bushfire By Cause Report')
+        sheet1 = book.get_sheet('Bushfire By Cause Report')
+
+        # font BOLD
+        style = XFStyle() 
+        font = Font()
+        font.bold = True
+        style.font = font
+
+        # font BOLD and Center Aligned
+        style_center = XFStyle()
+        font = Font()
+        font.bold = True
+        style_center.font = font
+        style_center.alignment.horz = Alignment.HORZ_CENTER
+
+
+        col_no = lambda c=count(): next(c)
+        row_no = lambda c=count(): next(c)
+
+        hdr = sheet1.row(row_no())
+        hdr.write(0, 'Report Date', style=style)
+        hdr.write(1, rpt_date.strftime('%d-%b-%Y'))
+
+        hdr = sheet1.row(row_no())
+        hdr.write(0, 'Report', style=style)
+        hdr.write(1, 'Bushfire By Cause Report')
+
+        hdr = sheet1.row(row_no())
+        hdr.write(0, 'Fin Year', style=style)
+        hdr.write(1, year)
+
+        hdr = sheet1.row(row_no())
+        hdr.write(0, 'Missing Final', style=style)
+        hdr.write(1, Bushfire.objects.filter(report_status=Bushfire.STATUS_INITIAL_AUTHORISED, year=current_finyear()).count() )
+
+        hdr = sheet1.row(row_no())
+        hdr = sheet1.row(row_no())
+        row = row_no()
+        sheet1.write_merge(row, row, 1, 3, "Number", style_center)
+        sheet1.write_merge(row, row, 4, 6, "Percent %", style_center)
+        hdr = sheet1.row(row_no())
+        hdr.write(col_no(), "ALL REGIONS", style=style)
+        hdr.write(col_no(), year2, style=style)
+        hdr.write(col_no(), year1, style=style)
+        hdr.write(col_no(), year0, style=style)
+
+        hdr.write(col_no(), year2, style=style)
+        hdr.write(col_no(), year1, style=style)
+        hdr.write(col_no(), year0, style=style)
+
+        for row in self.rpt_map:
+            for tenure, data in row.iteritems():
+
+                row = sheet1.row(row_no())
+                col_no = lambda c=count(): next(c)
+                if tenure == '':
+                    #row = sheet1.row(row_no())
+                    continue
+                elif 'total' in tenure.lower():
+                    #row = sheet1.row(row_no())
+                    row.write(col_no(), tenure, style=style)
+                    row.write(col_no(), data['count2'], style=style)
+                    row.write(col_no(), data['count1'], style=style)
+                    row.write(col_no(), data['count0'], style=style)
+                    row.write(col_no(), data['perc2'], style=style)
+                    row.write(col_no(), data['perc1'], style=style)
+                    row.write(col_no(), data['perc0'], style=style)
+                else:
+                    row.write(col_no(), tenure )
+                    row.write(col_no(), data['count2'])
+                    row.write(col_no(), data['count1'])
+                    row.write(col_no(), data['count0'])
+                    row.write(col_no(), data['perc2'])
+                    row.write(col_no(), data['perc1'])
+                    row.write(col_no(), data['perc0'])
+
+    def write_excel(self):
+        rpt_date = datetime.now()
+        book = Workbook()
+        self.get_excel_sheet(rpt_date, book)
+        filename = '/tmp/bushfire_by_cause_report_{}.xls'.format(rpt_date.strftime('%d-%b-%Y'))
+        book.save(filename)
+
+    def export(self):
+        """ Executed from the Overview page in BFRS, returns an Excel WB as a HTTP Response object """
+
+        rpt_date = datetime.now()
+        filename = 'bushfire_by_cause_report_{}.xls'.format(rpt_date.strftime('%d%b%Y'))
+        response = HttpResponse(content_type='application/vnd.ms-excel')
+        response['Content-Disposition'] = 'attachment; filename=' + filename
+
+        book = Workbook()
+        self.get_excel_sheet(rpt_date, book)
+
+        book.add_sheet('Sheet 2')
+        book.save(response)
+
+        return response
+
+    def display(self):
+        year = current_finyear()
+        year0 = str(year-1) + '/' + str(year)
+        year1 = str(year-2) + '/' + str(year-1)
+        year2 = str(year-3) + '/' + str(year-2)
+        print '{}\t{}\t{}\t{}\t{}\t{}\t{}'.format('Cause', year2, year1, year0,  year2, year1, year0).expandtabs(20)
+        for row in self.rpt_map:
+            for cause, data in row.iteritems():
+                if cause and data:
+                    print '{}\t{}\t{}\t{}\t{}\t{}\t{}'.format(cause, data['count2'], data['count1'], data['count0'], data['perc2'], data['perc1'], data['perc0']).expandtabs(25)
+                else:
+                    print
+
+class Bushfire10YrAverageReport():
+    def __init__(self):
+        self.rpt_map, self.item_map = self.create()
+
+    def create(self):
+        # Group By Region
+        year = current_finyear()
+        qs = Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED)
+        qs0 = qs.filter(year=year).values('cause_id').annotate(count=Count('cause_id') )
+        qs1 = qs.filter(year=year-1).values('cause_id').annotate(count=Count('cause_id') )
+        qs2 = qs.filter(year=year-2).values('cause_id').annotate(count=Count('cause_id') )
+        qs3 = qs.filter(year=year-3).values('cause_id').annotate(count=Count('cause_id') )
+        qs4 = qs.filter(year=year-4).values('cause_id').annotate(count=Count('cause_id') )
+        qs5 = qs.filter(year=year-5).values('cause_id').annotate(count=Count('cause_id') )
+        qs6 = qs.filter(year=year-6).values('cause_id').annotate(count=Count('cause_id') )
+        qs7 = qs.filter(year=year-7).values('cause_id').annotate(count=Count('cause_id') )
+        qs8 = qs.filter(year=year-8).values('cause_id').annotate(count=Count('cause_id') )
+        qs9 = qs.filter(year=year-9).values('cause_id').annotate(count=Count('cause_id') )
+
+        qs0_total = qs.filter(year=year).aggregate(count_total=Count('cause_id') )
+        qs1_total = qs.filter(year=year-1).aggregate(count_total=Count('cause_id') )
+        qs2_total = qs.filter(year=year-2).aggregate(count_total=Count('cause_id') )
+        qs3_total = qs.filter(year=year-3).aggregate(count_total=Count('cause_id') )
+        qs4_total = qs.filter(year=year-4).aggregate(count_total=Count('cause_id') )
+        qs5_total = qs.filter(year=year-5).aggregate(count_total=Count('cause_id') )
+        qs6_total = qs.filter(year=year-6).aggregate(count_total=Count('cause_id') )
+        qs7_total = qs.filter(year=year-7).aggregate(count_total=Count('cause_id') )
+        qs8_total = qs.filter(year=year-8).aggregate(count_total=Count('cause_id') )
+        qs9_total = qs.filter(year=year-9).aggregate(count_total=Count('cause_id') )
+
+        count_total0 = qs0_total.get('count_total') if qs0_total.get('count_total') else 0
+        count_total1 = qs1_total.get('count_total') if qs1_total.get('count_total') else 0
+        count_total2 = qs2_total.get('count_total') if qs2_total.get('count_total') else 0
+        count_total3 = qs3_total.get('count_total') if qs3_total.get('count_total') else 0
+        count_total4 = qs4_total.get('count_total') if qs4_total.get('count_total') else 0
+        count_total5 = qs5_total.get('count_total') if qs5_total.get('count_total') else 0
+        count_total6 = qs6_total.get('count_total') if qs6_total.get('count_total') else 0
+        count_total7 = qs7_total.get('count_total') if qs7_total.get('count_total') else 0
+        count_total8 = qs8_total.get('count_total') if qs8_total.get('count_total') else 0
+        count_total9 = qs9_total.get('count_total') if qs9_total.get('count_total') else 0
+
+        rpt_map = []
+        item_map = {}
+        net_count0 = 0; net_perc0 = 0
+        net_count1 = 0; net_perc1 = 0
+        net_count2 = 0; net_perc2 = 0
+        net_count3 = 0; net_perc3 = 0
+        net_count4 = 0; net_perc4 = 0
+        net_count5 = 0; net_perc5 = 0
+        net_count6 = 0; net_perc6 = 0
+        net_count7 = 0; net_perc7 = 0
+        net_count8 = 0; net_perc8 = 0
+        net_count9 = 0; net_perc9 = 0
+        net_count_avg = 0; net_perc_avg = 0
+
+        for cause in Cause.objects.all().order_by('id'):
+            row0 = qs0.get(cause_id=cause.id) if qs0.filter(cause_id=cause.id).count() > 0 else {}
+            row1 = qs1.get(cause_id=cause.id) if qs1.filter(cause_id=cause.id).count() > 0 else {}
+            row2 = qs2.get(cause_id=cause.id) if qs2.filter(cause_id=cause.id).count() > 0 else {}
+            row3 = qs3.get(cause_id=cause.id) if qs3.filter(cause_id=cause.id).count() > 0 else {}
+            row4 = qs4.get(cause_id=cause.id) if qs4.filter(cause_id=cause.id).count() > 0 else {}
+            row5 = qs5.get(cause_id=cause.id) if qs5.filter(cause_id=cause.id).count() > 0 else {}
+            row6 = qs6.get(cause_id=cause.id) if qs6.filter(cause_id=cause.id).count() > 0 else {}
+            row7 = qs7.get(cause_id=cause.id) if qs7.filter(cause_id=cause.id).count() > 0 else {}
+            row8 = qs8.get(cause_id=cause.id) if qs8.filter(cause_id=cause.id).count() > 0 else {}
+            row9 = qs9.get(cause_id=cause.id) if qs9.filter(cause_id=cause.id).count() > 0 else {}
+
+            count0 = row0.get('count') if row0.get('count') else 0
+            perc0  = round(count0 * 100. / count_total0, 2) if count_total0 > 0 else 0
+
+            count1 = row1.get('count') if row1.get('count') else 0
+            perc1  = round(count1 * 100. / count_total1, 2) if count_total1 > 0 else 0
+
+            count2 = row2.get('count') if row2.get('count') else 0
+            perc2  = round(count2 * 100. / count_total2, 2) if count_total2 > 0 else 0
+
+            count3 = row3.get('count') if row3.get('count') else 0
+            perc3  = round(count3 * 100. / count_total3, 2) if count_total3 > 0 else 0
+
+            count4 = row4.get('count') if row4.get('count') else 0
+            perc4  = round(count4 * 100. / count_total4, 2) if count_total4 > 0 else 0
+
+            count5 = row5.get('count') if row5.get('count') else 0
+            perc5  = round(count5 * 100. / count_total5, 2) if count_total5 > 0 else 0
+
+            count6 = row6.get('count') if row6.get('count') else 0
+            perc6  = round(count6 * 100. / count_total6, 2) if count_total6 > 0 else 0
+
+            count7 = row7.get('count') if row7.get('count') else 0
+            perc7  = round(count7 * 100. / count_total7, 2) if count_total7 > 0 else 0
+
+            count8 = row8.get('count') if row8.get('count') else 0
+            perc8  = round(count8 * 100. / count_total8, 2) if count_total8 > 0 else 0
+
+            count9 = row9.get('count') if row9.get('count') else 0
+            perc9  = round(count9 * 100. / count_total9, 2) if count_total9 > 0 else 0
+
+            count_avg = (count0 + count1 + count2 + count3 + count4 + count5 + count6 + count7 + count8 + count9)/10.
+            perc_avg = (perc0 + perc1 + perc2 + perc3 + perc4 + perc5 + perc6 + perc7 + perc8 + perc9)/10.
+
+
+            rpt_map.append(
+                {cause.name: dict(
+                    count2=count2, count1=count1, count0=count0, count3=count3, count4=count4, count5=count5, count6=count6, count7=count7, count8=count8, count9=count9,
+                    perc2=perc2, perc1=perc1, perc0=perc0, perc3=perc3, perc4=perc4, perc5=perc5, perc6=perc6, perc7=perc7, perc8=perc8, perc9=perc9,
+                    count_avg=count_avg, perc_avg=perc_avg
+                )}
+            )
+                
+            net_count0 += count0; net_perc0  += perc0
+            net_count1 += count1; net_perc1  += perc1
+            net_count2 += count2; net_perc2  += perc2
+            net_count3 += count3; net_perc3  += perc3
+            net_count4 += count4; net_perc4  += perc4
+            net_count5 += count5; net_perc5  += perc5
+            net_count6 += count6; net_perc6  += perc6
+            net_count7 += count7; net_perc7  += perc7
+            net_count8 += count8; net_perc8  += perc8
+            net_count9 += count9; net_perc9  += perc9
+            net_count_avg += count_avg
+            net_perc_avg += perc_avg
+
+        rpt_map.append(
+            {'Total': dict(
+                count9=net_count9, count8=net_count8, count7=net_count7, count6=net_count6, count5=net_count5, count4=net_count4, count3=net_count3, count2=net_count2, count1=net_count1, count0=net_count0, 
+                perc9=round(net_perc9, 0), perc8=round(net_perc8, 0), perc7=round(net_perc7, 0), perc6=round(net_perc6, 0), perc5=round(net_perc5, 0), perc4=round(net_perc4, 0), perc3=round(net_perc3, 0), perc2=round(net_perc2, 0), perc1=round(net_perc1, 0), perc0=round(net_perc0, 0),
+                count_avg=net_count_avg, perc_avg=net_perc_avg
+            )}
+        )
+
+        return rpt_map, item_map
+
+    def get_excel_sheet(self, rpt_date, book=Workbook()):
+
+        year = current_finyear()
+        year0 = str(year-1) + '/' + str(year)
+        year1 = str(year-2) + '/' + str(year-1)
+        year2 = str(year-3) + '/' + str(year-2)
+        year3 = str(year-4) + '/' + str(year-3)
+        year4 = str(year-5) + '/' + str(year-4)
+        year5 = str(year-6) + '/' + str(year-5)
+        year6 = str(year-7) + '/' + str(year-6)
+        year7 = str(year-8) + '/' + str(year-7)
+        year8 = str(year-9) + '/' + str(year-8)
+        year9 = str(year-10) + '/' + str(year-9)
+        # book = Workbook()
+        sheet1 = book.add_sheet('Bushfire Causes 10Yr Average')
+        sheet1 = book.get_sheet('Bushfire Causes 10Yr Average')
+
+        # font BOLD
+        style = XFStyle() 
+        font = Font()
+        font.bold = True
+        style.font = font
+
+        # font BOLD and Center Aligned
+        style_center = XFStyle()
+        font = Font()
+        font.bold = True
+        style_center.font = font
+        style_center.alignment.horz = Alignment.HORZ_CENTER
+
+
+        col_no = lambda c=count(): next(c)
+        row_no = lambda c=count(): next(c)
+
+        hdr = sheet1.row(row_no())
+        hdr.write(0, 'Report Date', style=style)
+        hdr.write(1, rpt_date.strftime('%d-%b-%Y'))
+
+        hdr = sheet1.row(row_no())
+        hdr.write(0, 'Report', style=style)
+        hdr.write(1, 'Bushfire Causes 10Yr Average')
+
+        hdr = sheet1.row(row_no())
+        hdr.write(0, 'Fin Year', style=style)
+        hdr.write(1, year)
+
+        hdr = sheet1.row(row_no())
+        hdr.write(0, 'Missing Final', style=style)
+        hdr.write(1, Bushfire.objects.filter(report_status=Bushfire.STATUS_INITIAL_AUTHORISED, year=current_finyear()).count() )
+
+        hdr = sheet1.row(row_no())
+        hdr = sheet1.row(row_no())
+        row = row_no()
+        sheet1.write_merge(row, row, 1, 10, "Number", style_center)
+        sheet1.write_merge(row, row, 11, 20, "Percent %", style_center)
+        hdr = sheet1.row(row_no())
+        hdr.write(col_no(), "ALL REGIONS", style=style)
+        hdr.write(col_no(), year9, style=style)
+        hdr.write(col_no(), year8, style=style)
+        hdr.write(col_no(), year7, style=style)
+        hdr.write(col_no(), year6, style=style)
+        hdr.write(col_no(), year5, style=style)
+        hdr.write(col_no(), year4, style=style)
+        hdr.write(col_no(), year3, style=style)
+        hdr.write(col_no(), year2, style=style)
+        hdr.write(col_no(), year1, style=style)
+        hdr.write(col_no(), year0, style=style)
+
+        hdr.write(col_no(), year9, style=style)
+        hdr.write(col_no(), year8, style=style)
+        hdr.write(col_no(), year7, style=style)
+        hdr.write(col_no(), year6, style=style)
+        hdr.write(col_no(), year5, style=style)
+        hdr.write(col_no(), year4, style=style)
+        hdr.write(col_no(), year3, style=style)
+        hdr.write(col_no(), year2, style=style)
+        hdr.write(col_no(), year1, style=style)
+        hdr.write(col_no(), year0, style=style)
+
+        for row in self.rpt_map:
+            for cause, data in row.iteritems():
+
+                row = sheet1.row(row_no())
+                col_no = lambda c=count(): next(c)
+                if cause == '':
+                    #row = sheet1.row(row_no())
+                    continue
+                elif 'total' in cause.lower():
+                    #row = sheet1.row(row_no())
+                    row.write(col_no(), cause, style=style)
+                    row.write(col_no(), data['count9'], style=style)
+                    row.write(col_no(), data['count8'], style=style)
+                    row.write(col_no(), data['count7'], style=style)
+                    row.write(col_no(), data['count6'], style=style)
+                    row.write(col_no(), data['count5'], style=style)
+                    row.write(col_no(), data['count4'], style=style)
+                    row.write(col_no(), data['count3'], style=style)
+                    row.write(col_no(), data['count2'], style=style)
+                    row.write(col_no(), data['count1'], style=style)
+                    row.write(col_no(), data['count0'], style=style)
+                    row.write(col_no(), data['perc9'], style=style)
+                    row.write(col_no(), data['perc8'], style=style)
+                    row.write(col_no(), data['perc7'], style=style)
+                    row.write(col_no(), data['perc6'], style=style)
+                    row.write(col_no(), data['perc5'], style=style)
+                    row.write(col_no(), data['perc4'], style=style)
+                    row.write(col_no(), data['perc3'], style=style)
+                    row.write(col_no(), data['perc2'], style=style)
+                    row.write(col_no(), data['perc1'], style=style)
+                    row.write(col_no(), data['perc0'], style=style)
+                else:
+                    row.write(col_no(), cause )
+                    row.write(col_no(), data['count9'])
+                    row.write(col_no(), data['count8'])
+                    row.write(col_no(), data['count7'])
+                    row.write(col_no(), data['count6'])
+                    row.write(col_no(), data['count5'])
+                    row.write(col_no(), data['count4'])
+                    row.write(col_no(), data['count3'])
+                    row.write(col_no(), data['count2'])
+                    row.write(col_no(), data['count1'])
+                    row.write(col_no(), data['count0'])
+                    row.write(col_no(), data['perc9'])
+                    row.write(col_no(), data['perc8'])
+                    row.write(col_no(), data['perc7'])
+                    row.write(col_no(), data['perc6'])
+                    row.write(col_no(), data['perc5'])
+                    row.write(col_no(), data['perc4'])
+                    row.write(col_no(), data['perc3'])
+                    row.write(col_no(), data['perc2'])
+                    row.write(col_no(), data['perc1'])
+                    row.write(col_no(), data['perc0'])
+
+        col_no = lambda c=count(): next(c)
+        hdr = sheet1.row(row_no())
+        hdr = sheet1.row(row_no())
+        row = row_no()
+        sheet1.write_merge(row, row, 0, 2, "Ten Year Average", style_center)
+        hdr = sheet1.row(row_no())
+        hdr.write(col_no(), "ALL REGIONS", style=style)
+        hdr.write(col_no(), "Number", style=style)
+        hdr.write(col_no(), "Percent (%)", style=style)
+
+        for row in self.rpt_map:
+            for cause, data in row.iteritems():
+
+                row = sheet1.row(row_no())
+                col_no = lambda c=count(): next(c)
+                if cause == '':
+                    #row = sheet1.row(row_no())
+                    continue
+                elif 'total' in cause.lower():
+                    #row = sheet1.row(row_no())
+                    row.write(col_no(), cause, style=style)
+                    row.write(col_no(), data['count_avg'], style=style)
+                    row.write(col_no(), data['perc_avg'], style=style)
+                else:
+                    row.write(col_no(), cause )
+                    row.write(col_no(), data['count_avg'])
+                    row.write(col_no(), data['perc_avg'])
+
+
+    def write_excel(self):
+        rpt_date = datetime.now()
+        book = Workbook()
+        self.get_excel_sheet(rpt_date, book)
+        filename = '/tmp/bushfire_cause_10yr_average_report_{}.xls'.format(rpt_date.strftime('%d-%b-%Y'))
+        book.save(filename)
+
+    def export(self):
+        """ Executed from the Overview page in BFRS, returns an Excel WB as a HTTP Response object """
+
+        rpt_date = datetime.now()
+        filename = 'bushfire_by_cause_10yr_average_report_{}.xls'.format(rpt_date.strftime('%d%b%Y'))
+        response = HttpResponse(content_type='application/vnd.ms-excel')
+        response['Content-Disposition'] = 'attachment; filename=' + filename
+
+        book = Workbook()
+        self.get_excel_sheet(rpt_date, book)
+
+        book.add_sheet('Sheet 2')
+        book.save(response)
+
+        return response
+
+    def display(self):
+        year = current_finyear()
+        year0 = str(year-1) + '/' + str(year)
+        year1 = str(year-2) + '/' + str(year-1)
+        year2 = str(year-3) + '/' + str(year-2)
+        print '{}\t{}\t{}\t{}\t{}\t{}\t{}'.format('Cause', year2, year1, year0,  year2, year1, year0).expandtabs(20)
+        for row in self.rpt_map:
+            for cause, data in row.iteritems():
+                if cause and data:
+                    print '{}\t{}\t{}\t{}\t{}\t{}\t{}'.format(cause, data['count2'], data['count1'], data['count0'], data['perc2'], data['perc1'], data['perc0']).expandtabs(25)
+                else:
+                    print
+
+class BushfireIndicator():
+    def __init__(self):
+        self.rpt_map, self.item_map = self.create()
+
+    def create(self):
+        # Group By Region
+        year = current_finyear()
+        qs = Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, year=current_finyear(), region__in=Region.objects.filter(forest_region=False), initial_control__name='DBCA P&W')
+        qs1 = qs.aggregate(count=Count('id'), area=Sum('area') ) 
+        qs2 = qs.filter(area__lte=2.0).aggregate(count=Count('id'), area=Sum('area') ) 
+        count1 = qs1.get('count') if qs1.get('count') else 0
+        count2 = qs2.get('count') if qs2.get('count') else 0
+
+        rpt_map = []
+        item_map = {}
+        rpt_map.append({'No of bushfires in the Forest Regions where P&W was the initial attack agency': dict(count=count1)})
+        rpt_map.append({'No of bushfires in the Forest Regions <2ha, where P&W was the initial attack agency': dict(count=count2)})
+        rpt_map.append({'Percentage': dict(count=round(count2*100./count1, 2))})
+
+        return rpt_map, item_map
+
+    def get_excel_sheet(self, rpt_date, book=Workbook()):
+
+        year = current_finyear()
+        # book = Workbook()
+        sheet1 = book.add_sheet('Bushfire Indicator')
+        sheet1 = book.get_sheet('Bushfire Indicator')
+
+        # font BOLD
+        style = XFStyle() 
+        font = Font()
+        font.bold = True
+        style.font = font
+
+        # font BOLD and Center Aligned
+        style_center = XFStyle()
+        font = Font()
+        font.bold = True
+        style_center.font = font
+        style_center.alignment.horz = Alignment.HORZ_CENTER
+
+
+        col_no = lambda c=count(): next(c)
+        row_no = lambda c=count(): next(c)
+
+        hdr = sheet1.row(row_no())
+        hdr.write(0, 'Report Date', style=style)
+        hdr.write(1, rpt_date.strftime('%d-%b-%Y'))
+
+        hdr = sheet1.row(row_no())
+        hdr.write(0, 'Report', style=style)
+        hdr.write(1, 'Bushfire By Cause Report')
+
+        hdr = sheet1.row(row_no())
+        hdr.write(0, 'Fin Year', style=style)
+        hdr.write(1, year)
+
+        hdr = sheet1.row(row_no())
+        hdr.write(0, 'Missing Final', style=style)
+        hdr.write(1, Bushfire.objects.filter(report_status=Bushfire.STATUS_INITIAL_AUTHORISED, year=current_finyear()).count() )
+
+        hdr = sheet1.row(row_no())
+        hdr = sheet1.row(row_no())
+        row = row_no()
+        sheet1.write_merge(row, row, 0, 1, "Bushfire Indicator", style_center)
+        hdr = sheet1.row(row_no())
+
+        for row in self.rpt_map:
+            for key, data in row.iteritems():
+
+                row = sheet1.row(row_no())
+                col_no = lambda c=count(): next(c)
+                if key == '':
+                    #row = sheet1.row(row_no())
+                    continue
+                elif 'total' in key.lower() or 'percentage' in key.lower():
+                    #row = sheet1.row(row_no())
+                    row.write(col_no(), key, style=style)
+                    row.write(col_no(), data['count'], style=style)
+                else:
+                    row.write(col_no(), key )
+                    row.write(col_no(), data['count'])
+
+    def write_excel(self):
+        rpt_date = datetime.now()
+        book = Workbook()
+        self.get_excel_sheet(rpt_date, book)
+        filename = '/tmp/bushfire_indicator_report_{}.xls'.format(rpt_date.strftime('%d-%b-%Y'))
+        book.save(filename)
+
+    def export(self):
+        """ Executed from the Overview page in BFRS, returns an Excel WB as a HTTP Response object """
+
+        rpt_date = datetime.now()
+        filename = 'bushfire_indicator_report_{}.xls'.format(rpt_date.strftime('%d%b%Y'))
+        response = HttpResponse(content_type='application/vnd.ms-excel')
+        response['Content-Disposition'] = 'attachment; filename=' + filename
+
+        book = Workbook()
+        self.get_excel_sheet(rpt_date, book)
+
+        book.add_sheet('Sheet 2')
+        book.save(response)
+
+        return response
+
+    def display(self):
+        year = current_finyear()
+        print '{}\t{}'.format('', 'Number').expandtabs(20)
+        for row in self.rpt_map:
+            for key, data in row.iteritems():
+                if key and data:
+                    print '{}\t{}'.format(key, data['count']).expandtabs(25)
+                else:
+                    print
+
+
 
 
 
