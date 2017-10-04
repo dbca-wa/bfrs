@@ -1,8 +1,8 @@
 from django.db import connection
-from bfrs.models import Bushfire, Region, current_finyear
+from bfrs.models import Bushfire, Region, Tenure, current_finyear
 from django.db.models import Count, Sum
 from datetime import datetime
-from xlwt import Workbook, Font, XFStyle
+from xlwt import Workbook, Font, XFStyle, Alignment
 from itertools import count
 import unicodecsv
 
@@ -19,6 +19,40 @@ from django.template.loader import render_to_string
 
 import logging
 logger = logging.getLogger(__name__)
+
+
+class Report():
+    def __init__(self):
+        self.ministerial = MinisterialReport()
+        self.quarterly = QuarterlyReport()
+        self.by_tenure = BushfireByTenureReport()
+
+    def write_excel(self):
+        rpt_date = datetime.now()
+        book = Workbook()
+        self.ministerial.get_excel_sheet(rpt_date, book)
+        self.quarterly.get_excel_sheet(rpt_date, book)
+        self.by_tenure.get_excel_sheet(rpt_date, book)
+        filename = '/tmp/bushfire_report_{}.xls'.format(rpt_date.strftime('%d-%b-%Y'))
+        book.save(filename)
+
+    def export(self):
+        """ Executed from the Overview page in BFRS, returns an Excel WB as a HTTP Response object """
+
+        rpt_date = datetime.now()
+        filename = 'bushfire_report_{}.xls'.format(rpt_date.strftime('%d%b%Y'))
+        response = HttpResponse(content_type='application/vnd.ms-excel')
+        response['Content-Disposition'] = 'attachment; filename=' + filename
+
+        book = Workbook()
+        self.ministerial.get_excel_sheet(rpt_date, book)
+        self.quarterly.get_excel_sheet(rpt_date, book)
+        self.by_tenure.get_excel_sheet(rpt_date, book)
+
+        book.add_sheet('Sheet 2')
+        book.save(response)
+
+        return response
 
 
 class MinisterialReport():
@@ -457,6 +491,367 @@ def _ministerial_report():
 #            p.num_bushfires = row[3]
 #            result_list.append(p)
 #    return result_list
+
+class QuarterlyReport():
+    def __init__(self):
+        self.rpt_map, self.item_map = self.create()
+
+    def create(self):
+        """
+        To Test:
+            from bfrs.reports import QuarterlyReport
+            q=QuarterlyReport()
+            q.display()
+        """
+        rpt_map = []
+        item_map = {}
+        qs=Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, year=current_finyear()).values('region_id')
+
+        qs_forest_pw = qs.filter(region__in=Region.objects.filter(forest_region=True)).filter(initial_control__name='DBCA P&W').aggregate(count=Count('region_id'), area=Sum('area') )
+        qs_forest_non_pw = qs.filter(region__in=Region.objects.filter(forest_region=True)).exclude(initial_control__name='DBCA P&W').aggregate(count=Count('region_id'), area=Sum('area') )
+        forest_pw_tenure = qs_forest_pw.get('count') if qs_forest_pw.get('count') else 0.0
+        forest_area_pw_tenure = qs_forest_pw.get('area') if qs_forest_pw.get('area') else 0.0
+        forest_non_pw_tenure = qs_forest_non_pw.get('count') if qs_forest_non_pw.get('count') else 0.0
+        forest_area_non_pw_tenure = qs_forest_non_pw.get('area') if qs_forest_non_pw.get('area') else 0.0
+        forest_tenure_total = forest_pw_tenure + forest_non_pw_tenure 
+        forest_area_total = forest_area_pw_tenure + forest_area_non_pw_tenure
+        rpt_map.append(
+            {'Forest Regions': dict(
+                pw_tenure=forest_pw_tenure, area_pw_tenure=forest_area_pw_tenure, 
+                non_pw_tenure=forest_non_pw_tenure, area_non_pw_tenure=forest_area_non_pw_tenure, 
+                total_all_tenure=forest_tenure_total, total_area=forest_area_total
+            )}
+        )
+
+        qs_nonforest_pw = qs.filter(region__in=Region.objects.filter(forest_region=False)).filter(initial_control__name='DBCA P&W').aggregate(count=Count('region_id'), area=Sum('area') )
+        qs_nonforest_non_pw = qs.filter(region__in=Region.objects.filter(forest_region=False)).exclude(initial_control__name='DBCA P&W').aggregate(count=Count('region_id'), area=Sum('area') )
+        nonforest_pw_tenure = qs_nonforest_pw.get('count') if qs_nonforest_pw.get('count') else 0.0
+        nonforest_area_pw_tenure = qs_nonforest_pw.get('area') if qs_nonforest_pw.get('area') else 0.0
+        nonforest_non_pw_tenure = qs_nonforest_non_pw.get('count') if qs_nonforest_non_pw.get('count') else 0.0
+        nonforest_area_non_pw_tenure = qs_nonforest_non_pw.get('area') if qs_nonforest_non_pw.get('area') else 0.0
+        nonforest_tenure_total = nonforest_pw_tenure + nonforest_non_pw_tenure 
+        nonforest_area_total = nonforest_area_pw_tenure + nonforest_area_non_pw_tenure
+        rpt_map.append(
+            {'Non Forest Regions': dict(
+                pw_tenure=nonforest_pw_tenure, area_pw_tenure=nonforest_area_pw_tenure, 
+                non_pw_tenure=nonforest_non_pw_tenure, area_non_pw_tenure=nonforest_area_non_pw_tenure, 
+                total_all_tenure=nonforest_tenure_total, total_area=nonforest_area_total
+            )}
+        )
+
+        rpt_map.append(
+            {'TOTAL': dict(
+                pw_tenure=forest_pw_tenure + nonforest_pw_tenure, area_pw_tenure=forest_area_pw_tenure + nonforest_area_pw_tenure, 
+                non_pw_tenure=forest_non_pw_tenure + nonforest_non_pw_tenure, area_non_pw_tenure=forest_area_non_pw_tenure + nonforest_area_non_pw_tenure, 
+                total_all_tenure=forest_tenure_total + nonforest_tenure_total, total_area=forest_area_total + nonforest_area_total
+            )}
+        )
+
+        return rpt_map, item_map
+
+    def escape_burns(self):
+        return Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, year=current_finyear(), cause__name__icontains='escape')
+
+    def get_excel_sheet(self, rpt_date, book=Workbook()):
+
+        # book = Workbook()
+        sheet1 = book.add_sheet('Quarterly Report')
+        sheet1 = book.get_sheet('Quarterly Report')
+
+        style = XFStyle()
+        # font
+        font = Font()
+        font.bold = True
+        style.font = font
+
+        col_no = lambda c=count(): next(c)
+        row_no = lambda c=count(): next(c)
+
+        hdr = sheet1.row(row_no())
+        hdr.write(0, 'Report Date', style=style)
+        hdr.write(1, rpt_date.strftime('%d-%b-%Y'))
+
+        hdr = sheet1.row(row_no())
+        hdr.write(0, 'Report', style=style)
+        hdr.write(1, 'Quarterly Report')
+
+        hdr = sheet1.row(row_no())
+        hdr.write(0, 'Fin Year', style=style)
+        hdr.write(1, current_finyear())
+
+        hdr = sheet1.row(row_no())
+        hdr.write(0, 'Missing Final', style=style)
+        hdr.write(1, Bushfire.objects.filter(report_status=Bushfire.STATUS_INITIAL_AUTHORISED, year=current_finyear()).count() )
+
+        hdr = sheet1.row(row_no())
+        hdr = sheet1.row(row_no())
+        hdr.write(col_no(), "Region", style=style)
+        hdr.write(col_no(), "PW Tenure", style=style)
+        hdr.write(col_no(), "Area PW Tenure", style=style)
+        hdr.write(col_no(), "Non PW Tenure", style=style)
+        hdr.write(col_no(), "Area Non PW Tenure", style=style)
+        hdr.write(col_no(), "Total All Area", style=style)
+        hdr.write(col_no(), "Total Area", style=style)
+
+        for row in self.rpt_map:
+            for region, data in row.iteritems():
+
+                row = sheet1.row(row_no())
+                col_no = lambda c=count(): next(c)
+                if region == '':
+                    #row = sheet1.row(row_no())
+                    continue
+                elif 'total' in region.lower():
+                    #row = sheet1.row(row_no())
+                    row.write(col_no(), region, style=style)
+                    row.write(col_no(), data['pw_tenure'], style=style)
+                    row.write(col_no(), data['area_pw_tenure'], style=style)
+                    row.write(col_no(), data['non_pw_tenure'], style=style)
+                    row.write(col_no(), data['area_non_pw_tenure'], style=style)
+                    row.write(col_no(), data['total_all_tenure'], style=style)
+                    row.write(col_no(), data['total_area'], style=style)
+                else:
+                    row.write(col_no(), region )
+                    row.write(col_no(), data['pw_tenure'])
+                    row.write(col_no(), data['area_pw_tenure'])
+                    row.write(col_no(), data['non_pw_tenure'])
+                    row.write(col_no(), data['area_non_pw_tenure'])
+                    row.write(col_no(), data['total_all_tenure'])
+                    row.write(col_no(), data['total_area'])
+
+        escape_burns = self.escape_burns()
+        hdr = sheet1.row(row_no())
+        hdr = sheet1.row(row_no())
+        hdr.write(0, 'Escape Fires', style=style)
+        hdr.write(1, escape_burns.count() )
+
+        col_no = lambda c=count(): next(c)
+        hdr = sheet1.row(row_no())
+        hdr.write(col_no(), "Bushfire Number", style=style)
+        hdr.write(col_no(), "Name", style=style)
+        hdr.write(col_no(), "Cause", style=style)
+        hdr.write(col_no(), "Prescribed Burn ID", style=style)
+        for bushfire in escape_burns:
+            row = sheet1.row(row_no())
+            col_no = lambda c=count(): next(c)
+            row.write(col_no(), bushfire.fire_number)
+            row.write(col_no(), bushfire.name)
+            row.write(col_no(), bushfire.cause.name)
+            row.write(col_no(), bushfire.prescribed_burn_id)
+
+    def write_excel(self):
+        rpt_date = datetime.now()
+        book = Workbook()
+        self.get_excel_sheet(rpt_date, book)
+        filename = '/tmp/quarterly_report_{}.xls'.format(rpt_date.strftime('%d-%b-%Y'))
+        book.save(filename)
+
+    def export(self):
+        """ Executed from the Overview page in BFRS, returns an Excel WB as a HTTP Response object """
+
+        rpt_date = datetime.now()
+        filename = 'quarterly_report_{}.xls'.format(rpt_date.strftime('%d%b%Y'))
+        response = HttpResponse(content_type='application/vnd.ms-excel')
+        response['Content-Disposition'] = 'attachment; filename=' + filename
+
+        book = Workbook()
+        self.get_excel_sheet(rpt_date, book)
+
+        book.add_sheet('Sheet 2')
+        book.save(response)
+
+        return response
+
+    def display(self):
+        print '{}\t{}\t{}\t{}\t{}\t{}\t{}'.format('Region', 'PW Tenure', 'Area PW Tenure', 'Non PW Tenure', 'Area Non PW Tenure', 'Total All Area', 'Total Area').expandtabs(20)
+        for row in self.rpt_map:
+            for region, data in row.iteritems():
+                if region and data:
+                    print '{}\t{}\t{}\t{}\t{}\t{}\t{}'.format(region, data['pw_tenure'], data['area_pw_tenure'], data['non_pw_tenure'], data['area_non_pw_tenure'], data['total_all_tenure'], data['total_area']).expandtabs(20)
+                else:
+                    print
+
+class BushfireByTenureReport():
+    def __init__(self):
+        self.rpt_map, self.item_map = self.create()
+
+    def create(self):
+        # Group By Region
+        year = current_finyear()
+        qs = Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED)
+        qs0 = qs.filter(year=year).values('tenure_id').annotate(count=Count('tenure_id'), area=Sum('area') )
+        qs1 = qs.filter(year=year-1).values('tenure_id').annotate(count=Count('tenure_id'), area=Sum('area') )
+        qs2 = qs.filter(year=year-2).values('tenure_id').annotate(count=Count('tenure_id'), area=Sum('area') )
+
+        rpt_map = []
+        item_map = {}
+        net_count0 = 0
+        net_count1 = 0
+        net_count2 = 0
+        net_area0  = 0
+        net_area1  = 0
+        net_area2  = 0
+
+        for tenure in Tenure.objects.all().order_by('id'):
+            row0 = qs0.get(tenure_id=tenure.id) if qs0.filter(tenure_id=tenure.id).count() > 0 else {}
+            row1 = qs1.get(tenure_id=tenure.id) if qs1.filter(tenure_id=tenure.id).count() > 0 else {}
+            row2 = qs2.get(tenure_id=tenure.id) if qs2.filter(tenure_id=tenure.id).count() > 0 else {}
+
+            count0 = row0.get('count') if row0.get('count') else 0
+            area0  = row0.get('area') if row0.get('area') else 0
+
+            count1 = row1.get('count') if row1.get('count') else 0
+            area1  = row1.get('area') if row1.get('area') else 0
+
+            count2 = row2.get('count') if row2.get('count') else 0
+            area2  = row2.get('area') if row2.get('area') else 0
+
+            rpt_map.append(
+                {tenure.name: dict(count2=count2, count1=count1, count0=count0, area2=area2, area1=area1, area0=area0)}
+            )
+                
+            net_count0      += count0 
+            net_count1      += count1 
+            net_count2      += count2 
+            net_area0       += area0 
+            net_area1       += area1 
+            net_area2       += area2 
+
+        rpt_map.append(
+            {'Total': dict(count2=net_count2, count1=net_count1, count0=net_count0, area2=net_area2, area1=net_area1, area0=net_area0)}
+        )
+
+        # add a white space/line between forest and non-forest region tabulated info
+        #rpt_map.append(
+        #    {'': ''}
+        #)
+
+        return rpt_map, item_map
+
+
+
+    def get_excel_sheet(self, rpt_date, book=Workbook()):
+
+        year = current_finyear()
+        year0 = str(year-1) + '/' + str(year)
+        year1 = str(year-2) + '/' + str(year-1)
+        year2 = str(year-3) + '/' + str(year-2)
+        # book = Workbook()
+        sheet1 = book.add_sheet('Bushfire By Tenure Report')
+        sheet1 = book.get_sheet('Bushfire By Tenure Report')
+
+        # font BOLD
+        style = XFStyle() 
+        font = Font()
+        font.bold = True
+        style.font = font
+
+        # font BOLD and Center Aligned
+        style_center = XFStyle()
+        font = Font()
+        font.bold = True
+        style_center.font = font
+        style_center.alignment.horz = Alignment.HORZ_CENTER
+
+
+        col_no = lambda c=count(): next(c)
+        row_no = lambda c=count(): next(c)
+
+        hdr = sheet1.row(row_no())
+        hdr.write(0, 'Report Date', style=style)
+        hdr.write(1, rpt_date.strftime('%d-%b-%Y'))
+
+        hdr = sheet1.row(row_no())
+        hdr.write(0, 'Report', style=style)
+        hdr.write(1, 'Bushfire By Tenure Report')
+
+        hdr = sheet1.row(row_no())
+        hdr.write(0, 'Fin Year', style=style)
+        hdr.write(1, current_finyear())
+
+        hdr = sheet1.row(row_no())
+        hdr.write(0, 'Missing Final', style=style)
+        hdr.write(1, Bushfire.objects.filter(report_status=Bushfire.STATUS_INITIAL_AUTHORISED, year=current_finyear()).count() )
+
+        hdr = sheet1.row(row_no())
+        hdr = sheet1.row(row_no())
+        row = row_no()
+        sheet1.write_merge(row, row, 1, 3, "Number", style_center)
+        sheet1.write_merge(row, row, 4, 6, "Area (ha)", style_center)
+        hdr = sheet1.row(row_no())
+        hdr.write(col_no(), "Tenure", style=style)
+        hdr.write(col_no(), year2, style=style)
+        hdr.write(col_no(), year1, style=style)
+        hdr.write(col_no(), year0, style=style)
+
+        hdr.write(col_no(), year2, style=style)
+        hdr.write(col_no(), year1, style=style)
+        hdr.write(col_no(), year0, style=style)
+
+        for row in self.rpt_map:
+            for tenure, data in row.iteritems():
+
+                row = sheet1.row(row_no())
+                col_no = lambda c=count(): next(c)
+                if tenure == '':
+                    #row = sheet1.row(row_no())
+                    continue
+                elif 'total' in tenure.lower():
+                    #row = sheet1.row(row_no())
+                    row.write(col_no(), tenure, style=style)
+                    row.write(col_no(), data['count2'], style=style)
+                    row.write(col_no(), data['count1'], style=style)
+                    row.write(col_no(), data['count0'], style=style)
+                    row.write(col_no(), data['area2'], style=style)
+                    row.write(col_no(), data['area1'], style=style)
+                    row.write(col_no(), data['area0'], style=style)
+                else:
+                    row.write(col_no(), tenure )
+                    row.write(col_no(), data['count2'])
+                    row.write(col_no(), data['count1'])
+                    row.write(col_no(), data['count0'])
+                    row.write(col_no(), data['area2'])
+                    row.write(col_no(), data['area1'])
+                    row.write(col_no(), data['area0'])
+
+    def write_excel(self):
+        rpt_date = datetime.now()
+        book = Workbook()
+        self.get_excel_sheet(rpt_date, book)
+        filename = '/tmp/bushfire_by_tenure_report_{}.xls'.format(rpt_date.strftime('%d-%b-%Y'))
+        book.save(filename)
+
+    def export(self):
+        """ Executed from the Overview page in BFRS, returns an Excel WB as a HTTP Response object """
+
+        rpt_date = datetime.now()
+        filename = 'bushfire_by_tenure_report_{}.xls'.format(rpt_date.strftime('%d%b%Y'))
+        response = HttpResponse(content_type='application/vnd.ms-excel')
+        response['Content-Disposition'] = 'attachment; filename=' + filename
+
+        book = Workbook()
+        self.get_excel_sheet(rpt_date, book)
+
+        book.add_sheet('Sheet 2')
+        book.save(response)
+
+        return response
+
+    def display(self):
+        year = current_finyear()
+        year0 = str(year-1) + '/' + str(year)
+        year1 = str(year-2) + '/' + str(year-1)
+        year2 = str(year-3) + '/' + str(year-2)
+        print '{}\t{}\t{}\t{}\t{}\t{}\t{}'.format('Tenure', year2, year1, year0,  year2, year1, year0).expandtabs(20)
+        for row in self.rpt_map:
+            for tenure, data in row.iteritems():
+                if tenure and data:
+                    print '{}\t{}\t{}\t{}\t{}\t{}\t{}'.format(tenure, data['count2'], data['count1'], data['count0'], data['area2'], data['area1'], data['area0']).expandtabs(20)
+                else:
+                    print
+
+
+
 
 def export_outstanding_fires(request, region_id, queryset):
     """ Executed from the Overview page in BFRS, returns an Excel WB as a HTTP Response object """

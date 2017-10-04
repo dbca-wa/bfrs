@@ -33,7 +33,7 @@ from bfrs.utils import (breadcrumbs_li,
         invalidate_bushfire, is_external_user, can_maintain_data, refresh_gokart, clear_gokart_session, 
         authorise_report, check_district_changed,
     )
-from bfrs.reports import MinisterialReport, export_outstanding_fires 
+from bfrs.reports import Report, MinisterialReport, export_outstanding_fires 
 from django.db import IntegrityError, transaction
 from django.contrib import messages
 from django.forms import ValidationError
@@ -214,7 +214,8 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
         if self.request.GET.has_key('export_excel_ministerial_report'):
             report = self.request.GET.get('export_excel_ministerial_report')
             if eval(report):
-                return MinisterialReport().export()
+                #return MinisterialReport().export()
+                return Report().export()
 
         if self.request.GET.has_key('pdf_ministerial_report'):
             report = self.request.GET.get('pdf_ministerial_report')
