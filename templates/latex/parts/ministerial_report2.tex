@@ -1,12 +1,16 @@
 {% load latex_tags %}
 {% load humanize %}
 
-% override the base header
+% override the base header and footer
 \fancyhead[L]{\href{http://www.dbca.wa.gov.au}{\includegraphics[scale=0.975]{% templatetag openbrace %}{% base_dir %}/staticfiles/img/ministerial_rpt_hdr.png}}}
 \fancyhead[R] {}
 
-\fancyfoot[L]{ \leftmark\newline {{report_date}} {{time}} \\ \footnotesize Web link to the Parks and Wildlife Service Daily Burn Program: \url{% templatetag openbrace %}http://www.dbca.wa.gov.au/todaysburns}}
+%\fancyfoot[L]{ \leftmark\newline {{report_date}} {{time}} \\ \footnotesize Web link to the Parks and Wildlife Service Daily Burn Program: \url{% templatetag openbrace %}http://www.dbca.wa.gov.au/todaysburns}}
+\fancyfoot[L]{}
+\fancyfoot[R]{}
+\renewcommand{\footrulewidth}{0.0pt}
 
+\small
 \begin{minipage}[t]{0.2\textwidth}
     Author: \\
     Office of Origin: \\
@@ -14,21 +18,23 @@
     Our Reference: \\
  \end{minipage}
  \begin{minipage}[t]{0.75\textwidth}
-     {{ form.author }} \hfill Date: {{report_date}} \\
-     Regional and Fire Management Services Division \\
+     %{{ form.author }} \hfill Date: {{report_date}} \\
+     {{ form.author }}{% if form.position %}, {{form.position}}{% endif %}{% if form.phone_no %}, {{form.phone_no}}{% endif %} \\
+     {{ form.branch }}{% if form.division %}, {{form.division}}{% endif %} \\
      {{form.your_ref}} \\
      {{form.our_ref}} \\
  \end{minipage}
 
 
+\normalsize
 \subsection{MINISTER FOR ENVIRONMENT}
-\subsubsection{ {{form.title}} }
+\subsubsection{% templatetag openbrace %}{{form.title}} }
 
-Records as at {{report_date}} show {{ item.map.forest_total_all_tenure }} bushfires have been attended by Parks and Wildlife fire resources in the Department’s three south-west forest regions, covering an area of {{ item_map.forest_total_area|intcomma }} hectares, for the period since 1 July {{ current_finyear }}. Of these, {{ item_map.forest_pw_tenure }} fires occurred on Parks and Wildlife-managed lands, covering {{ item_map.forest_area_pw_tenure|intcomma }} hectares. 
+Records as at {{report_date}} show number of fires {{ item.map.forest_total_all_tenure }} bushfires have been attended by Department of Biodiversity, Conservation and Attractions (DBCA) staff in its three south-west forest regions, covering an area of {{ item_map.forest_total_area|intcomma }} hectares, for the period since 1 July {{ current_finyear }}. Of these, {{ item_map.forest_pw_tenure }} fires occurred on  DBCA managed lands, covering {{ item_map.forest_area_pw_tenure|intcomma }} hectares. 
 \\~\\
-Outside the south-west forest regions, records show {{ item_map.nonforest_total_all_tenure }} bushfires attended by Department staff have burnt through an area of {{ item_map.nonforest_total_area|intcomma }} hectares. 
+Outside the south-west forest regions, records show {{ item_map.nonforest_total_all_tenure }} bushfires attended by DBCA staff have burnt through an area of {{ item_map.nonforest_total_area|intcomma }} hectares. 
 \\~\\
-A breakdown of the records to date by Parks and Wildlife regions for bushfires since 1 July {{ current_finyear}} is shown below.
+A breakdown of the records to date by DBCA regions for bushfires since 1 July {{ current_finyear}} is shown below.
 
 {% if form.supplementary_text %}
 \\~\\
@@ -38,6 +44,8 @@ A breakdown of the records to date by Parks and Wildlife regions for bushfires s
 
 %\footnotesize
 \scriptsize
+\renewcommand{\arraystretch}{0.5}% Tighter
+\tabulinesep=1.0mm
 \begin{longtabu} to \linewidth { | X[1.0] | X[1.0] | X[1.0] | X[1.0] | X[1.0] | }
 \hline
 \textbf{Region} & \bfseries\makecell[c]{Total no. \\ PW tenure} & \bfseries\makecell[c]{Total area (ha) \\ PW tenure} & \bfseries\makecell[c]{Total no. \\ All tenure} & \bfseries\makecell[c]{Total area (ha) \\ All area}
@@ -100,5 +108,9 @@ A breakdown of the records to date by Parks and Wildlife regions for bushfires s
 \end{enumerate}
 {% endif %}
 
-\subsubsection{Jim Sharp \hfill $\rule{5.5cm}{0.05mm}$ \\DIRECTOR GENERAL \hfill MINISTER FOR ENVIRONMENT \\ {{report_date}}  \\Att  \hfill Date:$\rule{4.5cm}{0.05mm}$}
+\\~\\
+\begin{minipage}{\linewidth}
+\subsubsection{Mark Webb \\DIRECTOR GENERAL   \\~\\ {{report_date}} \hfill $\rule{5.5cm}{0.05mm}$ \\ \hfill MINISTER FOR ENVIRONMENT   \\ Att  \\~\\ \hfill Date:$\rule{4.5cm}{0.05mm}$}
+\end{minipage}
+
 \clearpage

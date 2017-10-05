@@ -677,10 +677,10 @@ class ReportView(FormView):
 
     def get_initial(self):
         initial = {}
-        initial['author'] = self.request.user.get_full_name() + ', Fire Management Services Branch'
-        #initial['your_ref'] = '62-XXXX'
-        #initial['our_ref'] = 'MINXXXX/YY'
-        initial['title'] = 'BUSHFIRE SUPPRESSION'
+        initial['author'] = self.request.user.get_full_name()
+        #initial['branch'] = 'Fire Management Services Branch'
+        #initial['division'] = 'Regional and Fire Management Services Division'
+        #initial['title'] = 'BUSHFIRE SUPPRESSION'
 
         return initial
 

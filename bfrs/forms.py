@@ -415,9 +415,13 @@ RECOMMENDATION_CHOICES = (
 
 class PDFReportForm(forms.Form):
     author = forms.CharField(max_length=100)
+    position = forms.CharField(max_length=100)
+    phone_no = forms.CharField(max_length=100)
+    branch = forms.CharField(max_length=100, widget=forms.TextInput(attrs={'placeholder': 'eg. Fire Management Services Branch'}))
+    division = forms.CharField(max_length=100, widget=forms.TextInput(attrs={'placeholder': 'eg. Regional and Fire Management Services Division'}))
     your_ref = forms.CharField(max_length=20, required=False)
     our_ref = forms.CharField(max_length=20, required=False)
-    title = forms.CharField(max_length=50)
+    title = forms.CharField(max_length=50, widget=forms.TextInput(attrs={'placeholder': 'eg. BUSHFIRE SUPPRESSION'}))
 
     supplementary_text = forms.CharField(max_length=500, widget=forms.Textarea(), required=False)
     cost_implications = forms.CharField(max_length=250, widget=forms.Textarea(), required=False)

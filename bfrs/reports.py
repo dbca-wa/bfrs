@@ -303,7 +303,7 @@ class MinisterialReport():
 
         context = {
             'user': request.user.get_full_name(),
-            'report_date': report_date.strftime('%d %b %Y'),
+            'report_date': report_date.strftime('%d %B %Y'),
             'time': report_date.strftime('%H:%M'),
             'current_finyear': current_finyear(),
             'rpt_map': self.rpt_map,
@@ -394,7 +394,7 @@ class MinisterialReport():
 
         context = {
             'user': request.user.get_full_name(),
-            'report_date': report_date.strftime('%d %b %Y'),
+            'report_date': report_date.strftime('%d %B %Y'),
             'time': report_date.strftime('%H:%M'),
             'current_finyear': current_finyear(),
             'rpt_map': self.rpt_map,
