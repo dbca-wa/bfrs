@@ -33,7 +33,7 @@ from bfrs.utils import (breadcrumbs_li,
         invalidate_bushfire, is_external_user, can_maintain_data, refresh_gokart, clear_gokart_session, 
         authorise_report, check_district_changed,
     )
-from bfrs.reports import Report, MinisterialReport, export_outstanding_fires 
+from bfrs.reports import BushfireReport, MinisterialReport, export_outstanding_fires 
 from django.db import IntegrityError, transaction
 from django.contrib import messages
 from django.forms import ValidationError
@@ -215,13 +215,7 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
             report = self.request.GET.get('export_excel_ministerial_report')
             if eval(report):
                 #return MinisterialReport().export()
-                return Report().export()
-
-        if self.request.GET.has_key('pdf_ministerial_report'):
-            report = self.request.GET.get('pdf_ministerial_report')
-            if eval(report):
-                return MinisterialReport().pdflatex(request)
-
+                return BushfireReport().export()
 
         if self.request.GET.has_key('action'):
             action = self.request.GET.get('action')
@@ -688,7 +682,7 @@ class ReportView(FormView):
     def form_valid(self, form):
         valid = super(ReportView, self).form_valid(form)
         if valid.status_code == 302:
-            return MinisterialReport().pdflatex2(self.request, form.cleaned_data)
+            return MinisterialReport().pdflatex(self.request, form.cleaned_data)
         return super(ReportView, self).form_valid(form)
 
 
