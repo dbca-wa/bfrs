@@ -20,6 +20,20 @@ from django.template.loader import render_to_string
 import logging
 logger = logging.getLogger(__name__)
 
+def style(bold=False, num_fmt='#,##0', horz_align=Alignment.HORZ_GENERAL):
+    style = XFStyle()
+    font = Font()
+    font.bold = bold
+    style.font = font
+    style.num_format_str = num_fmt
+    style.alignment.horz = horz_align
+    return style
+
+style_normal_int = style()
+style_normal     = style(num_fmt='#,##0.00')
+style_bold_int   = style(bold=True, horz_align=Alignment.HORZ_CENTER)
+style_bold       = style(bold=True, num_fmt='#,##0.00', horz_align=Alignment.HORZ_CENTER)
+style_bold_gen       = style(bold=True, num_fmt='#,##0')
 
 class BushfireReport():
     def __init__(self):
@@ -27,6 +41,7 @@ class BushfireReport():
         self.quarterly = QuarterlyReport()
         self.by_tenure = BushfireByTenureReport()
         self.by_cause = BushfireByCauseReport()
+        self.region_by_tenure = RegionByTenureReport()
         self.indicator = BushfireIndicator()
         self.by_cause_10YrAverage = Bushfire10YrAverageReport()
 
@@ -37,6 +52,7 @@ class BushfireReport():
         self.quarterly.get_excel_sheet(rpt_date, book)
         self.by_tenure.get_excel_sheet(rpt_date, book)
         self.by_cause.get_excel_sheet(rpt_date, book)
+        self.region_by_tenure.get_excel_sheet(rpt_date, book)
         self.indicator.get_excel_sheet(rpt_date, book)
         self.by_cause_10YrAverage.get_excel_sheet(rpt_date, book)
         filename = '/tmp/bushfire_report_{}.xls'.format(rpt_date.strftime('%d-%b-%Y'))
@@ -55,10 +71,11 @@ class BushfireReport():
         self.quarterly.get_excel_sheet(rpt_date, book)
         self.by_tenure.get_excel_sheet(rpt_date, book)
         self.by_cause.get_excel_sheet(rpt_date, book)
+        self.region_by_tenure.get_excel_sheet(rpt_date, book)
         self.indicator.get_excel_sheet(rpt_date, book)
         self.by_cause_10YrAverage.get_excel_sheet(rpt_date, book)
 
-        book.add_sheet('Sheet 2')
+        book.add_sheet('Sheet 1')
         book.save(response)
 
         return response
@@ -182,38 +199,32 @@ class MinisterialReport():
         sheet1 = book.add_sheet('Ministerial Report')
         sheet1 = book.get_sheet('Ministerial Report')
 
-        style = XFStyle()
-        # font
-        font = Font()
-        font.bold = True
-        style.font = font
-
         col_no = lambda c=count(): next(c)
         row_no = lambda c=count(): next(c)
 
         hdr = sheet1.row(row_no())
-        hdr.write(0, 'Report Date')
+        hdr.write(0, 'Report Date', style=style_bold_gen)
         hdr.write(1, rpt_date.strftime('%d-%b-%Y'))
 
         hdr = sheet1.row(row_no())
-        hdr.write(0, 'Report')
+        hdr.write(0, 'Report', style=style_bold_gen)
         hdr.write(1, 'Ministerial Report')
 
         hdr = sheet1.row(row_no())
-        hdr.write(0, 'Fin Year')
+        hdr.write(0, 'Fin Year', style=style_bold_gen)
         hdr.write(1, current_finyear())
 
         hdr = sheet1.row(row_no())
-        hdr.write(0, 'Missing Final')
+        hdr.write(0, 'Missing Final', style=style_bold_gen)
         hdr.write(1, Bushfire.objects.filter(report_status=Bushfire.STATUS_INITIAL_AUTHORISED, year=current_finyear()).count() )
 
         hdr = sheet1.row(row_no())
         hdr = sheet1.row(row_no())
-        hdr.write(col_no(), "Region", style=style)
-        hdr.write(col_no(), "PW Tenure", style=style)
-        hdr.write(col_no(), "Area PW Tenure", style=style)
-        hdr.write(col_no(), "Total All Area", style=style)
-        hdr.write(col_no(), "Total Area", style=style)
+        hdr.write(col_no(), "Region", style=style_bold_gen)
+        hdr.write(col_no(), "PW Tenure", style=style_bold_gen)
+        hdr.write(col_no(), "Area PW Tenure", style=style_bold_gen)
+        hdr.write(col_no(), "Total All Tenure", style=style_bold_gen)
+        hdr.write(col_no(), "Total Area", style=style_bold_gen)
 
         for row in self.rpt_map:
             for region, data in row.iteritems():
@@ -225,17 +236,17 @@ class MinisterialReport():
                     continue
                 elif 'total' in region.lower():
                     #row = sheet1.row(row_no())
-                    row.write(col_no(), region, style=style)
-                    row.write(col_no(), data['pw_tenure'], style=style)
-                    row.write(col_no(), data['area_pw_tenure'], style=style)
-                    row.write(col_no(), data['total_all_tenure'], style=style)
-                    row.write(col_no(), data['total_area'], style=style)
+                    row.write(col_no(), region, style=style_bold)
+                    row.write(col_no(), data['pw_tenure'], style=style_bold_int)
+                    row.write(col_no(), data['area_pw_tenure'], style=style_bold)
+                    row.write(col_no(), data['total_all_tenure'], style=style_bold_int)
+                    row.write(col_no(), data['total_area'], style=style_bold)
                 else:
                     row.write(col_no(), region )
-                    row.write(col_no(), data['pw_tenure'])
-                    row.write(col_no(), data['area_pw_tenure'])
-                    row.write(col_no(), data['total_all_tenure'])
-                    row.write(col_no(), data['total_area'])
+                    row.write(col_no(), data['pw_tenure'], style=style_normal_int)
+                    row.write(col_no(), data['area_pw_tenure'], style=style_normal)
+                    row.write(col_no(), data['total_all_tenure'], style=style_normal_int)
+                    row.write(col_no(), data['total_area'], style=style_normal)
 
         #book.save("/tmp/foobar.xls")
         #return sheet1
@@ -302,7 +313,7 @@ class MinisterialReport():
 
         context = {
             'user': request.user.get_full_name(),
-            'report_date': report_date.strftime('%d %B %Y'),
+            'report_date': report_date.strftime('%e %B %Y').strip(),
             'time': report_date.strftime('%H:%M'),
             'current_finyear': current_finyear(),
             'rpt_map': self.rpt_map,
@@ -475,40 +486,34 @@ class QuarterlyReport():
         sheet1 = book.add_sheet('Quarterly Report')
         sheet1 = book.get_sheet('Quarterly Report')
 
-        style = XFStyle()
-        # font
-        font = Font()
-        font.bold = True
-        style.font = font
-
         col_no = lambda c=count(): next(c)
         row_no = lambda c=count(): next(c)
 
         hdr = sheet1.row(row_no())
-        hdr.write(0, 'Report Date', style=style)
+        hdr.write(0, 'Report Date', style=style_bold_gen)
         hdr.write(1, rpt_date.strftime('%d-%b-%Y'))
 
         hdr = sheet1.row(row_no())
-        hdr.write(0, 'Report', style=style)
+        hdr.write(0, 'Report', style=style_bold_gen)
         hdr.write(1, 'Quarterly Report')
 
         hdr = sheet1.row(row_no())
-        hdr.write(0, 'Fin Year', style=style)
+        hdr.write(0, 'Fin Year', style=style_bold_gen)
         hdr.write(1, current_finyear())
 
         hdr = sheet1.row(row_no())
-        hdr.write(0, 'Missing Final', style=style)
+        hdr.write(0, 'Missing Final', style=style_bold_gen)
         hdr.write(1, Bushfire.objects.filter(report_status=Bushfire.STATUS_INITIAL_AUTHORISED, year=current_finyear()).count() )
 
         hdr = sheet1.row(row_no())
         hdr = sheet1.row(row_no())
-        hdr.write(col_no(), "Region", style=style)
-        hdr.write(col_no(), "PW Tenure", style=style)
-        hdr.write(col_no(), "Area PW Tenure", style=style)
-        hdr.write(col_no(), "Non PW Tenure", style=style)
-        hdr.write(col_no(), "Area Non PW Tenure", style=style)
-        hdr.write(col_no(), "Total All Area", style=style)
-        hdr.write(col_no(), "Total Area", style=style)
+        hdr.write(col_no(), "Region", style=style_bold_gen)
+        hdr.write(col_no(), "PW Tenure", style=style_bold_gen)
+        hdr.write(col_no(), "Area PW Tenure", style=style_bold_gen)
+        hdr.write(col_no(), "Non PW Tenure", style=style_bold_gen)
+        hdr.write(col_no(), "Area Non PW Tenure", style=style_bold_gen)
+        hdr.write(col_no(), "Total All Tenure", style=style_bold_gen)
+        hdr.write(col_no(), "Total Area", style=style_bold_gen)
 
         for row in self.rpt_map:
             for region, data in row.iteritems():
@@ -520,34 +525,34 @@ class QuarterlyReport():
                     continue
                 elif 'total' in region.lower():
                     #row = sheet1.row(row_no())
-                    row.write(col_no(), region, style=style)
-                    row.write(col_no(), data['pw_tenure'], style=style)
-                    row.write(col_no(), data['area_pw_tenure'], style=style)
-                    row.write(col_no(), data['non_pw_tenure'], style=style)
-                    row.write(col_no(), data['area_non_pw_tenure'], style=style)
-                    row.write(col_no(), data['total_all_tenure'], style=style)
-                    row.write(col_no(), data['total_area'], style=style)
+                    row.write(col_no(), region, style=style_bold)
+                    row.write(col_no(), data['pw_tenure'], style=style_bold_int)
+                    row.write(col_no(), data['area_pw_tenure'], style=style_bold)
+                    row.write(col_no(), data['non_pw_tenure'], style=style_bold_int)
+                    row.write(col_no(), data['area_non_pw_tenure'], style=style_bold)
+                    row.write(col_no(), data['total_all_tenure'], style=style_bold_int)
+                    row.write(col_no(), data['total_area'], style=style_bold)
                 else:
                     row.write(col_no(), region )
-                    row.write(col_no(), data['pw_tenure'])
-                    row.write(col_no(), data['area_pw_tenure'])
-                    row.write(col_no(), data['non_pw_tenure'])
-                    row.write(col_no(), data['area_non_pw_tenure'])
-                    row.write(col_no(), data['total_all_tenure'])
-                    row.write(col_no(), data['total_area'])
+                    row.write(col_no(), data['pw_tenure'], style=style_normal_int)
+                    row.write(col_no(), data['area_pw_tenure'], style=style_normal)
+                    row.write(col_no(), data['non_pw_tenure'], style=style_normal_int)
+                    row.write(col_no(), data['area_non_pw_tenure'], style=style_normal)
+                    row.write(col_no(), data['total_all_tenure'], style=style_normal_int)
+                    row.write(col_no(), data['total_area'], style=style_normal)
 
         escape_burns = self.escape_burns()
         hdr = sheet1.row(row_no())
         hdr = sheet1.row(row_no())
-        hdr.write(0, 'Escape Fires', style=style)
+        hdr.write(0, 'Escape Fires', style=style_bold_gen)
         hdr.write(1, escape_burns.count() )
 
         col_no = lambda c=count(): next(c)
         hdr = sheet1.row(row_no())
-        hdr.write(col_no(), "Bushfire Number", style=style)
-        hdr.write(col_no(), "Name", style=style)
-        hdr.write(col_no(), "Cause", style=style)
-        hdr.write(col_no(), "Prescribed Burn ID", style=style)
+        hdr.write(col_no(), "Bushfire Number", style=style_bold_gen)
+        hdr.write(col_no(), "Name", style=style_bold_gen)
+        hdr.write(col_no(), "Cause", style=style_bold_gen)
+        hdr.write(col_no(), "Prescribed Burn ID", style=style_bold_gen)
         for bushfire in escape_burns:
             row = sheet1.row(row_no())
             col_no = lambda c=count(): next(c)
@@ -657,53 +662,53 @@ class BushfireByTenureReport():
         sheet1 = book.add_sheet('Bushfire By Tenure Report')
         sheet1 = book.get_sheet('Bushfire By Tenure Report')
 
-        # font BOLD
-        style = XFStyle() 
-        font = Font()
-        font.bold = True
-        style.font = font
-
-        # font BOLD and Center Aligned
-        style_center = XFStyle()
-        font = Font()
-        font.bold = True
-        style_center.font = font
-        style_center.alignment.horz = Alignment.HORZ_CENTER
+#        # font BOLD
+#        style = XFStyle() 
+#        font = Font()
+#        font.bold = True
+#        style.font = font
+#
+#        # font BOLD and Center Aligned
+#        style_center = XFStyle()
+#        font = Font()
+#        font.bold = True
+#        style_center.font = font
+#        style_center.alignment.horz = Alignment.HORZ_CENTER
 
 
         col_no = lambda c=count(): next(c)
         row_no = lambda c=count(): next(c)
 
         hdr = sheet1.row(row_no())
-        hdr.write(0, 'Report Date', style=style)
+        hdr.write(0, 'Report Date', style=style_bold_gen)
         hdr.write(1, rpt_date.strftime('%d-%b-%Y'))
 
         hdr = sheet1.row(row_no())
-        hdr.write(0, 'Report', style=style)
+        hdr.write(0, 'Report', style=style_bold_gen)
         hdr.write(1, 'Bushfire By Tenure Report')
 
         hdr = sheet1.row(row_no())
-        hdr.write(0, 'Fin Year', style=style)
+        hdr.write(0, 'Fin Year', style=style_bold_gen)
         hdr.write(1, year)
 
         hdr = sheet1.row(row_no())
-        hdr.write(0, 'Missing Final', style=style)
+        hdr.write(0, 'Missing Final', style=style_bold_gen)
         hdr.write(1, Bushfire.objects.filter(report_status=Bushfire.STATUS_INITIAL_AUTHORISED, year=current_finyear()).count() )
 
         hdr = sheet1.row(row_no())
         hdr = sheet1.row(row_no())
         row = row_no()
-        sheet1.write_merge(row, row, 1, 3, "Number", style_center)
-        sheet1.write_merge(row, row, 4, 6, "Area (ha)", style_center)
+        sheet1.write_merge(row, row, 1, 3, "Number", style_bold)
+        sheet1.write_merge(row, row, 4, 6, "Area (ha)", style_bold)
         hdr = sheet1.row(row_no())
-        hdr.write(col_no(), "ALL REGIONS", style=style)
-        hdr.write(col_no(), year2, style=style)
-        hdr.write(col_no(), year1, style=style)
-        hdr.write(col_no(), year0, style=style)
+        hdr.write(col_no(), "ALL REGIONS", style=style_bold_gen)
+        hdr.write(col_no(), year2, style=style_bold_gen)
+        hdr.write(col_no(), year1, style=style_bold_gen)
+        hdr.write(col_no(), year0, style=style_bold_gen)
 
-        hdr.write(col_no(), year2, style=style)
-        hdr.write(col_no(), year1, style=style)
-        hdr.write(col_no(), year0, style=style)
+        hdr.write(col_no(), year2, style=style_bold_gen)
+        hdr.write(col_no(), year1, style=style_bold_gen)
+        hdr.write(col_no(), year0, style=style_bold_gen)
 
         for row in self.rpt_map:
             for tenure, data in row.iteritems():
@@ -715,21 +720,21 @@ class BushfireByTenureReport():
                     continue
                 elif 'total' in tenure.lower():
                     #row = sheet1.row(row_no())
-                    row.write(col_no(), tenure, style=style)
-                    row.write(col_no(), data['count2'] if data['count2'] > 0 else '', style=style)
-                    row.write(col_no(), data['count1'] if data['count1'] > 0 else '', style=style)
-                    row.write(col_no(), data['count0'], style=style)
-                    row.write(col_no(), data['area2'] if data['area2'] > 0 else '', style=style)
-                    row.write(col_no(), data['area1'] if data['area1'] > 0 else '', style=style)
-                    row.write(col_no(), data['area0'], style=style)
+                    row.write(col_no(), tenure, style=style_bold_gen)
+                    row.write(col_no(), data['count2'] if data['count2'] > 0 else '', style=style_bold_gen)
+                    row.write(col_no(), data['count1'] if data['count1'] > 0 else '', style=style_bold_gen)
+                    row.write(col_no(), data['count0'], style=style_bold_gen)
+                    row.write(col_no(), data['area2'] if data['area2'] > 0 else '', style=style_bold_gen)
+                    row.write(col_no(), data['area1'] if data['area1'] > 0 else '', style=style_bold_gen)
+                    row.write(col_no(), data['area0'], style=style_bold_gen)
                 else:
-                    row.write(col_no(), tenure )
-                    row.write(col_no(), data['count2'] if data['count2'] > 0 else '')
-                    row.write(col_no(), data['count1'] if data['count1'] > 0 else '')
-                    row.write(col_no(), data['count0'])
-                    row.write(col_no(), data['area2'] if data['area2'] > 0 else '')
-                    row.write(col_no(), data['area1'] if data['area1'] > 0 else '')
-                    row.write(col_no(), data['area0'])
+                    row.write(col_no(), tenure, style=style_normal )
+                    row.write(col_no(), data['count2'] if data['count2'] > 0 else '', style=style_normal_int)
+                    row.write(col_no(), data['count1'] if data['count1'] > 0 else '', style=style_normal_int)
+                    row.write(col_no(), data['count0'], style=style_normal_int)
+                    row.write(col_no(), data['area2'] if data['area2'] > 0 else '', style=style_normal)
+                    row.write(col_no(), data['area1'] if data['area1'] > 0 else '', style=style_normal)
+                    row.write(col_no(), data['area0'], style=style_normal)
 
     def write_excel(self):
         rpt_date = datetime.now()
@@ -962,6 +967,210 @@ class BushfireByCauseReport():
                     print '{}\t{}\t{}\t{}\t{}\t{}\t{}'.format(cause, data['count2'], data['count1'], data['count0'], data['perc2'], data['perc1'], data['perc0']).expandtabs(25)
                 else:
                     print
+
+class RegionByTenureReport():
+    def __init__(self):
+        self.rpt_map, self.item_map = self.create()
+
+    def create(self):
+
+        qs = Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, year=current_finyear())
+        qs = qs.values('region_id','tenure_id').order_by('region_id','tenure_id').annotate(count=Count('tenure_id'), area=Sum('area') )
+
+        rpt_map = []
+        item_map = {}
+        for region in Region.objects.all().order_by('id'):
+            tmp_list=[]                       
+            for tenure in Tenure.objects.all().order_by('id'):
+                ls = [i for i in qs if i['tenure_id']==tenure.id and i['region_id']==region.id]
+                if ls:
+                    tmp_list.append(ls[0])
+                else:
+                    tmp_list.append(dict(tenure_id=tenure.id, region_id=region.id, count=0, area=0))
+
+            rpt_map.append(tmp_list)
+
+        return rpt_map, item_map
+
+    @property
+    def all_map(self):
+        return Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, year=current_finyear()).aggregate(count=Count('id'), area=Sum('area') )
+
+    @property
+    def region_map(self):
+
+        def contains_id(id):
+            """ Returns dict tuple if id contained in qs """
+            id_dict = [i for i in qs if i.get('region_id')==id]
+            return id_dict[0] if id_dict else False
+
+        qs = Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, year=current_finyear()).values('region_id').annotate(count=Count('region_id'), area=Sum('area') )
+        regions = {}
+        for region in Region.objects.all().order_by('id'):
+
+            id_dict = contains_id(region.id)
+            if id_dict:
+                regions[region.id] = dict(count=id_dict['count'], area=id_dict['area'])
+            else:
+                regions[region.id] = dict(count=0, area=0)
+                
+        return regions
+
+    @property
+    def tenure_map(self):
+
+        def contains_id(id):
+            """ Returns dict tuple if id contained in qs """
+            id_dict = [i for i in qs if i.get('tenure_id')==id]
+            return id_dict[0] if id_dict else False
+
+        qs = Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, year=current_finyear()).values('tenure_id').annotate(count=Count('tenure_id'), area=Sum('area') )
+        tenures = {}
+        for tenure in Tenure.objects.all().order_by('id'):
+            id_dict = contains_id(tenure.id)
+            if id_dict:
+                tenures[tenure.id] = dict(count=id_dict['count'], area=id_dict['area'])
+            else:
+                tenures[tenure.id] = dict(count=0, area=0)
+ 
+        return tenures
+
+    def get_excel_sheet(self, rpt_date, book=Workbook()):
+
+        year = current_finyear()
+        # book = Workbook()
+        sheet1 = book.add_sheet('Bushfire Region By Tenure')
+        sheet1 = book.get_sheet('Bushfire Region By Tenure')
+
+        # font BOLD
+        style = XFStyle() 
+        font = Font()
+        font.bold = True
+        style.font = font
+
+        # font BOLD and Center Aligned
+        style_center = XFStyle()
+        font = Font()
+        font.bold = True
+        style_center.font = font
+        style_center.alignment.horz = Alignment.HORZ_CENTER
+
+
+        col_no = lambda c=count(): next(c)
+        row_no = lambda c=count(): next(c)
+
+        hdr = sheet1.row(row_no())
+        hdr.write(0, 'Report Date', style=style)
+        hdr.write(1, rpt_date.strftime('%d-%b-%Y'))
+
+        hdr = sheet1.row(row_no())
+        hdr.write(0, 'Report', style=style)
+        hdr.write(1, 'Bushfire Region By Tenure Report')
+
+        hdr = sheet1.row(row_no())
+        hdr.write(0, 'Fin Year', style=style)
+        hdr.write(1, year)
+
+        hdr = sheet1.row(row_no())
+        hdr.write(0, 'Missing Final', style=style)
+        hdr.write(1, Bushfire.objects.filter(report_status=Bushfire.STATUS_INITIAL_AUTHORISED, year=current_finyear()).count() )
+
+        hdr = sheet1.row(row_no())
+        hdr = sheet1.row(row_no())
+        row = row_no()
+        sheet1.write_merge(row, row, 0, 1, "Bushfire Region By Tenure", style_center)
+        hdr = sheet1.row(row_no())
+
+        row = sheet1.row(row_no())
+        col_no = lambda c=count(): next(c)
+        row.write(col_no(), '')
+        row.write(col_no(), '' )
+        for i in Tenure.objects.all().order_by('id'):
+            row.write(col_no(), i.name, style=style)
+        row.write(col_no(), "Total", style=style)
+
+        no_regions = Region.objects.all().count()
+        no_tenures = Tenure.objects.all().count()
+        all_map = self.all_map
+        region_map = self.region_map
+        tenure_map = self.tenure_map
+        region_ids=[region.id for region in Region.objects.all().order_by('id')]
+        for region in self.rpt_map:
+            region_id = region_ids.pop(0)
+            row = sheet1.row(row_no())
+            col_no = lambda c=count(): next(c)
+            row.write(col_no(), Region.objects.get(id=region_id).name, style=style)
+            row.write(col_no(), 'Area', style=style)
+            tenure_id = 1
+            for tenure in region: # loops through all tenures for given region
+                row.write(col_no(), tenure['area'] )
+
+            
+            # Right-most 'Total Column' - Area
+            row.write(col_no(), region_map[region_id]['area'], style=style )
+
+
+            row = sheet1.row(row_no())
+            col_no = lambda c=count(): next(c)
+            row.write(col_no(), '' )
+            row.write(col_no(), 'Number', style=style)
+            for i in region:
+                row.write(col_no(), i['count'] )
+
+            # Right-most 'Total Column' - Number
+            row.write(col_no(), region_map[region_id]['count'], style=style )
+
+            row = sheet1.row(row_no())
+
+        # Last Two Rows - 'Grand Total' rows - Area
+        col_no = lambda c=count(): next(c)
+        row = sheet1.row(row_no())
+        row.write(col_no(), 'Grand Total (All Regions)', style=style)
+        row.write(col_no(), 'Area (ha)', style=style)
+        for tenure_id in tenure_map:
+            row.write(col_no(), tenure_map[tenure_id]['area'], style=style)
+        # Bottom-Right Two Cells - Total for entire matrix - Area
+        row.write(col_no(), all_map.get('area'), style=style)
+
+        # Last Two Rows - 'Grand Total' rows - Number
+        col_no = lambda c=count(): next(c)
+        row = sheet1.row(row_no())
+        row.write(col_no(), '', style=style)
+        row.write(col_no(), 'Number', style=style)
+        for tenure_id in tenure_map:
+            row.write(col_no(), tenure_map[tenure_id]['count'], style=style)
+        # Bottom-Right Two Cells - Total for entire matrix - Number
+        row.write(col_no(), all_map.get('count'), style=style)
+
+
+    def write_excel(self):
+        rpt_date = datetime.now()
+        book = Workbook()
+        self.get_excel_sheet(rpt_date, book)
+        filename = '/tmp/bushfire_regionbytenure_report_{}.xls'.format(rpt_date.strftime('%d-%b-%Y'))
+        book.save(filename)
+
+    def export(self):
+        """ Executed from the Overview page in BFRS, returns an Excel WB as a HTTP Response object """
+
+        rpt_date = datetime.now()
+        filename = 'bushfire_regionbytenure_report_{}.xls'.format(rpt_date.strftime('%d%b%Y'))
+        response = HttpResponse(content_type='application/vnd.ms-excel')
+        response['Content-Disposition'] = 'attachment; filename=' + filename
+
+        book = Workbook()
+        self.get_excel_sheet(rpt_date, book)
+
+        book.add_sheet('Sheet 2')
+        book.save(response)
+
+        return response
+
+    def display(self):
+        for data in self.rpt_map:
+            print ', '.join([str(i['count']) for i in data])
+            print ', '.join([str(i['area']) for i in data])
+            print
 
 class Bushfire10YrAverageReport():
     def __init__(self):
