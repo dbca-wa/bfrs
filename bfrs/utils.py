@@ -866,6 +866,37 @@ def clear_gokart_session(request):
     #request.session['id'] = 'null'
     #request.session['action'] = 'null'
 
+
+def get_pbs_bushfires(fire_ids=None):
+    """ 
+        fire_ids: string --> BF_2017_SWC_001, BF_2017_SWC_002, BF_2017_SWC_003", OR
+                  list   --> ["BF_2017_SWC_001", "BF_2017_SWC_002", "BF_2017_SWC_003"]
+    
+        Returns list of dicts:
+        [
+            {'fire_id': u'BF_2017_SWC_001', 'area': '0.3', 'region': 1},
+            {'fire_id': u'BF_2017_DON_001', 'area': '2.3', 'region': 2}
+        ]
+    """
+    try:
+        if fire_ids:
+            if isinstance(fire_ids, list):
+                params = {"fire_id__in": ','.join(fire_ids)}
+            else:
+                params = {"fire_id__in": fire_ids}
+        elif isinstance(fire_ids, list) and len(fire_ids) == 0:
+            """ case where there are no outstanding fires in BFRS """
+            return 
+        else:
+            params = None
+        pbs_url = settings.PBS_URL if settings.PBS_URL.endswith('/') else settings.PBS_URL + os.sep
+        url = pbs_url + 'api/v1/prescribedburn/?format=json'
+        return requests.get(url=url, params=params, auth=requests.auth.HTTPBasicAuth(settings.USER_SSO, settings.PASS_SSO)).json()
+    except Exception as e:
+        logger.error('REST API error connecting to PBS 268b bushfires:  {}\n{}\n'.format(url, e))
+        return []
+   
+
 def export_final_csv(request, queryset):
     #import csv
     filename = 'export_final-' + datetime.now().strftime('%Y-%m-%dT%H%M%S') + '.csv'

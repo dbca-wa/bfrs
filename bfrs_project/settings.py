@@ -47,6 +47,7 @@ INTERNAL_EMAIL = env('INTERNAL_EMAIL', ['dpaw.wa.gov.au'])
 SSS_URL = env('SSS_URL', 'sss_redirect_url')
 AREA_THRESHOLD = env('AREA_THRESHOLD', 2)
 
+PBS_URL = env('PBS_URL', 'https://pbs.dpaw.wa.gov.au/')
 URL_SSO = env('URL_SSO', 'https://oim.dpaw.wa.gov.au/api/users/')
 USER_SSO = env('USER_SSO')
 PASS_SSO = env('PASS_SSO')

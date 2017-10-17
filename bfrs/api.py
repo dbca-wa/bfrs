@@ -169,6 +169,19 @@ class BushfireResource(APIResource):
             qs = Bushfire.objects.all().distinct().order_by('year').values_list('year', flat=True)[::1]
             year_list = qs if current_finyear() in qs else qs + [current_finyear()]
             return self.create_response(request, data=year_list)
+        elif kwargs['field_name'] == 'fire_number':
+        # Get a list of fire_numbers and names for the field passed in kwargs and request.GET params.
+            qs = Bushfire.objects.all()
+            if request.GET.get('region_id'):
+                qs = qs.filter(region_id=request.GET.get('region_id'))
+            if request.GET.get('district_id'):
+                qs = qs.filter(district_id=request.GET.get('district_id'))
+            if request.GET.get('year'):
+                qs = qs.filter(year=request.GET.get('year'))
+
+            qs = qs.order_by('region', 'district', 'year').values('fire_number', 'name')
+            return self.create_response(request, data=list(qs))
+
 
         return super(BushfireResource, self).field_values(request, **kwargs)
 
@@ -280,7 +293,6 @@ class BushfireResource(APIResource):
 
         bundle.obj.save()
         return bundle
-
 
 
 v1_api = Api(api_name='v1')

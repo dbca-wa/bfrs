@@ -1,5 +1,6 @@
 from django.db import connection
-from bfrs.models import Bushfire, Region, Tenure, Cause, current_finyear
+from bfrs.models import Bushfire, Region, District, Tenure, Cause, current_finyear
+from bfrs.utils import get_pbs_bushfires
 from django.db.models import Count, Sum
 from datetime import datetime
 from xlwt import Workbook, Font, XFStyle, Alignment
@@ -20,6 +21,7 @@ from django.template.loader import render_to_string
 import logging
 logger = logging.getLogger(__name__)
 
+
 def style(bold=False, num_fmt='#,##0', horz_align=Alignment.HORZ_GENERAL):
     style = XFStyle()
     font = Font()
@@ -33,11 +35,14 @@ style_normal_int = style()
 style_normal     = style(num_fmt='#,##0.00')
 style_bold_int   = style(bold=True, horz_align=Alignment.HORZ_CENTER)
 style_bold       = style(bold=True, num_fmt='#,##0.00', horz_align=Alignment.HORZ_CENTER)
-style_bold_gen       = style(bold=True, num_fmt='#,##0')
+style_bold_left  = style(bold=True, num_fmt='#,##0.00')
+style_bold_gen   = style(bold=True, num_fmt='#,##0')
 
 class BushfireReport():
     def __init__(self):
-        self.ministerial = MinisterialReport()
+        self.ministerial_auth = MinisterialReportAuth()
+        self.ministerial_268 = MinisterialReport268()
+        self.ministerial = MinisterialReport(self.ministerial_auth, self.ministerial_268)
         self.quarterly = QuarterlyReport()
         self.by_tenure = BushfireByTenureReport()
         self.by_cause = BushfireByCauseReport()
@@ -49,6 +54,8 @@ class BushfireReport():
         rpt_date = datetime.now()
         book = Workbook()
         self.ministerial.get_excel_sheet(rpt_date, book)
+        self.ministerial_auth.get_excel_sheet(rpt_date, book)
+        self.ministerial_268.get_excel_sheet(rpt_date, book)
         self.quarterly.get_excel_sheet(rpt_date, book)
         self.by_tenure.get_excel_sheet(rpt_date, book)
         self.by_cause.get_excel_sheet(rpt_date, book)
@@ -68,6 +75,8 @@ class BushfireReport():
 
         book = Workbook()
         self.ministerial.get_excel_sheet(rpt_date, book)
+        self.ministerial_auth.get_excel_sheet(rpt_date, book)
+        self.ministerial_268.get_excel_sheet(rpt_date, book)
         self.quarterly.get_excel_sheet(rpt_date, book)
         self.by_tenure.get_excel_sheet(rpt_date, book)
         self.by_cause.get_excel_sheet(rpt_date, book)
@@ -82,93 +91,95 @@ class BushfireReport():
 
 
 class MinisterialReport():
-    def __init__(self):
+    """
+    Report for Combined (Authorised and active 268b) fires
+    """
+    def __init__(self, ministerial_auth=None, ministerial_268=None):
+        self.ministerial_auth = ministerial_auth if ministerial_auth else MinisterialReportAuth()
+        self.ministerial_268 = ministerial_268 if ministerial_268 else MinisterialReport268()
         self.rpt_map, self.item_map = self.create()
 
     def create(self):
-        # Group By Region
-        qs=Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, year=current_finyear()).values('region_id')
-        qs1=qs.filter(initial_control__name='DBCA P&W').annotate(dbca_count=Count('region_id'), dbca_sum=Sum('area') )
-        qs2=qs.exclude(initial_control__isnull=True).annotate(total_count=Count('region_id'), total_sum=Sum('area') )
+        #import ipdb; ipdb.set_trace()
+        rpt_map_auth = self.ministerial_auth.rpt_map
+        rpt_map_268 = self.ministerial_268.rpt_map
+        item_map_auth = self.ministerial_auth.item_map
+        item_map_268 = self.ministerial_268.item_map
 
         rpt_map = []
         item_map = {}
-        net_forest_pw_tenure      = 0
-        net_forest_area_pw_tenure = 0
-        net_forest_total_all_area = 0
-        net_forest_total_area     = 0
-
         for region in Region.objects.filter(forest_region=True).order_by('id'):
-            row1 = qs1.get(region_id=region.id) if qs1.filter(region_id=region.id).count() > 0 else {}
-            row2 = qs2.get(region_id=region.id) if qs2.filter(region_id=region.id).count() > 0 else {}
+            map_auth = [i for i in rpt_map_auth if i.has_key(region.name)][0]
+            map_268  = [i for i in rpt_map_268 if i.has_key(region.name)][0]
+            rpt_map.append({
+                region.name: dict(
+                    pw_tenure=map_auth[region.name]['pw_tenure'] + map_268[region.name]['pw_tenure'],
+                    area_pw_tenure=map_auth[region.name]['area_pw_tenure'] + map_268[region.name]['area_pw_tenure'],
+                    total_all_tenure=map_auth[region.name]['total_all_tenure'] + map_268[region.name]['total_all_tenure'],
+                    total_area=map_auth[region.name]['total_area'] + map_268[region.name]['total_area']
+                )
+            })
 
-            pw_tenure      = row1['dbca_count'] if row1.has_key('dbca_count') and row1['dbca_count'] else 0
-            area_pw_tenure = round(row1['dbca_sum'], 2) if row1.has_key('dbca_sum') and row1['dbca_sum'] else 0
-            total_all_area = row2['total_count'] if row2.has_key('total_count') and row2['total_count'] else 0
-            total_area     = round(row2['total_sum'], 2) if row2.has_key('total_sum') and row2['total_sum'] else 0
-
-            rpt_map.append(
-                {region.name: dict(pw_tenure=pw_tenure, area_pw_tenure=area_pw_tenure, total_all_tenure=total_all_area, total_area=total_area)}
+        key = 'Sub Total (Forest)'
+        map_auth = [i for i in rpt_map_auth if i.has_key(key)][0]
+        map_268  = [i for i in rpt_map_268 if i.has_key(key)][0]
+        rpt_map.append({
+            key: dict(
+                pw_tenure=map_auth[key]['pw_tenure'] + map_268[key]['pw_tenure'],
+                area_pw_tenure=map_auth[key]['area_pw_tenure'] + map_268[key]['area_pw_tenure'],
+                total_all_tenure=map_auth[key]['total_all_tenure'] + map_268[key]['total_all_tenure'],
+                total_area=map_auth[key]['total_area'] + map_268[key]['total_area']
             )
-                
-            net_forest_pw_tenure      += pw_tenure 
-            net_forest_area_pw_tenure += area_pw_tenure
-            net_forest_total_all_area += total_all_area
-            net_forest_total_area     += total_area
+        })
 
-        rpt_map.append(
-            {'Sub Total (Forest)': dict(pw_tenure=net_forest_pw_tenure, area_pw_tenure=net_forest_area_pw_tenure, total_all_tenure=net_forest_total_all_area, total_area=net_forest_total_area)}
-        )
+        item_map['forest_pw_tenure'] = item_map_auth['forest_pw_tenure'] + item_map_268['forest_pw_tenure']
+        item_map['forest_area_pw_tenure'] = item_map_auth['forest_area_pw_tenure'] + item_map_268['forest_area_pw_tenure']
+        item_map['forest_total_all_tenure'] = item_map_auth['forest_total_all_tenure'] + item_map_268['forest_total_all_tenure'] 
+        item_map['forest_total_area'] = item_map_auth['forest_total_area'] + item_map_268['forest_total_area']
 
-        item_map['forest_pw_tenure'] = net_forest_pw_tenure
-        item_map['forest_area_pw_tenure'] = net_forest_area_pw_tenure
-        item_map['forest_total_all_tenure'] = net_forest_total_all_area
-        item_map['forest_total_area'] = net_forest_total_area
-
-        # add a white space/line between forest and non-forest region tabulated info
         rpt_map.append(
             {'': ''}
         )
 
-        net_nonforest_pw_tenure      = 0
-        net_nonforest_area_pw_tenure = 0
-        net_nonforest_total_all_area = 0
-        net_nonforest_total_area     = 0
         for region in Region.objects.filter(forest_region=False).order_by('id'):
-            row1 = qs1.get(region_id=region.id) if qs1.filter(region_id=region.id).count() > 0 else {}
-            row2 = qs2.get(region_id=region.id) if qs2.filter(region_id=region.id).count() > 0 else {}
+            map_auth = [i for i in rpt_map_auth if i.has_key(region.name)][0]
+            map_268  = [i for i in rpt_map_268 if i.has_key(region.name)][0]
+            rpt_map.append({
+                region.name: dict(
+                    pw_tenure=map_auth[region.name]['pw_tenure'] + map_268[region.name]['pw_tenure'],
+                    area_pw_tenure=map_auth[region.name]['area_pw_tenure'] + map_268[region.name]['area_pw_tenure'],
+                    total_all_tenure=map_auth[region.name]['total_all_tenure'] + map_268[region.name]['total_all_tenure'],
+                    total_area=map_auth[region.name]['total_area'] + map_268[region.name]['total_area']
+                )
+            })
 
-            pw_tenure      = row1['dbca_count'] if row1.has_key('dbca_count') and row1['dbca_count'] else 0
-            area_pw_tenure = round(row1['dbca_sum'], 2) if row1.has_key('dbca_sum') and row1['dbca_sum'] else 0
-            total_all_area = row2['total_count'] if row2.has_key('total_count') and row2['total_count'] else 0
-            total_area     = round(row2['total_sum'], 2) if row2.has_key('total_sum') and row2['total_sum'] else 0
-
-            rpt_map.append(
-                {region.name: dict(pw_tenure=pw_tenure, area_pw_tenure=area_pw_tenure, total_all_tenure=total_all_area, total_area=total_area)}
+        key = 'Sub Total (Non Forest)'
+        map_auth = [i for i in rpt_map_auth if i.has_key(key)][0]
+        map_268  = [i for i in rpt_map_268 if i.has_key(key)][0]
+        rpt_map.append({
+            key: dict(
+                pw_tenure=map_auth[key]['pw_tenure'] + map_268[key]['pw_tenure'],
+                area_pw_tenure=map_auth[key]['area_pw_tenure'] + map_268[key]['area_pw_tenure'],
+                total_all_tenure=map_auth[key]['total_all_tenure'] + map_268[key]['total_all_tenure'],
+                total_area=map_auth[key]['total_area'] + map_268[key]['total_area']
             )
-                
-            net_nonforest_pw_tenure      += pw_tenure 
-            net_nonforest_area_pw_tenure += area_pw_tenure
-            net_nonforest_total_all_area += total_all_area
-            net_nonforest_total_area     += total_area
+        })
 
-
-        rpt_map.append(
-            {'Sub Total (Non Forest)': dict(pw_tenure=net_nonforest_pw_tenure, area_pw_tenure=net_nonforest_area_pw_tenure, total_all_tenure=net_nonforest_total_all_area, total_area=net_nonforest_total_area)}
-        )
-
-        item_map['nonforest_total_all_tenure'] = net_nonforest_total_all_area
-        item_map['nonforest_total_area'] = net_nonforest_total_area
+        item_map['nonforest_total_all_tenure'] = item_map_auth['nonforest_total_all_tenure'] + item_map_268['nonforest_total_all_tenure']
+        item_map['nonforest_total_area'] = item_map_auth['nonforest_total_area'] + item_map_268['nonforest_total_area']
                 
-        rpt_map.append(
-            {'GRAND TOTAL': dict(
-                pw_tenure=net_forest_pw_tenure + net_nonforest_pw_tenure, 
-                area_pw_tenure=net_forest_area_pw_tenure + net_nonforest_area_pw_tenure, 
-                total_all_tenure=net_forest_total_all_area + net_nonforest_total_all_area, 
-                total_area=net_forest_total_area + net_nonforest_total_area
-            )}
-        )
-                
+        key = 'GRAND TOTAL'
+        map_auth = [i for i in rpt_map_auth if i.has_key(key)][0]
+        map_268  = [i for i in rpt_map_268 if i.has_key(key)][0]
+        rpt_map.append({
+            key: dict(
+                pw_tenure=map_auth[key]['pw_tenure'] + map_268[key]['pw_tenure'],
+                area_pw_tenure=map_auth[key]['area_pw_tenure'] + map_268[key]['area_pw_tenure'],
+                total_all_tenure=map_auth[key]['total_all_tenure'] + map_268[key]['total_all_tenure'],
+                total_area=map_auth[key]['total_area'] + map_268[key]['total_area']
+            )
+        })
+
         return rpt_map, item_map
 
     def export_final_csv(self, request, queryset):
@@ -236,11 +247,11 @@ class MinisterialReport():
                     continue
                 elif 'total' in region.lower():
                     #row = sheet1.row(row_no())
-                    row.write(col_no(), region, style=style_bold)
-                    row.write(col_no(), data['pw_tenure'], style=style_bold_int)
-                    row.write(col_no(), data['area_pw_tenure'], style=style_bold)
-                    row.write(col_no(), data['total_all_tenure'], style=style_bold_int)
-                    row.write(col_no(), data['total_area'], style=style_bold)
+                    row.write(col_no(), region, style=style_bold_left)
+                    row.write(col_no(), data['pw_tenure'], style=style_bold_gen)
+                    row.write(col_no(), data['area_pw_tenure'], style=style_bold_left)
+                    row.write(col_no(), data['total_all_tenure'], style=style_bold_gen)
+                    row.write(col_no(), data['total_area'], style=style_bold_left)
                 else:
                     row.write(col_no(), region )
                     row.write(col_no(), data['pw_tenure'], style=style_normal_int)
@@ -372,6 +383,525 @@ class MinisterialReport():
         logger.debug("Finally: returning PDF response.")
         return response
 
+
+
+
+class MinisterialReport268():
+    """
+    Report for active 268b bushfires only
+    """
+    def __init__(self):
+        self.rpt_map, self.item_map = self.create()
+
+    def get_268_data(self, dbca_initial_control=None):
+        """ Retrieves the 268b fires from PBS and Aggregates the Area and Number count by region """
+        qs_regions = Region.objects.all()
+
+        if dbca_initial_control:
+            # get the fires managed by DBCA
+            outstanding_fires = list(Bushfire.objects.filter(report_status__in=[Bushfire.STATUS_INITIAL_AUTHORISED], initial_control__name__icontains='DBCA').values_list('fire_number', flat=True))
+        else:
+            outstanding_fires = list(Bushfire.objects.filter(report_status__in=[Bushfire.STATUS_INITIAL_AUTHORISED]).values_list('fire_number', flat=True))
+
+        forest_regions = list(qs_regions.filter(forest_region=True).values_list('id', flat=True))
+        pbs_fires_dict = get_pbs_bushfires(outstanding_fires)
+
+        rpt_map = {}
+        for i in pbs_fires_dict:                                                                       
+            region_id = i['region']
+
+            exists = [i for r in qs_regions if r.id==region_id]
+            if exists:
+                if rpt_map.has_key(region_id):
+                    area = rpt_map.get(region_id)['area'] + float(i['area'])
+                    number = rpt_map.get(region_id)['number'] + 1
+                            
+                else:
+                    area = float(i['area'])
+                    number = 1
+
+            else:
+                area = 0.0
+                number = 0
+
+            rpt_map.update({region_id: dict(area=area, number=number)})
+
+        return rpt_map
+
+    def create(self):
+        # Group By Region
+
+        data_268 = self.get_268_data()
+        data_268_pw = self.get_268_data('DBCA')
+
+        rpt_map = []
+        item_map = {}
+        net_forest_pw_tenure      = 0
+        net_forest_area_pw_tenure = 0
+        net_forest_total_all_tenure = 0
+        net_forest_total_area     = 0
+
+        for region in Region.objects.filter(forest_region=True).order_by('id'):
+            if data_268_pw.has_key(region.id):
+                pw_tenure      = data_268_pw[region.id]['number']
+                area_pw_tenure = data_268_pw[region.id]['area']
+            else:
+                pw_tenure      = 0
+                area_pw_tenure = 0.0
+
+            if data_268.has_key(region.id):
+                total_all_tenure = data_268[region.id]['number']
+                total_area       = data_268[region.id]['area']
+            else:
+                total_all_tenure = 0
+                total_area       = 0.0
+
+            rpt_map.append(
+                {region.name: dict(pw_tenure=pw_tenure, area_pw_tenure=area_pw_tenure, total_all_tenure=total_all_tenure, total_area=total_area)}
+            )
+                
+            net_forest_pw_tenure      += pw_tenure 
+            net_forest_area_pw_tenure += area_pw_tenure
+            net_forest_total_all_tenure += total_all_tenure
+            net_forest_total_area     += total_area
+
+        rpt_map.append(
+            {'Sub Total (Forest)': dict(pw_tenure=net_forest_pw_tenure, area_pw_tenure=net_forest_area_pw_tenure, total_all_tenure=net_forest_total_all_tenure, total_area=net_forest_total_area)}
+        )
+
+        item_map['forest_pw_tenure'] = net_forest_pw_tenure
+        item_map['forest_area_pw_tenure'] = net_forest_area_pw_tenure
+        item_map['forest_total_all_tenure'] = net_forest_total_all_tenure
+        item_map['forest_total_area'] = net_forest_total_area
+
+        # add a white space/line between forest and non-forest region tabulated info
+        rpt_map.append(
+            {'': ''}
+        )
+
+        net_nonforest_pw_tenure      = 0
+        net_nonforest_area_pw_tenure = 0
+        net_nonforest_total_all_tenure = 0
+        net_nonforest_total_area     = 0
+
+        for region in Region.objects.filter(forest_region=False).order_by('id'):
+            if data_268_pw.has_key(region.id):
+                pw_tenure      = data_268_pw[region.id]['number']
+                area_pw_tenure = data_268_pw[region.id]['area']
+            else:
+                pw_tenure      = 0
+                area_pw_tenure = 0.0
+
+            if data_268.has_key(region.id):
+                total_all_tenure = data_268[region.id]['number']
+                total_area       = data_268[region.id]['area']
+            else:
+                total_all_tenure = 0
+                total_area       = 0.0
+
+            rpt_map.append(
+                {region.name: dict(pw_tenure=pw_tenure, area_pw_tenure=area_pw_tenure, total_all_tenure=total_all_tenure, total_area=total_area)}
+            )
+                
+            net_nonforest_pw_tenure      += pw_tenure 
+            net_nonforest_area_pw_tenure += area_pw_tenure
+            net_nonforest_total_all_tenure += total_all_tenure
+            net_nonforest_total_area     += total_area
+
+        rpt_map.append(
+            {'Sub Total (Non Forest)': dict(pw_tenure=net_nonforest_pw_tenure, area_pw_tenure=net_nonforest_area_pw_tenure, total_all_tenure=net_nonforest_total_all_tenure, total_area=net_nonforest_total_area)}
+        )
+
+        item_map['nonforest_total_all_tenure'] = net_nonforest_total_all_tenure
+        item_map['nonforest_total_area'] = net_nonforest_total_area
+                
+        rpt_map.append(
+            {'GRAND TOTAL': dict(
+                pw_tenure=net_forest_pw_tenure + net_nonforest_pw_tenure, 
+                area_pw_tenure=net_forest_area_pw_tenure + net_nonforest_area_pw_tenure, 
+                total_all_tenure=net_forest_total_all_tenure + net_nonforest_total_all_tenure, 
+                total_area=net_forest_total_area + net_nonforest_total_area
+            )}
+        )
+                
+        return rpt_map, item_map
+
+    def get_excel_sheet(self, rpt_date, book=Workbook()):
+
+        # book = Workbook()
+        sheet1 = book.add_sheet('Ministerial Report (268)')
+        sheet1 = book.get_sheet('Ministerial Report (268)')
+
+        col_no = lambda c=count(): next(c)
+        row_no = lambda c=count(): next(c)
+
+        hdr = sheet1.row(row_no())
+        hdr.write(0, 'Report Date', style=style_bold_gen)
+        hdr.write(1, rpt_date.strftime('%d-%b-%Y'))
+
+        hdr = sheet1.row(row_no())
+        hdr.write(0, 'Report', style=style_bold_gen)
+        hdr.write(1, 'Ministerial Report 268')
+
+        hdr = sheet1.row(row_no())
+        hdr.write(0, 'Fin Year', style=style_bold_gen)
+        hdr.write(1, current_finyear())
+
+        hdr = sheet1.row(row_no())
+        hdr.write(0, 'Missing Final', style=style_bold_gen)
+        hdr.write(1, Bushfire.objects.filter(report_status=Bushfire.STATUS_INITIAL_AUTHORISED, year=current_finyear()).count() )
+
+        hdr = sheet1.row(row_no())
+        hdr = sheet1.row(row_no())
+        hdr.write(col_no(), "Region", style=style_bold_gen)
+        hdr.write(col_no(), "PW Tenure", style=style_bold_gen)
+        hdr.write(col_no(), "Area PW Tenure", style=style_bold_gen)
+        hdr.write(col_no(), "Total All Tenure", style=style_bold_gen)
+        hdr.write(col_no(), "Total Area", style=style_bold_gen)
+
+        for row in self.rpt_map:
+            for region, data in row.iteritems():
+
+                row = sheet1.row(row_no())
+                col_no = lambda c=count(): next(c)
+                if region == '':
+                    #row = sheet1.row(row_no())
+                    continue
+                elif 'total' in region.lower():
+                    #row = sheet1.row(row_no())
+                    row.write(col_no(), region, style=style_bold_left)
+                    row.write(col_no(), data['pw_tenure'], style=style_bold_gen)
+                    row.write(col_no(), data['area_pw_tenure'], style=style_bold_left)
+                    row.write(col_no(), data['total_all_tenure'], style=style_bold_gen)
+                    row.write(col_no(), data['total_area'], style=style_bold_left)
+                else:
+                    row.write(col_no(), region )
+                    row.write(col_no(), data['pw_tenure'], style=style_normal_int)
+                    row.write(col_no(), data['area_pw_tenure'], style=style_normal)
+                    row.write(col_no(), data['total_all_tenure'], style=style_normal_int)
+                    row.write(col_no(), data['total_area'], style=style_normal)
+
+        #book.save("/tmp/foobar.xls")
+        #return sheet1
+
+    def write_excel(self):
+        rpt_date = datetime.now()
+        book = Workbook()
+        self.get_excel_sheet(rpt_date, book)
+        filename = '/tmp/ministerial_268_report_{}.xls'.format(rpt_date.strftime('%d-%b-%Y'))
+        book.save(filename)
+
+    def export(self):
+        """ Executed from the Overview page in BFRS, returns an Excel WB as a HTTP Response object """
+
+        rpt_date = datetime.now()
+        filename = 'ministerial_268_report_{}.xls'.format(rpt_date.strftime('%d%b%Y'))
+        response = HttpResponse(content_type='application/vnd.ms-excel')
+        response['Content-Disposition'] = 'attachment; filename=' + filename
+
+        book = Workbook()
+        self.get_excel_sheet(rpt_date, book)
+
+        book.add_sheet('Sheet 2')
+        book.save(response)
+
+        return response
+
+
+
+class MinisterialReportAuth():
+    """
+    Report for Authorised fires Only
+    """
+    def __init__(self):
+        self.rpt_map, self.item_map = self.create()
+
+    def create(self):
+        # Group By Region
+        qs=Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, year=current_finyear()).values('region_id')
+        qs1=qs.filter(initial_control__name='DBCA P&W').annotate(dbca_count=Count('region_id'), dbca_sum=Sum('area') )
+        qs2=qs.exclude(initial_control__isnull=True).annotate(total_count=Count('region_id'), total_sum=Sum('area') )
+
+        rpt_map = []
+        item_map = {}
+        net_forest_pw_tenure      = 0
+        net_forest_area_pw_tenure = 0
+        net_forest_total_all_area = 0
+        net_forest_total_area     = 0
+
+        for region in Region.objects.filter(forest_region=True).order_by('id'):
+            row1 = qs1.get(region_id=region.id) if qs1.filter(region_id=region.id).count() > 0 else {}
+            row2 = qs2.get(region_id=region.id) if qs2.filter(region_id=region.id).count() > 0 else {}
+
+            pw_tenure      = row1['dbca_count'] if row1.has_key('dbca_count') and row1['dbca_count'] else 0
+            area_pw_tenure = round(row1['dbca_sum'], 2) if row1.has_key('dbca_sum') and row1['dbca_sum'] else 0
+            total_all_area = row2['total_count'] if row2.has_key('total_count') and row2['total_count'] else 0
+            total_area     = round(row2['total_sum'], 2) if row2.has_key('total_sum') and row2['total_sum'] else 0
+
+            rpt_map.append(
+                {region.name: dict(pw_tenure=pw_tenure, area_pw_tenure=area_pw_tenure, total_all_tenure=total_all_area, total_area=total_area)}
+            )
+                
+            net_forest_pw_tenure      += pw_tenure 
+            net_forest_area_pw_tenure += area_pw_tenure
+            net_forest_total_all_area += total_all_area
+            net_forest_total_area     += total_area
+
+        rpt_map.append(
+            {'Sub Total (Forest)': dict(pw_tenure=net_forest_pw_tenure, area_pw_tenure=net_forest_area_pw_tenure, total_all_tenure=net_forest_total_all_area, total_area=net_forest_total_area)}
+        )
+
+        item_map['forest_pw_tenure'] = net_forest_pw_tenure
+        item_map['forest_area_pw_tenure'] = net_forest_area_pw_tenure
+        item_map['forest_total_all_tenure'] = net_forest_total_all_area
+        item_map['forest_total_area'] = net_forest_total_area
+
+        # add a white space/line between forest and non-forest region tabulated info
+        rpt_map.append(
+            {'': ''}
+        )
+
+        net_nonforest_pw_tenure      = 0
+        net_nonforest_area_pw_tenure = 0
+        net_nonforest_total_all_area = 0
+        net_nonforest_total_area     = 0
+        for region in Region.objects.filter(forest_region=False).order_by('id'):
+            row1 = qs1.get(region_id=region.id) if qs1.filter(region_id=region.id).count() > 0 else {}
+            row2 = qs2.get(region_id=region.id) if qs2.filter(region_id=region.id).count() > 0 else {}
+
+            pw_tenure      = row1['dbca_count'] if row1.has_key('dbca_count') and row1['dbca_count'] else 0
+            area_pw_tenure = round(row1['dbca_sum'], 2) if row1.has_key('dbca_sum') and row1['dbca_sum'] else 0
+            total_all_area = row2['total_count'] if row2.has_key('total_count') and row2['total_count'] else 0
+            total_area     = round(row2['total_sum'], 2) if row2.has_key('total_sum') and row2['total_sum'] else 0
+
+            rpt_map.append(
+                {region.name: dict(pw_tenure=pw_tenure, area_pw_tenure=area_pw_tenure, total_all_tenure=total_all_area, total_area=total_area)}
+            )
+                
+            net_nonforest_pw_tenure      += pw_tenure 
+            net_nonforest_area_pw_tenure += area_pw_tenure
+            net_nonforest_total_all_area += total_all_area
+            net_nonforest_total_area     += total_area
+
+
+        rpt_map.append(
+            {'Sub Total (Non Forest)': dict(pw_tenure=net_nonforest_pw_tenure, area_pw_tenure=net_nonforest_area_pw_tenure, total_all_tenure=net_nonforest_total_all_area, total_area=net_nonforest_total_area)}
+        )
+
+        item_map['nonforest_total_all_tenure'] = net_nonforest_total_all_area
+        item_map['nonforest_total_area'] = net_nonforest_total_area
+                
+        rpt_map.append(
+            {'GRAND TOTAL': dict(
+                pw_tenure=net_forest_pw_tenure + net_nonforest_pw_tenure, 
+                area_pw_tenure=net_forest_area_pw_tenure + net_nonforest_area_pw_tenure, 
+                total_all_tenure=net_forest_total_all_area + net_nonforest_total_all_area, 
+                total_area=net_forest_total_area + net_nonforest_total_area
+            )}
+        )
+                
+        return rpt_map, item_map
+
+    def export_final_csv(self, request, queryset):
+        writer = unicodecsv.writer(response, quoting=unicodecsv.QUOTE_ALL)
+
+        writer.writerow([
+            "Region",
+            "PW Tenure",
+            "Area PW Tenure",
+            "Total All Area",
+            "Total Area",
+        ])
+
+        for row in self.rpt_map:
+            for region, data in row.iteritems():
+                writer.writerow([
+                    region,
+                    data['pw_tenure'],
+                    data['area_pw_tenure'],
+                    data['total_all_tenure'],
+                    data['total_area'],
+                ])
+        return response
+
+    def get_excel_sheet(self, rpt_date, book=Workbook()):
+
+        # book = Workbook()
+        sheet1 = book.add_sheet('Ministerial Report (Auth)')
+        sheet1 = book.get_sheet('Ministerial Report (Auth)')
+
+        col_no = lambda c=count(): next(c)
+        row_no = lambda c=count(): next(c)
+
+        hdr = sheet1.row(row_no())
+        hdr.write(0, 'Report Date', style=style_bold_gen)
+        hdr.write(1, rpt_date.strftime('%d-%b-%Y'))
+
+        hdr = sheet1.row(row_no())
+        hdr.write(0, 'Report', style=style_bold_gen)
+        hdr.write(1, 'Ministerial Report (Authorised)')
+
+        hdr = sheet1.row(row_no())
+        hdr.write(0, 'Fin Year', style=style_bold_gen)
+        hdr.write(1, current_finyear())
+
+        hdr = sheet1.row(row_no())
+        hdr.write(0, 'Missing Final', style=style_bold_gen)
+        hdr.write(1, Bushfire.objects.filter(report_status=Bushfire.STATUS_INITIAL_AUTHORISED, year=current_finyear()).count() )
+
+        hdr = sheet1.row(row_no())
+        hdr = sheet1.row(row_no())
+        hdr.write(col_no(), "Region", style=style_bold_gen)
+        hdr.write(col_no(), "PW Tenure", style=style_bold_gen)
+        hdr.write(col_no(), "Area PW Tenure", style=style_bold_gen)
+        hdr.write(col_no(), "Total All Tenure", style=style_bold_gen)
+        hdr.write(col_no(), "Total Area", style=style_bold_gen)
+
+        for row in self.rpt_map:
+            for region, data in row.iteritems():
+
+                row = sheet1.row(row_no())
+                col_no = lambda c=count(): next(c)
+                if region == '':
+                    #row = sheet1.row(row_no())
+                    continue
+                elif 'total' in region.lower():
+                    #row = sheet1.row(row_no())
+                    row.write(col_no(), region, style=style_bold_left)
+                    row.write(col_no(), data['pw_tenure'], style=style_bold_gen)
+                    row.write(col_no(), data['area_pw_tenure'], style=style_bold_left)
+                    row.write(col_no(), data['total_all_tenure'], style=style_bold_gen)
+                    row.write(col_no(), data['total_area'], style=style_bold_left)
+                else:
+                    row.write(col_no(), region )
+                    row.write(col_no(), data['pw_tenure'], style=style_normal_int)
+                    row.write(col_no(), data['area_pw_tenure'], style=style_normal)
+                    row.write(col_no(), data['total_all_tenure'], style=style_normal_int)
+                    row.write(col_no(), data['total_area'], style=style_normal)
+
+        #book.save("/tmp/foobar.xls")
+        #return sheet1
+
+    def write_excel(self):
+        rpt_date = datetime.now()
+        book = Workbook()
+        self.get_excel_sheet(rpt_date, book)
+        filename = '/tmp/ministerial_auth_report_{}.xls'.format(rpt_date.strftime('%d-%b-%Y'))
+        book.save(filename)
+
+    def export(self):
+        """ Executed from the Overview page in BFRS, returns an Excel WB as a HTTP Response object """
+
+        rpt_date = datetime.now()
+        filename = 'ministerial_auth_report_{}.xls'.format(rpt_date.strftime('%d%b%Y'))
+        response = HttpResponse(content_type='application/vnd.ms-excel')
+        response['Content-Disposition'] = 'attachment; filename=' + filename
+
+        book = Workbook()
+        self.get_excel_sheet(rpt_date, book)
+
+        book.add_sheet('Sheet 2')
+        book.save(response)
+
+        return response
+
+    def display(self):
+        print '{}\t{}\t{}\t{}\t{}'.format('Region', 'PW Tenure', 'Area PW Tenure', 'Total All Area', 'Total Area').expandtabs(20)
+        for row in self.rpt_map:
+            for region, data in row.iteritems():
+                print '{}\t{}\t{}\t{}\t{}'.format(region, data['pw_tenure'], data['area_pw_tenure'], data['total_all_tenure'], data['total_area']).expandtabs(20)
+
+    def pdflatex(self, request, form_data):
+
+        now = timezone.localtime(timezone.now())
+        #report_date = now.strptime(request.GET.get('date'), '%Y-%m-%d').date()
+        report_date = now
+
+        #template = request.GET.get("template", "pfp")
+        template = "ministerial_auth_report"
+        response = HttpResponse(content_type='application/pdf')
+        #texname = template + ".tex"
+        #filename = template + ".pdf"
+        texname = template + "_" + request.user.username + ".tex"
+        filename = template + "_" + request.user.username + ".pdf"
+        timestamp = now.isoformat().rsplit(
+            ".")[0].replace(":", "")
+        if template == "ministerial_auth_report":
+            downloadname = "ministerial_auth_report_" + report_date.strftime('%Y-%m-%d') + ".pdf"
+        else:
+            downloadname = "ministerial_auth_report_" + template + "_" + report_date.strftime('%Y-%m-%d') + ".pdf"
+        error_response = HttpResponse(content_type='text/html')
+        errortxt = downloadname.replace(".pdf", ".errors.txt.html")
+        error_response['Content-Disposition'] = (
+            '{0}; filename="{1}"'.format(
+            "inline", errortxt))
+
+        subtitles = {
+            "ministerial_report": "Ministerial Report",
+            #"form268a": "268a - Planned Burns",
+        }
+        embed = False if request.GET.get("embed") == "false" else True
+
+        context = {
+            'user': request.user.get_full_name(),
+            'report_date': report_date.strftime('%e %B %Y').strip(),
+            'time': report_date.strftime('%H:%M'),
+            'current_finyear': current_finyear(),
+            'rpt_map': self.rpt_map,
+            'item_map': self.item_map,
+            'form': form_data,
+            'embed': embed,
+            'headers': request.GET.get("headers", True),
+            'title': request.GET.get("title", "Bushfire Reporting System"),
+            'subtitle': subtitles.get(template, ""),
+            'timestamp': now,
+            'downloadname': downloadname,
+            'settings': settings,
+            'baseurl': request.build_absolute_uri("/")[:-1]
+        }
+        disposition = "attachment"
+        #disposition = "inline"
+        response['Content-Disposition'] = (
+            '{0}; filename="{1}"'.format(
+                disposition, downloadname))
+
+        directory = os.path.join(settings.MEDIA_ROOT, 'ministerial_report' + os.sep)
+        if not os.path.exists(directory):
+            logger.debug("Making a new directory: {}".format(directory))
+            os.makedirs(directory)
+
+        logger.debug('Starting  render_to_string step')
+        err_msg = None
+        try:
+            output = render_to_string("latex/" + template + ".tex", context, request=request)
+        except Exception as e:
+            import traceback
+            err_msg = u"PDF tex template render failed (might be missing attachments):"
+            logger.debug(err_msg + "\n{}".format(e))
+
+            error_response.write(err_msg + "\n\n{0}\n\n{1}".format(e,traceback.format_exc()))
+            return error_response
+
+        with open(directory + texname, "w") as f:
+            f.write(output.encode('utf-8'))
+            logger.debug("Writing to {}".format(directory + texname))
+
+        #import ipdb; ipdb.set_trace()
+        logger.debug("Starting PDF rendering process ...")
+        cmd = ['latexmk', '-cd', '-f', '-silent', '-pdf', directory + texname]
+        #cmd = ['latexmk', '-cd', '-f', '-pdf', directory + texname]
+        logger.debug("Running: {0}".format(" ".join(cmd)))
+        subprocess.call(cmd)
+
+        logger.debug("Cleaning up ...")
+        cmd = ['latexmk', '-cd', '-c', directory + texname]
+        logger.debug("Running: {0}".format(" ".join(cmd)))
+        subprocess.call(cmd)
+
+        logger.debug("Reading PDF output from {}".format(filename))
+        response.write(open(directory + filename).read())
+        logger.debug("Finally: returning PDF response.")
+        return response
 
 def _ministerial_report():
     with connection.cursor() as cursor:
