@@ -24,7 +24,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown_btn">
     <li><a href="javascript: bushfire_filter('export_to_excel=True');">Export Excel</a></li>
     <li><a href="javascript: bushfire_filter('export_excel_outstanding_fires=True');">Export Outstanding Fires</a></li>
-    <li><a href="javascript: bushfire_filter('export_excel_ministerial_report=True');">Export Bushfire Report</a></li>
+    <li><a href="javascript: bushfire_filter('export_excel_ministerial_report=True');" onclick='growl({"message": "Creating Bushfire Report (Excel) ...", "type": "info"});'>Export Bushfire Report</a></li>
     <li><a href="{% url 'bushfire:bushfire_report' %}">PDF Ministerial Report</a></li>
   </ul>
 </div>

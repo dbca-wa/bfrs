@@ -139,6 +139,23 @@
     }
 
    /* END - GoKart section */
+
+    function growl(response) {
+        $.growl(response.message, {
+            type: response.type,
+            delay: 10000,
+            allow_dismiss: true,
+            animate: {
+                enter: 'animated bounceIn',
+                exit: 'animated bounceOut'
+            },
+            offset: {
+                x: 100,
+                y: 20
+            }
+        });
+    };
+
 </script>
 
 {% endblock %}

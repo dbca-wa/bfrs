@@ -16,6 +16,7 @@ from django.conf import settings
 from django.db.models import Q
 from django.contrib.auth.models import User, Group
 from django.http import JsonResponse
+from django.contrib import messages
 
 from bfrs.models import (Profile, Bushfire, BushfireSnapshot,
         Region, District,
@@ -682,6 +683,7 @@ class ReportView(FormView):
     def form_valid(self, form):
         valid = super(ReportView, self).form_valid(form)
         if valid.status_code == 302:
+            #messages.success(self.request, 'Running Ministerial Report ...')
             return MinisterialReport().pdflatex(self.request, form.cleaned_data)
         return super(ReportView, self).form_valid(form)
 

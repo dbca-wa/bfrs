@@ -412,7 +412,7 @@ class MinisterialReport268():
             self.missing_fires = list(set(outstanding_fires).difference(self.found_fires)) # fire_numbers not returned from PB
 
         rpt_map = {}
-        for i in self.pbs_fires_dict:                                                                       
+        for i in pbs_fires_dict:                                                                       
             region_id = i['region']
 
             exists = [i for r in qs_regions if r.id==region_id]

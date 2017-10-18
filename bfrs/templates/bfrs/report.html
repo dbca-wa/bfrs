@@ -80,9 +80,17 @@
   </tbody>
 </table>
 
-  <input type="submit" value="Create PDF" />
+  <input id="id_submit" type="submit" value="Create PDF" />
+  <a id="id_cancel_btn" href="{% url 'main' %}" class="btn btn-primary btn-danger">Return</a>
 </form>
 
-
+<script>
+    $( "#id_submit" ).click(function() {
+        if( $("#id_author").val() && $("#id_position").val() && $("#id_phone_no").val() && $("#id_branch").val() && $("#id_division").val() && $("#id_title").val() && $("#id_recommendation input[type='radio']:checked").val() ) {
+            growl({"message": "Creating Ministerial Report (PDF) ...", "type": "info"});
+        }
+    });
+</script>
 {% endblock %}
+
 
