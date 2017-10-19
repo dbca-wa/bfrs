@@ -427,8 +427,8 @@ class PDFReportForm(forms.Form):
     cost_implications = forms.CharField(max_length=250, widget=forms.Textarea(), required=False)
     urgency = forms.CharField(max_length=2500, widget=forms.Textarea(), required=False)
     contentious_issues = forms.CharField(max_length=250, widget=forms.Textarea(), required=False)
-    #recommendation = forms.ChoiceField(choices=RECOMMENDATION_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
-    recommendation = forms.ChoiceField(choices=RECOMMENDATION_CHOICES, widget=forms.RadioSelect(), required=True)
+    sig_date = forms.CharField(max_length=20, required=True)
+    recommendation = forms.ChoiceField(choices=RECOMMENDATION_CHOICES, widget=forms.RadioSelect(), initial=1,  required=True)
 
 
 AreaBurntFormSet            = inlineformset_factory(Bushfire, AreaBurnt, extra=0, min_num=0, exclude=(), form=AreaBurntForm)

@@ -71,7 +71,12 @@
         </tr>
 
         <tr>
-            <th colspan="1" class="cbas">Recommendation *</th>
+            <th colspan="1" class="cbas">Date *</th>
+            <td colspan="5" class="cbas"> {{form.sig_date}} </td>
+        </tr>
+
+        <tr>
+            <th colspan="1" class="cbas" style="font-weight:normal;">Recommendation</th>
             <td colspan="5" class="cbas"> {{form.recommendation}} </td>
         </tr>
 
@@ -85,8 +90,10 @@
 </form>
 
 <script>
+    $('[id$="_date"]').datepicker({ dateFormat: "d MM yy" });
+
     $( "#id_submit" ).click(function() {
-        if( $("#id_author").val() && $("#id_position").val() && $("#id_phone_no").val() && $("#id_branch").val() && $("#id_division").val() && $("#id_title").val() && $("#id_recommendation input[type='radio']:checked").val() ) {
+        if( $("#id_author").val() && $("#id_position").val() && $("#id_phone_no").val() && $("#id_branch").val() && $("#id_division").val() && $("#id_title").val() && $("#id_sig_date").val() ) {
             growl({"message": "Creating Ministerial Report (PDF) ...", "type": "info"});
         }
     });

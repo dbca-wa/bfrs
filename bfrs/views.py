@@ -676,9 +676,12 @@ class ReportView(FormView):
         #initial['branch'] = 'Fire Management Services Branch'
         #initial['division'] = 'Regional and Fire Management Services Division'
         #initial['title'] = 'BUSHFIRE SUPPRESSION'
-
         return initial
 
+    def form_invalid(self, form):
+        context = self.get_context_data()
+        context.update({'form': form})
+        return self.render_to_response(context)
 
     def form_valid(self, form):
         valid = super(ReportView, self).form_valid(form)
