@@ -30,9 +30,9 @@
 \subsection{MINISTER FOR ENVIRONMENT}
 \subsubsection{% templatetag openbrace %}{{form.title}} }
 
-Records as at {{report_date}} show {{ item_map.forest_total_all_tenure }} bushfires have been attended by Department of Biodiversity, Conservation and Attractions (DBCA) staff in its three south-west forest regions, covering an area of {{ item_map.forest_total_area|intcomma }} hectares, for the period since 1 July {{ current_finyear }}. Of these, {{ item_map.forest_pw_tenure }} fires occurred on  DBCA managed lands, covering {{ item_map.forest_area_pw_tenure|intcomma }} hectares. 
+Records as at {{report_date}} show {{ item_map.forest_total_all_tenure|floatformat:0|intcomma }} bushfires have been attended by Department of Biodiversity, Conservation and Attractions (DBCA) staff in its three south-west forest regions, covering an area of {{ item_map.forest_total_area|floatformat:0|intcomma }} hectares, for the period since 1 July {{ current_finyear }}. Of these, {{ item_map.forest_pw_tenure|floatformat:0|intcomma }} fires occurred on  DBCA managed lands, covering {{ item_map.forest_area_pw_tenure|floatformat:0|intcomma }} hectares. 
 \\~\\
-Outside the south-west forest regions, records show {{ item_map.nonforest_total_all_tenure }} bushfires attended by DBCA staff have burnt through an area of {{ item_map.nonforest_total_area|intcomma }} hectares. 
+Outside the south-west forest regions, records show {{ item_map.nonforest_total_all_tenure|floatformat:0|intcomma }} bushfires attended by DBCA staff have burnt through an area of {{ item_map.nonforest_total_area|floatformat:0|intcomma }} hectares.
 \\~\\
 A breakdown of the records to date by DBCA regions for bushfires since 1 July {{ current_finyear}} is shown below.
 
@@ -54,9 +54,9 @@ A breakdown of the records to date by DBCA regions for bushfires since 1 July {{
 {% for row in rpt_map %}
   {% for region, data in row.iteritems %}
     {% if 'Total' in region or 'TOTAL' in region %}
-      \textbf{ {{ region }} } & \textbf{ {{ data.pw_tenure|intcomma }} } & \textbf{ {{ data.area_pw_tenure|intcomma }} } & \textbf{ {{ data.total_all_tenure|intcomma }} } & \textbf{ {{ data.total_area|intcomma }} } \\
+      \textbf{ {{ region }} } & \textbf{ {{ data.pw_tenure|floatformat:0|intcomma }} } & \textbf{ {{ data.area_pw_tenure|floatformat:0|intcomma }} } & \textbf{ {{ data.total_all_tenure|floatformat:0|intcomma }} } & \textbf{ {{ data.total_area|floatformat:0|intcomma }} } \\
     {% else %}
-      {{ region }} & {{ data.pw_tenure|intcomma }} & {{ data.area_pw_tenure|intcomma }} & {{ data.total_all_tenure|intcomma }} & {{ data.total_area|intcomma }} \\
+      {{ region }} & {{ data.pw_tenure|floatformat:0|intcomma }} & {{ data.area_pw_tenure|floatformat:0|intcomma }} & {{ data.total_all_tenure|floatformat:0|intcomma }} & {{ data.total_area|floatformat:0|intcomma }} \\
     {% endif %}
     \hline
   {% empty %}
@@ -64,6 +64,7 @@ A breakdown of the records to date by DBCA regions for bushfires since 1 July {{
     \hline
   {% endfor %}
 {% endfor %}
+\caption*{Any discrepancies between the total and the sum of the individual values is due to rounding}
 \end{longtabu}
 
 {% if form.cost_implications %}

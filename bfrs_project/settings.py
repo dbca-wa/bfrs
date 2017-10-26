@@ -85,6 +85,7 @@ OUTSTANDING_FIRES_EMAIL=[
 ]
 #if ALL_REGIONS_EMAIL: OUTSTANDING_FIRES_EMAIL.append({"All Regions": ALL_REGIONS_EMAIL})
      
+HISTORICAL_CAUSE_CSV_FILE = env('HISTORICAL_CAUSE_CSV_FILE', '')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/

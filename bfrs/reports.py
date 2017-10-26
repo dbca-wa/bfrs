@@ -2,8 +2,9 @@ from django.db import connection
 from bfrs.models import Bushfire, Region, District, Tenure, Cause, current_finyear
 from bfrs.utils import get_pbs_bushfires
 from django.db.models import Count, Sum
+from django.db.models.query import QuerySet
 from datetime import datetime
-from xlwt import Workbook, Font, XFStyle, Alignment
+from xlwt import Workbook, Font, XFStyle, Alignment, Pattern, Style
 from itertools import count
 import unicodecsv
 
@@ -15,28 +16,99 @@ from django.conf import settings
 from django.utils import timezone
 import os
 import subprocess
+import csv
 
 from django.template.loader import render_to_string
 
 import logging
 logger = logging.getLogger(__name__)
 
+DISCLAIMER = 'Any discrepancies between the total and the sum of the individual values is due to rounding'
+MISSING_MAP = []
 
-def style(bold=False, num_fmt='#,##0', horz_align=Alignment.HORZ_GENERAL):
+
+def style(bold=False, num_fmt='#,##0', horz_align=Alignment.HORZ_GENERAL, colour=None):
     style = XFStyle()
     font = Font()
     font.bold = bold
     style.font = font
     style.num_format_str = num_fmt
     style.alignment.horz = horz_align
+
+    # add cell colour
+    if colour:
+        pattern = Pattern()
+        pattern.pattern = Pattern.SOLID_PATTERN
+        pattern.pattern_fore_colour = Style.colour_map[colour]
+        style.pattern = pattern
+
     return style
 
-style_normal_int = style()
-style_normal     = style(num_fmt='#,##0.00')
-style_bold_int   = style(bold=True, horz_align=Alignment.HORZ_CENTER)
-style_bold       = style(bold=True, num_fmt='#,##0.00', horz_align=Alignment.HORZ_CENTER)
-style_bold_left  = style(bold=True, num_fmt='#,##0.00')
-style_bold_gen   = style(bold=True, num_fmt='#,##0')
+style_normal_int   = style()
+style_normal       = style(num_fmt='#,##0')
+style_normal_float = style(num_fmt='#,##0.00')
+style_bold_int     = style(bold=True, horz_align=Alignment.HORZ_CENTER)
+style_bold         = style(bold=True, num_fmt='#,##0', horz_align=Alignment.HORZ_CENTER)
+style_bold_float   = style(bold=True, num_fmt='#,##0.00')
+style_bold_gen     = style(bold=True, num_fmt='#,##0')
+style_bold_red     = style(bold=True, num_fmt='#,##0', colour='red')
+style_bold_yellow  = style(bold=True, num_fmt='#,##0', colour='yellow')
+
+def read_col(fin_year, col_type):
+    """ 
+        Reads historical data from file - provided by FMS from legacy BFRS application
+
+        fin_year: 2006          --> first part of '2006/2007'
+        col_type: 'count'       --> annotated values or 
+                  'total_count' --> aggregated values
+    """
+    try:
+        reader = csv.reader(open(settings.HISTORICAL_CAUSE_CSV_FILE), delimiter=',', quotechar='"')
+        hdr = reader.next()
+        hdr = [hdr[0]] + [int(i.split('/')[0]) for i in hdr if '/' in i] # converts '2006/2007' --> int('2006')
+        idx = hdr.index(fin_year)
+
+        if hdr[idx+10] != fin_year:
+            # check idx + 10 is also equal to fin_year
+            logger.error("Cannot find 2nd fin_year (percentage column) in CSV header: {}, {}".format(fin_year, hdr))
+            return [], []
+
+        count_list = [] 
+        perc_list = [] 
+        for i in list(reader):
+            if len(i) == 0 or i[0].startswith('#'):
+                # ignore comments or blanks lines in csv file
+                continue
+
+            if i[0] != 'Total' and col_type=='count':
+                cause = Cause.objects.filter(name=i[0])
+                if cause:
+                    cause_id = cause[0].id
+                else:
+                    if not [j for j in MISSING_MAP if not j.has_key(i[0])]:
+                        MISSING_MAP.append( dict(name=i[0], error='Cause {0}, Missing from BFRS Enum list. Please Request OIM to add Cause={0}'.format(i[0])))
+                    continue
+                count_list.append( dict(cause_id=cause_id, count=int(i[idx])) )
+                perc_list.append( dict(cause_id=cause_id, count=int(i[idx+10])) )
+            if i[0] == 'Total' and col_type=='total_count':
+                return dict(count_total=int(i[idx])), dict(count_total=int(i[idx+10])) 
+
+        return count_list, perc_list
+
+    except ValueError, e:
+        logger.error("Cannot find fin_year in CSV header: {}, {}, {}".format(fin_year, hdr, e))
+
+    except IndexError, e:
+        logger.error("Cannot find 2nd fin_year (percentage column) in CSV header: {}, {}, {}".format(fin_year, hdr, e))
+
+    except IOError, e:
+        logger.error("Cannot Open CSV file: {}, {}".format(settings.HISTORICAL_CAUSE_CSV_FILE, e))
+
+    except Exception, e:
+        logger.error("Error reading column from CSV file: {}, {}, {}".format(fin_year, settings.HISTORICAL_CAUSE_CSV_FILE, e))
+
+    return [], []
+
 
 class BushfireReport():
     def __init__(self):
@@ -92,7 +164,7 @@ class BushfireReport():
 
 class MinisterialReport():
     """
-    Report for Combined (Authorised and active 268b) fires
+    Report for Combined (Authorised and active 268b) fires. This is the sum of MinisterialAuth and Ministerial268b.
     """
     def __init__(self, ministerial_auth=None, ministerial_268=None):
         self.ministerial_auth = ministerial_auth if ministerial_auth else MinisterialReportAuth()
@@ -100,7 +172,6 @@ class MinisterialReport():
         self.rpt_map, self.item_map = self.create()
 
     def create(self):
-        #import ipdb; ipdb.set_trace()
         rpt_map_auth = self.ministerial_auth.rpt_map
         rpt_map_268 = self.ministerial_268.rpt_map
         item_map_auth = self.ministerial_auth.item_map
@@ -247,17 +318,23 @@ class MinisterialReport():
                     continue
                 elif 'total' in region.lower():
                     #row = sheet1.row(row_no())
-                    row.write(col_no(), region, style=style_bold_left)
+                    row.write(col_no(), region, style=style_bold_gen)
                     row.write(col_no(), data['pw_tenure'], style=style_bold_gen)
-                    row.write(col_no(), data['area_pw_tenure'], style=style_bold_left)
+                    row.write(col_no(), data['area_pw_tenure'], style=style_bold_gen)
                     row.write(col_no(), data['total_all_tenure'], style=style_bold_gen)
-                    row.write(col_no(), data['total_area'], style=style_bold_left)
+                    row.write(col_no(), data['total_area'], style=style_bold_gen)
                 else:
                     row.write(col_no(), region )
                     row.write(col_no(), data['pw_tenure'], style=style_normal_int)
                     row.write(col_no(), data['area_pw_tenure'], style=style_normal)
                     row.write(col_no(), data['total_all_tenure'], style=style_normal_int)
                     row.write(col_no(), data['total_area'], style=style_normal)
+
+        # DISCLAIMER
+        col_no = lambda c=count(): next(c)
+        hdr = sheet1.row(row_no())
+        hdr = sheet1.row(row_no())
+        hdr.write(col_no(), DISCLAIMER, style=style_normal)
 
         #book.save("/tmp/foobar.xls")
         #return sheet1
@@ -366,7 +443,6 @@ class MinisterialReport():
             f.write(output.encode('utf-8'))
             logger.debug("Writing to {}".format(directory + texname))
 
-        #import ipdb; ipdb.set_trace()
         logger.debug("Starting PDF rendering process ...")
         cmd = ['latexmk', '-cd', '-f', '-silent', '-pdf', directory + texname]
         #cmd = ['latexmk', '-cd', '-f', '-pdf', directory + texname]
@@ -574,17 +650,23 @@ class MinisterialReport268():
                     continue
                 elif 'total' in region.lower():
                     #row = sheet1.row(row_no())
-                    row.write(col_no(), region, style=style_bold_left)
+                    row.write(col_no(), region, style=style_bold_gen)
                     row.write(col_no(), data['pw_tenure'], style=style_bold_gen)
-                    row.write(col_no(), data['area_pw_tenure'], style=style_bold_left)
+                    row.write(col_no(), data['area_pw_tenure'], style=style_bold_gen)
                     row.write(col_no(), data['total_all_tenure'], style=style_bold_gen)
-                    row.write(col_no(), data['total_area'], style=style_bold_left)
+                    row.write(col_no(), data['total_area'], style=style_bold_gen)
                 else:
                     row.write(col_no(), region )
                     row.write(col_no(), data['pw_tenure'], style=style_normal_int)
                     row.write(col_no(), data['area_pw_tenure'], style=style_normal)
                     row.write(col_no(), data['total_all_tenure'], style=style_normal_int)
                     row.write(col_no(), data['total_area'], style=style_normal)
+
+        # DISCLAIMER
+        col_no = lambda c=count(): next(c)
+        hdr = sheet1.row(row_no())
+        hdr = sheet1.row(row_no())
+        hdr.write(col_no(), DISCLAIMER, style=style_normal)
 
         col_no = lambda c=count(): next(c)
         hdr = sheet1.row(row_no())
@@ -605,7 +687,6 @@ class MinisterialReport268():
             row = sheet1.row(row_no())
             col_no = lambda c=count(): next(c)
             row.write(col_no(), fire_id, style=style_normal)
-
 
         #book.save("/tmp/foobar.xls")
         #return sheet1
@@ -793,17 +874,23 @@ class MinisterialReportAuth():
                     continue
                 elif 'total' in region.lower():
                     #row = sheet1.row(row_no())
-                    row.write(col_no(), region, style=style_bold_left)
+                    row.write(col_no(), region, style=style_bold_gen)
                     row.write(col_no(), data['pw_tenure'], style=style_bold_gen)
-                    row.write(col_no(), data['area_pw_tenure'], style=style_bold_left)
+                    row.write(col_no(), data['area_pw_tenure'], style=style_bold_gen)
                     row.write(col_no(), data['total_all_tenure'], style=style_bold_gen)
-                    row.write(col_no(), data['total_area'], style=style_bold_left)
+                    row.write(col_no(), data['total_area'], style=style_bold_gen)
                 else:
                     row.write(col_no(), region )
                     row.write(col_no(), data['pw_tenure'], style=style_normal_int)
                     row.write(col_no(), data['area_pw_tenure'], style=style_normal)
                     row.write(col_no(), data['total_all_tenure'], style=style_normal_int)
                     row.write(col_no(), data['total_area'], style=style_normal)
+
+        # DISCLAIMER
+        col_no = lambda c=count(): next(c)
+        hdr = sheet1.row(row_no())
+        hdr = sheet1.row(row_no())
+        hdr.write(col_no(), DISCLAIMER, style=style_normal)
 
         #book.save("/tmp/foobar.xls")
         #return sheet1
@@ -912,7 +999,6 @@ class MinisterialReportAuth():
             f.write(output.encode('utf-8'))
             logger.debug("Writing to {}".format(directory + texname))
 
-        #import ipdb; ipdb.set_trace()
         logger.debug("Starting PDF rendering process ...")
         cmd = ['latexmk', '-cd', '-f', '-silent', '-pdf', directory + texname]
         #cmd = ['latexmk', '-cd', '-f', '-pdf', directory + texname]
@@ -966,7 +1052,6 @@ def _ministerial_report():
 
 #        results = list(cursor.fetchall())
 #        return results
-#        import ipdb; ipdb.set_trace()
 
 #        result_list = []
 #        for row in cursor.fetchall():
@@ -1097,6 +1182,12 @@ class QuarterlyReport():
                     row.write(col_no(), data['total_all_tenure'], style=style_normal_int)
                     row.write(col_no(), data['total_area'], style=style_normal)
 
+        # DISCLAIMER
+        col_no = lambda c=count(): next(c)
+        hdr = sheet1.row(row_no())
+        hdr = sheet1.row(row_no())
+        hdr.write(col_no(), DISCLAIMER, style=style_normal)
+
         escape_burns = self.escape_burns()
         hdr = sheet1.row(row_no())
         hdr = sheet1.row(row_no())
@@ -1211,9 +1302,9 @@ class BushfireByTenureReport():
     def get_excel_sheet(self, rpt_date, book=Workbook()):
 
         year = current_finyear()
-        year0 = str(year-1) + '/' + str(year)
-        year1 = str(year-2) + '/' + str(year-1)
-        year2 = str(year-3) + '/' + str(year-2)
+        year0 = str(year) + '/' + str(year+1)
+        year1 = str(year-1) + '/' + str(year)
+        year2 = str(year-2) + '/' + str(year-1)
         # book = Workbook()
         sheet1 = book.add_sheet('Bushfire By Tenure Report')
         sheet1 = book.get_sheet('Bushfire By Tenure Report')
@@ -1292,6 +1383,12 @@ class BushfireByTenureReport():
                     row.write(col_no(), data['area1'] if data['area1'] > 0 else '', style=style_normal)
                     row.write(col_no(), data['area0'], style=style_normal)
 
+        # DISCLAIMER
+        col_no = lambda c=count(): next(c)
+        hdr = sheet1.row(row_no())
+        hdr = sheet1.row(row_no())
+        hdr.write(col_no(), DISCLAIMER, style=style_normal)
+
     def write_excel(self):
         rpt_date = datetime.now()
         book = Workbook()
@@ -1336,13 +1433,14 @@ class BushfireByCauseReport():
         # Group By Region
         year = current_finyear()
         qs = Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED)
-        qs0 = qs.filter(year=year).values('cause_id').annotate(count=Count('cause_id'), area=Sum('area') )
-        qs1 = qs.filter(year=year-1).values('cause_id').annotate(count=Count('cause_id'), area=Sum('area') )
-        qs2 = qs.filter(year=year-2).values('cause_id').annotate(count=Count('cause_id'), area=Sum('area') )
+        qs0 = qs.filter(year=year).values('cause_id').annotate(count=Count('cause_id'), area=Sum('area') ) # NOTE area not actually used anywhere in this report - can discard if we want!
+        qs1 = qs.filter(year=year-1).values('cause_id').annotate(count=Count('cause_id'), area=Sum('area') ) if year-1 >= 2017 else read_col(year-1, 'count')[0]
+        qs2 = qs.filter(year=year-2).values('cause_id').annotate(count=Count('cause_id'), area=Sum('area') ) if year-2 >= 2017 else read_col(year-2, 'count')[0]
 
         qs0_total = qs.filter(year=year).aggregate(count_total=Count('cause_id'), area_total=Sum('area') )
-        qs1_total = qs.filter(year=year-1).aggregate(count_total=Count('cause_id'), area_total=Sum('area') )
-        qs2_total = qs.filter(year=year-2).aggregate(count_total=Count('cause_id'), area_total=Sum('area') )
+        qs1_total = qs.filter(year=year-1).aggregate(count_total=Count('cause_id'), area_total=Sum('area') ) if year-1 >= 2017 else read_col(year-1, 'total_count')[0]
+        qs2_total = qs.filter(year=year-2).aggregate(count_total=Count('cause_id'), area_total=Sum('area') ) if year-2 >= 2017 else read_col(year-2, 'total_count')[0]
+
         count_total0 = qs0_total.get('count_total') if qs0_total.get('count_total') else 0
         count_total1 = qs1_total.get('count_total') if qs1_total.get('count_total') else 0
         count_total2 = qs2_total.get('count_total') if qs2_total.get('count_total') else 0
@@ -1359,10 +1457,17 @@ class BushfireByCauseReport():
         net_area1  = 0
         net_area2  = 0
 
+        def get_row(qs, cause):
+            if isinstance(qs, QuerySet):
+                return qs.get(cause_id=cause.id) if qs.filter(cause_id=cause.id).count() > 0 else {}# if isinstance(qs1, Queryset) else 
+            else:
+                row = [d for d in qs if d.get('cause_id')==cause.id]
+                return row[0] if len(row) > 0 else {}
+
         for cause in Cause.objects.all().order_by('id'):
             row0 = qs0.get(cause_id=cause.id) if qs0.filter(cause_id=cause.id).count() > 0 else {}
-            row1 = qs1.get(cause_id=cause.id) if qs1.filter(cause_id=cause.id).count() > 0 else {}
-            row2 = qs2.get(cause_id=cause.id) if qs2.filter(cause_id=cause.id).count() > 0 else {}
+            row1 = get_row(qs1, cause)
+            row2 = get_row(qs2, cause)
 
             count0 = row0.get('count') if row0.get('count') else 0
             perc0  = round(count0 * 100. / count_total0, 2) if count_total0 > 0 else 0
@@ -1407,9 +1512,9 @@ class BushfireByCauseReport():
     def get_excel_sheet(self, rpt_date, book=Workbook()):
 
         year = current_finyear()
-        year0 = str(year-1) + '/' + str(year)
-        year1 = str(year-2) + '/' + str(year-1)
-        year2 = str(year-3) + '/' + str(year-2)
+        year0 = str(year) + '/' + str(year+1)
+        year1 = str(year-1) + '/' + str(year)
+        year2 = str(year-2) + '/' + str(year-1)
         # book = Workbook()
         sheet1 = book.add_sheet('Bushfire By Cause Report')
         sheet1 = book.get_sheet('Bushfire By Cause Report')
@@ -1472,21 +1577,38 @@ class BushfireByCauseReport():
                     continue
                 elif 'total' in tenure.lower():
                     #row = sheet1.row(row_no())
-                    row.write(col_no(), tenure, style=style)
-                    row.write(col_no(), data['count2'] if data['count2'] > 0 else '', style=style)
-                    row.write(col_no(), data['count1'] if data['count1'] > 0 else '', style=style)
-                    row.write(col_no(), data['count0'], style=style)
-                    row.write(col_no(), data['perc2'] if data['perc2'] > 0 else '', style=style)
-                    row.write(col_no(), data['perc1'] if data['perc1'] > 0 else '', style=style)
-                    row.write(col_no(), data['perc0'], style=style)
+                    row.write(col_no(), tenure, style=style_bold_gen)
+                    row.write(col_no(), data['count2'], style=style_bold_gen)
+                    row.write(col_no(), data['count1'], style=style_bold_gen)
+                    row.write(col_no(), data['count0'], style=style_bold_gen)
+                    row.write(col_no(), data['perc2'], style=style_bold_gen)
+                    row.write(col_no(), data['perc1'], style=style_bold_gen)
+                    row.write(col_no(), data['perc0'], style=style_bold_gen)
                 else:
-                    row.write(col_no(), tenure )
-                    row.write(col_no(), data['count2'] if data['count2'] > 0 else '')
-                    row.write(col_no(), data['count1'] if data['count1'] > 0 else '')
-                    row.write(col_no(), data['count0'])
-                    row.write(col_no(), data['perc2'] if data['perc2'] > 0 else '')
-                    row.write(col_no(), data['perc1'] if data['perc1'] > 0 else '')
-                    row.write(col_no(), data['perc0'])
+                    row.write(col_no(), tenure, style=style_bold_gen )
+                    row.write(col_no(), data['count2'], style=style_normal)
+                    row.write(col_no(), data['count1'], style=style_normal)
+                    row.write(col_no(), data['count0'], style=style_normal)
+                    row.write(col_no(), data['perc2'], style=style_normal)
+                    row.write(col_no(), data['perc1'], style=style_normal)
+                    row.write(col_no(), data['perc0'], style=style_normal)
+
+        # DISCLAIMER
+        col_no = lambda c=count(): next(c)
+        hdr = sheet1.row(row_no())
+        hdr = sheet1.row(row_no())
+        hdr.write(col_no(), DISCLAIMER, style=style_normal)
+
+        if MISSING_MAP:
+            col_no = lambda c=count(): next(c)
+            hdr = sheet1.row(row_no())
+            hdr = sheet1.row(row_no())
+            row = row_no()
+            sheet1.write_merge(row, row, 0, 2, "NOTE: Errors in report", style_bold_red)
+            for item in MISSING_MAP:
+                hdr = sheet1.row(row_no())
+                hdr.write(col_no(), item.get('name'), style=style_bold_yellow)
+                hdr.write(col_no(), item.get('error'), style=style_bold_yellow)
 
     def write_excel(self):
         rpt_date = datetime.now()
@@ -1655,26 +1777,26 @@ class RegionByTenureReport():
             region_id = region_ids.pop(0)
             row = sheet1.row(row_no())
             col_no = lambda c=count(): next(c)
-            row.write(col_no(), Region.objects.get(id=region_id).name, style=style)
-            row.write(col_no(), 'Area', style=style)
+            row.write(col_no(), Region.objects.get(id=region_id).name, style=style_bold_gen)
+            row.write(col_no(), 'Area', style=style_bold_gen)
             tenure_id = 1
             for tenure in region: # loops through all tenures for given region
-                row.write(col_no(), tenure['area'] )
+                row.write(col_no(), tenure['area'], style=style_normal )
 
             
             # Right-most 'Total Column' - Area
-            row.write(col_no(), region_map[region_id]['area'], style=style )
+            row.write(col_no(), region_map[region_id]['area'], style=style_bold_gen )
 
 
             row = sheet1.row(row_no())
             col_no = lambda c=count(): next(c)
             row.write(col_no(), '' )
-            row.write(col_no(), 'Number', style=style)
+            row.write(col_no(), 'Number', style=style_bold_gen)
             for i in region:
-                row.write(col_no(), i['count'] )
+                row.write(col_no(), i['count'], style=style_normal)
 
             # Right-most 'Total Column' - Number
-            row.write(col_no(), region_map[region_id]['count'], style=style )
+            row.write(col_no(), region_map[region_id]['count'], style=style_bold_gen)
 
             row = sheet1.row(row_no())
 
@@ -1684,19 +1806,25 @@ class RegionByTenureReport():
         row.write(col_no(), 'Grand Total (All Regions)', style=style)
         row.write(col_no(), 'Area (ha)', style=style)
         for tenure_id in tenure_map:
-            row.write(col_no(), tenure_map[tenure_id]['area'], style=style)
+            row.write(col_no(), tenure_map[tenure_id]['area'], style=style_bold_gen)
         # Bottom-Right Two Cells - Total for entire matrix - Area
-        row.write(col_no(), all_map.get('area'), style=style)
+        row.write(col_no(), all_map.get('area'), style=style_bold_gen)
 
         # Last Two Rows - 'Grand Total' rows - Number
         col_no = lambda c=count(): next(c)
         row = sheet1.row(row_no())
         row.write(col_no(), '', style=style)
-        row.write(col_no(), 'Number', style=style)
+        row.write(col_no(), 'Number', style=style_bold_gen)
         for tenure_id in tenure_map:
-            row.write(col_no(), tenure_map[tenure_id]['count'], style=style)
+            row.write(col_no(), tenure_map[tenure_id]['count'], style=style_bold_gen)
         # Bottom-Right Two Cells - Total for entire matrix - Number
-        row.write(col_no(), all_map.get('count'), style=style)
+        row.write(col_no(), all_map.get('count'), style=style_bold_gen)
+
+        # DISCLAIMER
+        col_no = lambda c=count(): next(c)
+        hdr = sheet1.row(row_no())
+        hdr = sheet1.row(row_no())
+        hdr.write(col_no(), DISCLAIMER, style=style_normal)
 
 
     def write_excel(self):
@@ -1728,7 +1856,9 @@ class RegionByTenureReport():
             print ', '.join([str(i['area']) for i in data])
             print
 
+
 class Bushfire10YrAverageReport():
+
     def __init__(self):
         self.rpt_map, self.item_map = self.create()
 
@@ -1736,27 +1866,28 @@ class Bushfire10YrAverageReport():
         # Group By Region
         year = current_finyear()
         qs = Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED)
+
         qs0 = qs.filter(year=year).values('cause_id').annotate(count=Count('cause_id') )
-        qs1 = qs.filter(year=year-1).values('cause_id').annotate(count=Count('cause_id') )
-        qs2 = qs.filter(year=year-2).values('cause_id').annotate(count=Count('cause_id') )
-        qs3 = qs.filter(year=year-3).values('cause_id').annotate(count=Count('cause_id') )
-        qs4 = qs.filter(year=year-4).values('cause_id').annotate(count=Count('cause_id') )
-        qs5 = qs.filter(year=year-5).values('cause_id').annotate(count=Count('cause_id') )
-        qs6 = qs.filter(year=year-6).values('cause_id').annotate(count=Count('cause_id') )
-        qs7 = qs.filter(year=year-7).values('cause_id').annotate(count=Count('cause_id') )
-        qs8 = qs.filter(year=year-8).values('cause_id').annotate(count=Count('cause_id') )
-        qs9 = qs.filter(year=year-9).values('cause_id').annotate(count=Count('cause_id') )
+        qs1 = qs.filter(year=year-1).values('cause_id').annotate(count=Count('cause_id') ) if year-1 >= 2017 else read_col(year-1, 'count')[0]
+        qs2 = qs.filter(year=year-2).values('cause_id').annotate(count=Count('cause_id') ) if year-2 >= 2017 else read_col(year-2, 'count')[0]
+        qs3 = qs.filter(year=year-3).values('cause_id').annotate(count=Count('cause_id') ) if year-3 >= 2017 else read_col(year-3, 'count')[0]
+        qs4 = qs.filter(year=year-4).values('cause_id').annotate(count=Count('cause_id') ) if year-4 >= 2017 else read_col(year-4, 'count')[0]
+        qs5 = qs.filter(year=year-5).values('cause_id').annotate(count=Count('cause_id') ) if year-5 >= 2017 else read_col(year-5, 'count')[0]
+        qs6 = qs.filter(year=year-6).values('cause_id').annotate(count=Count('cause_id') ) if year-6 >= 2017 else read_col(year-6, 'count')[0]
+        qs7 = qs.filter(year=year-7).values('cause_id').annotate(count=Count('cause_id') ) if year-7 >= 2017 else read_col(year-7, 'count')[0]
+        qs8 = qs.filter(year=year-8).values('cause_id').annotate(count=Count('cause_id') ) if year-8 >= 2017 else read_col(year-8, 'count')[0]
+        qs9 = qs.filter(year=year-9).values('cause_id').annotate(count=Count('cause_id') ) if year-9 >= 2017 else read_col(year-9, 'count')[0]
 
         qs0_total = qs.filter(year=year).aggregate(count_total=Count('cause_id') )
-        qs1_total = qs.filter(year=year-1).aggregate(count_total=Count('cause_id') )
-        qs2_total = qs.filter(year=year-2).aggregate(count_total=Count('cause_id') )
-        qs3_total = qs.filter(year=year-3).aggregate(count_total=Count('cause_id') )
-        qs4_total = qs.filter(year=year-4).aggregate(count_total=Count('cause_id') )
-        qs5_total = qs.filter(year=year-5).aggregate(count_total=Count('cause_id') )
-        qs6_total = qs.filter(year=year-6).aggregate(count_total=Count('cause_id') )
-        qs7_total = qs.filter(year=year-7).aggregate(count_total=Count('cause_id') )
-        qs8_total = qs.filter(year=year-8).aggregate(count_total=Count('cause_id') )
-        qs9_total = qs.filter(year=year-9).aggregate(count_total=Count('cause_id') )
+        qs1_total = qs.filter(year=year-1).aggregate(count_total=Count('cause_id') ) if year-1 >= 2017 else read_col(year-1, 'total_count')[0]
+        qs2_total = qs.filter(year=year-2).aggregate(count_total=Count('cause_id') ) if year-2 >= 2017 else read_col(year-2, 'total_count')[0]
+        qs3_total = qs.filter(year=year-3).aggregate(count_total=Count('cause_id') ) if year-3 >= 2017 else read_col(year-3, 'total_count')[0]
+        qs4_total = qs.filter(year=year-4).aggregate(count_total=Count('cause_id') ) if year-4 >= 2017 else read_col(year-4, 'total_count')[0]
+        qs5_total = qs.filter(year=year-5).aggregate(count_total=Count('cause_id') ) if year-5 >= 2017 else read_col(year-5, 'total_count')[0]
+        qs6_total = qs.filter(year=year-6).aggregate(count_total=Count('cause_id') ) if year-6 >= 2017 else read_col(year-6, 'total_count')[0]
+        qs7_total = qs.filter(year=year-7).aggregate(count_total=Count('cause_id') ) if year-7 >= 2017 else read_col(year-7, 'total_count')[0]
+        qs8_total = qs.filter(year=year-8).aggregate(count_total=Count('cause_id') ) if year-8 >= 2017 else read_col(year-8, 'total_count')[0]
+        qs9_total = qs.filter(year=year-9).aggregate(count_total=Count('cause_id') ) if year-9 >= 2017 else read_col(year-9, 'total_count')[0]
 
         count_total0 = qs0_total.get('count_total') if qs0_total.get('count_total') else 0
         count_total1 = qs1_total.get('count_total') if qs1_total.get('count_total') else 0
@@ -1783,17 +1914,24 @@ class Bushfire10YrAverageReport():
         net_count9 = 0; net_perc9 = 0
         net_count_avg = 0; net_perc_avg = 0
 
+        def get_row(qs, cause):
+            if isinstance(qs, QuerySet):
+                return qs.get(cause_id=cause.id) if qs.filter(cause_id=cause.id).count() > 0 else {}# if isinstance(qs1, Queryset) else 
+            else:
+                row = [d for d in qs if d.get('cause_id')==cause.id]
+                return row[0] if len(row) > 0 else {}
+                
         for cause in Cause.objects.all().order_by('id'):
             row0 = qs0.get(cause_id=cause.id) if qs0.filter(cause_id=cause.id).count() > 0 else {}
-            row1 = qs1.get(cause_id=cause.id) if qs1.filter(cause_id=cause.id).count() > 0 else {}
-            row2 = qs2.get(cause_id=cause.id) if qs2.filter(cause_id=cause.id).count() > 0 else {}
-            row3 = qs3.get(cause_id=cause.id) if qs3.filter(cause_id=cause.id).count() > 0 else {}
-            row4 = qs4.get(cause_id=cause.id) if qs4.filter(cause_id=cause.id).count() > 0 else {}
-            row5 = qs5.get(cause_id=cause.id) if qs5.filter(cause_id=cause.id).count() > 0 else {}
-            row6 = qs6.get(cause_id=cause.id) if qs6.filter(cause_id=cause.id).count() > 0 else {}
-            row7 = qs7.get(cause_id=cause.id) if qs7.filter(cause_id=cause.id).count() > 0 else {}
-            row8 = qs8.get(cause_id=cause.id) if qs8.filter(cause_id=cause.id).count() > 0 else {}
-            row9 = qs9.get(cause_id=cause.id) if qs9.filter(cause_id=cause.id).count() > 0 else {}
+            row1 = get_row(qs1, cause)
+            row2 = get_row(qs2, cause)
+            row3 = get_row(qs3, cause)
+            row4 = get_row(qs4, cause)
+            row5 = get_row(qs5, cause)
+            row6 = get_row(qs6, cause)
+            row7 = get_row(qs7, cause)
+            row8 = get_row(qs8, cause)
+            row9 = get_row(qs9, cause)
 
             count0 = row0.get('count') if row0.get('count') else 0
             perc0  = round(count0 * 100. / count_total0, 2) if count_total0 > 0 else 0
@@ -1863,16 +2001,17 @@ class Bushfire10YrAverageReport():
     def get_excel_sheet(self, rpt_date, book=Workbook()):
 
         year = current_finyear()
-        year0 = str(year-1) + '/' + str(year)
-        year1 = str(year-2) + '/' + str(year-1)
-        year2 = str(year-3) + '/' + str(year-2)
-        year3 = str(year-4) + '/' + str(year-3)
-        year4 = str(year-5) + '/' + str(year-4)
-        year5 = str(year-6) + '/' + str(year-5)
-        year6 = str(year-7) + '/' + str(year-6)
-        year7 = str(year-8) + '/' + str(year-7)
-        year8 = str(year-9) + '/' + str(year-8)
-        year9 = str(year-10) + '/' + str(year-9)
+        year0 = str(year) + '/' + str(year+1)
+        year1 = str(year-1) + '/' + str(year)
+        year2 = str(year-2) + '/' + str(year-1)
+        year3 = str(year-3) + '/' + str(year-2)
+        year4 = str(year-4) + '/' + str(year-3)
+        year5 = str(year-5) + '/' + str(year-4)
+        year6 = str(year-6) + '/' + str(year-5)
+        year7 = str(year-7) + '/' + str(year-6)
+        year8 = str(year-8) + '/' + str(year-7)
+        year9 = str(year-9) + '/' + str(year-8)
+
         # book = Workbook()
         sheet1 = book.add_sheet('Bushfire Causes 10Yr Average')
         sheet1 = book.get_sheet('Bushfire Causes 10Yr Average')
@@ -1950,48 +2089,60 @@ class Bushfire10YrAverageReport():
                 elif 'total' in cause.lower():
                     #row = sheet1.row(row_no())
                     row.write(col_no(), cause, style=style)
-                    row.write(col_no(), data['count9'] if data['count9'] > 0 else '', style=style)
-                    row.write(col_no(), data['count8'] if data['count8'] > 0 else '', style=style)
-                    row.write(col_no(), data['count7'] if data['count7'] > 0 else '', style=style)
-                    row.write(col_no(), data['count6'] if data['count6'] > 0 else '', style=style)
-                    row.write(col_no(), data['count5'] if data['count5'] > 0 else '', style=style)
-                    row.write(col_no(), data['count4'] if data['count4'] > 0 else '', style=style)
-                    row.write(col_no(), data['count3'] if data['count3'] > 0 else '', style=style)
-                    row.write(col_no(), data['count2'] if data['count2'] > 0 else '', style=style)
-                    row.write(col_no(), data['count1'] if data['count1'] > 0 else '', style=style)
-                    row.write(col_no(), data['count0'], style=style)
-                    row.write(col_no(), data['perc9'] if data['perc9'] > 0 else '', style=style)
-                    row.write(col_no(), data['perc8'] if data['perc8'] > 0 else '', style=style)
-                    row.write(col_no(), data['perc7'] if data['perc7'] > 0 else '', style=style)
-                    row.write(col_no(), data['perc6'] if data['perc6'] > 0 else '', style=style)
-                    row.write(col_no(), data['perc5'] if data['perc5'] > 0 else '', style=style)
-                    row.write(col_no(), data['perc4'] if data['perc4'] > 0 else '', style=style)
-                    row.write(col_no(), data['perc3'] if data['perc3'] > 0 else '', style=style)
-                    row.write(col_no(), data['perc2'] if data['perc2'] > 0 else '', style=style)
-                    row.write(col_no(), data['perc1'] if data['perc1'] > 0 else '', style=style)
-                    row.write(col_no(), data['perc0'], style=style)
+                    row.write(col_no(), data['count9'], style=style_bold_gen)
+                    row.write(col_no(), data['count8'], style=style_bold_gen)
+                    row.write(col_no(), data['count7'], style=style_bold_gen)
+                    row.write(col_no(), data['count6'], style=style_bold_gen)
+                    row.write(col_no(), data['count5'], style=style_bold_gen)
+                    row.write(col_no(), data['count4'], style=style_bold_gen)
+                    row.write(col_no(), data['count3'], style=style_bold_gen)
+                    row.write(col_no(), data['count2'], style=style_bold_gen)
+                    row.write(col_no(), data['count1'], style=style_bold_gen)
+                    row.write(col_no(), data['count0'], style=style_bold_gen)
+                    row.write(col_no(), data['perc9'], style=style_bold_gen)
+                    row.write(col_no(), data['perc8'], style=style_bold_gen)
+                    row.write(col_no(), data['perc7'], style=style_bold_gen)
+                    row.write(col_no(), data['perc6'], style=style_bold_gen)
+                    row.write(col_no(), data['perc5'], style=style_bold_gen)
+                    row.write(col_no(), data['perc4'], style=style_bold_gen)
+                    row.write(col_no(), data['perc3'], style=style_bold_gen)
+                    row.write(col_no(), data['perc2'], style=style_bold_gen)
+                    row.write(col_no(), data['perc1'], style=style_bold_gen)
+                    row.write(col_no(), data['perc0'], style=style_bold_gen)
+
                 else:
                     row.write(col_no(), cause )
-                    row.write(col_no(), data['count9'] if data['count9'] > 0 else '')
-                    row.write(col_no(), data['count8'] if data['count8'] > 0 else '')
-                    row.write(col_no(), data['count7'] if data['count7'] > 0 else '')
-                    row.write(col_no(), data['count6'] if data['count6'] > 0 else '')
-                    row.write(col_no(), data['count5'] if data['count5'] > 0 else '')
-                    row.write(col_no(), data['count4'] if data['count4'] > 0 else '')
-                    row.write(col_no(), data['count3'] if data['count3'] > 0 else '')
-                    row.write(col_no(), data['count2'] if data['count2'] > 0 else '')
-                    row.write(col_no(), data['count1'] if data['count1'] > 0 else '')
-                    row.write(col_no(), data['count0'])
-                    row.write(col_no(), data['perc9'] if data['perc9'] > 0 else '')
-                    row.write(col_no(), data['perc8'] if data['perc8'] > 0 else '')
-                    row.write(col_no(), data['perc7'] if data['perc7'] > 0 else '')
-                    row.write(col_no(), data['perc6'] if data['perc6'] > 0 else '')
-                    row.write(col_no(), data['perc5'] if data['perc5'] > 0 else '')
-                    row.write(col_no(), data['perc4'] if data['perc4'] > 0 else '')
-                    row.write(col_no(), data['perc3'] if data['perc3'] > 0 else '')
-                    row.write(col_no(), data['perc2'] if data['perc2'] > 0 else '')
-                    row.write(col_no(), data['perc1'] if data['perc1'] > 0 else '')
-                    row.write(col_no(), data['perc0'])
+                    row.write(col_no(), data['count9'], style=style_normal)
+                    row.write(col_no(), data['count8'], style=style_normal)
+                    row.write(col_no(), data['count7'], style=style_normal)
+                    row.write(col_no(), data['count6'], style=style_normal)
+                    row.write(col_no(), data['count5'], style=style_normal)
+                    row.write(col_no(), data['count4'], style=style_normal)
+                    row.write(col_no(), data['count3'], style=style_normal)
+                    row.write(col_no(), data['count2'], style=style_normal)
+                    row.write(col_no(), data['count1'], style=style_normal)
+                    row.write(col_no(), data['count0'], style=style_normal)
+                    row.write(col_no(), data['perc9'], style=style_normal)
+                    row.write(col_no(), data['perc8'], style=style_normal)
+                    row.write(col_no(), data['perc7'], style=style_normal)
+                    row.write(col_no(), data['perc6'], style=style_normal)
+                    row.write(col_no(), data['perc5'], style=style_normal)
+                    row.write(col_no(), data['perc4'], style=style_normal)
+                    row.write(col_no(), data['perc3'], style=style_normal)
+                    row.write(col_no(), data['perc2'], style=style_normal)
+                    row.write(col_no(), data['perc1'], style=style_normal)
+                    row.write(col_no(), data['perc0'], style=style_normal)
+
+        if MISSING_MAP:
+            col_no = lambda c=count(): next(c)
+            hdr = sheet1.row(row_no())
+            hdr = sheet1.row(row_no())
+            row = row_no()
+            sheet1.write_merge(row, row, 0, 2, "NOTE: Errors in report", style_bold_red)
+            for item in MISSING_MAP:
+                hdr = sheet1.row(row_no())
+                hdr.write(col_no(), item.get('name'), style=style_bold_yellow)
+                hdr.write(col_no(), item.get('error'), style=style_bold_yellow)
 
         col_no = lambda c=count(): next(c)
         hdr = sheet1.row(row_no())
@@ -2013,13 +2164,19 @@ class Bushfire10YrAverageReport():
                     continue
                 elif 'total' in cause.lower():
                     #row = sheet1.row(row_no())
-                    row.write(col_no(), cause, style=style)
-                    row.write(col_no(), data['count_avg'], style=style)
-                    row.write(col_no(), data['perc_avg'], style=style)
+                    row.write(col_no(), cause, style=style_bold_gen)
+                    row.write(col_no(), data['count_avg'], style=style_bold_gen)
+                    row.write(col_no(), data['perc_avg'], style=style_bold_gen)
                 else:
-                    row.write(col_no(), cause )
-                    row.write(col_no(), data['count_avg'])
-                    row.write(col_no(), data['perc_avg'])
+                    row.write(col_no(), cause, style=style_normal)
+                    row.write(col_no(), data['count_avg'], style=style_normal)
+                    row.write(col_no(), data['perc_avg'], style=style_normal)
+
+        # DISCLAIMER
+        col_no = lambda c=count(): next(c)
+        hdr = sheet1.row(row_no())
+        hdr = sheet1.row(row_no())
+        hdr.write(col_no(), DISCLAIMER, style=style_normal)
 
 
     def write_excel(self):
@@ -2141,6 +2298,12 @@ class BushfireIndicator():
                     row.write(col_no(), key )
                     row.write(col_no(), data['count'])
 
+        # DISCLAIMER
+        col_no = lambda c=count(): next(c)
+        hdr = sheet1.row(row_no())
+        hdr = sheet1.row(row_no())
+        hdr.write(col_no(), DISCLAIMER, style=style_normal)
+
     def write_excel(self):
         rpt_date = datetime.now()
         book = Workbook()
@@ -2220,7 +2383,6 @@ def email_outstanding_fires(region_id=None):
 
                 filename = 'outstanding_fires_{}_{}.xls'.format(region_name.replace(' ', '').lower(), rpt_date.strftime('%d-%b-%Y'))
 
-                #import ipdb; ipdb.set_trace()
                 message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=email_to, cc=settings.CC_EMAIL, bcc=settings.BCC_EMAIL)
                 message.attach(filename, f.getvalue(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") #get the stream and set the correct mimetype
                 message.send()
