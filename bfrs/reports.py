@@ -2292,11 +2292,11 @@ class BushfireIndicator():
                     continue
                 elif 'total' in key.lower() or 'percentage' in key.lower():
                     #row = sheet1.row(row_no())
-                    row.write(col_no(), key, style=style)
-                    row.write(col_no(), data['count'], style=style)
+                    row.write(col_no(), key, style=style_bold_gen)
+                    row.write(col_no(), data['count'], style=style_bold_gen)
                 else:
-                    row.write(col_no(), key )
-                    row.write(col_no(), data['count'])
+                    row.write(col_no(), key, style=style_normal)
+                    row.write(col_no(), data['count'], style=style_normal)
 
         # DISCLAIMER
         col_no = lambda c=count(): next(c)

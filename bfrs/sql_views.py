@@ -473,7 +473,12 @@ def create_fireboundary_view():
     '''.format(Bushfire.STATUS_INVALIDATED))
 
 
-def test_view():
+def test_bushfirelist_view():
+    cursor=connection.cursor()
+    cursor.execute('''select fire_number, year, district_id from bfrs_bushfirelist_v''')
+    return cursor.fetchall()
+
+def test_bushfire_view():
     cursor=connection.cursor()
     cursor.execute('''select fire_number, year, district_id from bfrs_bushfire_v''')
     return cursor.fetchall()
@@ -487,6 +492,15 @@ def test_fireboundary_view():
     cursor=connection.cursor()
     cursor.execute('''select fire_number, year, district_id from bfrs_bushfire_fireboundary_v''')
     return cursor.fetchall()
+
+def drop_bushfirelist_view():
+    try:
+        cursor=connection.cursor()
+        cursor.execute('''drop view bfrs_bushfirelist_v''')
+        return cursor.fetchall()
+    except:
+        pass
+
 
 def drop_view():
     try:

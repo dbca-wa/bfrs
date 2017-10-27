@@ -3,19 +3,21 @@
 from __future__ import unicode_literals
 
 from django.db import migrations, models
-from bfrs.sql_views import create_view, create_final_view, create_fireboundary_view, drop_view, drop_final_view, drop_fireboundary_view
+from bfrs.sql_views import create_bushfirelist_view, create_bushfire_view, create_final_view, create_fireboundary_view, drop_view, drop_final_view, drop_fireboundary_view
 
 
 class Migration(migrations.Migration):
 
     def run_drop_view(apps, schema_editor):
         drop_view()
+        drop_bushfirelist_view()
         drop_final_view()
         drop_fireboundary_view()
         
 
     def run_create_view(apps, schema_editor):
         create_view()
+        create_bushfirelist_view()
         create_final_view()
         create_fireboundary_view()
 
