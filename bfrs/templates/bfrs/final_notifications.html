@@ -269,5 +269,7 @@ $("#id_job_code").keyup( function (e) {
   $("#id_job_code").val(str.toUpperCase()).prop('pattern', '[A-Z]{3}').prop('title', '3 letters and upper case');
 });
 
+/* DFES Incident Number Validation */
+$("#id_dfes_incident_no").prop('pattern', '[0-9]{6}').prop('title', 'Must be 6 numeric digits');
 </script>
 

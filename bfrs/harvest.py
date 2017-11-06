@@ -184,9 +184,12 @@ def save_bushfire_emails(queueitem):
                 raise Exception('Failed to parse incident number or fire number from email')
         except: 
             err_msg = "Failed to parse incident number or fire number from email"
-            logger.warning(err_msg)
+            subject = 'DFES HARVEST ERROR: Incident No - Auto Update Failed - {}'.format(msg_subject)
+            body = 'Subject: {}<br><br>Could not parse {}'.format(subject, err_msg)
+
+            logger.warning(body)
             if not ('automatic reply' in msg_subject.lower() or 'spam notification' in msg_subject.lower()):
-                support_email(msg_subject, err_msg, None)
+                support_email(subject, body)
             dimap.flag(msgid)
             return
 
@@ -207,13 +210,21 @@ def save_bushfire_emails(queueitem):
             bf.save()
             #dimap.flag(msgid)
             dimap.success_flag(msgid)
+            if not (len(incident_num) == 6 and incident_num.isdigit()):
+                subject = 'DFES HARVEST Update Warning: Incident No. is not 6 digits - {}'.format(incident_num)
+                body = "WARNING: DFES Incident number updated successfully, but it is not 6 numeric digits. {} - DFES Incident No. {}".format(fire_num, incident_num)
+                logger.warning(body)
+                support_email(subject, body)
         else:
             raise Exception('Incident: and Fire Number: text missing from email')
 
     except ObjectDoesNotExist as e:
+
         err_msg = "{}\nFailed to update incident no. {} - Bushfire.objects.get(fire_number='{}') query failed".format(e, incident_num, fire_num)
+        subject = 'DFES HARVEST ERROR: Incident No - Auto Update Failed'
+        body = 'Subject: {}<br><br>Could not parse {}'.format(subject, err_msg)
         logger.warning(err_msg)
-        support_email(msg_subject, err_msg, e)
+        support_email(subject, body, e)
         dimap.flag(msgid)
         return
 
@@ -225,12 +236,9 @@ def save_bushfire_emails(queueitem):
         return
 
 
-def support_email(subject, msg_meta, e):
+def support_email(subject, body, e=None):
     if not settings.SUPPORT_EMAIL:
        return
-
-    subject = 'DFES HARVEST ERROR: Incident No - Auto Update Failed - {}'.format(subject)
-    body = 'Subject: {}<br><br>Could not parse {}<br><br>{}'.format(subject, msg_meta, e)
 
     message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.SUPPORT_EMAIL)
     message.content_subtype = 'html'
