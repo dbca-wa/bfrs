@@ -23,7 +23,7 @@ from django.template.loader import render_to_string
 import logging
 logger = logging.getLogger(__name__)
 
-DISCLAIMER = 'Any discrepancies between the total and the sum of the individual values is due to rounding'
+DISCLAIMER = 'Any discrepancies between the total and the sum of the individual values is due to rounding.'
 MISSING_MAP = []
 
 
@@ -258,8 +258,8 @@ class MinisterialReport():
 
         writer.writerow([
             "Region",
-            "PW Tenure",
-            "Area PW Tenure",
+            "DBCA Tenure",
+            "Area DBCA Tenure",
             "Total All Area",
             "Total Area",
         ])
@@ -303,8 +303,8 @@ class MinisterialReport():
         hdr = sheet1.row(row_no())
         hdr = sheet1.row(row_no())
         hdr.write(col_no(), "Region", style=style_bold_gen)
-        hdr.write(col_no(), "PW Tenure", style=style_bold_gen)
-        hdr.write(col_no(), "Area PW Tenure", style=style_bold_gen)
+        hdr.write(col_no(), "DBCA Tenure", style=style_bold_gen)
+        hdr.write(col_no(), "Area DBCA Tenure", style=style_bold_gen)
         hdr.write(col_no(), "Total All Tenure", style=style_bold_gen)
         hdr.write(col_no(), "Total Area", style=style_bold_gen)
 
@@ -363,7 +363,7 @@ class MinisterialReport():
         return response
 
     def display(self):
-        print '{}\t{}\t{}\t{}\t{}'.format('Region', 'PW Tenure', 'Area PW Tenure', 'Total All Area', 'Total Area').expandtabs(20)
+        print '{}\t{}\t{}\t{}\t{}'.format('Region', 'DBCA Tenure', 'Area DBCA Tenure', 'Total All Area', 'Total Area').expandtabs(20)
         for row in self.rpt_map:
             for region, data in row.iteritems():
                 print '{}\t{}\t{}\t{}\t{}'.format(region, data['pw_tenure'], data['area_pw_tenure'], data['total_all_tenure'], data['total_area']).expandtabs(20)
@@ -635,8 +635,8 @@ class MinisterialReport268():
         hdr = sheet1.row(row_no())
         hdr = sheet1.row(row_no())
         hdr.write(col_no(), "Region", style=style_bold_gen)
-        hdr.write(col_no(), "PW Tenure", style=style_bold_gen)
-        hdr.write(col_no(), "Area PW Tenure", style=style_bold_gen)
+        hdr.write(col_no(), "DBCA Tenure", style=style_bold_gen)
+        hdr.write(col_no(), "Area DBCA Tenure", style=style_bold_gen)
         hdr.write(col_no(), "Total All Tenure", style=style_bold_gen)
         hdr.write(col_no(), "Total Area", style=style_bold_gen)
 
@@ -814,8 +814,8 @@ class MinisterialReportAuth():
 
         writer.writerow([
             "Region",
-            "PW Tenure",
-            "Area PW Tenure",
+            "DBCA Tenure",
+            "Area DBCA Tenure",
             "Total All Area",
             "Total Area",
         ])
@@ -859,8 +859,8 @@ class MinisterialReportAuth():
         hdr = sheet1.row(row_no())
         hdr = sheet1.row(row_no())
         hdr.write(col_no(), "Region", style=style_bold_gen)
-        hdr.write(col_no(), "PW Tenure", style=style_bold_gen)
-        hdr.write(col_no(), "Area PW Tenure", style=style_bold_gen)
+        hdr.write(col_no(), "DBCA Tenure", style=style_bold_gen)
+        hdr.write(col_no(), "Area DBCA Tenure", style=style_bold_gen)
         hdr.write(col_no(), "Total All Tenure", style=style_bold_gen)
         hdr.write(col_no(), "Total Area", style=style_bold_gen)
 
@@ -919,7 +919,7 @@ class MinisterialReportAuth():
         return response
 
     def display(self):
-        print '{}\t{}\t{}\t{}\t{}'.format('Region', 'PW Tenure', 'Area PW Tenure', 'Total All Area', 'Total Area').expandtabs(20)
+        print '{}\t{}\t{}\t{}\t{}'.format('Region', 'DBCA Tenure', 'Area DBCA Tenure', 'Total All Area', 'Total Area').expandtabs(20)
         for row in self.rpt_map:
             for region, data in row.iteritems():
                 print '{}\t{}\t{}\t{}\t{}'.format(region, data['pw_tenure'], data['area_pw_tenure'], data['total_all_tenure'], data['total_area']).expandtabs(20)
@@ -1149,10 +1149,10 @@ class QuarterlyReport():
         hdr = sheet1.row(row_no())
         hdr = sheet1.row(row_no())
         hdr.write(col_no(), "Region", style=style_bold_gen)
-        hdr.write(col_no(), "PW Tenure", style=style_bold_gen)
-        hdr.write(col_no(), "Area PW Tenure", style=style_bold_gen)
-        hdr.write(col_no(), "Non PW Tenure", style=style_bold_gen)
-        hdr.write(col_no(), "Area Non PW Tenure", style=style_bold_gen)
+        hdr.write(col_no(), "DBCA Tenure", style=style_bold_gen)
+        hdr.write(col_no(), "Area DBCA Tenure", style=style_bold_gen)
+        hdr.write(col_no(), "Non DBCA Tenure", style=style_bold_gen)
+        hdr.write(col_no(), "Area Non DBCA Tenure", style=style_bold_gen)
         hdr.write(col_no(), "Total All Tenure", style=style_bold_gen)
         hdr.write(col_no(), "Total Area", style=style_bold_gen)
 
@@ -1166,20 +1166,20 @@ class QuarterlyReport():
                     continue
                 elif 'total' in region.lower():
                     #row = sheet1.row(row_no())
-                    row.write(col_no(), region, style=style_bold)
-                    row.write(col_no(), data['pw_tenure'], style=style_bold_int)
-                    row.write(col_no(), data['area_pw_tenure'], style=style_bold)
-                    row.write(col_no(), data['non_pw_tenure'], style=style_bold_int)
-                    row.write(col_no(), data['area_non_pw_tenure'], style=style_bold)
-                    row.write(col_no(), data['total_all_tenure'], style=style_bold_int)
-                    row.write(col_no(), data['total_area'], style=style_bold)
+                    row.write(col_no(), region, style=style_bold_gen)
+                    row.write(col_no(), data['pw_tenure'], style=style_bold_gen)
+                    row.write(col_no(), data['area_pw_tenure'], style=style_bold_gen)
+                    row.write(col_no(), data['non_pw_tenure'], style=style_bold_gen)
+                    row.write(col_no(), data['area_non_pw_tenure'], style=style_bold_gen)
+                    row.write(col_no(), data['total_all_tenure'], style=style_bold_gen)
+                    row.write(col_no(), data['total_area'], style=style_bold_gen)
                 else:
                     row.write(col_no(), region )
-                    row.write(col_no(), data['pw_tenure'], style=style_normal_int)
+                    row.write(col_no(), data['pw_tenure'], style=style_normal)
                     row.write(col_no(), data['area_pw_tenure'], style=style_normal)
-                    row.write(col_no(), data['non_pw_tenure'], style=style_normal_int)
+                    row.write(col_no(), data['non_pw_tenure'], style=style_normal)
                     row.write(col_no(), data['area_non_pw_tenure'], style=style_normal)
-                    row.write(col_no(), data['total_all_tenure'], style=style_normal_int)
+                    row.write(col_no(), data['total_all_tenure'], style=style_normal)
                     row.write(col_no(), data['total_area'], style=style_normal)
 
         # DISCLAIMER
@@ -1232,7 +1232,7 @@ class QuarterlyReport():
         return response
 
     def display(self):
-        print '{}\t{}\t{}\t{}\t{}\t{}\t{}'.format('Region', 'PW Tenure', 'Area PW Tenure', 'Non PW Tenure', 'Area Non PW Tenure', 'Total All Area', 'Total Area').expandtabs(20)
+        print '{}\t{}\t{}\t{}\t{}\t{}\t{}'.format('Region', 'DBCA Tenure', 'Area PDBCA Tenure', 'Non DBCA Tenure', 'Area Non DBCA Tenure', 'Total All Area', 'Total Area').expandtabs(20)
         for row in self.rpt_map:
             for region, data in row.iteritems():
                 if region and data:
@@ -2230,8 +2230,8 @@ class BushfireIndicator():
 
         rpt_map = []
         item_map = {}
-        rpt_map.append({'No of bushfires in the Forest Regions where P&W was the initial attack agency': dict(count=count1)})
-        rpt_map.append({'No of bushfires in the Forest Regions <2ha, where P&W was the initial attack agency': dict(count=count2)})
+        rpt_map.append({'No of bushfires in the Forest Regions where DBCA was the initial attack agency': dict(count=count1)})
+        rpt_map.append({'No of bushfires in the Forest Regions <2ha, where DBCA was the initial attack agency': dict(count=count2)})
         rpt_map.append({'Percentage': dict(count=round(count2*100./count1, 2))})
 
         return rpt_map, item_map
