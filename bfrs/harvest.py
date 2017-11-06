@@ -41,6 +41,7 @@ class DeferredIMAP():
         self.moved_dev = []
         self.moved_test = []
         self.flags = []
+        self.success_flags = []
         self.host = host
         self.user = user
         self.password = password
@@ -78,6 +79,11 @@ class DeferredIMAP():
             logger.info("Moving {} NON-PROD emails to TEST folder.".format(len(self.moved_test)))
             self.imp.copy(",".join(self.moved_test), 'INBOX/Test')
             self.imp.store(",".join(self.moved_test), '+FLAGS', r'(\Deleted)')
+        if self.success_flags:
+            logger.info("Moving {} successfully processed emails to archive folder.".format(len(self.success_flags)))
+            self.imp.store(",".join(self.success_flags), '+FLAGS', r'(\Flagged)')
+            self.imp.copy(",".join(self.success_flags), 'INBOX/flagged_bfrs_emails')
+            self.imp.store(",".join(self.success_flags), '+FLAGS', r'(\Deleted)')
         if self.flags:
             logger.info("Flagging {} unprocessable emails.".format(len(self.flags)))
             self.imp.store(",".join(self.flags), '+FLAGS', r'(\Flagged)')
@@ -103,6 +109,9 @@ class DeferredIMAP():
 
     def flag(self, msgid):
         self.flags.append(str(msgid))
+
+    def success_flag(self, msgid):
+        self.success_flags.append(str(msgid))
 
     def __getattr__(self, name):
         def temp(*args, **kwargs):
@@ -196,7 +205,8 @@ def save_bushfire_emails(queueitem):
             bf.modifier = admin_user
             serialize_bushfire('Final', 'DFES Incident No. Update', bf) 
             bf.save()
-            dimap.flag(msgid)
+            #dimap.flag(msgid)
+            dimap.success_flag(msgid)
         else:
             raise Exception('Incident: and Fire Number: text missing from email')
 
