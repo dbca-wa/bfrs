@@ -118,8 +118,10 @@ def invalidate_bushfire(obj, new_district, user):
 
     with transaction.atomic():
         old_rpt_status = obj.report_status
+        old_sss_id = obj.sss_id
         obj.report_status = Bushfire.STATUS_INVALIDATED
         obj.modifier = user
+        obj.sss_id = None
         obj.save()
         old_obj = deepcopy(obj)
         old_invalidated = old_obj.bushfire_invalidated.all()
@@ -139,6 +141,7 @@ def invalidate_bushfire(obj, new_district, user):
             obj.fire_number = ' '.join(['BF', str(obj.year), new_district.code, '{0:03d}'.format(obj.next_id(new_district))])
 
         obj.report_status = old_rpt_status
+        obj.sss_id = old_sss_id
         obj.district = new_district
         obj.region = new_district.region
         obj.valid_bushfire = None
