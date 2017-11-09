@@ -618,8 +618,15 @@ def rdo_email(bushfire, url):
 
     message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=to_email, cc=settings.CC_EMAIL, bcc=settings.BCC_EMAIL)
     message.content_subtype = 'html'
+    ret = message.send()
 
-    message.send()
+    if not ret:
+        msg = 'Failed to send RDO Email. {}'.format(bushfire.fire_number)
+        logger.error(msg)
+        support_email(subject=msg, body=msg)
+
+    return ret
+
 
 def pvs_email(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION or bushfire.fire_number in settings.EMAIL_EXCLUSIONS:
@@ -635,7 +642,14 @@ def pvs_email(bushfire, url):
 
     message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.PVS_EMAIL, cc=settings.CC_EMAIL, bcc=settings.BCC_EMAIL)
     message.content_subtype = 'html'
-    message.send()
+    ret = message.send()
+
+    if not ret:
+        msg = 'Failed to send PVS Email. {}'.format(bushfire.fire_number)
+        logger.error(msg)
+        support_email(subject=msg, body=msg)
+
+    return ret
 
 def fpc_email(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION or bushfire.fire_number in settings.EMAIL_EXCLUSIONS:
@@ -651,7 +665,15 @@ def fpc_email(bushfire, url):
 
     message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.FPC_EMAIL, cc=settings.CC_EMAIL, bcc=settings.BCC_EMAIL)
     message.content_subtype = 'html'
-    message.send()
+    ret = message.send()
+
+    if not ret:
+        msg = 'Failed to send FPC Email. {}'.format(bushfire.fire_number)
+        logger.error(msg)
+        support_email(subject=msg, body=msg)
+
+    return ret
+
 
 def pica_email(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION or bushfire.fire_number in settings.EMAIL_EXCLUSIONS:
@@ -667,18 +689,34 @@ def pica_email(bushfire, url):
 
     message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.PICA_EMAIL, cc=settings.CC_EMAIL, bcc=settings.BCC_EMAIL)
     message.content_subtype = 'html'
-    message.send()
+    ret = message.send()
+
+    if not ret:
+        msg = 'Failed to send PICA Email. {}'.format(bushfire.fire_number)
+        logger.error(msg)
+        support_email(subject=msg, body=msg)
+
+    return ret
+
 
 def pica_sms(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION or bushfire.fire_number in settings.EMAIL_EXCLUSIONS:
        return
 
-    if 'bfrs-prod' not in os.getcwd():
-       return
+#    if 'bfrs-prod' not in os.getcwd():
+#       return
 
     message = 'PICA SMS - {}\n\nInitial Bushfire has been submitted and is located at {}'.format(bushfire.fire_number, url)
     TO_SMS_ADDRESS = [phone_no + '@' + settings.SMS_POSTFIX for phone_no in settings.MEDIA_ALERT_SMS_TOADDRESS_MAP.values()]
-    return send_mail('', message, settings.EMAIL_TO_SMS_FROMADDRESS, TO_SMS_ADDRESS)
+    ret = send_mail('', message, settings.EMAIL_TO_SMS_FROMADDRESS, TO_SMS_ADDRESS)
+
+    if not ret:
+        msg = 'Failed to send PICA SMS. {}'.format(bushfire.fire_number)
+        logger.error(msg)
+        support_email(subject=msg, body=msg)
+
+    return ret
+
 
 def dfes_email(bushfire, url):
     if (not settings.ALLOW_EMAIL_NOTIFICATION or
@@ -696,7 +734,14 @@ def dfes_email(bushfire, url):
 
     message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.DFES_EMAIL, cc=settings.CC_EMAIL, bcc=settings.BCC_EMAIL)
     message.content_subtype = 'html'
-    message.send()
+    ret = message.send()
+    
+    if not ret:
+        msg = 'Failed to send DFES Email. {}'.format(bushfire.fire_number)
+        logger.error(msg)
+        support_email(subject=msg, body=msg)
+        
+    return ret
 
 def police_email(bushfire, url):
     if not settings.ALLOW_EMAIL_NOTIFICATION or bushfire.fire_number in settings.EMAIL_EXCLUSIONS:
@@ -714,7 +759,14 @@ def police_email(bushfire, url):
 
     message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.POLICE_EMAIL, cc=settings.CC_EMAIL, bcc=settings.BCC_EMAIL)
     message.content_subtype = 'html'
-    message.send()
+    ret = message.send()
+    
+    if not ret:
+        msg = 'Failed to send POLICE Email. {}'.format(bushfire.fire_number)
+        logger.error(msg)
+        support_email(subject=msg, body=msg)
+        
+    return ret
 
 def fssdrs_email(bushfire, url, status='final'):
     if not settings.ALLOW_EMAIL_NOTIFICATION:
@@ -732,7 +784,25 @@ def fssdrs_email(bushfire, url, status='final'):
 
     message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.FSSDRS_EMAIL, cc=settings.CC_EMAIL, bcc=settings.BCC_EMAIL)
     message.content_subtype = 'html'
-    message.send()
+    ret = message.send()
+    
+    if not ret:
+        msg = 'Failed to send FSSDRS Email. {}'.format(bushfire.fire_number)
+        logger.error(msg)
+        support_email(subject=msg, body=msg)
+        
+    return ret
+
+def support_email(subject, body):
+    if not settings.SUPPORT_EMAIL:
+       return
+
+    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.SUPPORT_EMAIL)
+    message.content_subtype = 'html'
+    ret = message.send()
+    if not ret:
+        logger.error('Failed to send Support Email<br>subject: {}<br>body: {}'.format(subject, body))
+
 
 def create_other_user():
     user, created = User.objects.get_or_create(username='other', first_name='Other', last_name='Contact')

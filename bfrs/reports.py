@@ -726,7 +726,7 @@ class MinisterialReportAuth():
     def create(self):
         # Group By Region
         #qs=Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, year=current_finyear()).values('region_id')
-        qs=Bushfire.objects.filter(authorised_by__isnull=False, year=current_finyear()).values('region_id').exclude(report_status=Bushfire.STATUS_INVALIDATED).exclude(fire_not_found=True)
+        qs=Bushfire.objects.filter(authorised_by__isnull=False, year=current_finyear()).exclude(report_status=Bushfire.STATUS_INVALIDATED).exclude(fire_not_found=True).values('region_id')
         qs1=qs.filter(initial_control__name='DBCA P&W').annotate(dbca_count=Count('region_id'), dbca_sum=Sum('area') )
         qs2=qs.exclude(initial_control__isnull=True).annotate(total_count=Count('region_id'), total_sum=Sum('area') )
 
@@ -1076,7 +1076,7 @@ class QuarterlyReport():
         rpt_map = []
         item_map = {}
         #qs=Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, year=current_finyear()).values('region_id')
-        qs=Bushfire.objects.filter(authorised_by__isnull=False, year=current_finyear()).values('region_id').exclude(report_status=Bushfire.STATUS_INVALIDATED).exclude(fire_not_found=True)
+        qs=Bushfire.objects.filter(authorised_by__isnull=False, year=current_finyear()).exclude(report_status=Bushfire.STATUS_INVALIDATED).exclude(fire_not_found=True).values('region_id')
 
         qs_forest_pw = qs.filter(region__in=Region.objects.filter(forest_region=True)).filter(initial_control__name='DBCA P&W').aggregate(count=Count('region_id'), area=Sum('area') )
         qs_forest_non_pw = qs.filter(region__in=Region.objects.filter(forest_region=True)).exclude(initial_control__name='DBCA P&W').aggregate(count=Count('region_id'), area=Sum('area') )
