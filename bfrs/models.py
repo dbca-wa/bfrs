@@ -36,6 +36,7 @@ AUTH_MANDATORY_FIELDS= [
     'fire_safe_date',
     'final_control',
     'max_fire_level', 'arson_squad_notified', 'job_code',
+    'dfes_incident_no',
 ]
 
 AUTH_MANDATORY_FIELDS_FIRE_NOT_FOUND= [

@@ -12,7 +12,7 @@ def create_bushfirelist_view():
     SELECT b.id,
     b.origin_point,
     CASE WHEN b.report_status >= 2 THEN ST_AsGeoJSON(st_envelope(b.fire_boundary))
-     	 ELSE ST_AsGeoJSON(b.fire_boundary)
+         ELSE ST_AsGeoJSON(b.fire_boundary)
     END as fire_boundary,
     b.fb_validation_req,
     b.created,
@@ -24,12 +24,12 @@ def create_bushfirelist_view():
     b.prob_fire_level,
     b.max_fire_level,
     CASE WHEN b.media_alert_req IS NULL THEN NULL
-     	 WHEN b.media_alert_req THEN 1
-     	 ELSE 0
+         WHEN b.media_alert_req THEN 1
+         ELSE 0
     END as media_alert_req,
     CASE WHEN b.park_trail_impacted IS NULL THEN NULL
-    	 WHEN b.park_trail_impacted THEN 1
-     	 ELSE 0
+         WHEN b.park_trail_impacted THEN 1
+         ELSE 0
     END as park_trail_impacted,
     b.cause_state,
     b.other_cause,
@@ -38,19 +38,19 @@ def create_bushfirelist_view():
     b.job_code,
     b.fire_position,
     CASE WHEN b.fire_position_override IS NULL THEN NULL
-    	 WHEN b.fire_position_override THEN 1
-     	 ELSE 0
+         WHEN b.fire_position_override THEN 1
+         ELSE 0
     END as fire_position_override,
     CASE WHEN b.fire_not_found IS NULL THEN NULL
-    	 WHEN b.fire_not_found THEN 1
-     	 ELSE 0
+         WHEN b.fire_not_found THEN 1
+         ELSE 0
     END as fire_not_found,
     b.other_info,
     b.init_authorised_date,
     b.dispatch_pw,
     CASE WHEN b.dispatch_aerial IS NULL THEN NULL
-    	 WHEN b.dispatch_aerial THEN 1
-     	 ELSE 0
+         WHEN b.dispatch_aerial THEN 1
+         ELSE 0
     END as dispatch_aerial,
     b.dispatch_pw_date,
     b.dispatch_aerial_date,
@@ -65,29 +65,29 @@ def create_bushfirelist_view():
     b.other_initial_control,
     b.other_final_control,
     CASE WHEN b.arson_squad_notified IS NULL THEN NULL
-    	 WHEN b.arson_squad_notified THEN 1
-     	 ELSE 0
+         WHEN b.arson_squad_notified THEN 1
+         ELSE 0
     END as arson_squad_notified,
     CASE WHEN b.investigation_req IS NULL THEN NULL
-    	 WHEN b.investigation_req THEN 1
-     	 ELSE 0
+         WHEN b.investigation_req THEN 1
+         ELSE 0
     END as investigation_req,
     b.offence_no,
     b.initial_area,
     b.area,
     CASE WHEN b.area_limit IS NULL THEN NULL
-    	 WHEN b.area_limit THEN 1
-     	 ELSE 0
+         WHEN b.area_limit THEN 1
+         ELSE 0
     END as area_limit,
     CASE WHEN b.initial_area_unknown IS NULL THEN NULL
-    	 WHEN b.initial_area_unknown THEN 1
-     	 ELSE 0
+         WHEN b.initial_area_unknown THEN 1
+         ELSE 0
     END as initial_area_unknown,
     b.authorised_date,
     b.report_status,
     CASE WHEN b.archive IS NULL THEN NULL
-    	 WHEN b.archive THEN 1
-     	 ELSE 0
+         WHEN b.archive THEN 1
+         ELSE 0
     END as archive,
     b.authorised_by_id,
     b.cause_id,
@@ -127,11 +127,11 @@ def create_bushfire_view():
     b.max_fire_level,
     CASE WHEN media_alert_req IS NULL THEN ''
          WHEN media_alert_req THEN 'Yes'
-     	 ELSE 'No'
+         ELSE 'No'
     END as media_alert_req,
     CASE WHEN park_trail_impacted IS NULL THEN ''
          WHEN park_trail_impacted THEN 'Yes'
-     	 ELSE 'No'
+         ELSE 'No'
     END as park_trail_impacted,
     CASE WHEN b.cause_state IS NULL THEN ''
          WHEN b.cause_state = 1 THEN 'Known'
@@ -149,7 +149,7 @@ def create_bushfire_view():
     b.fire_position,
     CASE WHEN b.fire_position_override IS NULL THEN ''
          WHEN b.fire_position_override THEN 'Yes'
-     	 ELSE 'No'
+         ELSE 'No'
     END as fire_position_override,
     CASE WHEN fire_not_found IS NULL THEN ''
          WHEN fire_not_found THEN 'Yes'
@@ -165,7 +165,7 @@ def create_bushfire_view():
     END as dispatch_pw,
     CASE WHEN b.dispatch_aerial IS NULL THEN ''
          WHEN b.dispatch_aerial THEN 'Yes'
-     	 ELSE 'No'
+         ELSE 'No'
     END as dispatch_aerial,
     b.dispatch_pw_date,
     b.dispatch_aerial_date,
@@ -181,22 +181,22 @@ def create_bushfire_view():
     b.other_final_control,
     CASE WHEN b.arson_squad_notified IS NULL THEN ''
          WHEN b.arson_squad_notified THEN 'Yes'
-     	 ELSE 'No'
+         ELSE 'No'
     END as arson_squad_notified,
     CASE WHEN b.investigation_req IS NULL THEN ''
          WHEN b.investigation_req THEN 'Yes'
-     	 ELSE 'No'
+         ELSE 'No'
     END as investigation_req,
     b.offence_no,
     b.initial_area,
     b.area,
     CASE WHEN b.area_limit IS NULL THEN ''
          WHEN b.area_limit THEN 'Yes'
-     	 ELSE 'No'
+         ELSE 'No'
     END as area_limit,
     CASE WHEN initial_area_unknown IS NULL THEN ''
          WHEN initial_area_unknown THEN 'Yes'
-     	 ELSE 'No'
+         ELSE 'No'
     END as initial_area_unknown,
     b.authorised_date,
     CASE WHEN b.report_status = 1 THEN 'Initial Fire Report'
@@ -209,19 +209,19 @@ def create_bushfire_view():
     END as report_status,
     CASE WHEN b.archive IS NULL THEN ''
          WHEN b.archive THEN 'Yes'
-     	 ELSE 'No'
+         ELSE 'No'
     END as archive,
     (SELECT username AS authorised_by FROM auth_user WHERE id = b.authorised_by_id),
     (SELECT name AS cause FROM bfrs_cause WHERE id = b.cause_id),
-    (SELECT name AS creator FROM auth_user WHERE id = b.creator_id),
+    (SELECT username AS creator FROM auth_user WHERE id = b.creator_id),
     (SELECT name AS district FROM bfrs_district WHERE id = b.district_id),
-    (SELECT name AS duty_officer FROM auth_user WHERE id = b.duty_officer_id),
-    (SELECT name AS field_officer FROM auth_user WHERE id = b.field_officer_id),
+    (SELECT username AS duty_officer FROM auth_user WHERE id = b.duty_officer_id),
+    (SELECT username AS field_officer FROM auth_user WHERE id = b.field_officer_id),
     (SELECT name AS final_control FROM bfrs_agency WHERE id = b.final_control_id),
     (SELECT name AS first_attack FROM bfrs_agency WHERE id = b.first_attack_id),
-    (SELECT name AS init_authorised_by FROM auth_user WHERE id = b.init_authorised_by_id),
+    (SELECT username AS init_authorised_by FROM auth_user WHERE id = b.init_authorised_by_id),
     (SELECT name AS initial_control FROM bfrs_agency WHERE id = b.initial_control_id),
-    (SELECT name AS modifier FROM auth_user WHERE id = b.modifier_id),
+    (SELECT username AS modifier FROM auth_user WHERE id = b.modifier_id),
     (SELECT name AS region FROM bfrs_region WHERE id = b.region_id),
     (SELECT name AS tenure FROM bfrs_tenure WHERE id = b.tenure_id)
     FROM bfrs_bushfire b
@@ -249,11 +249,11 @@ def create_final_view():
     b.max_fire_level,
     CASE WHEN media_alert_req IS NULL THEN ''
          WHEN media_alert_req THEN 'Yes'
-     	 ELSE 'No'
+         ELSE 'No'
     END as media_alert_req,
     CASE WHEN park_trail_impacted IS NULL THEN ''
          WHEN park_trail_impacted THEN 'Yes'
-     	 ELSE 'No'
+         ELSE 'No'
     END as park_trail_impacted,
     CASE WHEN b.cause_state IS NULL THEN ''
          WHEN b.cause_state = 1 THEN 'Known'
@@ -271,7 +271,7 @@ def create_final_view():
     b.fire_position,
     CASE WHEN b.fire_position_override IS NULL THEN ''
          WHEN b.fire_position_override THEN 'Yes'
-     	 ELSE 'No'
+         ELSE 'No'
     END as fire_position_override,
     CASE WHEN fire_not_found IS NULL THEN ''
          WHEN fire_not_found THEN 'Yes'
@@ -287,7 +287,7 @@ def create_final_view():
     END as dispatch_pw,
     CASE WHEN b.dispatch_aerial IS NULL THEN ''
          WHEN b.dispatch_aerial THEN 'Yes'
-     	 ELSE 'No'
+         ELSE 'No'
     END as dispatch_aerial,
     b.dispatch_pw_date,
     b.dispatch_aerial_date,
@@ -303,22 +303,22 @@ def create_final_view():
     b.other_final_control,
     CASE WHEN b.arson_squad_notified IS NULL THEN ''
          WHEN b.arson_squad_notified THEN 'Yes'
-     	 ELSE 'No'
+         ELSE 'No'
     END as arson_squad_notified,
     CASE WHEN b.investigation_req IS NULL THEN ''
          WHEN b.investigation_req THEN 'Yes'
-     	 ELSE 'No'
+         ELSE 'No'
     END as investigation_req,
     b.offence_no,
     b.initial_area,
     b.area,
     CASE WHEN b.area_limit IS NULL THEN ''
          WHEN b.area_limit THEN 'Yes'
-     	 ELSE 'No'
+         ELSE 'No'
     END as area_limit,
     CASE WHEN initial_area_unknown IS NULL THEN ''
          WHEN initial_area_unknown THEN 'Yes'
-     	 ELSE 'No'
+         ELSE 'No'
     END as initial_area_unknown,
     b.authorised_date,
     CASE WHEN b.report_status = 1 THEN 'Initial Fire Report'
@@ -331,19 +331,19 @@ def create_final_view():
     END as report_status,
     CASE WHEN b.archive IS NULL THEN ''
          WHEN b.archive THEN 'Yes'
-     	 ELSE 'No'
+         ELSE 'No'
     END as archive,
     (SELECT username AS authorised_by FROM auth_user WHERE id = b.authorised_by_id),
     (SELECT name AS cause FROM bfrs_cause WHERE id = b.cause_id),
-    (SELECT name AS creator FROM auth_user WHERE id = b.creator_id),
+    (SELECT username AS creator FROM auth_user WHERE id = b.creator_id),
     (SELECT name AS district FROM bfrs_district WHERE id = b.district_id),
-    (SELECT name AS duty_officer FROM auth_user WHERE id = b.duty_officer_id),
-    (SELECT name AS field_officer FROM auth_user WHERE id = b.field_officer_id),
+    (SELECT username AS duty_officer FROM auth_user WHERE id = b.duty_officer_id),
+    (SELECT username AS field_officer FROM auth_user WHERE id = b.field_officer_id),
     (SELECT name AS final_control FROM bfrs_agency WHERE id = b.final_control_id),
     (SELECT name AS first_attack FROM bfrs_agency WHERE id = b.first_attack_id),
-    (SELECT name AS init_authorised_by FROM auth_user WHERE id = b.init_authorised_by_id),
+    (SELECT username AS init_authorised_by FROM auth_user WHERE id = b.init_authorised_by_id),
     (SELECT name AS initial_control FROM bfrs_agency WHERE id = b.initial_control_id),
-    (SELECT name AS modifier FROM auth_user WHERE id = b.modifier_id),
+    (SELECT username AS modifier FROM auth_user WHERE id = b.modifier_id),
     (SELECT name AS region FROM bfrs_region WHERE id = b.region_id),
     (SELECT name AS tenure FROM bfrs_tenure WHERE id = b.tenure_id)
     FROM bfrs_bushfire b
@@ -371,11 +371,11 @@ def create_fireboundary_view():
     b.max_fire_level,
     CASE WHEN media_alert_req IS NULL THEN ''
          WHEN media_alert_req THEN 'Yes'
-     	 ELSE 'No'
+         ELSE 'No'
     END as media_alert_req,
     CASE WHEN park_trail_impacted IS NULL THEN ''
          WHEN park_trail_impacted THEN 'Yes'
-     	 ELSE 'No'
+         ELSE 'No'
     END as park_trail_impacted,
     CASE WHEN b.cause_state IS NULL THEN ''
          WHEN b.cause_state = 1 THEN 'Known'
@@ -393,7 +393,7 @@ def create_fireboundary_view():
     b.fire_position,
     CASE WHEN b.fire_position_override IS NULL THEN ''
          WHEN b.fire_position_override THEN 'Yes'
-     	 ELSE 'No'
+         ELSE 'No'
     END as fire_position_override,
     CASE WHEN fire_not_found IS NULL THEN ''
          WHEN fire_not_found THEN 'Yes'
@@ -409,7 +409,7 @@ def create_fireboundary_view():
     END as dispatch_pw,
     CASE WHEN b.dispatch_aerial IS NULL THEN ''
          WHEN b.dispatch_aerial THEN 'Yes'
-     	 ELSE 'No'
+         ELSE 'No'
     END as dispatch_aerial,
     b.dispatch_pw_date,
     b.dispatch_aerial_date,
@@ -425,22 +425,22 @@ def create_fireboundary_view():
     b.other_final_control,
     CASE WHEN b.arson_squad_notified IS NULL THEN ''
          WHEN b.arson_squad_notified THEN 'Yes'
-     	 ELSE 'No'
+         ELSE 'No'
     END as arson_squad_notified,
     CASE WHEN b.investigation_req IS NULL THEN ''
          WHEN b.investigation_req THEN 'Yes'
-     	 ELSE 'No'
+         ELSE 'No'
     END as investigation_req,
     b.offence_no,
     b.initial_area,
     b.area,
     CASE WHEN b.area_limit IS NULL THEN ''
          WHEN b.area_limit THEN 'Yes'
-     	 ELSE 'No'
+         ELSE 'No'
     END as area_limit,
     CASE WHEN initial_area_unknown IS NULL THEN ''
          WHEN initial_area_unknown THEN 'Yes'
-     	 ELSE 'No'
+         ELSE 'No'
     END as initial_area_unknown,
     b.authorised_date,
     CASE WHEN b.report_status = 1 THEN 'Initial Fire Report'
@@ -453,19 +453,19 @@ def create_fireboundary_view():
     END as report_status,
     CASE WHEN b.archive IS NULL THEN ''
          WHEN b.archive THEN 'Yes'
-     	 ELSE 'No'
+         ELSE 'No'
     END as archive,
     (SELECT username AS authorised_by FROM auth_user WHERE id = b.authorised_by_id),
     (SELECT name AS cause FROM bfrs_cause WHERE id = b.cause_id),
-    (SELECT name AS creator FROM auth_user WHERE id = b.creator_id),
+    (SELECT username AS creator FROM auth_user WHERE id = b.creator_id),
     (SELECT name AS district FROM bfrs_district WHERE id = b.district_id),
-    (SELECT name AS duty_officer FROM auth_user WHERE id = b.duty_officer_id),
-    (SELECT name AS field_officer FROM auth_user WHERE id = b.field_officer_id),
+    (SELECT username AS duty_officer FROM auth_user WHERE id = b.duty_officer_id),
+    (SELECT username AS field_officer FROM auth_user WHERE id = b.field_officer_id),
     (SELECT name AS final_control FROM bfrs_agency WHERE id = b.final_control_id),
     (SELECT name AS first_attack FROM bfrs_agency WHERE id = b.first_attack_id),
-    (SELECT name AS init_authorised_by FROM auth_user WHERE id = b.init_authorised_by_id),
+    (SELECT username AS init_authorised_by FROM auth_user WHERE id = b.init_authorised_by_id),
     (SELECT name AS initial_control FROM bfrs_agency WHERE id = b.initial_control_id),
-    (SELECT name AS modifier FROM auth_user WHERE id = b.modifier_id),
+    (SELECT username AS modifier FROM auth_user WHERE id = b.modifier_id),
     (SELECT name AS region FROM bfrs_region WHERE id = b.region_id),
     (SELECT name AS tenure FROM bfrs_tenure WHERE id = b.tenure_id)
     FROM bfrs_bushfire b
@@ -473,12 +473,7 @@ def create_fireboundary_view():
     '''.format(Bushfire.STATUS_INVALIDATED))
 
 
-def test_bushfirelist_view():
-    cursor=connection.cursor()
-    cursor.execute('''select fire_number, year, district_id from bfrs_bushfirelist_v''')
-    return cursor.fetchall()
-
-def test_bushfire_view():
+def test_view():
     cursor=connection.cursor()
     cursor.execute('''select fire_number, year, district_id from bfrs_bushfire_v''')
     return cursor.fetchall()
@@ -492,15 +487,6 @@ def test_fireboundary_view():
     cursor=connection.cursor()
     cursor.execute('''select fire_number, year, district_id from bfrs_bushfire_fireboundary_v''')
     return cursor.fetchall()
-
-def drop_bushfirelist_view():
-    try:
-        cursor=connection.cursor()
-        cursor.execute('''drop view bfrs_bushfirelist_v''')
-        return cursor.fetchall()
-    except:
-        pass
-
 
 def drop_view():
     try:
@@ -525,5 +511,6 @@ def drop_fireboundary_view():
         return cursor.fetchall()
     except:
         pass
+
 
 
