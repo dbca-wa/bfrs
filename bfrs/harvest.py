@@ -229,7 +229,7 @@ def save_bushfire_emails(queueitem):
 
     except Exception as e:
         logger.warning("Couldn't parse {}, error: {}".format(msg_meta, e))
-        if not ('automatic reply' in msg_subject.lower() or 'spam notification' in msg_subject.lower()):
+        if not ('automatic reply' in msg_subject.lower() or 'spam notification' in msg_subject.lower() or 'successful sms' in msg_subject.lower()):
             support_email(msg_subject, msg_meta, e)
         dimap.flag(msgid)
         return
