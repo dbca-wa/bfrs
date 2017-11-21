@@ -177,8 +177,7 @@ def save_bushfire_emails(queueitem):
         }
         try:
             msg_text_reply = msg_text.split('REPLY')[0] # ignore the body content after the string 'REPLY'
-            #incident_num = msg_text_reply.split('Incident:')[1].split('\r')[0].strip()
-            incident_num = re.split('\s*[Ii]ncident:', msg_text_reply)[1].split('\r')[0].strip()
+            incident_num = re.split('incident:', msg_text_reply, flags=re.IGNORECASE)[1].split('\r')[0].strip()
             fire_num = msg_text.split('Fire Number:')[1].split('\r')[0].strip()
             if not incident_num or not fire_num:
                 raise Exception('Failed to parse incident number or fire number from email')
@@ -201,7 +200,7 @@ def save_bushfire_emails(queueitem):
             elif any(x in msg_subject for x in ['test', 'Test', 'TEST']):
                 dimap.move(msgid, 'test')
 
-        elif ('Incident:' in msg_text and 'Fire Number:' in msg_text):
+        elif (re.search('incident:', msg_text, flags=re.IGNORECASE) and 'Fire Number:' in msg_text):
             logger.info('Updating DFES Incident Number - ' + incident_num + ' - ' + fire_num)
             bf = Bushfire.objects.get(fire_number=fire_num)
             bf.dfes_incident_no = incident_num
