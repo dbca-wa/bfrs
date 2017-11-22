@@ -187,7 +187,7 @@ def save_bushfire_emails(queueitem):
             body = 'Subject: {}<br><br>Could not parse {}'.format(subject, err_msg)
 
             logger.warning(body)
-            if not ('automatic reply' in msg_subject.lower() or 'spam notification' in msg_subject.lower()):
+            if not ('automatic reply' in msg_subject.lower() or 'spam notification' in msg_subject.lower() or 'successful sms' in msg_subject.lower()):
                 support_email(subject, body)
             dimap.flag(msgid)
             return
