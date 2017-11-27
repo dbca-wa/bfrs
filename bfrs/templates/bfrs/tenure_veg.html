@@ -98,6 +98,11 @@
         deleteCssClass: 'delete-row' + '-' + '{{ area_burnt_formset.prefix  }}',
     });
 
+// clear the widgets
+$("#id_area_1").val(0.00);
+$("#id_area_2").val(0.00);
+$("#id_area_perc_1").val(0.0);
+$("#id_area_perc_2").val(0.0);
 
 {% if object.other_area %}
     var total_other_area = {{ object.other_area|to_null }};
