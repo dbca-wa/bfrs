@@ -96,51 +96,19 @@ SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 #DEBUG = True
-DEBUG = os.environ.get('DEBUG', None) in ["True", "on", "1", "DEBUG"]
+DEBUG = (os.environ.get('DEBUG') or 'false').lower() in ["true", "on", "1", "debug"]
 
 ALLOWED_HOSTS = []
 
 #DEBUG = os.environ.get('DEBUG', None) in ["True", "on", "1", "DEBUG"]
 INTERNAL_IPS = ['127.0.0.1', '::1']
-if not DEBUG:
-    # Localhost, UAT and Production hosts
+if os.environ.get("ALLOWED_HOSTS"):
+    ALLOWED_HOSTS = [host.strip() for host in os.environ.get("ALLOWED_HOSTS").split(',') if host.strip()]
+else:
     ALLOWED_HOSTS = [
-        'localhost',
-        '127.0.0.1',
         'bfrs.dpaw.wa.gov.au',
-        'bfrs.dpaw.wa.gov.au.',
-        'bfrs-uat.dpaw.wa.gov.au',
-        'bfrs-uat.dpaw.wa.gov.au.',
-        'bfrs-uat.dbca.wa.gov.au',
-        'bfrs-uat.dbca.wa.gov.au.',
-        'bfrs-dev.dpaw.wa.gov.au',
-        'bfrs-dev.dpaw.wa.gov.au.',
-        'bfrs-dev.dbca.wa.gov.au',
-        'bfrs-dev.dbca.wa.gov.au.',
-        'aws-oim-001',
-        'aws-oim-001.',
-        '192.168.0.4',
-        '192.168.0.4.',
+        'bfrs.dbca.wa.gov.au'
     ]
-
-ALLOWED_HOSTS = [
-    'localhost',
-    '127.0.0.1',
-    'bfrs.dpaw.wa.gov.au',
-    'bfrs.dpaw.wa.gov.au.',
-    'bfrs-uat.dpaw.wa.gov.au',
-    'bfrs-uat.dpaw.wa.gov.au.',
-    'bfrs-uat.dbca.wa.gov.au',
-    'bfrs-uat.dbca.wa.gov.au.',
-    'bfrs-dev.dpaw.wa.gov.au',
-    'bfrs-dev.dpaw.wa.gov.au.',
-    'bfrs-dev.dbca.wa.gov.au',
-    'bfrs-dev.dbca.wa.gov.au.',
-    'aws-oim-001',
-    'aws-oim-001.',
-    '192.168.0.4',
-    '192.168.0.4.',
-]
 
 # Application definition
 INSTALLED_APPS = [
