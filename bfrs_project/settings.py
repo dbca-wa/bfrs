@@ -46,7 +46,7 @@ CC_EMAIL = env('CC_EMAIL', None)
 BCC_EMAIL = env('BCC_EMAIL', None)
 SUPPORT_EMAIL = env('SUPPORT_EMAIL', None)
 
-INTERNAL_EMAIL = env('INTERNAL_EMAIL', ['dpaw.wa.gov.au'])
+INTERNAL_EMAIL = [email.strip() for email in (env('INTERNAL_EMAIL') or 'dbca.wa.gov.au,dpaw.wa.gov.au').split(',') if email.strip()]
 SSS_URL = env('SSS_URL', 'sss_redirect_url')
 AREA_THRESHOLD = env('AREA_THRESHOLD', 2)
 
