@@ -4,6 +4,7 @@ from django.core.urlresolvers import reverse
 from django.views import generic
 from django.views.generic.edit import CreateView, UpdateView, FormView
 from django.forms.formsets import formset_factory
+from django.forms.widgets import CheckboxInput
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -53,13 +54,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def reporting_years():
-    """ Returns: [[2016, '2016/2017'], [2017, '2017/2018']] """
-    yrs = list(Bushfire.objects.values_list('reporting_year', flat=True).distinct())
-    return [[yr, '/'.join([str(yr),str(yr+1)])] for yr in yrs]
-
-
-class BooleanFilter(django_filters.filters.Filter):
+class BooleanFilter(django_filters.filters.BooleanFilter):
     field_class = forms.BooleanField
 
 
@@ -67,30 +62,29 @@ class BushfireFilter(django_filters.FilterSet):
 
     # try/except block hack added here to allow initial migration before the model exists - else migration fails
     try:
-        YEAR_CHOICES = [[i['year'], i['year']] for i in Bushfire.objects.all().values('year').distinct()]
-        RPT_YEAR_CHOICES = [[i['reporting_year'], i['reporting_year']] for i in Bushfire.objects.all().values('reporting_year').distinct()]
-
-        REGION_CHOICES = []
-        for region in Region.objects.distinct('name'):
-            REGION_CHOICES.append([region.id, region.name])
-
-        DISTRICT_CHOICES = []
-        for district in District.objects.distinct('name'):
-            DISTRICT_CHOICES.append([district.id, district.name])
-
-        region = django_filters.ChoiceFilter(choices=REGION_CHOICES, label='Region')
-        district = django_filters.ChoiceFilter(choices=DISTRICT_CHOICES, label='District')
-        year = django_filters.ChoiceFilter(choices=YEAR_CHOICES, label='Year')
-        reporting_year = django_filters.ChoiceFilter(choices=RPT_YEAR_CHOICES, label='Reporting Year')
-        report_status = django_filters.ChoiceFilter(choices=Bushfire.REPORT_STATUS_CHOICES, label='Report Status', name='report_status', method='filter_report_status')
+        region = django_filters.Filter(name="region",label='Region',lookup_expr="exact")
+        district = django_filters.Filter(name="district",label='District',lookup_expr="exact")
+        year = django_filters.Filter(name="year",label='Year',lookup_expr="exact")
+        reporting_year = django_filters.Filter(name="reporting_year",label='Reporting Year',lookup_expr="exact")
+        report_status = django_filters.Filter(label='Report Status', name='report_status', method='filter_report_status')
         fire_number = django_filters.CharFilter(name='fire_number', label='Search', method='filter_fire_number')
+        include_archived = BooleanFilter(name='include_archived',label='Include archived', method='filter_include_archived')
+        exclude_missing_final_fire_boundary = BooleanFilter(name='exclude_missing_final_fire_boundary',label='Exclude missing final fire boundary', method='filter_exclude_missing_final_fire_boundary')
+
+        order_by = django_filters.Filter(name="order_by",label="Order by",method="filter_order_by")
     except:
         pass
 
     def filter_report_status(self, queryset, name, value):
-        if int(value) == Bushfire.STATUS_MISSING_FINAL:
-            return queryset.filter(report_status__in=[Bushfire.STATUS_INITIAL_AUTHORISED])
-        return queryset.filter(report_status=value)
+        status = int(value)
+        if status == Bushfire.STATUS_MISSING_FINAL:
+            queryset = queryset.filter(report_status__in=[Bushfire.STATUS_INITIAL_AUTHORISED])
+        elif status == -1:
+            queryset = queryset.exclude(report_status=Bushfire.STATUS_INVALIDATED)
+        else:
+            queryset = queryset.filter(report_status=status)
+
+        return queryset
 
     def filter_fire_number(self, queryset, filter_name, value):
         """ 
@@ -106,38 +100,36 @@ class BushfireFilter(django_filters.FilterSet):
         return queryset.filter(Q(fire_number__icontains=value) | Q(name__icontains=value) | Q(dfes_incident_no__icontains=value))
 
 
+    def filter_include_archived(self, queryset, filter_name, value):
+        if not value:
+            queryset = queryset.exclude(archive=True)
+
+        return queryset
+    
+    def filter_exclude_missing_final_fire_boundary(self, queryset, filter_name, value):
+        if value:
+            queryset = queryset.filter(final_fire_boundary=True)
+        return queryset
+
+    def filter_order_by(self,queryset,filter_name,value):
+        if value:
+            queryset = queryset.order_by(value)
+
+        return queryset
+
     class Meta:
         model = Bushfire
         fields = [
-            'region_id',
-            'district_id',
+            'region',
+            'district',
             'year',
             'reporting_year',
             'report_status',
             'fire_number',
+            'include_archived',
+            'exclude_missing_final_fire_boundary',
+            'order_by'
         ]
-        order_by = (
-            ('region_id', 'Region'),
-            ('district_id', 'District'),
-            ('year', 'Year'),
-            ('reporting_year', 'Reporting Year'),
-            ('report_status', 'Report Status'),
-            ('fire_number', 'Search'),
-        )
-
-    def __init__(self, *args, **kwargs):
-        super(BushfireFilter, self).__init__(*args, **kwargs)
-
-        try:
-            # allows dynamic update of the filter set, on page refresh
-            self.filters['year'].extra['choices'] = [[None, '---------']] + [[i['year'], str(i['year']) + '/' + str(i['year']+1)] for i in Bushfire.objects.all().values('year').distinct().order_by('year')]
-            self.filters['reporting_year'].extra['choices'] = [[None, '---------']] + [[i['reporting_year'], str(i['reporting_year']) + '/' + str(i['reporting_year']+1)] for i in Bushfire.objects.all().values('reporting_year').distinct().order_by('reporting_year')]
-            if not can_maintain_data(self.request.user):
-                # pop the 'Reviewed' option
-                self.filters['report_status'].extra['choices'] = [(u'', '---------'), (1, 'Initial Fire Report'), (2, 'Notifications Submitted'), (3, 'Report Authorised'), (5, 'Invalidated'), (6, 'Outstanding Fires')]
-        except:
-            pass
-
 
 class ProfileView(LoginRequiredMixin, generic.FormView):
     model = Profile
@@ -174,11 +166,24 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
     template_name = 'bfrs/bushfire.html'
     paginate_by = 50
 
-    def get_queryset(self):
-        if self.request.GET.has_key('report_status') and int(self.request.GET.get('report_status'))==Bushfire.STATUS_INVALIDATED:
-            return super(BushfireView, self).get_queryset()
+    def get_filterset_kwargs(self, filterset_class):
+        kwargs = super(BushfireView,self).get_filterset_kwargs(filterset_class)
+        data = dict(kwargs["data"].iteritems()) if kwargs["data"] else {}
+        kwargs["data"] = data
+        self._filters = "?{}&".format("&".join(["{}={}".format(k,v) for k,v in data.iteritems() if k in BushfireFilter.Meta.fields])) if len(data) > 0 else "?"
+        profile = self.get_initial() # Additional profile Filters must also be added to the JS in bushfire.html- profile_field_list
+        if not data.has_key('region'):
+            data['region'] = profile['region'].id if profile['region'] else None
+            data['district'] = profile['district'].id if profile['district'] else None
 
-        return Bushfire.objects.exclude(report_status=Bushfire.STATUS_INVALIDATED)
+        if "include_archived" not in data:
+            data["include_archived"] = False
+
+        if "order_by" not in data:
+            data["order_by"] = '-modified'
+
+        #print "{}".format(data)
+        return kwargs
 
     def get_success_url(self):
         return reverse('main')
@@ -275,47 +280,14 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
     def get_context_data(self, **kwargs):
         context = super(BushfireView, self).get_context_data(**kwargs)
 
-        initial = {} # initial parameter prevents the form from resetting, if the region and district filters had a value set previously
-        profile = self.get_initial() # Additional profile Filters must also be added to the JS in bushfire.html- profile_field_list
-        if self.request.GET.has_key('region'):
-            initial.update({'region': self.request.GET['region']})
-        elif profile['region']:
-            initial.update({'region': profile['region'].id})
-            self.object_list = self.object_list.filter(region=profile['region'])
-
-        if self.request.GET.has_key('district'):
-            initial.update({'district': self.request.GET['district']})
-        elif profile['district']:
-            initial.update({'district': profile['district'].id})
-            self.object_list = self.object_list.filter(district=profile['district'])
-
-        if not self.request.GET.has_key('include_archived'):
-            self.object_list = self.object_list.exclude(archive=True)
-        else:
-            initial.update({'include_archived': self.request.GET.get('include_archived')})
-
-        if self.request.GET.has_key('exclude_missing_final_fire_boundary'):
-            self.object_list = self.object_list.filter(final_fire_boundary=True)
-        initial.update({'exclude_missing_final_fire_boundary': self.request.GET.get('exclude_missing_final_fire_boundary')})
-
-        bushfire_list = self.object_list.order_by('-modified')
-        paginator = Paginator(bushfire_list, self.paginate_by)
-        page = self.request.GET.get('page')
-        try:
-            object_list_paginated = paginator.page(page)
-        except PageNotAnInteger:
-            object_list_paginated = paginator.page(1)
-        except EmptyPage:
-            object_list_paginated = paginator.page(paginator.num_pages)
-
         # update context with form - filter is already in the context
-        context['form'] = BushfireFilterForm(initial=initial)
-        context['object_list'] = object_list_paginated
+        context['form'] = BushfireFilterForm(initial=context["filter"].data)
+        context['filters'] = self._filters
         context['sss_url'] = settings.SSS_URL
         context['can_maintain_data'] = can_maintain_data(self.request.user)
         context['is_external_user'] = is_external_user(self.request.user)
-        if paginator.num_pages == 1: 
-            context['is_paginated'] = False
+        #if context["paginator"].num_pages == 1: 
+        #    context['is_paginated'] = False
 
         referrer = self.request.META.get('HTTP_REFERER')
         if referrer and not ('initial' in referrer or 'final' in referrer or 'create' in referrer):

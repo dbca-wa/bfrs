@@ -17,6 +17,8 @@ from crispy_forms.bootstrap import TabHolder, Tab
 from django.utils.safestring import mark_safe
 from django.forms.widgets import Widget
 
+from bfrs.utils import (can_maintain_data,)
+
 YESNO_CHOICES = (
     (True, 'Yes'),
     (False, 'No')
@@ -118,23 +120,44 @@ class ProfileForm(HelperModelForm):
 
 class BushfireFilterForm(forms.ModelForm):
     """
-    Used to pass region and district to the filter template (in bushfire template)
     django-filter module does not allow filter chaining
+    Form are used to populate user interface, django-filter are used to filter query set.
 
     So passing a both form and filter to the context in the BushfireView, and still allowing the BushfireFilter to filter using the
     region and district passed from this form (i.e. region and filter are also declared in the BushfireFilter class)
     """
 
+    try:
+        YEAR_CHOICES = [[i['year'], i['year']] for i in Bushfire.objects.all().values('year').distinct()]
+        RPT_YEAR_CHOICES = [[i['reporting_year'], i['reporting_year']] for i in Bushfire.objects.all().values('reporting_year').distinct()]
+        STATUS_CHOICES = [(u'-1', '---------')] + list(Bushfire.REPORT_STATUS_CHOICES)
+    except:
+        pass
+
+    year = forms.ChoiceField(choices=YEAR_CHOICES,required=False)
+    reporting_year = forms.ChoiceField(choices=RPT_YEAR_CHOICES, required=False)
     include_archived = forms.BooleanField(required=False)
     exclude_missing_final_fire_boundary = forms.BooleanField(required=False)
+    report_status = forms.ChoiceField(choices=STATUS_CHOICES, label='Report Status',required=False)
     def __init__(self, *args, **kwargs):
         super(BushfireFilterForm, self).__init__(*args, **kwargs)
 
         self.fields['region'].required = False
         self.fields['district'].required = False
 
+        try:
+            # allows dynamic update of the filter set, on page refresh
+            self.fields["year"].choices = [[None, '---------']] + [[i['year'], str(i['year']) + '/' + str(i['year']+1)] for i in Bushfire.objects.all().values('year').distinct().order_by('year')]
+            self.fields["reporting_year"].choices = [[None, '---------']] + [[i['reporting_year'], str(i['reporting_year']) + '/' + str(i['reporting_year']+1)] for i in Bushfire.objects.all().values('reporting_year').distinct().order_by('reporting_year')]
+            # allows dynamic update of the filter set, on page refresh
+            if not can_maintain_data(self.request.user):
+                # pop the 'Reviewed' option
+                self.fields['report_status'].choices = [(u'-1', '---------'), (1, 'Initial Fire Report'), (2, 'Notifications Submitted'), (3, 'Report Authorised'), (5, 'Invalidated'), (6, 'Outstanding Fires')]
+        except:
+            pass
+
     class Meta:
-        fields = ('region', 'district', 'include_archived', 'exclude_missing_final_fire_boundary')
+        fields = ('region', 'district')
         model = Bushfire
 
 

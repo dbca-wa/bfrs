@@ -22,9 +22,9 @@
   </button>
 
   <ul class="dropdown-menu" aria-labelledby="dropdown_btn">
-    <li><a href="javascript: bushfire_filter('export_to_excel=True');">Export Excel</a></li>
-    <li><a href="javascript: bushfire_filter('export_excel_outstanding_fires=True');">Export Outstanding Fires</a></li>
-    <li><a href="javascript: bushfire_filter('export_excel_ministerial_report=True');" onclick='growl({"message": "Creating Bushfire Report (Excel) ...", "type": "info"});'>Export Bushfire Report</a></li>
+      <li><a href="javascript: bushfire_filter({export_to_excel:'True'});">Export Excel</a></li>
+      <li><a href="javascript: bushfire_filter({export_excel_outstanding_fires:'True'});">Export Outstanding Fires</a></li>
+      <li><a href="javascript: bushfire_filter({export_excel_ministerial_report:'True'});" onclick='growl({"message": "Creating Bushfire Report (Excel) ...", "type": "info"});'>Export Bushfire Report</a></li>
     <li><a href="{% url 'bushfire:bushfire_report' %}">PDF Ministerial Report</a></li>
   </ul>
 </div>
@@ -72,22 +72,22 @@
          <td>
            {% if bushfire.report_status >= bushfire.STATUS_FINAL_AUTHORISED %}
              {% if bushfire.is_reviewed %}
-			   <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=delete_review');" title="Delete review"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-trash icon-white"></i></a>
+             <a href="{% url 'main' %}?bushfire_id={{bushfire.id}}&confirm_action=delete_review" title="Delete review"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-trash icon-white"></i></a>
              {% else %}
-			   <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=delete_final_authorisation');" title="Delete authorisation"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-trash icon-white"></i></a>
+             <a href="{% url 'main' %}?bushfire_id={{bushfire.id}}&confirm_action=delete_final_authorisation" title="Delete authorisation"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-trash icon-white"></i></a>
              {% endif %}
 
              {% if not bushfire.archive %}
-			   <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=archive');" title="Archive Report"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-folder-close"></i></a>
+             <a href="{% url 'main' %}?bushfire_id={{bushfire.id}}&confirm_action=archive" title="Archive Report"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-folder-close"></i></a>
              {% else %}
-		       <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=unarchive');" title="Unarchive Report"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-folder-open"></i></a>
+             <a href="{% url 'main' %}?bushfire_id={{bushfire.id}}&confirm_action=unarchive" title="Unarchive Report"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-folder-open"></i></a>
              {% endif %}
            {% endif %}
 
            {% if bushfire.is_reviewed %}
 			 <a href="#" title="Final fire report reviewed on {{bushfire.reviewed_date}} by {{bushfire.reviewed_by}}"><span style="display:none">{{bushfire.report_status}}</span><div style="float:right;"><font color="green"><i class="icon-ok icon-white"></i></font></div></a>
            {% elif bushfire.can_review %}
-		       <a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&confirm_action=mark_reviewed');" title="Mark Report as Reviewed"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-thumbs-up"></i></a>
+           <a href="{% url 'main' %}?bushfire_id={{bushfire.id}}&confirm_action=mark_reviewed" title="Mark Report as Reviewed"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-thumbs-up"></i></a>
            {% endif %}
 
 		 </td>
@@ -119,7 +119,7 @@
               </tr>
               <tr>
                 <th colspan="1">No. of Archived Snapshots</th>
-		        <td colspan="3"><a href="javascript: bushfire_filter('bushfire_id={{bushfire.id}}&action=snapshot_history');" title="Snapshot history details">{{ bushfire.snapshot_list.count }}</a></td>
+                <td colspan="3"><a href="{% url 'main' %}?bushfire_id={{bushfire.id}}&action=snapshot_history" title="Snapshot history details">{{ bushfire.snapshot_list.count }}</a></td>
               </tr>
 			  <tr>
                 <th>Linked bushfires</th>
@@ -180,7 +180,7 @@
   <ul class="pagination">
     {% if page_obj.has_previous %}
       <!-- <li><a href="?page={{ page_obj.previous_page_number }}">&laquo;</a></li> -->
-      <li><a href="javascript: bushfire_filter('page={{ page_obj.previous_page_number }}');">&laquo;</a></li>
+      <li><a href="javascript: bushfire_filter({page:{{ page_obj.previous_page_number }}});">&laquo;</a></li>
     {% else %}
       <li class="disabled"><span>&laquo;</span></li>
     {% endif %}
@@ -189,12 +189,12 @@
         <li class="active"><span>{{ i }} <span class="sr-only">(current)</span></span></li>
       {% else %}
         <!-- <li><a href="?page={{ i }}">{{ i }}</a></li> -->
-        <li><a href="javascript: bushfire_filter('page={{ i }}');">{{ i }}</a></li>
+        <li><a href="javascript: bushfire_filter({page:{{ i }}});">{{ i }}</a></li>
       {% endif %}
     {% endfor %}
     {% if page_obj.has_next %}
       <!-- <li><a href="?page={{ page_obj.next_page_number }}">&raquo;</a></li> -->
-      <li><a href="javascript: bushfire_filter('page={{ page_obj.next_page_number }}');">&raquo;</a></li>
+      <li><a href="javascript: bushfire_filter({page:{{ page_obj.next_page_number }}});">&raquo;</a></li>
     {% else %}
       <li class="disabled"><span>&raquo;</span></li>
     {% endif %}
@@ -222,50 +222,24 @@
 $(function(){
 
     bushfire_filter = function(params) {
-        /*
-        Function to append filter fields to the URL, only those that are selected. Default <form action="#"> adds all fields to the url, even if empty
-        */
+        var paramsDiv = null
+        var param = null
+        try {
 
-        profile_field_list = ['region', 'district'];
-        filter_list = [
-			'region', 'district', 'year', 'reporting_year', 'report_status', 'page',
-		];
-
-        var count = 0;
-        var url = "{% url 'main' %}";
-        for (var i = 0; i < filter_list.length; i++) {
-          var field_value = $("#id_" + filter_list[i]).val();
-          if (field_value) {
-            //alert("VAL: " + field_value);
-            var postfix = (count==0 ? "?" : "&");
-            url += postfix + filter_list[i] + "=" + $("#id_" + filter_list[i]).val();
-            count++;
-		  /* Check if string filter_list[i] exists in profile_field_list. This will add the field without a value, allowing Bushfire View to deal an 'All' selection (to distinguish from profile) */
-		  } else if (new RegExp(profile_field_list.join('|')).test(filter_list[i])) {
-            var postfix = (count==0 ? "?" : "&");
-            url += postfix + filter_list[i] + "=";
-            count++;
-		  }
+            if (params) {
+                paramsDiv = $("<div>")
+                $("#bushfire_filter").append(paramsDiv)
+                $.each(params,function(k,v){
+                    param = $("<input>",{type:"hidden",name:k,value:v})
+                    paramsDiv.append(param)
+                })
+            }
+            $("#bushfire_filter").submit()
+        } finally {
+            if (paramsDiv) {
+                paramsDiv.remove()
+            }
         }
-
-		if($('#id_include_archived').is(':checked')) {
-            var postfix = (count==0 ? "?" : "&");
-			url += postfix + 'include_archived=True'
-		}
-
-		if($('#id_exclude_missing_final_fire_boundary').is(':checked')) {
-            var postfix = (count==0 ? "?" : "&");
-			url += postfix + 'exclude_missing_final_fire_boundary=True'
-		}
-
-		/* Append the additional parameters such as "export_to_csv=final&stuff=ABC" */
-		if (params) {
-            var postfix = (count==0 ? "?" : "&");
-			url += postfix + params
-		}
-        //alert("URL: " + url);
-
-        location.href = url
     };
 
 });
