@@ -673,3 +673,6 @@ ul.stat-list {
   font-weight: bold !important;
 }
 
+.dropdown-menu li {
+    list-style-type:none;
+}
