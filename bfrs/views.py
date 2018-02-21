@@ -197,51 +197,35 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
         template_initial = 'bfrs/detail.html'
         template_final = 'bfrs/final.html'
         template_snapshot_history = 'bfrs/snapshot_history.html'
-
-        if self.request.GET.has_key('export_to_csv'):
-            report = self.request.GET.get('export_to_csv')
-            if eval(report):
-                qs = self.get_filterset(self.filterset_class).qs
-                return export_final_csv(self.request, qs)
-
-        if self.request.GET.has_key('export_to_excel'):
-            report = self.request.GET.get('export_to_excel')
-            if eval(report):
-                qs = self.get_filterset(self.filterset_class).qs
-                return export_excel(self.request, qs)
-
-        if self.request.GET.has_key('export_excel_outstanding_fires'):
-            report = self.request.GET.get('export_excel_outstanding_fires')
-            if eval(report):
-                # Only Reports that are Submitted, but not yet Authorised
-                qs = self.get_filterset(self.filterset_class).qs.filter(report_status__in=[Bushfire.STATUS_INITIAL_AUTHORISED])
-                return export_outstanding_fires(self.request, self.get_filterset(self.filterset_class).data['region'], qs)
-
-        if self.request.GET.has_key('export_excel_ministerial_report'):
-            report = self.request.GET.get('export_excel_ministerial_report')
-            if eval(report):
-                #return MinisterialReport().export()
-                return BushfireReport().export()
-
-        if self.request.GET.has_key('action'):
-            action = self.request.GET.get('action')
+        action = self.request.GET.get('action') if self.request.GET.has_key('action') else None
+        if action == 'export_to_csv':
+            qs = self.get_filterset(self.filterset_class).qs
+            return export_final_csv(self.request, qs)
+        elif action == 'export_to_excel':
+            qs = self.get_filterset(self.filterset_class).qs
+            return export_excel(self.request, qs)
+        elif action == 'export_excel_outstanding_fires':
+            # Only Reports that are Submitted, but not yet Authorised
+            qs = self.get_filterset(self.filterset_class).qs.filter(report_status__in=[Bushfire.STATUS_INITIAL_AUTHORISED])
+            return export_outstanding_fires(self.request, self.get_filterset(self.filterset_class).data['region'], qs)
+        elif action == 'export_excel_ministerial_report':
+            #return MinisterialReport().export()
+            return BushfireReport().export()
+        elif action == 'snapshot_history':
             bushfire = Bushfire.objects.get(id=self.request.GET.get('bushfire_id'))
-            if action == 'snapshot_history':
-                context = {
-                    'object': bushfire,
-                }
-                return TemplateResponse(request, template_snapshot_history, context=context)
-
-        if self.request.GET.has_key('confirm_action'):
+            context = {
+                'object': bushfire,
+            }
+            return TemplateResponse(request, template_snapshot_history, context=context)
+        elif action is not None:
+            #confirm actions
             bushfire = Bushfire.objects.get(id=self.request.GET.get('bushfire_id'))
-            action = self.request.GET.get('confirm_action')
-
             return TemplateResponse(request, template_confirm, context={'action': action, 'bushfire_id': bushfire.id})
-
-        try:
-            return  super(BushfireView, self).get(request, *args, **kwargs)
-        finally:
-            clear_gokart_session(request)
+        else:
+            try:
+                return  super(BushfireView, self).get(request, *args, **kwargs)
+            finally:
+                clear_gokart_session(request)
             
 
     def post(self, request, *args, **kwargs):

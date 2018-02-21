@@ -22,9 +22,9 @@
   </button>
 
   <ul class="dropdown-menu" aria-labelledby="dropdown_btn">
-      <li><a href="javascript: bushfire_filter({export_to_excel:'True'});">Export Excel</a></li>
-      <li><a href="javascript: bushfire_filter({export_excel_outstanding_fires:'True'});">Export Outstanding Fires</a></li>
-      <li><a href="javascript: bushfire_filter({export_excel_ministerial_report:'True'});" onclick='growl({"message": "Creating Bushfire Report (Excel) ...", "type": "info"});'>Export Bushfire Report</a></li>
+      <li><a href="javascript: bushfire_filter({action:'export_to_excel'});">Export Excel</a></li>
+      <li><a href="javascript: bushfire_filter({action:'export_excel_outstanding_fires'});">Export Outstanding Fires</a></li>
+      <li><a href="javascript: bushfire_filter({action:'export_excel_ministerial_report'});" onclick='growl({"message": "Creating Bushfire Report (Excel) ...", "type": "info"});'>Export Bushfire Report</a></li>
     <li><a href="{% url 'bushfire:bushfire_report' %}">PDF Ministerial Report</a></li>
   </ul>
 </div>
@@ -72,22 +72,22 @@
          <td>
            {% if bushfire.report_status >= bushfire.STATUS_FINAL_AUTHORISED %}
              {% if bushfire.is_reviewed %}
-             <a href="{% url 'main' %}?bushfire_id={{bushfire.id}}&confirm_action=delete_review" title="Delete review"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-trash icon-white"></i></a>
+             <a href="{% url 'main' %}?bushfire_id={{bushfire.id}}&action=delete_review" title="Delete review"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-trash icon-white"></i></a>
              {% else %}
-             <a href="{% url 'main' %}?bushfire_id={{bushfire.id}}&confirm_action=delete_final_authorisation" title="Delete authorisation"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-trash icon-white"></i></a>
+             <a href="{% url 'main' %}?bushfire_id={{bushfire.id}}&action=delete_final_authorisation" title="Delete authorisation"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-trash icon-white"></i></a>
              {% endif %}
 
              {% if not bushfire.archive %}
-             <a href="{% url 'main' %}?bushfire_id={{bushfire.id}}&confirm_action=archive" title="Archive Report"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-folder-close"></i></a>
+             <a href="{% url 'main' %}?bushfire_id={{bushfire.id}}&action=archive" title="Archive Report"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-folder-close"></i></a>
              {% else %}
-             <a href="{% url 'main' %}?bushfire_id={{bushfire.id}}&confirm_action=unarchive" title="Unarchive Report"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-folder-open"></i></a>
+             <a href="{% url 'main' %}?bushfire_id={{bushfire.id}}&action=unarchive" title="Unarchive Report"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-folder-open"></i></a>
              {% endif %}
            {% endif %}
 
            {% if bushfire.is_reviewed %}
 			 <a href="#" title="Final fire report reviewed on {{bushfire.reviewed_date}} by {{bushfire.reviewed_by}}"><span style="display:none">{{bushfire.report_status}}</span><div style="float:right;"><font color="green"><i class="icon-ok icon-white"></i></font></div></a>
            {% elif bushfire.can_review %}
-           <a href="{% url 'main' %}?bushfire_id={{bushfire.id}}&confirm_action=mark_reviewed" title="Mark Report as Reviewed"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-thumbs-up"></i></a>
+           <a href="{% url 'main' %}?bushfire_id={{bushfire.id}}&action=mark_reviewed" title="Mark Report as Reviewed"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-thumbs-up"></i></a>
            {% endif %}
 
 		 </td>
