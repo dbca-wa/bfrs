@@ -612,9 +612,8 @@ def rdo_email(bushfire, url):
     region_name = bushfire.region.name.upper()
     to_email = getattr(settings, region_name.replace(' ', '_') + '_EMAIL')
     subject = 'RDO Email - {}, Initial Bushfire submitted - {}'.format(region_name, bushfire.fire_number)
-    if 'bfrs-prod' not in os.getcwd():
-        env = os.getcwd().split('-')[1].split('.')[0] # will return either 'dev' or 'uat'
-        subject += ' ({})'.format(env.upper() if env != 'uat' or env != 'dev' else 'Test')
+    if settings.ENV_TYPE != "PROD":
+        subject += ' ({})'.format(ENV_TYPE)
 
     body = 'RDO Email - {0}, {1}\n\nInitial Bushfire has been submitted and is located at <a href="{2}">{2}</a><br><br>'.format(region_name, bushfire.fire_number, url)
     body += notifications_to_html(bushfire, url)
@@ -636,9 +635,8 @@ def pvs_email(bushfire, url):
        return
 
     subject = 'PVS Email - Initial Bushfire submitted - {}'.format(bushfire.fire_number)
-    if 'bfrs-prod' not in os.getcwd():
-        env = os.getcwd().split('-')[1].split('.')[0] # will return either 'dev' or 'uat'
-        subject += ' ({})'.format(env.upper() if env != 'uat' or env != 'dev' else 'Test')
+    if settings.ENV_TYPE != "PROD":
+        subject += ' ({})'.format(ENV_TYPE)
 
     body = 'PVS Email - {0}\n\nInitial Bushfire has been submitted and is located at <a href="{1}">{1}</a><br><br>'.format(bushfire.fire_number, url)
     body += notifications_to_html(bushfire, url)
@@ -659,9 +657,8 @@ def fpc_email(bushfire, url):
        return
 
     subject = 'FPC Email - Initial Bushfire submitted - {}'.format(bushfire.fire_number)
-    if 'bfrs-prod' not in os.getcwd():
-        env = os.getcwd().split('-')[1].split('.')[0] # will return either 'dev' or 'uat'
-        subject += ' ({})'.format(env.upper() if env != 'uat' or env != 'dev' else 'Test')
+    if settings.ENV_TYPE != "PROD":
+        subject += ' ({})'.format(ENV_TYPE)
 
     body = 'FPC Email - {0}\n\nInitial Bushfire has been submitted and is located at <a href="{1}">{1}</a><br><br>'.format(bushfire.fire_number, url)
     body += notifications_to_html(bushfire, url)
@@ -683,9 +680,8 @@ def pica_email(bushfire, url):
        return
 
     subject = 'PICA Email - Initial Bushfire submitted - {}'.format(bushfire.fire_number)
-    if 'bfrs-prod' not in os.getcwd():
-        env = os.getcwd().split('-')[1].split('.')[0] # will return either 'dev' or 'uat'
-        subject += ' ({})'.format(env.upper() if env != 'uat' or env != 'dev' else 'Test')
+    if settings.ENV_TYPE != "PROD":
+        subject += ' ({})'.format(ENV_TYPE)
 
     body = 'PICA Email - {0}\n\nInitial Bushfire has been submitted and is located at <a href="{1}">{1}</a><br><br>'.format(bushfire.fire_number, url)
     body += notifications_to_html(bushfire, url)
@@ -728,9 +724,8 @@ def dfes_email(bushfire, url):
        return
 
     subject = 'DFES Email - Initial Bushfire submitted - {}'.format(bushfire.fire_number)
-    if 'bfrs-prod' not in os.getcwd():
-        env = os.getcwd().split('-')[1].split('.')[0] # will return either 'dev' or 'uat'
-        subject += ' ({})'.format(env.upper() if env != 'uat' or env != 'dev' else 'Test')
+    if settings.ENV_TYPE != "PROD":
+        subject += ' ({})'.format(ENV_TYPE)
 
     body = '---- PLEASE REPLY AS FOLLOWS: "<span style="color:red;">Incident: ABCDE12345</span>" on a single line without quotes (alphanumeric max. 32 chars) ----<br><br>DFES Email<br><br>Fire Number:{0}<br><br>(Lat/Lon) {1}<br><br>Initial Bushfire has been submitted and is located at <a href="{2}">{2}</a><br><br>'.format(bushfire.fire_number, bushfire.origin_point, url)
     body += notifications_to_html(bushfire, url)
@@ -751,9 +746,8 @@ def police_email(bushfire, url):
        return
 
     subject = 'POLICE Email - Initial Bushfire submitted {}, and an investigation is required - {}'.format(bushfire.fire_number, 'Yes' if bushfire.investigation_req else 'No')
-    if 'bfrs-prod' not in os.getcwd():
-        env = os.getcwd().split('-')[1].split('.')[0] # will return either 'dev' or 'uat'
-        subject += ' ({})'.format(env.upper() if env != 'uat' or env != 'dev' else 'Test')
+    if settings.ENV_TYPE != "PROD":
+        subject += ' ({})'.format(ENV_TYPE)
 
     body = 'POLICE Email - {0}. Initial Bushfire has been submitted.<br><br>Investigation Required: {1}'.format(
         bushfire.fire_number, 'Yes' if bushfire.investigation_req else 'No'
@@ -776,9 +770,8 @@ def fssdrs_email(bushfire, url, status='final'):
        return
 
     subject = 'FSSDRS Email - Final Fire report has been authorised - {}'.format(bushfire.fire_number)
-    if 'bfrs-prod' not in os.getcwd():
-        env = os.getcwd().split('-')[1].split('.')[0] # will return either 'dev' or 'uat'
-        subject += ' ({})'.format(env.upper() if env != 'uat' or env != 'dev' else 'Test')
+    if settings.ENV_TYPE != "PROD":
+        subject += ' ({})'.format(ENV_TYPE)
 
     body = 'FSSDRS Email - {0}\n\nreport has been authorised. User {1}, at {2}.\n\nThe report is located at <a href="{3}">{3}</a><br><br>'.format(
         bushfire.fire_number, bushfire.authorised_by, bushfire.authorised_date.astimezone(tz.gettz(settings.TIME_ZONE)).strftime('%Y-%m-%d %H:%M'), url
