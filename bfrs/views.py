@@ -413,11 +413,15 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
 
     def get_object(self, queryset=None):
         """ Overriding this method to allow UpdateView to both Create new object and Update an existing object"""
-        if self.kwargs.get(self.pk_url_kwarg):
-            return super(BushfireUpdateView, self).get_object(queryset)
-        elif self.request.POST.has_key('bushfire_id') and self.request.POST.get('bushfire_id'):
-            return Bushfire.objects.get(id=self.request.POST.get('bushfire_id'))
-        return None
+        obj = getattr(self,"_object") if hasattr(self,"_object") else None
+        if not obj:
+            if self.kwargs.get(self.pk_url_kwarg):
+                obj = super(BushfireUpdateView, self).get_object(queryset)
+            elif self.request.POST.has_key('bushfire_id') and self.request.POST.get('bushfire_id'):
+                obj = Bushfire.objects.get(id=self.request.POST.get('bushfire_id'))
+            if obj:
+                setattr(self,"_object",obj)
+        return obj
 
     def post(self, request, *args, **kwargs):
         if self.request.POST.has_key('sss_create'):
