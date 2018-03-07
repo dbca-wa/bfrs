@@ -145,7 +145,7 @@ class TenureResource(APIResource):
     class Meta:
         queryset = Tenure.objects.all()
         resource_name = 'tenure'
-        authorization= Authorization()
+        authorization= DjangoAuthorization()
         #fields = ['origin_point', 'fire_boundary', 'area', 'fire_position', 'tenure_id']
 
 
@@ -159,7 +159,7 @@ class BushfireResource(APIResource):
     class Meta:
         queryset = Bushfire.objects.all()
         resource_name = 'bushfire'
-        authorization= Authorization()
+        authorization= DjangoAuthorization()
         #fields = ['origin_point', 'fire_boundary', 'area', 'fire_position']
         fields = ['origin_point', 'fire_boundary']
 
