@@ -87,6 +87,18 @@ class APIResource(ModelResource):
                 self.wrap_view('field_values'), name="api_field_values"),
         ]
 
+    def determine_format(self, request):
+        """
+        Used to determine the desired format.
+
+        Largely relies on ``tastypie.utils.mime.determine_format`` but here
+        as a point of extension.
+        """
+        if request.GET.get('format'):
+            return determine_format(request, self._meta.serializer, default_format=self._meta.default_format)
+        else:
+            return self._meta.serializer.get_mime_for_format("json")
+
     def field_values(self, request, **kwargs):
         # Get a list of unique values for the field passed in kwargs.
         try:
@@ -102,8 +114,11 @@ class ProfileResource(APIResource):
         queryset = Profile.objects.all()
         resource_name = 'profile'
         authorization= ReadOnlyAuthorization()
+        allowed_methods=[]
+        list_allowed_methods=[]
 
-    def prepend_urls(self):
+    @property
+    def urls(self):
         return [
             url(
                 r"^(?P<resource_name>{})/$".format(self._meta.resource_name),
@@ -126,8 +141,11 @@ class RegionResource(APIResource):
         queryset = Region.objects.all()
         resource_name = 'region'
         authorization= ReadOnlyAuthorization()
+        allowed_methods=[]
+        list_allowed_methods=[]
 
-    def prepend_urls(self):
+    @property
+    def urls(self):
         return [
             url(
                 r"^(?P<resource_name>{})/$".format(self._meta.resource_name),
@@ -145,8 +163,10 @@ class TenureResource(APIResource):
     class Meta:
         queryset = Tenure.objects.all()
         resource_name = 'tenure'
-        authorization= DjangoAuthorization()
+        authorization= ReadOnlyAuthorization()
         #fields = ['origin_point', 'fire_boundary', 'area', 'fire_position', 'tenure_id']
+        allowed_methods=['get']
+        list_allowed_methods=['get']
 
 
 class BushfireResource(APIResource):
@@ -154,14 +174,14 @@ class BushfireResource(APIResource):
         curl --dump-header - -H "Content-Type: application/json" -X PATCH --data '{"origin_point":[11,-12], "area":12347, "fire_boundary": [[[[115.6528663436689,-31.177579372720448],[116.20507608972612,-31.386375097597803],[116.36167288338414,-31.009993330384674],[115.77374807912422,-30.999004081706918],[115.6528663436689,-31.177579372720448]]]]}' http://localhost:8000/api/v1/bushfire/1/?format=json
     """
 
-    tenure = fields.ToOneField(TenureResource, 'tenure', null=True)
-
     class Meta:
         queryset = Bushfire.objects.all()
         resource_name = 'bushfire'
         authorization= DjangoAuthorization()
         #fields = ['origin_point', 'fire_boundary', 'area', 'fire_position']
         fields = ['origin_point', 'fire_boundary']
+        allowed_methods=['patch']
+        list_allowed_methods=[]
 
     def field_values(self, request, **kwargs):
         # Get a list of unique values for the field passed in kwargs.
@@ -242,7 +262,7 @@ class BushfireResource(APIResource):
                 raise ImmediateHttpResponse(response=HttpUnauthorized())
             else:
                 raise ImmediateHttpResponse(response=HttpAccepted())
-
+    
         # Allows BFRS and SSS to perform update only if permitted
         if is_external_user(bundle.request.user):
             return bundle
