@@ -46,7 +46,7 @@ CC_EMAIL = env('CC_EMAIL', None)
 BCC_EMAIL = env('BCC_EMAIL', None)
 SUPPORT_EMAIL = env('SUPPORT_EMAIL', None)
 
-INTERNAL_EMAIL = [email.strip() for email in (env('INTERNAL_EMAIL') or 'dbca.wa.gov.au,dpaw.wa.gov.au').split(',') if email.strip()]
+INTERNAL_EMAIL = env('INTERNAL_EMAIL',['dbca.wa.gov.au','dpaw.wa.gov.au'])
 SSS_URL = env('SSS_URL', 'sss_redirect_url')
 AREA_THRESHOLD = env('AREA_THRESHOLD', 2)
 
@@ -102,13 +102,8 @@ ALLOWED_HOSTS = []
 
 #DEBUG = os.environ.get('DEBUG', None) in ["True", "on", "1", "DEBUG"]
 INTERNAL_IPS = ['127.0.0.1', '::1']
-if os.environ.get("ALLOWED_HOSTS"):
-    ALLOWED_HOSTS = [host.strip() for host in os.environ.get("ALLOWED_HOSTS").split(',') if host.strip()]
-else:
-    ALLOWED_HOSTS = [
-        'bfrs.dpaw.wa.gov.au',
-        'bfrs.dbca.wa.gov.au'
-    ]
+
+ALLOWED_HOSTS = env("ALLOWED_HOSTS",['bfrs.dpaw.wa.gov.au','bfrs.dbca.wa.gov.au'])
 
 # Application definition
 INSTALLED_APPS = [
