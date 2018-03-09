@@ -84,17 +84,17 @@ def serialize_bushfire(auth_type, action, obj):
 
     # create the formset snapshots and attach the bushfire_snapshot
     for i in obj.damages.all():
-        damage_obj, created = DamageSnapshot.objects.update_or_create(
+        damage_obj = DamageSnapshot.objects.create(
             snapshot_id=s.id, snapshot_type=snapshot_type, damage_type=i.damage_type, number=i.number, creator=obj.modifier, modifier=obj.modifier
         )
 
     for i in obj.injuries.all():
-        injury_obj, created = InjurySnapshot.objects.update_or_create(
+        injury_obj = InjurySnapshot.objects.create(
             snapshot_id=s.id, snapshot_type=snapshot_type, injury_type=i.injury_type, number=i.number, creator=obj.modifier, modifier=obj.modifier
         )
 
     for i in obj.tenures_burnt.all():
-        tenure_burnt_obj, created = AreaBurntSnapshot.objects.update_or_create(
+        tenure_burnt_obj = AreaBurntSnapshot.objects.create(
             snapshot_id=s.id, snapshot_type=snapshot_type, tenure_id=i.tenure_id, area=i.area, creator=obj.modifier, modifier=obj.modifier
         )
 
