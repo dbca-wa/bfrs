@@ -171,7 +171,7 @@ def create_bushfire_view():
     END as dispatch_aerial,
     to_char(b.dispatch_pw_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI:SS') as dispatch_pw_date,
     to_char(b.dispatch_aerial_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI:SS') as dispatch_aerial_date,
-    to_char(b.fire_detected_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI') as fire_detected_date,
+    to_char(b.fire_detected_date at time zone 'Australia/Perth','DD/MM/YYYY') as fire_detected_date,
     to_char(b.fire_contained_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI') as fire_contained_date,
     to_char(b.fire_controlled_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI') as fire_controlled_date,
     to_char(b.fire_safe_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI') as fire_safe_date,
@@ -294,7 +294,7 @@ def create_final_fireboundary_view():
     END as dispatch_aerial,
     to_char(b.dispatch_pw_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI:SS') as dispatch_pw_date,
     to_char(b.dispatch_aerial_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI:SS') as dispatch_aerial_date,
-    to_char(b.fire_detected_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI') as fire_detected_date,
+    to_char(b.fire_detected_date at time zone 'Australia/Perth','DD/MM/YYYY') as fire_detected_date,
     to_char(b.fire_contained_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI') as fire_contained_date,
     to_char(b.fire_controlled_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI') as fire_controlled_date,
     to_char(b.fire_safe_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI') as fire_safe_date,
@@ -348,7 +348,8 @@ def create_final_fireboundary_view():
     (SELECT name AS initial_control FROM bfrs_agency WHERE id = b.initial_control_id),
     (SELECT username AS modifier FROM auth_user WHERE id = b.modifier_id),
     (SELECT name AS region FROM bfrs_region WHERE id = b.region_id),
-    (SELECT name AS tenure FROM bfrs_tenure WHERE id = b.tenure_id)
+    (SELECT name AS tenure FROM bfrs_tenure WHERE id = b.tenure_id),
+    ''::text as fireboundary_uploaded_by
     FROM bfrs_bushfire b
     WHERE b.archive = false AND b.report_status >= {} AND b.report_status < {};
     '''.format(Bushfire.STATUS_INITIAL_AUTHORISED, Bushfire.STATUS_INVALIDATED))
@@ -417,7 +418,7 @@ def create_fireboundary_view():
     END as dispatch_aerial,
     to_char(b.dispatch_pw_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI:SS') as dispatch_pw_date,
     to_char(b.dispatch_aerial_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI:SS') as dispatch_aerial_date,
-    to_char(b.fire_detected_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI') as fire_detected_date,
+    to_char(b.fire_detected_date at time zone 'Australia/Perth','DD/MM/YYYY') as fire_detected_date,
     to_char(b.fire_contained_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI') as fire_contained_date,
     to_char(b.fire_controlled_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI') as fire_controlled_date,
     to_char(b.fire_safe_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI') as fire_safe_date,
@@ -471,7 +472,8 @@ def create_fireboundary_view():
     (SELECT name AS initial_control FROM bfrs_agency WHERE id = b.initial_control_id),
     (SELECT username AS modifier FROM auth_user WHERE id = b.modifier_id),
     (SELECT name AS region FROM bfrs_region WHERE id = b.region_id),
-    (SELECT name AS tenure FROM bfrs_tenure WHERE id = b.tenure_id)
+    (SELECT name AS tenure FROM bfrs_tenure WHERE id = b.tenure_id),
+    ''::text as fireboundary_uploaded_by
     FROM bfrs_bushfire b
     WHERE b.archive = false AND b.report_status < {};
     '''.format(Bushfire.STATUS_INVALIDATED))
