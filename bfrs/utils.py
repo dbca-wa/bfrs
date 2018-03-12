@@ -111,39 +111,50 @@ def archive_snapshot(auth_type, action, obj):
             bushfire_id = obj.id
         )
 
-def invalidate_bushfire(obj, new_district, user):
-    """ Invalidate the current bushfire, create new bushfire and update links, including historical links """
-    if obj.district == new_district:
-        return None
+def invalidate_bushfire(obj, user,cur_obj=None):
+    """ 
+        Invalidate the current bushfire, create new bushfire report with new fire_number and data in obj and update links, including historical links if the bushfire need to be invalidated
+        return (new bushfire,True) if the current bushfire is invalidated and data is saved into a new report, otherwise return (current bushfire,False) directly
+    """
+    if not obj.pk:
+        #new object, can't invalidate it
+        return (obj,False)
+
+    #get the current object for database if it is None
+    cur_obj = cur_obj or Bushfire.objects.get(pk=obj.pk)
+
+    if cur_obj.report_status != Bushfire.STATUS_INITIAL:
+        #bushfire report is submitted, can't invalidate it
+        return (obj,False)
+
+    if cur_obj.district == obj.district:
+        #district isn't changed, no need to invalidate it
+        return (obj,False)
 
     with transaction.atomic():
-        old_rpt_status = obj.report_status
-        old_sss_id = obj.sss_id
-        obj.report_status = Bushfire.STATUS_INVALIDATED
-        obj.modifier = user
-        obj.sss_id = None
-        obj.save()
-        old_obj = deepcopy(obj)
-        old_invalidated = old_obj.bushfire_invalidated.all()
+        #invalidate the current object
+        cur_obj.report_status = Bushfire.STATUS_INVALIDATED
+        cur_obj.modifier = user
+        cur_obj.sss_id = None
+        # link the old invalidate bushfire to the new (valid) bushfire - fwd link
+        cur_obj.valid_bushfire = obj
+        cur_obj.save()
 
         # create a new object as a copy of existing
         obj.pk = None
 
         # check if we have this district already in the list of invalidated linked bushfires, and re-use fire_number if so
-        invalidated_objs = [invalidated_obj for invalidated_obj in old_invalidated if invalidated_obj.district==new_district]
-        if invalidated_objs and invalidated_objs[0].report_status==Bushfire.STATUS_INVALIDATED:
+        reusable_invalidated_objs = cur_obj.bushfire_invalidated.filter(district=obj.district,report_status=Bushfire.STATUS_INVALIDATED)
+        if reusable_invalidated_objs:
             # re-use previous fire_number
-            linked_bushfire = invalidated_objs[0]
+            linked_bushfire = reusable_invalidated_objs[0]
             obj.fire_number = linked_bushfire.fire_number
             linked_bushfire.delete() # to avoid integrity constraint
         else:
             # create new fire_number
-            obj.fire_number = ' '.join(['BF', str(obj.year), new_district.code, '{0:03d}'.format(obj.next_id(new_district))])
+            obj.fire_number = ' '.join(['BF', str(obj.year), obj.district.code, '{0:03d}'.format(obj.next_id(obj.district))])
 
-        obj.report_status = old_rpt_status
-        obj.sss_id = old_sss_id
-        obj.district = new_district
-        obj.region = new_district.region
+        obj.region = obj.district.region
         obj.valid_bushfire = None
         obj.fire_not_found = False
         obj.save()
@@ -152,13 +163,8 @@ def invalidate_bushfire(obj, new_district, user):
         created = datetime.now(tz=pytz.utc)
 
         # copy all links from the above invalidated bushfire to the new bushfire
-        if old_invalidated:
-            for linked in old_invalidated:
-                obj.bushfire_invalidated.add(linked)
-
-        # link the old invalidate bushfire to the new (valid) bushfire - fwd link
-        old_obj.valid_bushfire = obj
-        old_obj.save()
+        for linked in cur_obj.bushfire_invalidated.all():
+            obj.bushfire_invalidated.add(linked)
 
         def copy_fk_records(obj_id, fk_set, create_new=True):
             # create duplicate injury records and associate them with the new object
@@ -168,16 +174,20 @@ def invalidate_bushfire(obj, new_district, user):
                 record.bushfire_id = obj_id 
                 record.save()
 
-        copy_fk_records(obj.id, old_obj.damages)
-        copy_fk_records(obj.id, old_obj.injuries)
-        copy_fk_records(obj.id, old_obj.tenures_burnt)
+        copy_fk_records(obj.id, cur_obj.damages)
+        copy_fk_records(obj.id, cur_obj.injuries)
+        copy_fk_records(obj.id, cur_obj.tenures_burnt)
 
         # update Bushfire Snapshots to the new bushfire_id and then create a new snapshot
-        copy_fk_records(obj.id, old_obj.snapshots, create_new=False)
-        serialize_bushfire('Final', 'Update District ({} --> {})'.format(old_obj.district.code, obj.district.code), obj)
+        copy_fk_records(obj.id, cur_obj.snapshots, create_new=False)
 
-        return obj
-    return False
+        # link the old invalidate bushfire to the new (valid) bushfire - fwd link
+        cur_obj.valid_bushfire = obj
+        cur_obj.save()
+
+        serialize_bushfire('Final', 'Update District ({} --> {})'.format(cur_obj.district.code, obj.district.code), obj)
+
+    return (obj,True)
 
 def check_district_changed(request, obj, form):
     """
@@ -192,16 +202,21 @@ def check_district_changed(request, obj, form):
         district = District.objects.get(id=request.POST['district']) if request.POST.has_key('district') else None # get the district from the form
         if request.POST.has_key('action') and request.POST.get('action')=='invalidate' and cur_obj.report_status!=Bushfire.STATUS_INVALIDATED:
             obj.invalid_details = request.POST.get('invalid_details')
-            obj.save()
-            obj = invalidate_bushfire(obj, district, request.user)
+            obj.district = district
+            obj.region = district.region
+            obj,saved = invalidate_bushfire(obj, request.user,cur_obj)
+            if not saved:
+                obj.save()
             return HttpResponseRedirect(reverse("home"))
 
-        elif district != cur_obj.district and not request.POST.has_key('fire_not_found'):
-            if cur_obj.fire_not_found and form.is_valid():
+        #elif district != cur_obj.district and not request.POST.has_key('fire_not_found'):
+        elif district != cur_obj.district :
+            #if cur_obj.fire_not_found and form.is_valid():
+            if form.is_valid():
                 # logic below to save object, present to allow final form change from fire_not_found=True --> to fire_not_found=False. Will allow correct fire_number invalidation
                 obj = form.save(commit=False)
                 obj.modifier = request.user
-                obj.region = cur_obj.region # this will allow invalidate_bushfire() to invalidate and create the links as necessary
+                obj.region = cur_obj.region # this will allow invalidate_bushfire() to invalidate and create the links as necessary if user confirms in the confirm page
                 obj.district = cur_obj.district
                 obj.fire_number = cur_obj.fire_number
                 obj.save()

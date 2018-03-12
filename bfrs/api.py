@@ -347,13 +347,9 @@ class BushfireSpatialResource(ModelResource):
             #bushfire report is not a initial report,district is not changable.
             return
 
-        if bundle.obj.district is None:
-            bundle.obj.district = District.objects.get(id=bundle.data['district_id'])
-            #print("processing district, set district to {}".format(bundle.obj.district) )
-        elif bundle.data['district_id'] != bundle.obj.district.id:
-            district = District.objects.get(id=bundle.data['district_id'])
-            bundle.obj = invalidate_bushfire(bundle.obj, district, bundle.request.user) or bundle.obj
-            #print("processing district, district is changed, invalidate bushfire and set district to {}".format(bundle.obj.district) )
+        bundle.obj.district = District.objects.get(id=bundle.data['district_id'])
+        bundle.obj.region = bundle.obj.district.region
+        #print("processing district, set district to {}".format(bundle.obj.district) )
 
     def hydrate_sss_data(self,bundle):
         #print("processing sss data" )
@@ -387,7 +383,12 @@ class BushfireSpatialResource(ModelResource):
 
         self.full_hydrate(bundle)
 
-        bundle.obj.save()
+        #invalidate current bushfire if required.
+        bundle.obj,saved = invalidate_bushfire(bundle.obj, bundle.request.user) or (bundle.obj,False)
+
+        if not saved:
+            bundle.obj.save()
+
         if bundle.data.get('area'):
             #print("Clear tenure burnt data")
             bundle.obj.tenures_burnt.all().delete()
