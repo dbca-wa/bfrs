@@ -309,7 +309,6 @@ def create_areas_burnt(bushfire, tenure_layers):
     Creates the initial bushfire record together with AreaBurnt FormSet from BushfireUpdateView (Operates on data dict from SSS)
     Uses sss_dict - used by get_context_data, to display initial sss_data supplied from SSS system
     """
-
     # aggregate the area's in like tenure types
     aggregated_sums = defaultdict(float)
     for layer in tenure_layers:
@@ -343,21 +342,6 @@ def create_areas_burnt(bushfire, tenure_layers):
         subform.initial = data
 
     return area_burnt_formset
-
-def create_areas_burnt_fs(bushfire):
-    """
-    Currently not used
-    """
-    area_burnt_list = {}
-    [d.update({'tenure': i.tenure, 'area': round(i.area,2)}) for i in bushfire.tenures_burnt.all()]
-
-    AreaBurntFormSet = inlineformset_factory(Bushfire, AreaBurnt, extra=len(area_burnt_list), min_num=0, validate_min=True, exclude=())
-    area_burnt_formset = AreaBurntFormSet(instance=bushfire, prefix='area_burnt_fs')
-    for subform, data in zip(area_burnt_formset.forms, area_burnt_list):
-        subform.initial = data
-
-    return area_burnt_formset
-
 
 def update_areas_burnt(bushfire, tenure_layers):
     """
@@ -402,21 +386,35 @@ def update_areas_burnt_fs(bushfire, area_burnt_formset):
 
     At first object create time, formset values are saved to the newly created bushfire object
     """
-
-    new_fs_object = []
+    deleted_fs_tenure = []
+    updated_fs_object = []
     for form in area_burnt_formset:
-        if form.is_valid():
-            tenure = form.cleaned_data.get('tenure')
-            area = form.cleaned_data.get('area')
-            remove = form.cleaned_data.get('DELETE')
+        if not form.cleaned_data:
+            continue
+        tenure = form.cleaned_data.get('tenure')
+        area = form.cleaned_data.get('area')
+        remove = form.cleaned_data.get('DELETE')
 
-            if not remove and (tenure):
-                new_fs_object.append(AreaBurnt(bushfire=bushfire, tenure=tenure, area=area))
+        #if either injury_type or number is null, remove will be set tp True in BaseInjuryFormSet
+        if remove:
+            if tenure:
+                #this object exists in database, removed by user
+                deleted_fs_tenure.append(tenure)
+            else:
+                #this object doesn't exist in database,ignore it
+                pass
+        elif form.is_valid():
+            #this is a valid object
+            updated_fs_object.append(AreaBurnt(bushfire=bushfire, tenure=tenure, area=area))
 
     try:
         with transaction.atomic():
-            AreaBurnt.objects.filter(bushfire=bushfire).delete()
-            AreaBurnt.objects.bulk_create(new_fs_object)
+            #delete removed objects
+            if deleted_fs_tenure:
+                AreaBurnt.objects.filter(bushfire=bushfire,tenure__in=deleted_fs_tenure).delete()
+            #update changed objects
+            for obj in updated_fs_object:
+                AreaBurnt.objects.update_or_create(bushfire=obj.bushfire,tenure=obj.tenure,defaults={area:area})
     except IntegrityError:
         return 0
 
