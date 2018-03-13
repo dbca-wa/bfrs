@@ -426,21 +426,57 @@ def update_injury_fs(bushfire, injury_formset):
     if not injury_formset:
         return 1
 
-    new_fs_object = []
-    for form in injury_formset:
-        if form.is_valid():
-            injury_type = form.cleaned_data.get('injury_type')
-            number = form.cleaned_data.get('number')
-            remove = form.cleaned_data.get('DELETE')
+    if bushfire.injury_unknown:
+        #injury unknown, remove all injury objects
+        Injury.objects.filter(bushfire=bushfire).delete()
+        return 1
 
-            if not remove and (injury_type and number):
-                new_fs_object.append(Injury(bushfire=bushfire, injury_type=injury_type, number=number))
+    new_fs_object = []
+    deleted_fs_id = []
+    updated_fs_object = []
+    for form in injury_formset:
+        if not form.cleaned_data:
+            continue
+        remove = form.cleaned_data.get('DELETE')
+        injury_type = form.cleaned_data.get('injury_type')
+        number = form.cleaned_data.get('number')
+        obj = form.cleaned_data.get('id')
+
+        #if either injury_type or number is null, remove will be set tp True in BaseInjuryFormSet
+        if remove:
+            if obj:
+                #this object exists in database, removed by user
+                deleted_fs_id.append(obj.id)
+            else:
+                #this object doesn't exist in database,ignore it
+                pass
+        elif form.is_valid():
+            #this is a valid object
+            if obj:
+                #the object exists in database
+                if obj.injury_type != injury_type or obj.number != number:
+                    #existing object has been changed
+                    obj.injury_type = injury_type
+                    obj.number = number
+                    updated_fs_object.append(obj)
+                else:
+                    #existing object is not changed,ignore 
+                    pass
+            else:
+                #this is a new object, add it
+                new_fs_object.append(Injury(bushfire=bushfire, injury_type=injury_type,number=number))
 
     try:
         with transaction.atomic():
-            Injury.objects.filter(bushfire=bushfire).delete()
-            if not bushfire.injury_unknown:
-                Injury.objects.bulk_create(new_fs_object)
+            #delete removed objects
+            if deleted_fs_id:
+                Injury.objects.filter(id__in=deleted_fs_id).delete()
+            #update changed objects
+            for obj in updated_fs_object:
+                obj.save()
+            #add new objects
+            for obj in new_fs_object:
+                obj.save()
     except IntegrityError:
         return 0
 
@@ -450,21 +486,57 @@ def update_damage_fs(bushfire, damage_formset):
     if not damage_formset:
         return 1
 
-    new_fs_object = []
-    for form in damage_formset:
-        if form.is_valid():
-            damage_type = form.cleaned_data.get('damage_type')
-            number = form.cleaned_data.get('number')
-            remove = form.cleaned_data.get('DELETE')
+    if bushfire.damage_unknown:
+        #damage unknown, remove all damage objects
+        Damage.objects.filter(bushfire=bushfire).delete()
+        return 1
 
-            if not remove and (damage_type and number):
+    new_fs_object = []
+    deleted_fs_id = []
+    updated_fs_object = []
+    for form in damage_formset:
+        if not form.cleaned_data:
+            continue
+        damage_type = form.cleaned_data.get('damage_type')
+        number = form.cleaned_data.get('number')
+        remove = form.cleaned_data.get('DELETE')
+        obj = form.cleaned_data.get('id')
+
+        #if either damage_type or number is null, remove will be set tp True in BaseDamageFormSet
+        if remove:
+            if obj:
+                #this object exists in database, removed by user
+                deleted_fs_id.append(obj.id)
+            else:
+                #this object doesn't exist in database,ignore it
+                pass
+        elif form.is_valid():
+            #this is a valid object
+            if obj:
+                #the object exists in database
+                if obj.damage_type != damage_type or obj.number != number:
+                    #existing object has been changed
+                    obj.damage_type = damage_type
+                    obj.number = number
+                    updated_fs_object.append(obj)
+                else:
+                    #existing object is not changed,ignore 
+                    pass
+            else:
+                #this is a new object, add it
                 new_fs_object.append(Damage(bushfire=bushfire, damage_type=damage_type, number=number))
 
     try:
         with transaction.atomic():
-            Damage.objects.filter(bushfire=bushfire).delete()
-            if not bushfire.damage_unknown:
-                Damage.objects.bulk_create(new_fs_object)
+            #delete removed objects
+            if deleted_fs_id:
+                Damage.objects.filter(id__in=deleted_fs_id).delete()
+            #update changed objects
+            for obj in updated_fs_object:
+                obj.save()
+            #add new objects
+            for obj in new_fs_object:
+                obj.save()
     except IntegrityError:
         return 0
 

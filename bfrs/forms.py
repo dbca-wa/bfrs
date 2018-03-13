@@ -314,21 +314,23 @@ class BaseInjuryFormSet(BaseInlineFormSet):
 
         duplicates = False
         injuries = []
-
         for form in self.forms:
             if form.cleaned_data:
                 injury_type = form.cleaned_data['injury_type'] if form.cleaned_data.has_key('injury_type') else None
                 number = form.cleaned_data['number'] if form.cleaned_data.has_key('number') else None
                 remove = form.cleaned_data['DELETE'] if form.cleaned_data.has_key('DELETE') else False
 
+                duplicates = False
                 if not remove:
-                    if not injury_type and not number:
+                    if not injury_type or not number:
+                        #if either injury_type or number is null, the injury data will be removed if it exists; or ignored if it doesn't exist
                         form.cleaned_data['DELETE'] = True
+                        continue
 
                     # Check that no two records have the same injury_type
-                    if injury_type and number:
-                        if set([(injury_type.name)]).issubset(injuries):
-                            duplicates = True
+                    if injury_type.name in injuries:
+                        duplicates = True
+                    else:
                         injuries.append((injury_type.name))
 
                     if duplicates:
@@ -360,14 +362,16 @@ class BaseDamageFormSet(BaseInlineFormSet):
                 number = form.cleaned_data['number'] if form.cleaned_data.has_key('number') else None
                 remove = form.cleaned_data['DELETE'] if form.cleaned_data.has_key('DELETE') else False
 
+                duplicates = False
                 if not remove:
-                    if not damage_type and not number:
+                    if not damage_type or not number:
                         form.cleaned_data['DELETE'] = True
+                        continue
 
                     # Check that no two records have the same damage_type
-                    if damage_type and number:
-                        if set([(damage_type.name)]).issubset(damages):
-                            duplicates = True
+                    if damage_type.name in damages:
+                        duplicates = True
+                    else:
                         damages.append((damage_type.name))
 
                     if duplicates:
