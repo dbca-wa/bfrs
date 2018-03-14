@@ -18,6 +18,7 @@ from django.db.models import Q
 from django.contrib.auth.models import User, Group
 from django.http import JsonResponse
 from django.contrib import messages
+from django.utils import timezone
 
 from bfrs.models import (Profile, Bushfire, BushfireSnapshot,
         Region, District,
@@ -356,15 +357,15 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         if self.request.POST.has_key('sss_create'):
             sss = json.loads(self.request.POST.get('sss_create'))
 
-            if sss.has_key('sss_id') and sss['sss_id']:
+            if sss.get('sss_id') :
                 initial['sss_id'] = sss['sss_id']
 
-            if sss.has_key('area') and sss['area'].has_key('total_area') and sss['area'].get('total_area'):
+            if sss.get('area') and sss['area'].get('total_area'):
                 initial_area = round(float(sss['area']['total_area']), 2)
                 initial['initial_area'] = initial_area if initial_area > 0 else 0.01
 
             # NOTE initial area (and area) includes 'Other Area', but recording separately to allow for updates - since this is not always provided, if area is not updated
-            if sss.has_key('area') and sss['area'].has_key('other_area') and sss['area'].get('other_area'):
+            if sss.get('area') and sss['area'].get('other_area'):
                 other_area = round(float(sss['area']['other_area']), 2)
                 initial['other_area'] = other_area if other_area > 0 else 0.01
 
@@ -375,17 +376,16 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
             if sss.has_key('origin_point_mga'):
                 initial['origin_point_mga'] = sss['origin_point_mga']
 
-            if sss.has_key('fire_boundary') and isinstance(sss['fire_boundary'], list):
+            if sss.get('fire_boundary') and isinstance(sss['fire_boundary'], list):
                 initial['fire_boundary'] = MultiPolygon([Polygon(*p) for p in sss['fire_boundary']])
 
             if sss.has_key('fb_validation_req'):
                 initial['fb_validation_req'] = sss['fb_validation_req']
 
-            if sss.has_key('fire_position') and sss.get('fire_position'):
+            if sss.get('fire_position'):
                 initial['fire_position'] = sss['fire_position']
 
-            if sss.has_key('tenure_ignition_point') and sss['tenure_ignition_point'] and \
-                sss['tenure_ignition_point'].has_key('category') and sss['tenure_ignition_point']['category']:
+            if sss.get('tenure_ignition_point') and sss['tenure_ignition_point'].get('category'):
                 try:
                     initial['tenure'] = Tenure.objects.get(name__istartswith=sss['tenure_ignition_point']['category'])
                 except:
@@ -393,7 +393,7 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
             else:
                 initial['tenure'] = Tenure.objects.get(name='Other')
 
-            if sss.has_key('region_id') and sss.has_key('district_id') and sss.get('district_id'):
+            if sss.get('region_id') and sss.get('district_id'):
                 initial['region'] = Region.objects.get(id=sss['region_id'])
                 initial['district'] = District.objects.get(id=sss['district_id'])
 
@@ -490,9 +490,16 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
             self.object.other_tenure = None
         if self.object.dispatch_pw:
             self.object.dispatch_pw = int(self.object.dispatch_pw)
+        if not self.get_object():
+            #this is a new bushfire report, set fireboundary_uploaded_by and fireboundary_uploded_date if fireboundary is not null
+            if self.object.fire_boundary:
+                self.object.fireboundary_uploaded_by = request.user
+                self.object.fireboundary_uploaded_date = timezone.now()
         self.object.save()
 
         if not self.get_object():
+            #this is a new bushfire report, save all the burnt areas from sss
+            #currtenly, burnt area is unavailable for initial bushfire report, so this statement will not save any data, burnt area pushed by sss will be ignored
             areas_burnt_updated = update_areas_burnt_fs(self.object, area_burnt_formset)
         injury_updated = update_injury_fs(self.object, injury_formset)
         damage_updated = update_damage_fs(self.object, damage_formset)
@@ -558,7 +565,7 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         area_burnt_formset = None
         if self.request.POST.has_key('sss_create'):
             sss = json.loads( self.request.POST['sss_create'] )
-            if sss.has_key('area') and sss['area'].has_key('total_area') and sss['area']['total_area'] > 0:
+            if sss.get('area') and sss['area'].get('total_area') > 0:
                 area_burnt_formset = create_areas_burnt(None, sss['area']['layers'])
 
         if not area_burnt_formset:

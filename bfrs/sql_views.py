@@ -38,6 +38,7 @@ def create_bushfirelist_view():
     b.dfes_incident_no,
     b.job_code,
     b.fire_position,
+    b.sss_id,
     CASE WHEN b.fire_position_override IS NULL THEN NULL
          WHEN b.fire_position_override THEN 1
          ELSE 0
@@ -349,7 +350,7 @@ def create_final_fireboundary_view():
     (SELECT username AS modifier FROM auth_user WHERE id = b.modifier_id),
     (SELECT name AS region FROM bfrs_region WHERE id = b.region_id),
     (SELECT name AS tenure FROM bfrs_tenure WHERE id = b.tenure_id),
-    ''::text as fireboundary_uploaded_by
+    (SELECT username AS fireboundary_uploaded_by FROM auth_user WHERE id = b.fireboundary_uploaded_by_id)
     FROM bfrs_bushfire b
     WHERE b.archive = false AND b.report_status >= {} AND b.report_status < {};
     '''.format(Bushfire.STATUS_INITIAL_AUTHORISED, Bushfire.STATUS_INVALIDATED))
@@ -473,7 +474,7 @@ def create_fireboundary_view():
     (SELECT username AS modifier FROM auth_user WHERE id = b.modifier_id),
     (SELECT name AS region FROM bfrs_region WHERE id = b.region_id),
     (SELECT name AS tenure FROM bfrs_tenure WHERE id = b.tenure_id),
-    ''::text as fireboundary_uploaded_by
+    (SELECT username AS fireboundary_uploaded_by FROM auth_user WHERE id = b.fireboundary_uploaded_by_id)
     FROM bfrs_bushfire b
     WHERE b.archive = false AND b.report_status < {};
     '''.format(Bushfire.STATUS_INVALIDATED))

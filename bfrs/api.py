@@ -1,5 +1,6 @@
 from django.conf.urls import url
 from django.conf import settings
+from django.utils import timezone
 from tastypie.resources import ModelResource, Resource
 from tastypie.authorization import Authorization, ReadOnlyAuthorization, DjangoAuthorization
 from tastypie.resources import ModelResource, ALL, ALL_WITH_RELATIONS
@@ -255,9 +256,13 @@ class BushfireSpatialResource(ModelResource):
         if bundle.data['fire_boundary'] == None:
             #bushfire has no fire boundaries
             bundle.obj.final_fire_boundary = False
+            bundle.obj.fireboundary_uploaded_by = None
+            bundle.obj.fireboundary_uploaded_date = None
         elif isinstance(bundle.data['fire_boundary'], list):
             #bushfire has fire boundaries
             bundle.data['fire_boundary'] = MultiPolygon([Polygon(*p) for p in bundle.data['fire_boundary']])
+            bundle.obj.fireboundary_uploaded_by = bundle.request.user
+            bundle.obj.fireboundary_uploaded_date = timezone.now()
 
             if bundle.obj.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED:
                 bundle.obj.final_fire_boundary = True
@@ -294,7 +299,7 @@ class BushfireSpatialResource(ModelResource):
             return
         #print("processing area")
 
-        if bundle.data.get('area',{}).get('total_area') == None:
+        if (bundle.data.get('area') or {}).get('total_area') == None:
             #bushfire has no fire boundary
             if bundle.obj.report_status < Bushfire.STATUS_INITIAL_AUTHORISED:
                 if bundle.obj.fire_boundary:
@@ -311,7 +316,7 @@ class BushfireSpatialResource(ModelResource):
                 #print("processing area, set area_limit to false, area to null,other_area to null for submitted report")
         else:
             #bushfire has fire boundary
-            if bundle.data.get('area',{}).get('other_area'):
+            if (bundle.data.get('area') or {}).get('other_area'):
                 bundle.obj.other_area = round(float(bundle.data['area']['other_area']), 2)
             else:
                 bundle.obj.other_area = 0

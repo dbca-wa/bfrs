@@ -348,6 +348,9 @@ class BushfireBase(Audit):
     # recursive relationship - an object that has a many-to-many relationship with itself
     valid_bushfire = models.ForeignKey('self', null=True, related_name='%(class)s_invalidated')
 
+    fireboundary_uploaded_by = models.ForeignKey(User,editable=False,null=True,blank=True)
+    fireboundary_uploaded_date = models.DateTimeField(verbose_name='Date fireboundary uploaded', null=True, blank=True,editable=False)
+
     class Meta:
         abstract = True
 
