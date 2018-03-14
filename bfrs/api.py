@@ -235,6 +235,7 @@ class BushfireSpatialResource(ModelResource):
             m = getattr(self,"hydrate_{}".format(field_name))
             if m:
                 m(bundle)
+        bundle.obj.modifier = bundle.request.user
         return super(BushfireSpatialResource,self).hydrate(bundle)
         
     def hydrate_origin_point(self, bundle):
