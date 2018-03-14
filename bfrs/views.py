@@ -543,8 +543,6 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
                 # update is occuring after report has already been authorised (action is undefined) - ie. it is being Reviewed by FSSDRS
                 serialize_bushfire('final', 'Review', self.object)
 
-        self.object.save()
-
         if self.request.POST.has_key('_save_and_submit'):
             response = authorise_report(self.request, self.object)
             if response:
