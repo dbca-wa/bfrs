@@ -1,5 +1,6 @@
 from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
+from django.template.loader import render_to_string
 from bfrs.models import (Bushfire, BushfireSnapshot, District, Region,
     AreaBurnt, Damage, Injury, Tenure,
     SNAPSHOT_INITIAL, SNAPSHOT_FINAL,
@@ -53,11 +54,19 @@ def breadcrumbs_li(links):
     crumbs += li_str_last.format(links[-1][1])
     return crumbs
 
+_users_group = None
 def users_group():
-    return Group.objects.get(name='Users')
+    global _users_group
+    if not _users_group:
+        _users_group = Group.objects.get(name='Users')
+    return _users_group
 
+_fssdrs_group = None
 def fssdrs_group():
-    return Group.objects.get(name='FSS Datasets and Reporting Services')
+    global _fssdrs_group
+    if not _fssdrs_group:
+        _fssdrs_group = Group.objects.get(name='FSS Datasets and Reporting Services')
+    return _fssdrs_group
 
 def can_maintain_data(user):
     return fssdrs_group() in user.groups.all() and not is_external_user(user)
@@ -754,6 +763,7 @@ def fpc_email(bushfire, url):
     if settings.ENV_TYPE != "PROD":
         subject += ' ({})'.format(settings.ENV_TYPE)
 
+    #body = render_to_string("fpc_email.html",{"url":url,"bushfire":bushfire})
     body = 'FPC Email - {0}\n\nInitial Bushfire has been submitted and is located at <a href="{1}">{1}</a><br><br>'.format(bushfire.fire_number, url)
     body += notifications_to_html(bushfire, url)
 
