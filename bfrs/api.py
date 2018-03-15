@@ -223,7 +223,7 @@ class BushfireSpatialResource(ModelResource):
     class Meta:
         queryset = Bushfire.objects.all()
         resource_name = 'bushfirespatial'
-        authorization = DjangoAuthorization()
+        authorization = Authorization()
         #fields = ['origin_point', 'fire_boundary', 'area', 'fire_position']
         fields = ['origin_point', 'fire_boundary','origin_point_mga','fb_validation_req']
         #using extra fields to process some complex or related fields
@@ -374,7 +374,6 @@ class BushfireSpatialResource(ModelResource):
 
 
     def obj_update(self, bundle, **kwargs):
-
         if bundle.request.GET.has_key('checkpermission') and bundle.request.GET['checkpermission'] == 'true':
             # Allows SSS to perform permission check
             if is_external_user(bundle.request.user) or \
