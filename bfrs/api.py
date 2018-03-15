@@ -374,20 +374,16 @@ class BushfireSpatialResource(ModelResource):
 
 
     def obj_update(self, bundle, **kwargs):
-        if bundle.request.GET.has_key('checkpermission') and bundle.request.GET['checkpermission'] == 'true':
-            # Allows SSS to perform permission check
-            if is_external_user(bundle.request.user) or \
-                (not can_maintain_data(bundle.request.user) and bundle.obj.report_status >= Bushfire.STATUS_FINAL_AUTHORISED):
-                raise ImmediateHttpResponse(response=HttpUnauthorized())
-            else:
-                raise ImmediateHttpResponse(response=HttpAccepted())
-    
         # Allows BFRS and SSS to perform update only if permitted
         if is_external_user(bundle.request.user):
             raise ImmediateHttpResponse(response=HttpUnauthorized())
 
         if not can_maintain_data(bundle.request.user) and bundle.obj.report_status >= Bushfire.STATUS_FINAL_AUTHORISED:
             raise ImmediateHttpResponse(response=HttpUnauthorized())
+
+        if bundle.request.GET.has_key('checkpermission') and bundle.request.GET['checkpermission'] == 'true':
+            #this is a permission checking request,return directly.
+            raise ImmediateHttpResponse(response=HttpAccepted())
 
         self.full_hydrate(bundle)
         #invalidate current bushfire if required.
