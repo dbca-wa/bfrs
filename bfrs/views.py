@@ -369,7 +369,7 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
                 other_area = round(float(sss['area']['other_area']), 2)
                 initial['other_area'] = other_area if other_area > 0 else 0.01
 
-            if sss.has_key('origin_point') and isinstance(sss['origin_point'], list):
+            if sss.get('origin_point') and isinstance(sss['origin_point'], list):
                 initial['origin_point_str'] = Point(sss['origin_point']).get_coords()
                 initial['origin_point'] = Point(sss['origin_point'])
 
@@ -382,7 +382,7 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
             if sss.has_key('fb_validation_req'):
                 initial['fb_validation_req'] = sss['fb_validation_req']
 
-            if sss.get('fire_position'):
+            if sss.has_key('fire_position'):
                 initial['fire_position'] = sss['fire_position']
 
             if sss.get('tenure_ignition_point') and sss['tenure_ignition_point'].get('category'):
