@@ -668,6 +668,30 @@ class DamageSnapshot(DamageBase, Audit):
         unique_together = ('damage_type', 'snapshot', 'snapshot_type',)
 
 
+class BushfirePropertyBase(models.Model):
+    name = models.CharField(max_length=32,null=False,editable=False, verbose_name="Property Name")
+    value = models.TextField(null=True,blank=True, verbose_name="Property Value")
+
+    class Meta:
+        abstract = True
+
+    def __str__(self):
+        return '{}={}'.format(self.name,self.value)
+
+
+class BushfireProperty(BushfirePropertyBase):
+    bushfire = models.ForeignKey(Bushfire, related_name='properties')
+
+    class Meta:
+        unique_together = ('bushfire', 'name',)
+
+class BushfirePropertySnapshot(BushfirePropertyBase):
+    snapshot_type = models.PositiveSmallIntegerField(choices=SNAPSHOT_TYPE_CHOICES)
+    snapshot = models.ForeignKey(BushfireSnapshot, related_name='properties_snapshot')
+
+    class Meta:
+        unique_together = ('snapshot', 'snapshot_type','name')
+
 reversion.register(Bushfire, follow=['tenures_burnt', 'injuries', 'damages'])
 reversion.register(Profile)
 reversion.register(Region)
@@ -683,3 +707,4 @@ reversion.register(Injury)          # related_name=injuries
 reversion.register(Damage)          # related_name=damages
 reversion.register(BushfireSnapshot) # related_name=snapshots
 
+reversion.register(BushfireProperty) 

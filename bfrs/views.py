@@ -20,7 +20,7 @@ from django.http import JsonResponse
 from django.contrib import messages
 from django.utils import timezone
 
-from bfrs.models import (Profile, Bushfire, BushfireSnapshot,
+from bfrs.models import (Profile, Bushfire, BushfireSnapshot,BushfireProperty,
         Region, District,
         Tenure, AreaBurnt,
         SNAPSHOT_INITIAL, SNAPSHOT_FINAL,
@@ -490,17 +490,30 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
             self.object.other_tenure = None
         if self.object.dispatch_pw:
             self.object.dispatch_pw = int(self.object.dispatch_pw)
+        plantations = None
         if not self.get_object():
-            #this is a new bushfire report, set fireboundary_uploaded_by and fireboundary_uploded_date if fireboundary is not null
+            #this is a new bushfire report
+            #set fireboundary_uploaded_by and fireboundary_uploded_date if fireboundary is not null
             if self.object.fire_boundary:
                 self.object.fireboundary_uploaded_by = request.user
                 self.object.fireboundary_uploaded_date = timezone.now()
+            #get plantations data from sss_data, and remove it from sss_data because it is too big sometimes
+            sss_data = json.loads(self.object.sss_data)
+            if sss_data.has_key("plantations"):
+                plantations = sss_data.pop("plantations")
+                self.object.sss_data = json.dumps(sss_data)
+                
         self.object.save()
 
         if not self.get_object():
             #this is a new bushfire report, save all the burnt areas from sss
             #currtenly, burnt area is unavailable for initial bushfire report, so this statement will not save any data, burnt area pushed by sss will be ignored
             areas_burnt_updated = update_areas_burnt_fs(self.object, area_burnt_formset)
+
+        #save plantations data into BushfireProperty
+        if plantations:
+            BushfireProperty.objects.create(bushfire=self.object,name="plantations",value=json.dumps(plantations))
+
         injury_updated = update_injury_fs(self.object, injury_formset)
         damage_updated = update_damage_fs(self.object, damage_formset)
 

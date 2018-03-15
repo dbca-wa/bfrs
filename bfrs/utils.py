@@ -3,7 +3,7 @@ from django.template.response import TemplateResponse
 from bfrs.models import (Bushfire, BushfireSnapshot, District, Region,
     AreaBurnt, Damage, Injury, Tenure,
     SNAPSHOT_INITIAL, SNAPSHOT_FINAL,
-    DamageSnapshot, InjurySnapshot, AreaBurntSnapshot,
+    DamageSnapshot, InjurySnapshot, AreaBurntSnapshot,BushfirePropertySnapshot,
     SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS, SUBMIT_MANDATORY_FORMSETS,
     AUTH_MANDATORY_FIELDS, AUTH_MANDATORY_FIELDS_FIRE_NOT_FOUND, 
     AUTH_MANDATORY_DEP_FIELDS, AUTH_MANDATORY_DEP_FIELDS_FIRE_NOT_FOUND, AUTH_MANDATORY_FORMSETS,
@@ -83,6 +83,11 @@ def serialize_bushfire(auth_type, action, obj):
     s = BushfireSnapshot.objects.create(snapshot_type=snapshot_type, action=action, bushfire_id=obj.id, **d)
 
     # create the formset snapshots and attach the bushfire_snapshot
+    for i in obj.properties.all():
+        BushfirePropertySnapshot.objects.create(
+            snapshot_id=s.id, snapshot_type=snapshot_type, name=i.name, value=i.value
+        )
+
     for i in obj.damages.all():
         damage_obj = DamageSnapshot.objects.create(
             snapshot_id=s.id, snapshot_type=snapshot_type, damage_type=i.damage_type, number=i.number, creator=obj.modifier, modifier=obj.modifier
@@ -99,7 +104,10 @@ def serialize_bushfire(auth_type, action, obj):
         )
 
 def archive_snapshot(auth_type, action, obj):
-        """ allows archicing of existing snapshot before overwriting """
+        """ 
+            allows archicing of existing snapshot before overwriting 
+            currently, can't find any code call this method
+        """
         cur_snapshot_history = obj.snapshot_history.all()
         SnapshotHistory.objects.create(
             creator = obj.modifier,
@@ -162,7 +170,7 @@ def invalidate_bushfire(obj, user,cur_obj=None):
         # link the new bushfire to the old invalidated bushfire
         created = datetime.now(tz=pytz.utc)
 
-        # copy all links from the above invalidated bushfire to the new bushfire
+        # move all links from the above invalidated bushfire to the new bushfire
         for linked in cur_obj.bushfire_invalidated.all():
             obj.bushfire_invalidated.add(linked)
 
@@ -174,6 +182,7 @@ def invalidate_bushfire(obj, user,cur_obj=None):
                 record.bushfire_id = obj_id 
                 record.save()
 
+        copy_fk_records(obj.id, cur_obj.properties)
         copy_fk_records(obj.id, cur_obj.damages)
         copy_fk_records(obj.id, cur_obj.injuries)
         copy_fk_records(obj.id, cur_obj.tenures_burnt)

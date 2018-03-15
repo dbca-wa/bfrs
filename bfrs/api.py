@@ -1,13 +1,14 @@
 from django.conf.urls import url
 from django.conf import settings
 from django.utils import timezone
+from django.http import JsonResponse
 from tastypie.resources import ModelResource, Resource
 from tastypie.authorization import Authorization, ReadOnlyAuthorization, DjangoAuthorization
 from tastypie.resources import ModelResource, ALL, ALL_WITH_RELATIONS
 from tastypie.utils.mime import determine_format
 from tastypie.api import Api
 from tastypie import fields
-from bfrs.models import Profile, Region, District, Bushfire, Tenure, current_finyear
+from bfrs.models import Profile, Region, District, Bushfire, Tenure, current_finyear,BushfireProperty
 from bfrs.utils import update_areas_burnt, invalidate_bushfire, serialize_bushfire, is_external_user, can_maintain_data
 
 from django.contrib.auth.models import User
@@ -226,13 +227,13 @@ class BushfireSpatialResource(ModelResource):
         #fields = ['origin_point', 'fire_boundary', 'area', 'fire_position']
         fields = ['origin_point', 'fire_boundary','origin_point_mga','fb_validation_req']
         #using extra fields to process some complex or related fields
-        extra_fields = ['district','area','tenure_ignition_point','fire_position','sss_data']
+        extra_fields = ['district','area','tenure_ignition_point','fire_position','plantations','sss_data']
         allowed_methods=['patch']
         list_allowed_methods=[]
 
     def hydrate(self, bundle):
         for field_name in self._meta.extra_fields:
-            m = getattr(self,"hydrate_{}".format(field_name))
+            m = getattr(self,"hydrate_{}".format(field_name)) if hasattr(self,"hydrate_{}".format(field_name)) else None
             if m:
                 m(bundle)
         bundle.obj.modifier = bundle.request.user
@@ -361,14 +362,15 @@ class BushfireSpatialResource(ModelResource):
     def hydrate_sss_data(self,bundle):
         #print("processing sss data" )
         sss_data = bundle.data
-        fire_boundary = None
-        has_fire_boundary = False
-        if sss_data.has_key('fire_boundary'):
-            has_fire_boundary = True
-            fire_boundary = sss_data.pop('fire_boundary')
+        
+        datas = []
+        for key in ["fire_boundary","plantations"]:
+            if sss_data.has_key(key):
+                datas.append((key,sss_data.pop(key)))
+
         bundle.obj.sss_data = json.dumps(sss_data)
-        if has_fire_boundary:
-            sss_data["fire_boundary"] = fire_boundary
+        for data in datas:
+            sss_data[data[0]] = data[1]
 
 
     def obj_update(self, bundle, **kwargs):
@@ -389,11 +391,10 @@ class BushfireSpatialResource(ModelResource):
             raise ImmediateHttpResponse(response=HttpUnauthorized())
 
         self.full_hydrate(bundle)
-
         #invalidate current bushfire if required.
-        bundle.obj,saved = invalidate_bushfire(bundle.obj, bundle.request.user) or (bundle.obj,False)
+        bundle.obj,invalidated = invalidate_bushfire(bundle.obj, bundle.request.user) or (bundle.obj,False)
 
-        if not saved:
+        if not invalidated:
             bundle.obj.save()
 
         if bundle.data.get('area'):
@@ -408,12 +409,25 @@ class BushfireSpatialResource(ModelResource):
                 #area burnt data is unavailable for initial report
                 bundle.obj.tenures_burnt.all().delete()
 
+        #save plantations
+        if bundle.data.has_key("plantations"):
+            #need to update plantations
+            if bundle.data.get("plantations"):
+                #has plantation data
+                BushfireProperty.objects.update_or_create(bushfire=bundle.obj,name="plantations",defaults={"value":json.dumps(bundle.data.get("plantations"))})
+            else:
+                #no plantation data,remove the plantations data from table
+                BushfireProperty.objects.filter(bushfire=bundle.obj,name="plantations").delete()
+
         if bundle.obj.report_status >=  Bushfire.STATUS_FINAL_AUTHORISED:
             # if bushfire has been authorised, update snapshot and archive old snapshot
             serialize_bushfire('final', 'SSS Update', bundle.obj)
             #print("serizlie bushfire")
 
-        return bundle
+        if invalidated:
+            raise ImmediateHttpResponse(response=JsonResponse({"id":bundle.obj.id,"fire_number":bundle.obj.fire_number},status=280))
+        else:
+            return bundle
 
 v1_api = Api(api_name='v1')
 v1_api.register(BushfireResource())
