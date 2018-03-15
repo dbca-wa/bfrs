@@ -414,7 +414,7 @@ def update_areas_burnt_fs(bushfire, area_burnt_formset):
                 AreaBurnt.objects.filter(bushfire=bushfire,tenure__in=deleted_fs_tenure).delete()
             #update changed objects
             for obj in updated_fs_object:
-                AreaBurnt.objects.update_or_create(bushfire=obj.bushfire,tenure=obj.tenure,defaults={area:area})
+                AreaBurnt.objects.update_or_create(bushfire=obj.bushfire,tenure=obj.tenure,defaults={"area":area})
     except IntegrityError:
         return 0
 
