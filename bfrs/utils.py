@@ -239,16 +239,16 @@ def check_district_changed(request, obj, form):
                 obj.fire_number = cur_obj.fire_number
                 obj.save()
 
-            message = 'District has changed (from {} to {}). This action will invalidate the existing bushfire and create  a new bushfire with the new district, and a new fire number.'.format(
-                cur_obj.district.name,
-                district.name
-            )
-            context={
-                'action': 'invalidate',
-                'district': district.id,
-                'message': message,
-            }
-            return TemplateResponse(request, 'bfrs/confirm.html', context=context)
+                message = 'District has changed (from {} to {}). This action will invalidate the existing bushfire and create  a new bushfire with the new district, and a new fire number.'.format(
+                    cur_obj.district.name,
+                    district.name
+                )
+                context={
+                    'action': 'invalidate',
+                    'district': district.id,
+                    'message': message,
+                }
+                return TemplateResponse(request, 'bfrs/confirm.html', context=context)
 
     return None
 
