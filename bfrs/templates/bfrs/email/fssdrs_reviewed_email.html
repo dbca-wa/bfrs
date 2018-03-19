@@ -1,0 +1,18 @@
+{% extends "./base_email.html" %}
+
+{% load email_tags %}
+
+{% block email_head %}
+<div>FSSDRS Email - {{bushfire.fire_number}}</div><br><br>
+{% endblock %}
+
+{% block bushfire_head %}
+<div>
+Report has been reviewed by user {{"reviewed_by"|field_value:bushfire}} at {{"reviewed_date"|field_value:bushfire}}.
+<br>
+<br>
+The report is located at <a href={{urls.final_snapshot}}>{{urls.final_snapshot}}</a>
+</div><br>
+{% endblock %}
+
+

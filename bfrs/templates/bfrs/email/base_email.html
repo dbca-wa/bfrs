@@ -1,0 +1,31 @@
+{% load email_tags %}
+
+<html>
+    <head>
+    </head>
+    <body>
+    {% block email_head %}
+    {% endblock %}
+
+    {% block bushfire_head %}
+        <div>Initial Bushfire has been submitted and is located at <a href="{{urls.initial_snapshot}}">{{urls.initial_snapshot}}</a></div><br>
+    {% endblock %}
+
+    {% block bushfire_detail %}
+        {% bushfire_details 'region' 'district' 'year' 'name' 'fire_detected_date' 'fire_number' 'dfes_incident_no' 'fire_position' 'origin_point_geo' 'origin_point_mga' 'tenure' 'duty_officer' 'dispatch_pw' 'dispatch_pw_date' 'dispatch_aerial' 'dispatch_aerial_date' 'initial_control' 'initial_area' 'prob_fire_level' 'investigation_req' 'media_alert_req' 'park_trail_impacted' 'other_info'  %}
+    {% endblock %}
+
+    {% block bushfire_footer %}
+    {% if urls.final and not bushfire.dfes_incident_no %}
+        <br>
+        <div>DFES incident number not available, please check the bushfire reporting system for updates to the DFES incident number <a href="{{urls.final}}">{{bushfire.fire_number}}</a></div>   
+    {% endif %}
+    {% endblock %}
+
+    {% block email_footer %}
+        <br>
+        <br>
+        <font face="Calibri" color="gray">The information contained in this email was the best available at the time. For updated information please contact the relevant Duty Officer</font>
+    {% endblock %}
+    </body>
+</html>

@@ -1,0 +1,9 @@
+{% load email_tags %}
+<table style="border:1px solid black;">
+{% for name in bushfire_fields %}
+    <tr>
+        <th style="border-bottom:1px solid; border-right:1px solid; text-align: left;">{{ name|field_label:bushfire }}</th> 
+        <td style="border-bottom:1px solid;{{ name | field_style:bushfire}}">{{name | field_value:bushfire}}</td> 
+    </tr>
+{% endfor %}
+</table>

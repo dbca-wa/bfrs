@@ -1,7 +1,7 @@
 from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.template.loader import render_to_string
-from bfrs.models import (Bushfire, BushfireSnapshot, District, Region,
+from bfrs.models import (Bushfire, BushfireSnapshot, District, Region,BushfireProperty,
     AreaBurnt, Damage, Injury, Tenure,
     SNAPSHOT_INITIAL, SNAPSHOT_FINAL,
     DamageSnapshot, InjurySnapshot, AreaBurntSnapshot,BushfirePropertySnapshot,
@@ -558,11 +558,20 @@ def update_damage_fs(bushfire, damage_formset):
 
     return 1
 
-def mail_url(request, bushfire, status='initial'):
-    if status == 'initial':
-        return "http://" + request.get_host() + reverse('bushfire:initial_snapshot', kwargs={'pk':bushfire.id})
-    if status == 'final':
-        return "http://" + request.get_host() + reverse('bushfire:final_snapshot', kwargs={'pk':bushfire.id})
+def bushfire_urls(request, bushfire):
+    urls = {}
+    if bushfire.report_status >= Bushfire.STATUS_INVALIDATED:
+        return urls
+
+    if bushfire.report_status == Bushfire.STATUS_INITIAL:
+        urls["initial"]=request.build_absolute_uri(reverse('bushfire:bushfire_initial', kwargs={'pk':bushfire.id}))
+    if bushfire.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED:
+        urls["initial_snapshot"]=request.build_absolute_uri(reverse('bushfire:initial_snapshot', kwargs={'pk':bushfire.id}))
+        urls["final"]=request.build_absolute_uri(reverse('bushfire:bushfire_final', kwargs={'pk':bushfire.id}))
+    if bushfire.report_status >= Bushfire.STATUS_FINAL_AUTHORISED:
+        urls["final_snapshot"]=request.build_absolute_uri(reverse('bushfire:final_snapshot', kwargs={'pk':bushfire.id}))
+
+    return urls
 
 
 def update_status(request, bushfire, action):
@@ -574,26 +583,31 @@ def update_status(request, bushfire, action):
         bushfire.report_status = Bushfire.STATUS_INITIAL_AUTHORISED
         bushfire.save()
         serialize_bushfire('initial', action, bushfire)
+        urls = bushfire_urls(request, bushfire)
 
         # send emails
-        resp = rdo_email(bushfire, mail_url(request, bushfire))
+        if BushfireProperty.objects.filter(bushfire=bushfire,name="plantations").count() > 0:
+            resp = fpc_email(bushfire, urls)
+            notification['FPC'] = 'Email Sent' if resp else 'Email failed'
+
+        resp = rdo_email(bushfire, urls)
         notification['RDO'] = 'Email Sent' if resp else 'Email failed'
 
-        resp = dfes_email(bushfire, mail_url(request, bushfire))
+        resp = dfes_email(bushfire, urls)
         notification['DFES'] = 'Email Sent' if resp else 'Email failed'
 
-        resp = police_email(bushfire, mail_url(request, bushfire))
+        resp = police_email(bushfire, urls)
         notification['POLICE'] = 'Email Sent' if resp else 'Email failed'
 
         if bushfire.park_trail_impacted:
-            resp = pvs_email(bushfire, mail_url(request, bushfire))
+            resp = pvs_email(bushfire, urls)
             notification['PVS'] = 'Email Sent' if resp else 'Email failed'
 
-        if bushfire.media_alert_req:
-            resp = pica_email(bushfire, mail_url(request, bushfire))
+        if bushfire.media_alert_req :
+            resp = pica_email(bushfire, urls)
             notification['PICA'] = 'Email Sent' if resp else 'Email failed'
 
-            resp = pica_sms(bushfire, mail_url(request, bushfire))
+            resp = pica_sms(bushfire, urls)
             notification['PICA SMS'] = 'SMS Sent' if resp else 'SMS failed'
 
         bushfire.area = None # reset bushfire area
@@ -607,8 +621,9 @@ def update_status(request, bushfire, action):
         bushfire.save()
         serialize_bushfire('final', action, bushfire)
 
+        urls = bushfire_urls(request, bushfire)
         # send emails
-        resp = fssdrs_email(bushfire, mail_url(request, bushfire, status='final'), status='final')
+        resp = fssdrs_email(bushfire, urls, status='final')
         notification['FSSDRS-Auth'] = 'Email Sent' if resp else 'Email failed'
 
         bushfire.save()
@@ -620,8 +635,9 @@ def update_status(request, bushfire, action):
         bushfire.save()
         serialize_bushfire('review', action, bushfire)
 
+        urls = bushfire_urls(request, bushfire)
         # send emails
-        resp = fssdrs_email(bushfire, mail_url(request, bushfire, status='review'), status='review')
+        resp = fssdrs_email(bushfire, urls, status='review')
         notification['FSSDRS-Auth'] = 'Email Sent' if resp else 'Email failed'
 
         bushfire.save()
@@ -708,7 +724,7 @@ def notifications_to_html(bushfire, url):
 
     return msg
 
-def rdo_email(bushfire, url):
+def rdo_email(bushfire, urls):
     if not settings.ALLOW_EMAIL_NOTIFICATION or bushfire.fire_number in settings.EMAIL_EXCLUSIONS:
        return
 
@@ -718,8 +734,7 @@ def rdo_email(bushfire, url):
     if settings.ENV_TYPE != "PROD":
         subject += ' ({})'.format(settings.ENV_TYPE)
 
-    body = 'RDO Email - {0}, {1}\n\nInitial Bushfire has been submitted and is located at <a href="{2}">{2}</a><br><br>'.format(region_name, bushfire.fire_number, url)
-    body += notifications_to_html(bushfire, url)
+    body = render_to_string("bfrs/email/rdo_email.html",context={"urls":urls,"bushfire":bushfire})
 
     message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=to_email, cc=settings.CC_EMAIL, bcc=settings.BCC_EMAIL)
     message.content_subtype = 'html'
@@ -733,7 +748,7 @@ def rdo_email(bushfire, url):
     return ret
 
 
-def pvs_email(bushfire, url):
+def pvs_email(bushfire, urls):
     if not settings.ALLOW_EMAIL_NOTIFICATION or bushfire.fire_number in settings.EMAIL_EXCLUSIONS:
        return
 
@@ -741,8 +756,7 @@ def pvs_email(bushfire, url):
     if settings.ENV_TYPE != "PROD":
         subject += ' ({})'.format(settings.ENV_TYPE)
 
-    body = 'PVS Email - {0}\n\nInitial Bushfire has been submitted and is located at <a href="{1}">{1}</a><br><br>'.format(bushfire.fire_number, url)
-    body += notifications_to_html(bushfire, url)
+    body = render_to_string("bfrs/email/pvs_email.html",context={"urls":urls,"bushfire":bushfire})
 
     message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.PVS_EMAIL, cc=settings.CC_EMAIL, bcc=settings.BCC_EMAIL)
     message.content_subtype = 'html'
@@ -755,7 +769,7 @@ def pvs_email(bushfire, url):
 
     return ret
 
-def fpc_email(bushfire, url):
+def fpc_email(bushfire, urls):
     if not settings.ALLOW_EMAIL_NOTIFICATION or bushfire.fire_number in settings.EMAIL_EXCLUSIONS:
        return
 
@@ -763,9 +777,7 @@ def fpc_email(bushfire, url):
     if settings.ENV_TYPE != "PROD":
         subject += ' ({})'.format(settings.ENV_TYPE)
 
-    #body = render_to_string("fpc_email.html",{"url":url,"bushfire":bushfire})
-    body = 'FPC Email - {0}\n\nInitial Bushfire has been submitted and is located at <a href="{1}">{1}</a><br><br>'.format(bushfire.fire_number, url)
-    body += notifications_to_html(bushfire, url)
+    body = render_to_string("bfrs/email/fpc_email.html",context={"urls":urls,"bushfire":bushfire})
 
     message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.FPC_EMAIL, cc=settings.CC_EMAIL, bcc=settings.BCC_EMAIL)
     message.content_subtype = 'html'
@@ -779,7 +791,7 @@ def fpc_email(bushfire, url):
     return ret
 
 
-def pica_email(bushfire, url):
+def pica_email(bushfire, urls):
     if not settings.ALLOW_EMAIL_NOTIFICATION or bushfire.fire_number in settings.EMAIL_EXCLUSIONS:
        return
 
@@ -787,8 +799,7 @@ def pica_email(bushfire, url):
     if settings.ENV_TYPE != "PROD":
         subject += ' ({})'.format(settings.ENV_TYPE)
 
-    body = 'PICA Email - {0}\n\nInitial Bushfire has been submitted and is located at <a href="{1}">{1}</a><br><br>'.format(bushfire.fire_number, url)
-    body += notifications_to_html(bushfire, url)
+    body = render_to_string("bfrs/email/pica_email.html",context={"urls":urls,"bushfire":bushfire})
 
     message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.PICA_EMAIL, cc=settings.CC_EMAIL, bcc=settings.BCC_EMAIL)
     message.content_subtype = 'html'
@@ -802,14 +813,15 @@ def pica_email(bushfire, url):
     return ret
 
 
-def pica_sms(bushfire, url):
+def pica_sms(bushfire, urls):
     if not settings.ALLOW_EMAIL_NOTIFICATION or bushfire.fire_number in settings.EMAIL_EXCLUSIONS:
        return
 
 #    if 'bfrs-prod' not in os.getcwd():
 #       return
 
-    message = 'PICA SMS - {}\n\nInitial Bushfire has been submitted and is located at {}'.format(bushfire.fire_number, url)
+    message = render_to_string("bfrs/email/pica_sms.txt",context={"urls":urls,"bushfire":bushfire})
+    message = message.strip()
     TO_SMS_ADDRESS = [phone_no + '@' + settings.SMS_POSTFIX for phone_no in settings.MEDIA_ALERT_SMS_TOADDRESS_MAP.values()]
     ret = send_mail('', message, settings.EMAIL_TO_SMS_FROMADDRESS, TO_SMS_ADDRESS)
 
@@ -821,7 +833,7 @@ def pica_sms(bushfire, url):
     return ret
 
 
-def dfes_email(bushfire, url):
+def dfes_email(bushfire, urls):
     if (not settings.ALLOW_EMAIL_NOTIFICATION or
         bushfire.fire_number in settings.EMAIL_EXCLUSIONS or
         bushfire.dfes_incident_no != ''):
@@ -831,8 +843,7 @@ def dfes_email(bushfire, url):
     if settings.ENV_TYPE != "PROD":
         subject += ' ({})'.format(settings.ENV_TYPE)
 
-    body = '---- PLEASE REPLY AS FOLLOWS: "<span style="color:red;">Incident: ABCDE12345</span>" on a single line without quotes (alphanumeric max. 32 chars) ----<br><br>DFES Email<br><br>Fire Number:{0}<br><br>(Lat/Lon) {1}<br><br>Initial Bushfire has been submitted and is located at <a href="{2}">{2}</a><br><br>'.format(bushfire.fire_number, bushfire.origin_point, url)
-    body += notifications_to_html(bushfire, url)
+    body = render_to_string("bfrs/email/dfes_email.html",context={"urls":urls,"bushfire":bushfire})
 
     message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.DFES_EMAIL, cc=settings.CC_EMAIL, bcc=settings.BCC_EMAIL)
     message.content_subtype = 'html'
@@ -845,7 +856,7 @@ def dfes_email(bushfire, url):
         
     return ret
 
-def police_email(bushfire, url):
+def police_email(bushfire, urls):
     if not settings.ALLOW_EMAIL_NOTIFICATION or bushfire.fire_number in settings.EMAIL_EXCLUSIONS:
        return
 
@@ -853,10 +864,7 @@ def police_email(bushfire, url):
     if settings.ENV_TYPE != "PROD":
         subject += ' ({})'.format(settings.ENV_TYPE)
 
-    body = 'POLICE Email - {0}. Initial Bushfire has been submitted.<br><br>Investigation Required: {1}'.format(
-        bushfire.fire_number, 'Yes' if bushfire.investigation_req else 'No'
-    )
-    body += notifications_to_html(bushfire, None)
+    body = render_to_string("bfrs/email/police_email.html",context={"urls":urls,"bushfire":bushfire})
 
     message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.POLICE_EMAIL, cc=settings.CC_EMAIL, bcc=settings.BCC_EMAIL)
     message.content_subtype = 'html'
@@ -869,7 +877,7 @@ def police_email(bushfire, url):
         
     return ret
 
-def fssdrs_email(bushfire, url, status='final'):
+def fssdrs_email(bushfire, urls, status='final'):
     if not settings.ALLOW_EMAIL_NOTIFICATION:
        return
 
@@ -877,10 +885,10 @@ def fssdrs_email(bushfire, url, status='final'):
     if settings.ENV_TYPE != "PROD":
         subject += ' ({})'.format(settings.ENV_TYPE)
 
-    body = 'FSSDRS Email - {0}\n\nreport has been authorised. User {1}, at {2}.\n\nThe report is located at <a href="{3}">{3}</a><br><br>'.format(
-        bushfire.fire_number, bushfire.authorised_by, bushfire.authorised_date.astimezone(tz.gettz(settings.TIME_ZONE)).strftime('%Y-%m-%d %H:%M'), url
-    )
-    body += notifications_to_html(bushfire, url)
+    if status == 'final':
+        body = render_to_string("bfrs/email/fssdrs_authorised_email.html",context={"urls":urls,"bushfire":bushfire})
+    else:
+        body = render_to_string("bfrs/email/fssdrs_reviewed_email.html",context={"urls":urls,"bushfire":bushfire})
 
     message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.FSSDRS_EMAIL, cc=settings.CC_EMAIL, bcc=settings.BCC_EMAIL)
     message.content_subtype = 'html'
