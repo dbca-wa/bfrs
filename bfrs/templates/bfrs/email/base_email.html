@@ -15,6 +15,9 @@
         {% bushfire_details 'region' 'district' 'year' 'name' 'fire_detected_date' 'fire_number' 'dfes_incident_no' 'fire_position' 'origin_point_geo' 'origin_point_mga' 'tenure' 'duty_officer' 'dispatch_pw' 'dispatch_pw_date' 'dispatch_aerial' 'dispatch_aerial_date' 'initial_control' 'initial_area' 'prob_fire_level' 'investigation_req' 'media_alert_req' 'park_trail_impacted' 'other_info'  %}
     {% endblock %}
 
+    {% block other_bushfire_detail %}
+    {% endblock %}
+
     {% block bushfire_footer %}
     {% if urls.final and not bushfire.dfes_incident_no %}
         <br>

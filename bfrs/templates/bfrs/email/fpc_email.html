@@ -6,4 +6,29 @@
 <div>FPC Email - {{bushfire.fire_number}}</div><br><br>
 {% endblock %}
 
+{% block other_bushfire_detail %}
+<br>
+<div>Plantations within 3km of origin point ({{ "origin_point_geo"|field_value:bushfire }})</div>
+<table style="border:1px solid black; border-collapse: collapse;">
+    <tr>
+        <th style="border:1px solid black; text-align: center;padding:2px 10px 2px 10px;">ogc_fid</th>
+        <th style="border:1px solid black; text-align: center;padding:2px 10px 2px 10px;">species</th>
+        <th style="border:1px solid black; text-align: center;padding:2px 10px 2px 10px;">sp_type</th>
+        <th style="border:1px solid black; text-align: center;padding:2px 10px 2px 10px;">classifica</th>
+        <th style="border:1px solid black; text-align: center;padding:2px 10px 2px 10px;">area_ha</th>
+    </tr>
+{% get_jsonproperty bushfire "plantations" as plantations %}
+{% if plantations %}
+{% for plant in plantations  %}
+    <tr>
+        <td style="border:1px solid black;text-align: center;padding:2px 10px 2px 10px;">{{plant.ogc_fid}}</td>
+        <td style="border:1px solid black;text-align: left;padding:2px 10px 2px 10px;">{{plant.species}}</td>
+        <td style="border:1px solid black;text-align: left;padding:2px 10px 2px 10px;">{{plant.sp_type}}</td>
+        <td style="border:1px solid black;text-align: left;padding:2px 10px 2px 10px;">{{plant.classifica}}</td>
+        <td style="border:1px solid black;text-align: right;padding:2px 10px 2px 10px;">{{plant.area_ha}}</td>
+    </tr>
+{% endfor %}
+{% endif %}
+</table>
+{% endblock %}
 

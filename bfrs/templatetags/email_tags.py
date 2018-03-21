@@ -18,6 +18,20 @@ def bushfire_details(context,*args):
 def email_debug(context):
     import ipdb;ipdb.set_trace()
 
+@register.simple_tag
+def get_jsonproperty(bushfire,property_name,default_value=None):
+    """
+    return property value
+    """
+    if bushfire:
+        try:
+            return bushfire.properties.get(name=property_name).json_value
+        except ObjectDoesNotExist:
+            return default_value
+    else:
+        return default_value
+
+
 FIELD_MAPPING = {
     "origin_point_geo":"origin_point"
 }

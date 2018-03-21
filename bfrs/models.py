@@ -675,6 +675,16 @@ class BushfirePropertyBase(models.Model):
     class Meta:
         abstract = True
 
+    @property
+    def json_value(self):
+        if hasattr(self,"_json_value"):
+            result = getattr(self,"_json_value")
+        else:
+            result = json.loads(self.value)
+            setattr(self,"_json_value",result)
+        return result
+
+
     def __str__(self):
         return '{}={}'.format(self.name,self.value)
 
