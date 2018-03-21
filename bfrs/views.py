@@ -171,7 +171,11 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
         kwargs = super(BushfireView,self).get_filterset_kwargs(filterset_class)
         data = dict(kwargs["data"].iteritems()) if kwargs["data"] else {}
         kwargs["data"] = data
-        self._filters = "?{}&".format("&".join(["{}={}".format(k,v) for k,v in data.iteritems() if k in BushfireFilter.Meta.fields])) if len(data) > 0 else "?"
+        filters = "&".join(["{}={}".format(k,v) for k,v in data.iteritems() if k in BushfireFilter.Meta.fields])
+        if filters:
+            self._filters = "?{}&".format(filters)
+        else:
+            self._filters = "?"
         profile = self.get_initial() # Additional profile Filters must also be added to the JS in bushfire.html- profile_field_list
         if not data.has_key('region'):
             data['region'] = profile['region'].id if profile['region'] else None
