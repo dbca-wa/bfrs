@@ -407,7 +407,7 @@ def update_areas_burnt_fs(bushfire, area_burnt_formset):
     deleted_fs_tenure = []
     updated_fs_object = []
     for form in area_burnt_formset:
-        if not form.cleaned_data:
+        if not hasattr(form,"cleaned_data") or not form.cleaned_data:
             continue
         tenure = form.cleaned_data.get('tenure')
         area = form.cleaned_data.get('area')
