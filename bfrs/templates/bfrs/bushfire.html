@@ -32,16 +32,45 @@
 {% include "bfrs/bushfire_filter.html" %}
 
 {% if object_list %}
+{% if is_paginated %}
+<table id="table" class="table table-striped table-bordered table-hover table-condensed" style="cursor:pointer;">
+  <thead>
+	  <th style="width:10%" onclick="document.location='{{filters_without_order}}{{'fire_number'|toggle_sort:form.initial}}'" class="headerSort {{'fire_number'|sort_class:form.initial}}">
+        <font color="dodgerblue">Fire Number</font>
+      </th>
+	  <th style="width:5%" onclick="document.location='{{filters_without_order}}{{'dfes_incident_no'|toggle_sort:form.initial}}'" class="headerSort {{'dfes_incident_no'|sort_class:form.initial}}">
+        <font color="dodgerblue">DFES </font>
+      </th>
+	  <th style="width:15%" onclick="document.location='{{filters_without_order}}{{'name'|toggle_sort:form.initial}}'" class="headerSort {{'name'|sort_class:form.initial}}">
+        <font color="dodgerblue">Name </font>
+      </th>
+	  <th style="width:5%" onclick="document.location='{{filters_without_order}}{{'job_code'|toggle_sort:form.initial}}'" class="headerSort {{'job_code'|sort_class:form.initial}}">
+        <font color="dodgerblue">Job Code </font>
+      </th>
+	  <th style="width:10%"><font color="dodgerblue">Notifications </th>
+	  <th style="width:10%"><font color="dodgerblue">Report </th>
+	  {% if can_maintain_data %}<th style="width:10%"><font color="dodgerblue">Admin </th>{% endif %}
+  </thead>
+{% else %}
 <table id="table" class="tablesorter table table-striped table-bordered table-hover table-condensed" style="cursor:pointer;">
   <thead>
-	  <th style="width:10%"><font color="dodgerblue">Fire Number <i class="icon-sort"></i></font></th>
-	  <th style="width:5%"><font color="dodgerblue">DFES <i class="icon-sort"></i></font></th>
-	  <th style="width:15%"><font color="dodgerblue">Name <i class="icon-sort"></i></font></th>
-	  <th style="width:5%"><font color="dodgerblue">Job Code <i class="icon-sort"></i></font></th>
-	  <th style="width:10%"><font color="dodgerblue">Notifications <i class="icon-sort"></font></i></th>
-	  <th style="width:10%"><font color="dodgerblue">Report <i class="icon-sort"></i></font></th>
-	  {% if can_maintain_data %}<th style="width:10%"><font color="dodgerblue">Admin <i class="icon-sort"></i></font></th>{% endif %}
+	  <th style="width:10%" class="{{'fire_number'|sort_class:form.initial}}">
+        <font color="dodgerblue">Fire Number </font>
+      </th>
+	  <th style="width:5%"  class="{{'dfes_incident_no'|sort_class:form.initial}}">
+        <font color="dodgerblue">DFES </font>
+      </th>
+	  <th style="width:15%" class="{{'name'|sort_class:form.initial}}">
+        <font color="dodgerblue">Name </font>
+      </th>
+	  <th style="width:5%" class="headerSort" class="{{'job_code'|sort_class:form.initial}}">
+        <font color="dodgerblue">Job Code </font>
+      </th>
+	  <th style="width:10%"><font color="dodgerblue">Notifications </th>
+	  <th style="width:10%"><font color="dodgerblue">Report </th>
+	  {% if can_maintain_data %}<th style="width:10%"><font color="dodgerblue">Admin </th>{% endif %}
   </thead>
+{% endif %}
   <tbody>
     {% for bushfire in object_list %}
       <tr class="row-vm" data-toggle="myCollapse" data-target="#{{bushfire.id}}">
@@ -203,7 +232,35 @@
 
 <script>
 
-    $("#table").tablesorter();
+{% if not is_paginated %}
+    var sortList = undefined;
+{% if 'fire_number'|sort_class:form.initial == "headerSortDown" %}
+    sortList = [[0,0]]
+{% elif 'fire_number'|sort_class:form.initial == "headerSortUp" %}
+    sortList = [[0,1]]
+{% elif 'dfes_incident_no'|sort_class:form.initial == "headerSortDown" %}
+    sortList = [[1,0]]
+{% elif 'dfes_incident_no'|sort_class:form.initial == "headerSortUp" %}
+    sortList = [[1,1]]
+{% elif 'name'|sort_class:form.initial == "headerSortDown" %}
+    sortList = [[2,0]]
+{% elif 'name'|sort_class:form.initial == "headerSortUp" %}
+    sortList = [[2,1]]
+{% elif 'job_code'|sort_class:form.initial == "headerSortDown" %}
+    sortList = [[3,0]]
+{% elif 'job_code'|sort_class:form.initial == "headerSortUp" %}
+    sortList = [[3,1]]
+{% endif %}
+    $("#table").tablesorter({
+        cssHeader:"headerSort",
+        sortList:sortList,
+        headers:{
+            4:{sorter:false},
+            5:{sorter:false},
+            6:{sorter:false},
+        }
+    });
+{% endif %}
 
     $("[data-toggle=myCollapse]").click(function( ev ) {
       ev.preventDefault();

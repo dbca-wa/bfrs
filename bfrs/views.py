@@ -59,6 +59,16 @@ class BooleanFilter(django_filters.filters.BooleanFilter):
     field_class = forms.BooleanField
 
 
+BUSHFIRE_SORT_MAPPING={
+    "modified":["modified","fire_number"],
+    "-modified":["modified","fire_number"],
+    "-dfes_incident_no":["-dfes_incident_no","fire_number"],
+    "dfes_incident_no":["dfes_incident_no","fire_number"],
+    "name":["name","fire_number"],
+    "-name":["-name","fire_number"],
+    "job_code":["job_code","fire_number"],
+    "-job_code":["-job_code","fire_number"],
+}
 class BushfireFilter(django_filters.FilterSet):
 
     # try/except block hack added here to allow initial migration before the model exists - else migration fails
@@ -114,7 +124,12 @@ class BushfireFilter(django_filters.FilterSet):
 
     def filter_order_by(self,queryset,filter_name,value):
         if value:
-            queryset = queryset.order_by(value)
+            if value[0] == "+":
+                value = value[1:]
+            if value in BUSHFIRE_SORT_MAPPING:
+                queryset = queryset.order_by(*BUSHFIRE_SORT_MAPPING[value])
+            else:
+                queryset = queryset.order_by(value)
 
         return queryset
 
@@ -176,6 +191,13 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
             self._filters = "?{}&".format(filters)
         else:
             self._filters = "?"
+
+        filters_without_order = "&".join(["{}={}".format(k,v) for k,v in data.iteritems() if k in BushfireFilter.Meta.fields if k != "order_by"])
+        if filters_without_order:
+            self._filters_without_order = "?{}&".format(filters_without_order)
+        else:
+            self._filters_without_order = "?"
+
         profile = self.get_initial() # Additional profile Filters must also be added to the JS in bushfire.html- profile_field_list
         if not data.has_key('region'):
             data['region'] = profile['region'].id if profile['region'] else None
@@ -268,10 +290,10 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
 
     def get_context_data(self, **kwargs):
         context = super(BushfireView, self).get_context_data(**kwargs)
-
         # update context with form - filter is already in the context
         context['form'] = BushfireFilterForm(initial=context["filter"].data)
-        context['filters'] = self._filters
+        context['filters'] = "{}{}".format(reverse('main'),self._filters)
+        context['filters_without_order'] = "{}{}".format(reverse('main'),self._filters_without_order)
         context['sss_url'] = settings.SSS_URL
         context['can_maintain_data'] = can_maintain_data(self.request.user)
         context['is_external_user'] = is_external_user(self.request.user)

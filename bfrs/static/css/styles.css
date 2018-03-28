@@ -676,3 +676,11 @@ ul.stat-list {
 .dropdown-menu li {
     list-style-type:none;
 }
+
+.headerSort {
+  background-image: url('../img/sort.gif');
+  cursor: pointer;
+  background-repeat: no-repeat;
+  background-position: center right;
+  padding-right: 16px !important;
+}
