@@ -31,20 +31,20 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880 * 4 # 5.0MB * 4
 EMAIL_HOST = env('EMAIL_HOST', 'email.host')
 EMAIL_PORT = env('EMAIL_PORT', 25)
 FROM_EMAIL = env('FROM_EMAIL', 'from_email')
-PICA_EMAIL = env('PICA_EMAIL', 'pica_email')
-PVS_EMAIL = env('PVS_EMAIL', 'pvs_email')
-FPC_EMAIL = env('FPC_EMAIL', 'fpc_email')
-POLICE_EMAIL = env('POLICE_EMAIL', 'police_email')
-DFES_EMAIL = env('DFES_EMAIL', 'dfes_email')
-FSSDRS_EMAIL = env('FSSDRS_EMAIL', 'fssdrs_email')
-EMAIL_TO_SMS_FROMADDRESS = env('EMAIL_TO_SMS_FROMADDRESS', 'pics_sms_from')
+PICA_EMAIL = env('PICA_EMAIL') or None
+PVS_EMAIL = env('PVS_EMAIL') or None
+FPC_EMAIL = env('FPC_EMAIL') or None
+POLICE_EMAIL = env('POLICE_EMAIL') or None
+DFES_EMAIL = env('DFES_EMAIL') or None
+FSSDRS_EMAIL = env('FSSDRS_EMAIL') or None
+EMAIL_TO_SMS_FROMADDRESS = env('EMAIL_TO_SMS_FROMADDRESS') or None
 SMS_POSTFIX = env('SMS_POSTFIX', 'sms_postfix')
 MEDIA_ALERT_SMS_TOADDRESS_MAP = env('MEDIA_ALERT_SMS_TOADDRESS_MAP', 'pica_sms_to')
-ALLOW_EMAIL_NOTIFICATION = os.environ.get('ALLOW_EMAIL_NOTIFICATION', None) in ["True", "on", "1", "DEBUG"]
+ALLOW_EMAIL_NOTIFICATION = (os.environ.get('ALLOW_EMAIL_NOTIFICATION') or 'false').lower() in ["true", "on", "1", "debug","yes"]
 EMAIL_EXCLUSIONS = env('EMAIL_EXCLUSIONS', [])
-CC_EMAIL = env('CC_EMAIL', None)
-BCC_EMAIL = env('BCC_EMAIL', None)
-SUPPORT_EMAIL = env('SUPPORT_EMAIL', None)
+CC_EMAIL = env('CC_EMAIL') or None
+BCC_EMAIL = env('BCC_EMAIL') or None
+SUPPORT_EMAIL = env('SUPPORT_EMAIL') or None
 
 INTERNAL_EMAIL = env('INTERNAL_EMAIL',['dbca.wa.gov.au','dpaw.wa.gov.au'])
 SSS_URL = env('SSS_URL', 'sss_redirect_url')
@@ -63,15 +63,15 @@ HARVEST_EMAIL_PASSWORD = env('HARVEST_EMAIL_PASSWORD')
 HARVEST_EMAIL_FOLDER = env('HARVEST_EMAIL_FOLDER', 'INBOX')
 
 # Outstanding Fires Report
-GOLDFIELDS_EMAIL = env('GOLDFIELDS_EMAIL', 'goldfields_email')
-KIMBERLEY_EMAIL = env('KIMBERLEY_EMAIL', 'kimberley_email')
-MIDWEST_EMAIL = env('MIDWEST_EMAIL', 'midwest_email')
-PILBARA_EMAIL = env('PILBARA_EMAIL', 'pilbara_email')
-SOUTH_COAST_EMAIL = env('SOUTH_COAST_EMAIL', 'south_coast_email')
-SOUTH_WEST_EMAIL = env('SOUTH_WEST_EMAIL', 'south_west_email')
-SWAN_EMAIL = env('SWAN_EMAIL', 'swan_email')
-WARREN_EMAIL = env('WARREN_EMAIL', 'warren_email')
-WHEATBELT_EMAIL = env('WHEATBELT_EMAIL', 'wheatbelt_email')
+GOLDFIELDS_EMAIL = env('GOLDFIELDS_EMAIL') or None
+KIMBERLEY_EMAIL = env('KIMBERLEY_EMAIL') or None
+MIDWEST_EMAIL = env('MIDWEST_EMAIL') or None
+PILBARA_EMAIL = env('PILBARA_EMAIL') or None
+SOUTH_COAST_EMAIL = env('SOUTH_COAST_EMAIL') or None
+SOUTH_WEST_EMAIL = env('SOUTH_WEST_EMAIL') or None
+SWAN_EMAIL = env('SWAN_EMAIL') or None
+WARREN_EMAIL = env('WARREN_EMAIL') or None
+WHEATBELT_EMAIL = env('WHEATBELT_EMAIL') or None
 OUTSTANDING_FIRES_EMAIL=[ 
     {"Goldfields": GOLDFIELDS_EMAIL}, 
     {"Kimberley": KIMBERLEY_EMAIL},
@@ -96,7 +96,7 @@ SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 #DEBUG = True
-DEBUG = (os.environ.get('DEBUG') or 'false').lower() in ["true", "on", "1", "debug"]
+DEBUG = (os.environ.get('DEBUG') or 'false').lower() in ["true", "on", "1", "yes", "debug"]
 
 ALLOWED_HOSTS = []
 
@@ -300,5 +300,5 @@ if not ENV_TYPE:
     except:
         ENV_TYPE = "TEST"
 ENV_TYPE = ENV_TYPE.upper() if ENV_TYPE else "TEST"
-
+CC_TO_LOGIN_USER = ENV_TYPE != 'PROD' and (os.environ.get('CC_TO_LOGIN_USER') or 'false').lower() in ["true", "on", "1","yes","debug"]
 
