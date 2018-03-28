@@ -142,10 +142,6 @@ def invalidate_bushfire(obj, user,cur_obj=None):
     #get the current object for database if it is None
     cur_obj = cur_obj or Bushfire.objects.get(pk=obj.pk)
 
-    if cur_obj.report_status != Bushfire.STATUS_INITIAL:
-        #bushfire report is submitted, can't invalidate it
-        return (obj,False)
-
     if cur_obj.district == obj.district:
         #district isn't changed, no need to invalidate it
         return (obj,False)
