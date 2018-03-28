@@ -56,17 +56,19 @@ def breadcrumbs_li(links):
 
 _users_group = None
 def users_group():
-    global _users_group
-    if not _users_group:
-        _users_group = Group.objects.get(name='Users')
-    return _users_group
+    return Group.objects.get(name='Users')
+    #global _users_group
+    #if not _users_group:
+    #    _users_group = Group.objects.get(name='Users')
+    #return _users_group
 
 _fssdrs_group = None
 def fssdrs_group():
-    global _fssdrs_group
-    if not _fssdrs_group:
-        _fssdrs_group = Group.objects.get(name='FSS Datasets and Reporting Services')
-    return _fssdrs_group
+    return Group.objects.get(name='FSS Datasets and Reporting Services')
+    #global _fssdrs_group
+    #if not _fssdrs_group:
+    #    _fssdrs_group = Group.objects.get(name='FSS Datasets and Reporting Services')
+    #return _fssdrs_group
 
 def can_maintain_data(user):
     return fssdrs_group() in user.groups.all() and not is_external_user(user)
