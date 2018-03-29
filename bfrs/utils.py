@@ -151,8 +151,6 @@ def invalidate_bushfire(obj, user,cur_obj=None):
         cur_obj.report_status = Bushfire.STATUS_INVALIDATED
         cur_obj.modifier = user
         cur_obj.sss_id = None
-        # link the old invalidate bushfire to the new (valid) bushfire - fwd link
-        cur_obj.valid_bushfire = obj
         cur_obj.save()
 
         # create a new object as a copy of existing
