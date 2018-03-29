@@ -400,6 +400,8 @@ def update_areas_burnt_fs(bushfire, area_burnt_formset):
     Creates the AreaBurnt Model, from the area_burnt_formset
 
     At first object create time, formset values are saved to the newly created bushfire object
+
+    Currently, it is not used in the system, because areas in dpaw tenure are only updated through rest api; and areas outside dpaw tenure are updated directly in views
     """
     deleted_fs_tenure = []
     updated_fs_object = []
@@ -410,7 +412,6 @@ def update_areas_burnt_fs(bushfire, area_burnt_formset):
         area = form.cleaned_data.get('area')
         remove = form.cleaned_data.get('DELETE')
 
-        #if either injury_type or number is null, remove will be set tp True in BaseInjuryFormSet
         if remove:
             if tenure:
                 #this object exists in database, removed by user
