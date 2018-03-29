@@ -361,6 +361,7 @@ def update_areas_burnt(bushfire, tenure_layers):
     """
     Updates AreaBurnt model attached to the bushfire record from api.py, via REST API (Operates on data dict from SSS)
     Uses sss_dict
+    This method just simply delete the existing datas and add the current datas
     """
 
     # aggregate the area's in like tenure types
