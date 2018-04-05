@@ -199,7 +199,7 @@ def invalidate_bushfire(obj, user,cur_obj=None):
         cur_obj.valid_bushfire = obj
         cur_obj.save()
 
-        if obj.report_status != Bushfire.STATUS_INITIAL:
+        if obj.report_status >= Bushfire.STATUS_FINAL_AUTHORISED:
             serialize_bushfire('Final', 'Update District ({} --> {})'.format(cur_obj.district.code, obj.district.code), obj)
 
     return (obj,True)
