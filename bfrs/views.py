@@ -4,6 +4,7 @@ from django.core.urlresolvers import reverse
 from django.views import generic
 from django.views.generic.edit import CreateView, UpdateView, FormView
 from django.forms.formsets import formset_factory
+from django.forms.widgets import CheckboxInput
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -17,8 +18,9 @@ from django.db.models import Q
 from django.contrib.auth.models import User, Group
 from django.http import JsonResponse
 from django.contrib import messages
+from django.utils import timezone
 
-from bfrs.models import (Profile, Bushfire, BushfireSnapshot,
+from bfrs.models import (Profile, Bushfire, BushfireSnapshot,BushfireProperty,
         Region, District,
         Tenure, AreaBurnt,
         SNAPSHOT_INITIAL, SNAPSHOT_FINAL,
@@ -53,44 +55,47 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def reporting_years():
-    """ Returns: [[2016, '2016/2017'], [2017, '2017/2018']] """
-    yrs = list(Bushfire.objects.values_list('reporting_year', flat=True).distinct())
-    return [[yr, '/'.join([str(yr),str(yr+1)])] for yr in yrs]
-
-
-class BooleanFilter(django_filters.filters.Filter):
+class BooleanFilter(django_filters.filters.BooleanFilter):
     field_class = forms.BooleanField
 
 
+BUSHFIRE_SORT_MAPPING={
+    "modified":["modified","fire_number"],
+    "-modified":["modified","fire_number"],
+    "-dfes_incident_no":["-dfes_incident_no","fire_number"],
+    "dfes_incident_no":["dfes_incident_no","fire_number"],
+    "name":["name","fire_number"],
+    "-name":["-name","fire_number"],
+    "job_code":["job_code","fire_number"],
+    "-job_code":["-job_code","fire_number"],
+}
 class BushfireFilter(django_filters.FilterSet):
 
     # try/except block hack added here to allow initial migration before the model exists - else migration fails
     try:
-        YEAR_CHOICES = [[i['year'], i['year']] for i in Bushfire.objects.all().values('year').distinct()]
-        RPT_YEAR_CHOICES = [[i['reporting_year'], i['reporting_year']] for i in Bushfire.objects.all().values('reporting_year').distinct()]
-
-        REGION_CHOICES = []
-        for region in Region.objects.distinct('name'):
-            REGION_CHOICES.append([region.id, region.name])
-
-        DISTRICT_CHOICES = []
-        for district in District.objects.distinct('name'):
-            DISTRICT_CHOICES.append([district.id, district.name])
-
-        region = django_filters.ChoiceFilter(choices=REGION_CHOICES, label='Region')
-        district = django_filters.ChoiceFilter(choices=DISTRICT_CHOICES, label='District')
-        year = django_filters.ChoiceFilter(choices=YEAR_CHOICES, label='Year')
-        reporting_year = django_filters.ChoiceFilter(choices=RPT_YEAR_CHOICES, label='Reporting Year')
-        report_status = django_filters.ChoiceFilter(choices=Bushfire.REPORT_STATUS_CHOICES, label='Report Status', name='report_status', method='filter_report_status')
+        region = django_filters.Filter(name="region",label='Region',lookup_expr="exact")
+        district = django_filters.Filter(name="district",label='District',lookup_expr="exact")
+        year = django_filters.Filter(name="year",label='Year',lookup_expr="exact")
+        reporting_year = django_filters.Filter(name="reporting_year",label='Reporting Year',lookup_expr="exact")
+        report_status = django_filters.Filter(label='Report Status', name='report_status', method='filter_report_status')
         fire_number = django_filters.CharFilter(name='fire_number', label='Search', method='filter_fire_number')
+        include_archived = BooleanFilter(name='include_archived',label='Include archived', method='filter_include_archived')
+        exclude_missing_final_fire_boundary = BooleanFilter(name='exclude_missing_final_fire_boundary',label='Exclude missing final fire boundary', method='filter_exclude_missing_final_fire_boundary')
+
+        order_by = django_filters.Filter(name="order_by",label="Order by",method="filter_order_by")
     except:
         pass
 
     def filter_report_status(self, queryset, name, value):
-        if int(value) == Bushfire.STATUS_MISSING_FINAL:
-            return queryset.filter(report_status__in=[Bushfire.STATUS_INITIAL_AUTHORISED])
-        return queryset.filter(report_status=value)
+        status = int(value)
+        if status == Bushfire.STATUS_MISSING_FINAL:
+            queryset = queryset.filter(report_status__in=[Bushfire.STATUS_INITIAL_AUTHORISED])
+        elif status == -1:
+            queryset = queryset.exclude(report_status=Bushfire.STATUS_INVALIDATED)
+        else:
+            queryset = queryset.filter(report_status=status)
+
+        return queryset
 
     def filter_fire_number(self, queryset, filter_name, value):
         """ 
@@ -106,38 +111,41 @@ class BushfireFilter(django_filters.FilterSet):
         return queryset.filter(Q(fire_number__icontains=value) | Q(name__icontains=value) | Q(dfes_incident_no__icontains=value))
 
 
+    def filter_include_archived(self, queryset, filter_name, value):
+        if not value:
+            queryset = queryset.exclude(archive=True)
+
+        return queryset
+    
+    def filter_exclude_missing_final_fire_boundary(self, queryset, filter_name, value):
+        if value:
+            queryset = queryset.filter(final_fire_boundary=True)
+        return queryset
+
+    def filter_order_by(self,queryset,filter_name,value):
+        if value:
+            if value[0] == "+":
+                value = value[1:]
+            if value in BUSHFIRE_SORT_MAPPING:
+                queryset = queryset.order_by(*BUSHFIRE_SORT_MAPPING[value])
+            else:
+                queryset = queryset.order_by(value)
+
+        return queryset
+
     class Meta:
         model = Bushfire
         fields = [
-            'region_id',
-            'district_id',
+            'region',
+            'district',
             'year',
             'reporting_year',
             'report_status',
             'fire_number',
+            'include_archived',
+            'exclude_missing_final_fire_boundary',
+            'order_by'
         ]
-        order_by = (
-            ('region_id', 'Region'),
-            ('district_id', 'District'),
-            ('year', 'Year'),
-            ('reporting_year', 'Reporting Year'),
-            ('report_status', 'Report Status'),
-            ('fire_number', 'Search'),
-        )
-
-    def __init__(self, *args, **kwargs):
-        super(BushfireFilter, self).__init__(*args, **kwargs)
-
-        try:
-            # allows dynamic update of the filter set, on page refresh
-            self.filters['year'].extra['choices'] = [[None, '---------']] + [[i['year'], str(i['year']) + '/' + str(i['year']+1)] for i in Bushfire.objects.all().values('year').distinct().order_by('year')]
-            self.filters['reporting_year'].extra['choices'] = [[None, '---------']] + [[i['reporting_year'], str(i['reporting_year']) + '/' + str(i['reporting_year']+1)] for i in Bushfire.objects.all().values('reporting_year').distinct().order_by('reporting_year')]
-            if not can_maintain_data(self.request.user):
-                # pop the 'Reviewed' option
-                self.filters['report_status'].extra['choices'] = [(u'', '---------'), (1, 'Initial Fire Report'), (2, 'Notifications Submitted'), (3, 'Report Authorised'), (5, 'Invalidated'), (6, 'Outstanding Fires')]
-        except:
-            pass
-
 
 class ProfileView(LoginRequiredMixin, generic.FormView):
     model = Profile
@@ -174,11 +182,35 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
     template_name = 'bfrs/bushfire.html'
     paginate_by = 50
 
-    def get_queryset(self):
-        if self.request.GET.has_key('report_status') and int(self.request.GET.get('report_status'))==Bushfire.STATUS_INVALIDATED:
-            return super(BushfireView, self).get_queryset()
+    def get_filterset_kwargs(self, filterset_class):
+        kwargs = super(BushfireView,self).get_filterset_kwargs(filterset_class)
+        data = dict(kwargs["data"].iteritems()) if kwargs["data"] else {}
+        kwargs["data"] = data
+        filters = "&".join(["{}={}".format(k,v) for k,v in data.iteritems() if k in BushfireFilter.Meta.fields])
+        if filters:
+            self._filters = "?{}&".format(filters)
+        else:
+            self._filters = "?"
 
-        return Bushfire.objects.exclude(report_status=Bushfire.STATUS_INVALIDATED)
+        filters_without_order = "&".join(["{}={}".format(k,v) for k,v in data.iteritems() if k in BushfireFilter.Meta.fields if k != "order_by"])
+        if filters_without_order:
+            self._filters_without_order = "?{}&".format(filters_without_order)
+        else:
+            self._filters_without_order = "?"
+
+        profile = self.get_initial() # Additional profile Filters must also be added to the JS in bushfire.html- profile_field_list
+        if not data.has_key('region'):
+            data['region'] = profile['region'].id if profile['region'] else None
+            data['district'] = profile['district'].id if profile['district'] else None
+
+        if "include_archived" not in data:
+            data["include_archived"] = False
+
+        if "order_by" not in data:
+            data["order_by"] = '-modified'
+
+        #print "{}".format(data)
+        return kwargs
 
     def get_success_url(self):
         return reverse('main')
@@ -192,51 +224,35 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
         template_initial = 'bfrs/detail.html'
         template_final = 'bfrs/final.html'
         template_snapshot_history = 'bfrs/snapshot_history.html'
-
-        if self.request.GET.has_key('export_to_csv'):
-            report = self.request.GET.get('export_to_csv')
-            if eval(report):
-                qs = self.get_filterset(self.filterset_class).qs
-                return export_final_csv(self.request, qs)
-
-        if self.request.GET.has_key('export_to_excel'):
-            report = self.request.GET.get('export_to_excel')
-            if eval(report):
-                qs = self.get_filterset(self.filterset_class).qs
-                return export_excel(self.request, qs)
-
-        if self.request.GET.has_key('export_excel_outstanding_fires'):
-            report = self.request.GET.get('export_excel_outstanding_fires')
-            if eval(report):
-                # Only Reports that are Submitted, but not yet Authorised
-                qs = self.get_filterset(self.filterset_class).qs.filter(report_status__in=[Bushfire.STATUS_INITIAL_AUTHORISED])
-                return export_outstanding_fires(self.request, self.get_filterset(self.filterset_class).data['region'], qs)
-
-        if self.request.GET.has_key('export_excel_ministerial_report'):
-            report = self.request.GET.get('export_excel_ministerial_report')
-            if eval(report):
-                #return MinisterialReport().export()
-                return BushfireReport().export()
-
-        if self.request.GET.has_key('action'):
-            action = self.request.GET.get('action')
+        action = self.request.GET.get('action') if self.request.GET.has_key('action') else None
+        if action == 'export_to_csv':
+            qs = self.get_filterset(self.filterset_class).qs
+            return export_final_csv(self.request, qs)
+        elif action == 'export_to_excel':
+            qs = self.get_filterset(self.filterset_class).qs
+            return export_excel(self.request, qs)
+        elif action == 'export_excel_outstanding_fires':
+            # Only Reports that are Submitted, but not yet Authorised
+            qs = self.get_filterset(self.filterset_class).qs.filter(report_status__in=[Bushfire.STATUS_INITIAL_AUTHORISED])
+            return export_outstanding_fires(self.request, self.get_filterset(self.filterset_class).data['region'], qs)
+        elif action == 'export_excel_ministerial_report':
+            #return MinisterialReport().export()
+            return BushfireReport().export()
+        elif action == 'snapshot_history':
             bushfire = Bushfire.objects.get(id=self.request.GET.get('bushfire_id'))
-            if action == 'snapshot_history':
-                context = {
-                    'object': bushfire,
-                }
-                return TemplateResponse(request, template_snapshot_history, context=context)
-
-        if self.request.GET.has_key('confirm_action'):
+            context = {
+                'object': bushfire,
+            }
+            return TemplateResponse(request, template_snapshot_history, context=context)
+        elif action is not None:
+            #confirm actions
             bushfire = Bushfire.objects.get(id=self.request.GET.get('bushfire_id'))
-            action = self.request.GET.get('confirm_action')
-
             return TemplateResponse(request, template_confirm, context={'action': action, 'bushfire_id': bushfire.id})
-
-        try:
-            return  super(BushfireView, self).get(request, *args, **kwargs)
-        finally:
-            clear_gokart_session(request)
+        else:
+            try:
+                return  super(BushfireView, self).get(request, *args, **kwargs)
+            finally:
+                clear_gokart_session(request)
             
 
     def post(self, request, *args, **kwargs):
@@ -274,48 +290,15 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
 
     def get_context_data(self, **kwargs):
         context = super(BushfireView, self).get_context_data(**kwargs)
-
-        initial = {} # initial parameter prevents the form from resetting, if the region and district filters had a value set previously
-        profile = self.get_initial() # Additional profile Filters must also be added to the JS in bushfire.html- profile_field_list
-        if self.request.GET.has_key('region'):
-            initial.update({'region': self.request.GET['region']})
-        elif profile['region']:
-            initial.update({'region': profile['region'].id})
-            self.object_list = self.object_list.filter(region=profile['region'])
-
-        if self.request.GET.has_key('district'):
-            initial.update({'district': self.request.GET['district']})
-        elif profile['district']:
-            initial.update({'district': profile['district'].id})
-            self.object_list = self.object_list.filter(district=profile['district'])
-
-        if not self.request.GET.has_key('include_archived'):
-            self.object_list = self.object_list.exclude(archive=True)
-        else:
-            initial.update({'include_archived': self.request.GET.get('include_archived')})
-
-        if self.request.GET.has_key('exclude_missing_final_fire_boundary'):
-            self.object_list = self.object_list.filter(final_fire_boundary=True)
-        initial.update({'exclude_missing_final_fire_boundary': self.request.GET.get('exclude_missing_final_fire_boundary')})
-
-        bushfire_list = self.object_list.order_by('-modified')
-        paginator = Paginator(bushfire_list, self.paginate_by)
-        page = self.request.GET.get('page')
-        try:
-            object_list_paginated = paginator.page(page)
-        except PageNotAnInteger:
-            object_list_paginated = paginator.page(1)
-        except EmptyPage:
-            object_list_paginated = paginator.page(paginator.num_pages)
-
         # update context with form - filter is already in the context
-        context['form'] = BushfireFilterForm(initial=initial)
-        context['object_list'] = object_list_paginated
+        context['form'] = BushfireFilterForm(initial=context["filter"].data)
+        context['filters'] = "{}{}".format(reverse('main'),self._filters)
+        context['filters_without_order'] = "{}{}".format(reverse('main'),self._filters_without_order)
         context['sss_url'] = settings.SSS_URL
         context['can_maintain_data'] = can_maintain_data(self.request.user)
         context['is_external_user'] = is_external_user(self.request.user)
-        if paginator.num_pages == 1: 
-            context['is_paginated'] = False
+        #if context["paginator"].num_pages == 1: 
+        #    context['is_paginated'] = False
 
         referrer = self.request.META.get('HTTP_REFERER')
         if referrer and not ('initial' in referrer or 'final' in referrer or 'create' in referrer):
@@ -400,36 +383,35 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         if self.request.POST.has_key('sss_create'):
             sss = json.loads(self.request.POST.get('sss_create'))
 
-            if sss.has_key('sss_id') and sss['sss_id']:
+            if sss.get('sss_id') :
                 initial['sss_id'] = sss['sss_id']
 
-            if sss.has_key('area') and sss['area'].has_key('total_area') and sss['area'].get('total_area'):
+            if sss.get('area') and sss['area'].get('total_area'):
                 initial_area = round(float(sss['area']['total_area']), 2)
                 initial['initial_area'] = initial_area if initial_area > 0 else 0.01
 
             # NOTE initial area (and area) includes 'Other Area', but recording separately to allow for updates - since this is not always provided, if area is not updated
-            if sss.has_key('area') and sss['area'].has_key('other_area') and sss['area'].get('other_area'):
+            if sss.get('area') and sss['area'].get('other_area'):
                 other_area = round(float(sss['area']['other_area']), 2)
                 initial['other_area'] = other_area if other_area > 0 else 0.01
 
-            if sss.has_key('origin_point') and isinstance(sss['origin_point'], list):
+            if sss.get('origin_point') and isinstance(sss['origin_point'], list):
                 initial['origin_point_str'] = Point(sss['origin_point']).get_coords()
                 initial['origin_point'] = Point(sss['origin_point'])
 
             if sss.has_key('origin_point_mga'):
                 initial['origin_point_mga'] = sss['origin_point_mga']
 
-            if sss.has_key('fire_boundary') and isinstance(sss['fire_boundary'], list):
+            if sss.get('fire_boundary') and isinstance(sss['fire_boundary'], list):
                 initial['fire_boundary'] = MultiPolygon([Polygon(*p) for p in sss['fire_boundary']])
 
             if sss.has_key('fb_validation_req'):
                 initial['fb_validation_req'] = sss['fb_validation_req']
 
-            if sss.has_key('fire_position') and sss.get('fire_position'):
+            if sss.has_key('fire_position'):
                 initial['fire_position'] = sss['fire_position']
 
-            if sss.has_key('tenure_ignition_point') and sss['tenure_ignition_point'] and \
-                sss['tenure_ignition_point'].has_key('category') and sss['tenure_ignition_point']['category']:
+            if sss.get('tenure_ignition_point') and sss['tenure_ignition_point'].get('category'):
                 try:
                     initial['tenure'] = Tenure.objects.get(name__istartswith=sss['tenure_ignition_point']['category'])
                 except:
@@ -437,7 +419,7 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
             else:
                 initial['tenure'] = Tenure.objects.get(name='Other')
 
-            if sss.has_key('region_id') and sss.has_key('district_id') and sss.get('district_id'):
+            if sss.get('region_id') and sss.get('district_id'):
                 initial['region'] = Region.objects.get(id=sss['region_id'])
                 initial['district'] = District.objects.get(id=sss['district_id'])
 
@@ -457,11 +439,15 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
 
     def get_object(self, queryset=None):
         """ Overriding this method to allow UpdateView to both Create new object and Update an existing object"""
-        if self.kwargs.get(self.pk_url_kwarg):
-            return super(BushfireUpdateView, self).get_object(queryset)
-        elif self.request.POST.has_key('bushfire_id') and self.request.POST.get('bushfire_id'):
-            return Bushfire.objects.get(id=self.request.POST.get('bushfire_id'))
-        return None
+        obj = getattr(self,"_object") if hasattr(self,"_object") else None
+        if not obj:
+            if self.kwargs.get(self.pk_url_kwarg):
+                obj = super(BushfireUpdateView, self).get_object(queryset)
+            elif self.request.POST.has_key('bushfire_id') and self.request.POST.get('bushfire_id'):
+                obj = Bushfire.objects.get(id=self.request.POST.get('bushfire_id'))
+            if obj:
+                setattr(self,"_object",obj)
+        return obj
 
     def post(self, request, *args, **kwargs):
         if self.request.POST.has_key('sss_create'):
@@ -530,10 +516,30 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
             self.object.other_tenure = None
         if self.object.dispatch_pw:
             self.object.dispatch_pw = int(self.object.dispatch_pw)
+        plantations = None
+        if not self.get_object():
+            #this is a new bushfire report
+            #set fireboundary_uploaded_by and fireboundary_uploded_date if fireboundary is not null
+            if self.object.fire_boundary:
+                self.object.fireboundary_uploaded_by = request.user
+                self.object.fireboundary_uploaded_date = timezone.now()
+            #get plantations data from sss_data, and remove it from sss_data because it is too big sometimes
+            sss_data = json.loads(self.object.sss_data)
+            if sss_data.has_key("plantations"):
+                plantations = sss_data.pop("plantations")
+                self.object.sss_data = json.dumps(sss_data)
+                
         self.object.save()
 
         if not self.get_object():
+            #this is a new bushfire report, save all the burnt areas from sss
+            #currtenly, burnt area is unavailable for initial bushfire report, so this statement will not save any data, burnt area pushed by sss will be ignored
             areas_burnt_updated = update_areas_burnt_fs(self.object, area_burnt_formset)
+
+        #save plantations data into BushfireProperty
+        if plantations:
+            BushfireProperty.objects.create(bushfire=self.object,name="plantations",value=json.dumps(plantations))
+
         injury_updated = update_injury_fs(self.object, injury_formset)
         damage_updated = update_damage_fs(self.object, damage_formset)
 
@@ -576,8 +582,6 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
                 # update is occuring after report has already been authorised (action is undefined) - ie. it is being Reviewed by FSSDRS
                 serialize_bushfire('final', 'Review', self.object)
 
-        self.object.save()
-
         if self.request.POST.has_key('_save_and_submit'):
             response = authorise_report(self.request, self.object)
             if response:
@@ -598,7 +602,7 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         area_burnt_formset = None
         if self.request.POST.has_key('sss_create'):
             sss = json.loads( self.request.POST['sss_create'] )
-            if sss.has_key('area') and sss['area'].has_key('total_area') and sss['area']['total_area'] > 0:
+            if sss.get('area') and sss['area'].get('total_area') > 0:
                 area_burnt_formset = create_areas_burnt(None, sss['area']['layers'])
 
         if not area_burnt_formset:

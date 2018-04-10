@@ -289,6 +289,50 @@ def to_float(value):
 def check_errors(error_list):
     return any(error_list) if error_list else False
 
+def get_order_by(filters):
+    sort_by = filters.get("order_by")
+    if not sort_by:
+        return (None,None)
+
+    if sort_by[0] == "+":
+        direction = "+"
+        sort_column = sort_by[1:]
+    elif sort_by[0] == "-":
+        direction = "-"
+        sort_column = sort_by[1:]
+    else:
+        direction = "+"
+        sort_column = sort_by
+    return (sort_column,direction)
+
+@register.filter()
+def sort_class(column,filters):
+    sort_column,direction = get_order_by(filters)
+
+    if sort_column is None:
+        return ""
+    elif column == sort_column:
+        if direction == "+":
+            return "headerSortDown"
+        else:
+            return "headerSortUp"
+    else:
+        return ""
+
+@register.filter()
+def toggle_sort(column,filters):
+    sort_column,direction = get_order_by(filters)
+
+    if sort_column is None:
+        return "order_by={}".format(column)
+    elif column == sort_column:
+        if direction == "+":
+            return "order_by=-{}".format(column)
+        else:
+            return "order_by={}".format(column)
+    else:
+        return "order_by={}".format(column)
+
 @register.simple_tag(takes_context=True)
 def _clear_session(context):
     """
@@ -342,7 +386,6 @@ def settings_value(name):
         {% settings_value "LANGUAGE_CODE" %}
     """
     return getattr(settings, name, "")
-
 
 @register.filter
 def test(name):

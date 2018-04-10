@@ -1,0 +1,19 @@
+{% extends "./base_email.html" %}
+
+{% load email_tags %}
+
+{% block email_head %}
+<div>POLICE Email - {{bushfire.fire_number}}</div><br><br>
+{% endblock %}
+
+{% block bushfire_head %}
+<div>Initial Bushfire has been submitted </div>
+<br>
+<br>
+Investigation Required:{{ "investigation_req"|field_value:bushfire }}
+{% endblock %}
+
+
+{% block bushfire_footer %}
+{% endblock %}
+

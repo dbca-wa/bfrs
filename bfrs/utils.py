@@ -1,9 +1,10 @@
 from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
-from bfrs.models import (Bushfire, BushfireSnapshot, District, Region,
+from django.template.loader import render_to_string
+from bfrs.models import (Bushfire, BushfireSnapshot, District, Region,BushfireProperty,
     AreaBurnt, Damage, Injury, Tenure,
     SNAPSHOT_INITIAL, SNAPSHOT_FINAL,
-    DamageSnapshot, InjurySnapshot, AreaBurntSnapshot,
+    DamageSnapshot, InjurySnapshot, AreaBurntSnapshot,BushfirePropertySnapshot,
     SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS, SUBMIT_MANDATORY_FORMSETS,
     AUTH_MANDATORY_FIELDS, AUTH_MANDATORY_FIELDS_FIRE_NOT_FOUND, 
     AUTH_MANDATORY_DEP_FIELDS, AUTH_MANDATORY_DEP_FIELDS_FIRE_NOT_FOUND, AUTH_MANDATORY_FORMSETS,
@@ -53,11 +54,21 @@ def breadcrumbs_li(links):
     crumbs += li_str_last.format(links[-1][1])
     return crumbs
 
+_users_group = None
 def users_group():
     return Group.objects.get(name='Users')
+    #global _users_group
+    #if not _users_group:
+    #    _users_group = Group.objects.get(name='Users')
+    #return _users_group
 
+_fssdrs_group = None
 def fssdrs_group():
     return Group.objects.get(name='FSS Datasets and Reporting Services')
+    #global _fssdrs_group
+    #if not _fssdrs_group:
+    #    _fssdrs_group = Group.objects.get(name='FSS Datasets and Reporting Services')
+    #return _fssdrs_group
 
 def can_maintain_data(user):
     return fssdrs_group() in user.groups.all() and not is_external_user(user)
@@ -83,23 +94,31 @@ def serialize_bushfire(auth_type, action, obj):
     s = BushfireSnapshot.objects.create(snapshot_type=snapshot_type, action=action, bushfire_id=obj.id, **d)
 
     # create the formset snapshots and attach the bushfire_snapshot
+    for i in obj.properties.all():
+        BushfirePropertySnapshot.objects.create(
+            snapshot_id=s.id, snapshot_type=snapshot_type, name=i.name, value=i.value
+        )
+
     for i in obj.damages.all():
-        damage_obj, created = DamageSnapshot.objects.update_or_create(
+        damage_obj = DamageSnapshot.objects.create(
             snapshot_id=s.id, snapshot_type=snapshot_type, damage_type=i.damage_type, number=i.number, creator=obj.modifier, modifier=obj.modifier
         )
 
     for i in obj.injuries.all():
-        injury_obj, created = InjurySnapshot.objects.update_or_create(
+        injury_obj = InjurySnapshot.objects.create(
             snapshot_id=s.id, snapshot_type=snapshot_type, injury_type=i.injury_type, number=i.number, creator=obj.modifier, modifier=obj.modifier
         )
 
     for i in obj.tenures_burnt.all():
-        tenure_burnt_obj, created = AreaBurntSnapshot.objects.update_or_create(
+        tenure_burnt_obj = AreaBurntSnapshot.objects.create(
             snapshot_id=s.id, snapshot_type=snapshot_type, tenure_id=i.tenure_id, area=i.area, creator=obj.modifier, modifier=obj.modifier
         )
 
 def archive_snapshot(auth_type, action, obj):
-        """ allows archicing of existing snapshot before overwriting """
+        """ 
+            allows archicing of existing snapshot before overwriting 
+            currently, can't find any code call this method
+        """
         cur_snapshot_history = obj.snapshot_history.all()
         SnapshotHistory.objects.create(
             creator = obj.modifier,
@@ -111,39 +130,44 @@ def archive_snapshot(auth_type, action, obj):
             bushfire_id = obj.id
         )
 
-def invalidate_bushfire(obj, new_district, user):
-    """ Invalidate the current bushfire, create new bushfire and update links, including historical links """
-    if obj.district == new_district:
-        return None
+def invalidate_bushfire(obj, user,cur_obj=None):
+    """ 
+        Invalidate the current bushfire, create new bushfire report with new fire_number and data in obj and update links, including historical links if the bushfire need to be invalidated
+        return (new bushfire,True) if the current bushfire is invalidated and data is saved into a new report, otherwise return (current bushfire,False) directly
+    """
+    if not obj.pk:
+        #new object, can't invalidate it
+        return (obj,False)
+
+    #get the current object for database if it is None
+    cur_obj = cur_obj or Bushfire.objects.get(pk=obj.pk)
+
+    if cur_obj.district == obj.district:
+        #district isn't changed, no need to invalidate it
+        return (obj,False)
 
     with transaction.atomic():
-        old_rpt_status = obj.report_status
-        old_sss_id = obj.sss_id
-        obj.report_status = Bushfire.STATUS_INVALIDATED
-        obj.modifier = user
-        obj.sss_id = None
-        obj.save()
-        old_obj = deepcopy(obj)
-        old_invalidated = old_obj.bushfire_invalidated.all()
+        #invalidate the current object
+        cur_obj.report_status = Bushfire.STATUS_INVALIDATED
+        cur_obj.modifier = user
+        cur_obj.sss_id = None
+        cur_obj.save()
 
         # create a new object as a copy of existing
         obj.pk = None
 
         # check if we have this district already in the list of invalidated linked bushfires, and re-use fire_number if so
-        invalidated_objs = [invalidated_obj for invalidated_obj in old_invalidated if invalidated_obj.district==new_district]
-        if invalidated_objs and invalidated_objs[0].report_status==Bushfire.STATUS_INVALIDATED:
+        reusable_invalidated_objs = cur_obj.bushfire_invalidated.filter(district=obj.district,report_status=Bushfire.STATUS_INVALIDATED)
+        if reusable_invalidated_objs:
             # re-use previous fire_number
-            linked_bushfire = invalidated_objs[0]
+            linked_bushfire = reusable_invalidated_objs[0]
             obj.fire_number = linked_bushfire.fire_number
             linked_bushfire.delete() # to avoid integrity constraint
         else:
             # create new fire_number
-            obj.fire_number = ' '.join(['BF', str(obj.year), new_district.code, '{0:03d}'.format(obj.next_id(new_district))])
+            obj.fire_number = ' '.join(['BF', str(obj.year), obj.district.code, '{0:03d}'.format(obj.next_id(obj.district))])
 
-        obj.report_status = old_rpt_status
-        obj.sss_id = old_sss_id
-        obj.district = new_district
-        obj.region = new_district.region
+        obj.region = obj.district.region
         obj.valid_bushfire = None
         obj.fire_not_found = False
         obj.save()
@@ -151,14 +175,9 @@ def invalidate_bushfire(obj, new_district, user):
         # link the new bushfire to the old invalidated bushfire
         created = datetime.now(tz=pytz.utc)
 
-        # copy all links from the above invalidated bushfire to the new bushfire
-        if old_invalidated:
-            for linked in old_invalidated:
-                obj.bushfire_invalidated.add(linked)
-
-        # link the old invalidate bushfire to the new (valid) bushfire - fwd link
-        old_obj.valid_bushfire = obj
-        old_obj.save()
+        # move all links from the above invalidated bushfire to the new bushfire
+        for linked in cur_obj.bushfire_invalidated.all():
+            obj.bushfire_invalidated.add(linked)
 
         def copy_fk_records(obj_id, fk_set, create_new=True):
             # create duplicate injury records and associate them with the new object
@@ -168,16 +187,22 @@ def invalidate_bushfire(obj, new_district, user):
                 record.bushfire_id = obj_id 
                 record.save()
 
-        copy_fk_records(obj.id, old_obj.damages)
-        copy_fk_records(obj.id, old_obj.injuries)
-        copy_fk_records(obj.id, old_obj.tenures_burnt)
+        copy_fk_records(obj.id, cur_obj.properties)
+        copy_fk_records(obj.id, cur_obj.damages)
+        copy_fk_records(obj.id, cur_obj.injuries)
+        copy_fk_records(obj.id, cur_obj.tenures_burnt)
 
         # update Bushfire Snapshots to the new bushfire_id and then create a new snapshot
-        copy_fk_records(obj.id, old_obj.snapshots, create_new=False)
-        serialize_bushfire('Final', 'Update District ({} --> {})'.format(old_obj.district.code, obj.district.code), obj)
+        copy_fk_records(obj.id, cur_obj.snapshots, create_new=False)
 
-        return obj
-    return False
+        # link the old invalidate bushfire to the new (valid) bushfire - fwd link
+        cur_obj.valid_bushfire = obj
+        cur_obj.save()
+
+        if obj.report_status >= Bushfire.STATUS_FINAL_AUTHORISED:
+            serialize_bushfire('Final', 'Update District ({} --> {})'.format(cur_obj.district.code, obj.district.code), obj)
+
+    return (obj,True)
 
 def check_district_changed(request, obj, form):
     """
@@ -192,30 +217,35 @@ def check_district_changed(request, obj, form):
         district = District.objects.get(id=request.POST['district']) if request.POST.has_key('district') else None # get the district from the form
         if request.POST.has_key('action') and request.POST.get('action')=='invalidate' and cur_obj.report_status!=Bushfire.STATUS_INVALIDATED:
             obj.invalid_details = request.POST.get('invalid_details')
-            obj.save()
-            obj = invalidate_bushfire(obj, district, request.user)
+            obj.district = district
+            obj.region = district.region
+            obj,saved = invalidate_bushfire(obj, request.user,cur_obj)
+            if not saved:
+                obj.save()
             return HttpResponseRedirect(reverse("home"))
 
-        elif district != cur_obj.district and not request.POST.has_key('fire_not_found'):
-            if cur_obj.fire_not_found and form.is_valid():
+        #elif district != cur_obj.district and not request.POST.has_key('fire_not_found'):
+        elif district != cur_obj.district :
+            #if cur_obj.fire_not_found and form.is_valid():
+            if form.is_valid():
                 # logic below to save object, present to allow final form change from fire_not_found=True --> to fire_not_found=False. Will allow correct fire_number invalidation
                 obj = form.save(commit=False)
                 obj.modifier = request.user
-                obj.region = cur_obj.region # this will allow invalidate_bushfire() to invalidate and create the links as necessary
+                obj.region = cur_obj.region # this will allow invalidate_bushfire() to invalidate and create the links as necessary if user confirms in the confirm page
                 obj.district = cur_obj.district
                 obj.fire_number = cur_obj.fire_number
                 obj.save()
 
-            message = 'District has changed (from {} to {}). This action will invalidate the existing bushfire and create  a new bushfire with the new district, and a new fire number.'.format(
-                cur_obj.district.name,
-                district.name
-            )
-            context={
-                'action': 'invalidate',
-                'district': district.id,
-                'message': message,
-            }
-            return TemplateResponse(request, 'bfrs/confirm.html', context=context)
+                message = 'District has changed (from {} to {}). This action will invalidate the existing bushfire and create  a new bushfire with the new district, and a new fire number.'.format(
+                    cur_obj.district.name,
+                    district.name
+                )
+                context={
+                    'action': 'invalidate',
+                    'district': district.id,
+                    'message': message,
+                }
+                return TemplateResponse(request, 'bfrs/confirm.html', context=context)
 
     return None
 
@@ -294,7 +324,6 @@ def create_areas_burnt(bushfire, tenure_layers):
     Creates the initial bushfire record together with AreaBurnt FormSet from BushfireUpdateView (Operates on data dict from SSS)
     Uses sss_dict - used by get_context_data, to display initial sss_data supplied from SSS system
     """
-
     # aggregate the area's in like tenure types
     aggregated_sums = defaultdict(float)
     for layer in tenure_layers:
@@ -329,25 +358,11 @@ def create_areas_burnt(bushfire, tenure_layers):
 
     return area_burnt_formset
 
-def create_areas_burnt_fs(bushfire):
-    """
-    Currently not used
-    """
-    area_burnt_list = {}
-    [d.update({'tenure': i.tenure, 'area': round(i.area,2)}) for i in bushfire.tenures_burnt.all()]
-
-    AreaBurntFormSet = inlineformset_factory(Bushfire, AreaBurnt, extra=len(area_burnt_list), min_num=0, validate_min=True, exclude=())
-    area_burnt_formset = AreaBurntFormSet(instance=bushfire, prefix='area_burnt_fs')
-    for subform, data in zip(area_burnt_formset.forms, area_burnt_list):
-        subform.initial = data
-
-    return area_burnt_formset
-
-
 def update_areas_burnt(bushfire, tenure_layers):
     """
     Updates AreaBurnt model attached to the bushfire record from api.py, via REST API (Operates on data dict from SSS)
     Uses sss_dict
+    This method just simply delete the existing datas and add the current datas
     """
 
     # aggregate the area's in like tenure types
@@ -386,22 +401,37 @@ def update_areas_burnt_fs(bushfire, area_burnt_formset):
     Creates the AreaBurnt Model, from the area_burnt_formset
 
     At first object create time, formset values are saved to the newly created bushfire object
+
+    Currently, it is not used in the system, because areas in dpaw tenure are only updated through rest api; and areas outside dpaw tenure are updated directly in views
     """
-
-    new_fs_object = []
+    deleted_fs_tenure = []
+    updated_fs_object = []
     for form in area_burnt_formset:
-        if form.is_valid():
-            tenure = form.cleaned_data.get('tenure')
-            area = form.cleaned_data.get('area')
-            remove = form.cleaned_data.get('DELETE')
+        if not hasattr(form,"cleaned_data") or not form.cleaned_data:
+            continue
+        tenure = form.cleaned_data.get('tenure')
+        area = form.cleaned_data.get('area')
+        remove = form.cleaned_data.get('DELETE')
 
-            if not remove and (tenure):
-                new_fs_object.append(AreaBurnt(bushfire=bushfire, tenure=tenure, area=area))
+        if remove:
+            if tenure:
+                #this object exists in database, removed by user
+                deleted_fs_tenure.append(tenure)
+            else:
+                #this object doesn't exist in database,ignore it
+                pass
+        elif form.is_valid():
+            #this is a valid object
+            updated_fs_object.append(AreaBurnt(bushfire=bushfire, tenure=tenure, area=area))
 
     try:
         with transaction.atomic():
-            AreaBurnt.objects.filter(bushfire=bushfire).delete()
-            AreaBurnt.objects.bulk_create(new_fs_object)
+            #delete removed objects
+            if deleted_fs_tenure:
+                AreaBurnt.objects.filter(bushfire=bushfire,tenure__in=deleted_fs_tenure).delete()
+            #update changed objects
+            for obj in updated_fs_object:
+                AreaBurnt.objects.update_or_create(bushfire=obj.bushfire,tenure=obj.tenure,defaults={"area":area})
     except IntegrityError:
         return 0
 
@@ -411,21 +441,57 @@ def update_injury_fs(bushfire, injury_formset):
     if not injury_formset:
         return 1
 
-    new_fs_object = []
-    for form in injury_formset:
-        if form.is_valid():
-            injury_type = form.cleaned_data.get('injury_type')
-            number = form.cleaned_data.get('number')
-            remove = form.cleaned_data.get('DELETE')
+    if bushfire.injury_unknown:
+        #injury unknown, remove all injury objects
+        Injury.objects.filter(bushfire=bushfire).delete()
+        return 1
 
-            if not remove and (injury_type and number):
-                new_fs_object.append(Injury(bushfire=bushfire, injury_type=injury_type, number=number))
+    new_fs_object = []
+    deleted_fs_id = []
+    updated_fs_object = []
+    for form in injury_formset:
+        if not form.cleaned_data:
+            continue
+        remove = form.cleaned_data.get('DELETE')
+        injury_type = form.cleaned_data.get('injury_type')
+        number = form.cleaned_data.get('number')
+        obj = form.cleaned_data.get('id')
+
+        #if either injury_type or number is null, remove will be set tp True in BaseInjuryFormSet
+        if remove:
+            if obj:
+                #this object exists in database, removed by user
+                deleted_fs_id.append(obj.id)
+            else:
+                #this object doesn't exist in database,ignore it
+                pass
+        elif form.is_valid():
+            #this is a valid object
+            if obj:
+                #the object exists in database
+                if obj.injury_type != injury_type or obj.number != number:
+                    #existing object has been changed
+                    obj.injury_type = injury_type
+                    obj.number = number
+                    updated_fs_object.append(obj)
+                else:
+                    #existing object is not changed,ignore 
+                    pass
+            else:
+                #this is a new object, add it
+                new_fs_object.append(Injury(bushfire=bushfire, injury_type=injury_type,number=number))
 
     try:
         with transaction.atomic():
-            Injury.objects.filter(bushfire=bushfire).delete()
-            if not bushfire.injury_unknown:
-                Injury.objects.bulk_create(new_fs_object)
+            #delete removed objects
+            if deleted_fs_id:
+                Injury.objects.filter(id__in=deleted_fs_id).delete()
+            #update changed objects
+            for obj in updated_fs_object:
+                obj.save()
+            #add new objects
+            for obj in new_fs_object:
+                obj.save()
     except IntegrityError:
         return 0
 
@@ -435,62 +501,113 @@ def update_damage_fs(bushfire, damage_formset):
     if not damage_formset:
         return 1
 
-    new_fs_object = []
-    for form in damage_formset:
-        if form.is_valid():
-            damage_type = form.cleaned_data.get('damage_type')
-            number = form.cleaned_data.get('number')
-            remove = form.cleaned_data.get('DELETE')
+    if bushfire.damage_unknown:
+        #damage unknown, remove all damage objects
+        Damage.objects.filter(bushfire=bushfire).delete()
+        return 1
 
-            if not remove and (damage_type and number):
+    new_fs_object = []
+    deleted_fs_id = []
+    updated_fs_object = []
+    for form in damage_formset:
+        if not form.cleaned_data:
+            continue
+        damage_type = form.cleaned_data.get('damage_type')
+        number = form.cleaned_data.get('number')
+        remove = form.cleaned_data.get('DELETE')
+        obj = form.cleaned_data.get('id')
+
+        #if either damage_type or number is null, remove will be set tp True in BaseDamageFormSet
+        if remove:
+            if obj:
+                #this object exists in database, removed by user
+                deleted_fs_id.append(obj.id)
+            else:
+                #this object doesn't exist in database,ignore it
+                pass
+        elif form.is_valid():
+            #this is a valid object
+            if obj:
+                #the object exists in database
+                if obj.damage_type != damage_type or obj.number != number:
+                    #existing object has been changed
+                    obj.damage_type = damage_type
+                    obj.number = number
+                    updated_fs_object.append(obj)
+                else:
+                    #existing object is not changed,ignore 
+                    pass
+            else:
+                #this is a new object, add it
                 new_fs_object.append(Damage(bushfire=bushfire, damage_type=damage_type, number=number))
 
     try:
         with transaction.atomic():
-            Damage.objects.filter(bushfire=bushfire).delete()
-            if not bushfire.damage_unknown:
-                Damage.objects.bulk_create(new_fs_object)
+            #delete removed objects
+            if deleted_fs_id:
+                Damage.objects.filter(id__in=deleted_fs_id).delete()
+            #update changed objects
+            for obj in updated_fs_object:
+                obj.save()
+            #add new objects
+            for obj in new_fs_object:
+                obj.save()
     except IntegrityError:
         return 0
 
     return 1
 
-def mail_url(request, bushfire, status='initial'):
-    if status == 'initial':
-        return "http://" + request.get_host() + reverse('bushfire:initial_snapshot', kwargs={'pk':bushfire.id})
-    if status == 'final':
-        return "http://" + request.get_host() + reverse('bushfire:final_snapshot', kwargs={'pk':bushfire.id})
+def bushfire_urls(request, bushfire):
+    urls = {}
+    if bushfire.report_status >= Bushfire.STATUS_INVALIDATED:
+        return urls
+
+    if bushfire.report_status == Bushfire.STATUS_INITIAL:
+        urls["initial"]=request.build_absolute_uri(reverse('bushfire:bushfire_initial', kwargs={'pk':bushfire.id}))
+    if bushfire.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED:
+        urls["initial_snapshot"]=request.build_absolute_uri(reverse('bushfire:initial_snapshot', kwargs={'pk':bushfire.id}))
+        urls["final"]=request.build_absolute_uri(reverse('bushfire:bushfire_final', kwargs={'pk':bushfire.id}))
+    if bushfire.report_status >= Bushfire.STATUS_FINAL_AUTHORISED:
+        urls["final_snapshot"]=request.build_absolute_uri(reverse('bushfire:final_snapshot', kwargs={'pk':bushfire.id}))
+
+    return urls
 
 
 def update_status(request, bushfire, action):
 
     notification = {}
+    user_email = request.user.email if settings.CC_TO_LOGIN_USER else None
     if action == 'Submit' and bushfire.report_status==Bushfire.STATUS_INITIAL:
         bushfire.init_authorised_by = request.user
         bushfire.init_authorised_date = datetime.now(tz=pytz.utc)
         bushfire.report_status = Bushfire.STATUS_INITIAL_AUTHORISED
         bushfire.save()
         serialize_bushfire('initial', action, bushfire)
+        urls = bushfire_urls(request, bushfire)
 
         # send emails
-        resp = rdo_email(bushfire, mail_url(request, bushfire))
+        if BushfireProperty.objects.filter(bushfire=bushfire,name="plantations").count() > 0:
+            resp = fpc_email(bushfire, urls,user_email)
+            notification['FPC'] = 'Email Sent' if resp else 'Email failed'
+
+        resp = rdo_email(bushfire, urls,user_email)
         notification['RDO'] = 'Email Sent' if resp else 'Email failed'
 
-        resp = dfes_email(bushfire, mail_url(request, bushfire))
+        resp = dfes_email(bushfire, urls,user_email)
         notification['DFES'] = 'Email Sent' if resp else 'Email failed'
 
-        resp = police_email(bushfire, mail_url(request, bushfire))
+        resp = police_email(bushfire, urls,user_email)
         notification['POLICE'] = 'Email Sent' if resp else 'Email failed'
 
         if bushfire.park_trail_impacted:
-            resp = pvs_email(bushfire, mail_url(request, bushfire))
+            resp = pvs_email(bushfire, urls,user_email)
             notification['PVS'] = 'Email Sent' if resp else 'Email failed'
 
-        if bushfire.media_alert_req:
-            resp = pica_email(bushfire, mail_url(request, bushfire))
+        if bushfire.media_alert_req :
+            resp = pica_email(bushfire, urls,user_email)
             notification['PICA'] = 'Email Sent' if resp else 'Email failed'
 
-            resp = pica_sms(bushfire, mail_url(request, bushfire))
+            resp = pica_sms(bushfire, urls)
             notification['PICA SMS'] = 'SMS Sent' if resp else 'SMS failed'
 
         bushfire.area = None # reset bushfire area
@@ -504,8 +621,9 @@ def update_status(request, bushfire, action):
         bushfire.save()
         serialize_bushfire('final', action, bushfire)
 
+        urls = bushfire_urls(request, bushfire)
         # send emails
-        resp = fssdrs_email(bushfire, mail_url(request, bushfire, status='final'), status='final')
+        resp = fssdrs_email(bushfire, urls,user_email, status='final')
         notification['FSSDRS-Auth'] = 'Email Sent' if resp else 'Email failed'
 
         bushfire.save()
@@ -517,8 +635,9 @@ def update_status(request, bushfire, action):
         bushfire.save()
         serialize_bushfire('review', action, bushfire)
 
+        urls = bushfire_urls(request, bushfire)
         # send emails
-        resp = fssdrs_email(bushfire, mail_url(request, bushfire, status='review'), status='review')
+        resp = fssdrs_email(bushfire, urls,user_email, status='review')
         notification['FSSDRS-Auth'] = 'Email Sent' if resp else 'Email failed'
 
         bushfire.save()
@@ -605,202 +724,205 @@ def notifications_to_html(bushfire, url):
 
     return msg
 
-def rdo_email(bushfire, url):
+def addEmailAddress(addresses,user_email):
+    """
+    Add email address to addresses
+    """
+    if user_email:
+        if addresses:
+            if user_email in addresses:
+                return addresses
+            else:
+                result = list(addresses)
+                result.append(user_email)
+                return result
+        else:
+            return [user_email]
+    else:
+        return addresses
+
+def rdo_email(bushfire, urls,user_email):
     if not settings.ALLOW_EMAIL_NOTIFICATION or bushfire.fire_number in settings.EMAIL_EXCLUSIONS:
        return
 
     region_name = bushfire.region.name.upper()
     to_email = getattr(settings, region_name.replace(' ', '_') + '_EMAIL')
     subject = 'RDO Email - {}, Initial Bushfire submitted - {}'.format(region_name, bushfire.fire_number)
-    if 'bfrs-prod' not in os.getcwd():
-        env = os.getcwd().split('-')[1].split('.')[0] # will return either 'dev' or 'uat'
-        subject += ' ({})'.format(env.upper() if env != 'uat' or env != 'dev' else 'Test')
+    if settings.ENV_TYPE != "PROD":
+        subject += ' ({})'.format(settings.ENV_TYPE)
 
-    body = 'RDO Email - {0}, {1}\n\nInitial Bushfire has been submitted and is located at <a href="{2}">{2}</a><br><br>'.format(region_name, bushfire.fire_number, url)
-    body += notifications_to_html(bushfire, url)
+    body = render_to_string("bfrs/email/rdo_email.html",context={"urls":urls,"bushfire":bushfire})
 
-    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=to_email, cc=settings.CC_EMAIL, bcc=settings.BCC_EMAIL)
+    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=to_email, cc=addEmailAddress(settings.CC_EMAIL,user_email), bcc=settings.BCC_EMAIL)
     message.content_subtype = 'html'
     ret = message.send()
 
     if not ret:
         msg = 'Failed to send RDO Email. {}'.format(bushfire.fire_number)
         logger.error(msg)
-        support_email(subject=msg, body=msg)
+        support_email(msg,msg,user_email)
 
     return ret
 
 
-def pvs_email(bushfire, url):
+def pvs_email(bushfire, urls,user_email):
     if not settings.ALLOW_EMAIL_NOTIFICATION or bushfire.fire_number in settings.EMAIL_EXCLUSIONS:
        return
 
     subject = 'PVS Email - Initial Bushfire submitted - {}'.format(bushfire.fire_number)
-    if 'bfrs-prod' not in os.getcwd():
-        env = os.getcwd().split('-')[1].split('.')[0] # will return either 'dev' or 'uat'
-        subject += ' ({})'.format(env.upper() if env != 'uat' or env != 'dev' else 'Test')
+    if settings.ENV_TYPE != "PROD":
+        subject += ' ({})'.format(settings.ENV_TYPE)
 
-    body = 'PVS Email - {0}\n\nInitial Bushfire has been submitted and is located at <a href="{1}">{1}</a><br><br>'.format(bushfire.fire_number, url)
-    body += notifications_to_html(bushfire, url)
+    body = render_to_string("bfrs/email/pvs_email.html",context={"urls":urls,"bushfire":bushfire})
 
-    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.PVS_EMAIL, cc=settings.CC_EMAIL, bcc=settings.BCC_EMAIL)
+    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.PVS_EMAIL, cc=addEmailAddress(settings.CC_EMAIL,user_email), bcc=settings.BCC_EMAIL)
     message.content_subtype = 'html'
     ret = message.send()
 
     if not ret:
         msg = 'Failed to send PVS Email. {}'.format(bushfire.fire_number)
         logger.error(msg)
-        support_email(subject=msg, body=msg)
+        support_email(msg, msg,user_email)
 
     return ret
 
-def fpc_email(bushfire, url):
+def fpc_email(bushfire, urls,user_email):
     if not settings.ALLOW_EMAIL_NOTIFICATION or bushfire.fire_number in settings.EMAIL_EXCLUSIONS:
        return
 
     subject = 'FPC Email - Initial Bushfire submitted - {}'.format(bushfire.fire_number)
-    if 'bfrs-prod' not in os.getcwd():
-        env = os.getcwd().split('-')[1].split('.')[0] # will return either 'dev' or 'uat'
-        subject += ' ({})'.format(env.upper() if env != 'uat' or env != 'dev' else 'Test')
+    if settings.ENV_TYPE != "PROD":
+        subject += ' ({})'.format(settings.ENV_TYPE)
 
-    body = 'FPC Email - {0}\n\nInitial Bushfire has been submitted and is located at <a href="{1}">{1}</a><br><br>'.format(bushfire.fire_number, url)
-    body += notifications_to_html(bushfire, url)
+    body = render_to_string("bfrs/email/fpc_email.html",context={"urls":urls,"bushfire":bushfire})
 
-    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.FPC_EMAIL, cc=settings.CC_EMAIL, bcc=settings.BCC_EMAIL)
+    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.FPC_EMAIL, cc=addEmailAddress(settings.CC_EMAIL,user_email), bcc=settings.BCC_EMAIL)
     message.content_subtype = 'html'
     ret = message.send()
 
     if not ret:
         msg = 'Failed to send FPC Email. {}'.format(bushfire.fire_number)
         logger.error(msg)
-        support_email(subject=msg, body=msg)
+        support_email(msg, msg,user_email)
 
     return ret
 
 
-def pica_email(bushfire, url):
+def pica_email(bushfire, urls,user_email):
     if not settings.ALLOW_EMAIL_NOTIFICATION or bushfire.fire_number in settings.EMAIL_EXCLUSIONS:
        return
 
     subject = 'PICA Email - Initial Bushfire submitted - {}'.format(bushfire.fire_number)
-    if 'bfrs-prod' not in os.getcwd():
-        env = os.getcwd().split('-')[1].split('.')[0] # will return either 'dev' or 'uat'
-        subject += ' ({})'.format(env.upper() if env != 'uat' or env != 'dev' else 'Test')
+    if settings.ENV_TYPE != "PROD":
+        subject += ' ({})'.format(settings.ENV_TYPE)
 
-    body = 'PICA Email - {0}\n\nInitial Bushfire has been submitted and is located at <a href="{1}">{1}</a><br><br>'.format(bushfire.fire_number, url)
-    body += notifications_to_html(bushfire, url)
+    body = render_to_string("bfrs/email/pica_email.html",context={"urls":urls,"bushfire":bushfire})
 
-    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.PICA_EMAIL, cc=settings.CC_EMAIL, bcc=settings.BCC_EMAIL)
+    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.PICA_EMAIL, cc=addEmailAddress(settings.CC_EMAIL,user_email), bcc=settings.BCC_EMAIL)
     message.content_subtype = 'html'
     ret = message.send()
 
     if not ret:
         msg = 'Failed to send PICA Email. {}'.format(bushfire.fire_number)
         logger.error(msg)
-        support_email(subject=msg, body=msg)
+        support_email(msg, msg,user_email)
 
     return ret
 
 
-def pica_sms(bushfire, url):
+def pica_sms(bushfire, urls, user_email):
     if not settings.ALLOW_EMAIL_NOTIFICATION or bushfire.fire_number in settings.EMAIL_EXCLUSIONS:
        return
 
 #    if 'bfrs-prod' not in os.getcwd():
 #       return
 
-    message = 'PICA SMS - {}\n\nInitial Bushfire has been submitted and is located at {}'.format(bushfire.fire_number, url)
+    message = render_to_string("bfrs/email/pica_sms.txt",context={"urls":urls,"bushfire":bushfire})
+    message = message.strip()
     TO_SMS_ADDRESS = [phone_no + '@' + settings.SMS_POSTFIX for phone_no in settings.MEDIA_ALERT_SMS_TOADDRESS_MAP.values()]
     ret = send_mail('', message, settings.EMAIL_TO_SMS_FROMADDRESS, TO_SMS_ADDRESS)
 
     if not ret:
         msg = 'Failed to send PICA SMS. {}'.format(bushfire.fire_number)
         logger.error(msg)
-        support_email(subject=msg, body=msg)
+        support_email(msg, msg,user_email)
 
     return ret
 
 
-def dfes_email(bushfire, url):
+def dfes_email(bushfire, urls,user_email):
     if (not settings.ALLOW_EMAIL_NOTIFICATION or
         bushfire.fire_number in settings.EMAIL_EXCLUSIONS or
         bushfire.dfes_incident_no != ''):
        return
 
     subject = 'DFES Email - Initial Bushfire submitted - {}'.format(bushfire.fire_number)
-    if 'bfrs-prod' not in os.getcwd():
-        env = os.getcwd().split('-')[1].split('.')[0] # will return either 'dev' or 'uat'
-        subject += ' ({})'.format(env.upper() if env != 'uat' or env != 'dev' else 'Test')
+    if settings.ENV_TYPE != "PROD":
+        subject += ' ({})'.format(settings.ENV_TYPE)
 
-    body = '---- PLEASE REPLY AS FOLLOWS: "<span style="color:red;">Incident: ABCDE12345</span>" on a single line without quotes (alphanumeric max. 32 chars) ----<br><br>DFES Email<br><br>Fire Number:{0}<br><br>(Lat/Lon) {1}<br><br>Initial Bushfire has been submitted and is located at <a href="{2}">{2}</a><br><br>'.format(bushfire.fire_number, bushfire.origin_point, url)
-    body += notifications_to_html(bushfire, url)
+    body = render_to_string("bfrs/email/dfes_email.html",context={"urls":urls,"bushfire":bushfire})
 
-    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.DFES_EMAIL, cc=settings.CC_EMAIL, bcc=settings.BCC_EMAIL)
+    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.DFES_EMAIL, cc=addEmailAddress(settings.CC_EMAIL,user_email), bcc=settings.BCC_EMAIL)
     message.content_subtype = 'html'
     ret = message.send()
     
     if not ret:
         msg = 'Failed to send DFES Email. {}'.format(bushfire.fire_number)
         logger.error(msg)
-        support_email(subject=msg, body=msg)
+        support_email(msg, msg,user_email)
         
     return ret
 
-def police_email(bushfire, url):
+def police_email(bushfire, urls,user_email):
     if not settings.ALLOW_EMAIL_NOTIFICATION or bushfire.fire_number in settings.EMAIL_EXCLUSIONS:
        return
 
     subject = 'POLICE Email - Initial Bushfire submitted {}, and an investigation is required - {}'.format(bushfire.fire_number, 'Yes' if bushfire.investigation_req else 'No')
-    if 'bfrs-prod' not in os.getcwd():
-        env = os.getcwd().split('-')[1].split('.')[0] # will return either 'dev' or 'uat'
-        subject += ' ({})'.format(env.upper() if env != 'uat' or env != 'dev' else 'Test')
+    if settings.ENV_TYPE != "PROD":
+        subject += ' ({})'.format(settings.ENV_TYPE)
 
-    body = 'POLICE Email - {0}. Initial Bushfire has been submitted.<br><br>Investigation Required: {1}'.format(
-        bushfire.fire_number, 'Yes' if bushfire.investigation_req else 'No'
-    )
-    body += notifications_to_html(bushfire, None)
+    body = render_to_string("bfrs/email/police_email.html",context={"urls":urls,"bushfire":bushfire})
 
-    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.POLICE_EMAIL, cc=settings.CC_EMAIL, bcc=settings.BCC_EMAIL)
+    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.POLICE_EMAIL, cc=addEmailAddress(settings.CC_EMAIL,user_email), bcc=settings.BCC_EMAIL)
     message.content_subtype = 'html'
     ret = message.send()
     
     if not ret:
         msg = 'Failed to send POLICE Email. {}'.format(bushfire.fire_number)
         logger.error(msg)
-        support_email(subject=msg, body=msg)
+        support_email(msg, msg,user_email)
         
     return ret
 
-def fssdrs_email(bushfire, url, status='final'):
+def fssdrs_email(bushfire, urls,user_email, status='final'):
     if not settings.ALLOW_EMAIL_NOTIFICATION:
        return
 
     subject = 'FSSDRS Email - Final Fire report has been authorised - {}'.format(bushfire.fire_number)
-    if 'bfrs-prod' not in os.getcwd():
-        env = os.getcwd().split('-')[1].split('.')[0] # will return either 'dev' or 'uat'
-        subject += ' ({})'.format(env.upper() if env != 'uat' or env != 'dev' else 'Test')
+    if settings.ENV_TYPE != "PROD":
+        subject += ' ({})'.format(settings.ENV_TYPE)
 
-    body = 'FSSDRS Email - {0}\n\nreport has been authorised. User {1}, at {2}.\n\nThe report is located at <a href="{3}">{3}</a><br><br>'.format(
-        bushfire.fire_number, bushfire.authorised_by, bushfire.authorised_date.astimezone(tz.gettz(settings.TIME_ZONE)).strftime('%Y-%m-%d %H:%M'), url
-    )
-    body += notifications_to_html(bushfire, url)
+    if status == 'final':
+        body = render_to_string("bfrs/email/fssdrs_authorised_email.html",context={"urls":urls,"bushfire":bushfire})
+    else:
+        body = render_to_string("bfrs/email/fssdrs_reviewed_email.html",context={"urls":urls,"bushfire":bushfire})
 
-    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.FSSDRS_EMAIL, cc=settings.CC_EMAIL, bcc=settings.BCC_EMAIL)
+    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.FSSDRS_EMAIL, cc=addEmailAddress(settings.CC_EMAIL,user_email), bcc=settings.BCC_EMAIL)
     message.content_subtype = 'html'
     ret = message.send()
     
     if not ret:
         msg = 'Failed to send FSSDRS Email. {}'.format(bushfire.fire_number)
         logger.error(msg)
-        support_email(subject=msg, body=msg)
+        support_email(msg, msg,user_email)
         
     return ret
 
-def support_email(subject, body):
+def support_email(subject, body,user_email):
     if not settings.SUPPORT_EMAIL:
        return
 
-    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.SUPPORT_EMAIL)
+    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.SUPPORT_EMAIL,cc=[user_email] if user_email else None)
     message.content_subtype = 'html'
     ret = message.send()
     if not ret:

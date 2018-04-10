@@ -1,11 +1,14 @@
 from django.conf.urls import url
 from django.conf import settings
+from django.utils import timezone
+from django.http import JsonResponse
 from tastypie.resources import ModelResource, Resource
 from tastypie.authorization import Authorization, ReadOnlyAuthorization, DjangoAuthorization
 from tastypie.resources import ModelResource, ALL, ALL_WITH_RELATIONS
+from tastypie.utils.mime import determine_format
 from tastypie.api import Api
 from tastypie import fields
-from bfrs.models import Profile, Region, District, Bushfire, Tenure, current_finyear
+from bfrs.models import Profile, Region, District, Bushfire, Tenure, current_finyear,BushfireProperty
 from bfrs.utils import update_areas_burnt, invalidate_bushfire, serialize_bushfire, is_external_user, can_maintain_data
 
 from django.contrib.auth.models import User
@@ -87,6 +90,18 @@ class APIResource(ModelResource):
                 self.wrap_view('field_values'), name="api_field_values"),
         ]
 
+    def determine_format(self, request):
+        """
+        Used to determine the desired format.
+
+        Largely relies on ``tastypie.utils.mime.determine_format`` but here
+        as a point of extension.
+        """
+        if request.GET.get('format'):
+            return determine_format(request, self._meta.serializer, default_format=self._meta.default_format)
+        else:
+            return self._meta.serializer.get_mime_for_format("json")
+
     def field_values(self, request, **kwargs):
         # Get a list of unique values for the field passed in kwargs.
         try:
@@ -102,8 +117,11 @@ class ProfileResource(APIResource):
         queryset = Profile.objects.all()
         resource_name = 'profile'
         authorization= ReadOnlyAuthorization()
+        allowed_methods=[]
+        list_allowed_methods=[]
 
-    def prepend_urls(self):
+    @property
+    def urls(self):
         return [
             url(
                 r"^(?P<resource_name>{})/$".format(self._meta.resource_name),
@@ -126,8 +144,11 @@ class RegionResource(APIResource):
         queryset = Region.objects.all()
         resource_name = 'region'
         authorization= ReadOnlyAuthorization()
+        allowed_methods=[]
+        list_allowed_methods=[]
 
-    def prepend_urls(self):
+    @property
+    def urls(self):
         return [
             url(
                 r"^(?P<resource_name>{})/$".format(self._meta.resource_name),
@@ -145,23 +166,23 @@ class TenureResource(APIResource):
     class Meta:
         queryset = Tenure.objects.all()
         resource_name = 'tenure'
-        authorization= Authorization()
+        authorization= ReadOnlyAuthorization()
         #fields = ['origin_point', 'fire_boundary', 'area', 'fire_position', 'tenure_id']
+        allowed_methods=['get']
+        list_allowed_methods=['get']
 
 
 class BushfireResource(APIResource):
-    """ http://localhost:8000/api/v1/bushfire/?format=json
-        curl --dump-header - -H "Content-Type: application/json" -X PATCH --data '{"origin_point":[11,-12], "area":12347, "fire_boundary": [[[[115.6528663436689,-31.177579372720448],[116.20507608972612,-31.386375097597803],[116.36167288338414,-31.009993330384674],[115.77374807912422,-30.999004081706918],[115.6528663436689,-31.177579372720448]]]]}' http://localhost:8000/api/v1/bushfire/1/?format=json
-    """
-
-    tenure = fields.ToOneField(TenureResource, 'tenure', null=True)
-
     class Meta:
         queryset = Bushfire.objects.all()
         resource_name = 'bushfire'
-        authorization= Authorization()
-        #fields = ['origin_point', 'fire_boundary', 'area', 'fire_position']
-        fields = ['origin_point', 'fire_boundary']
+        authorization= ReadOnlyAuthorization()
+        allowed_methods=[]
+        list_allowed_methods=[]
+
+    @property
+    def urls(self):
+        return self.prepend_urls()
 
     def field_values(self, request, **kwargs):
         # Get a list of unique values for the field passed in kwargs.
@@ -195,118 +216,216 @@ class BushfireResource(APIResource):
 
         return super(BushfireResource, self).field_values(request, **kwargs)
 
+class BushfireSpatialResource(ModelResource):
+    """ http://localhost:8000/api/v1/bushfire/?format=json
+        curl --dump-header - -H "Content-Type: application/json" -X PATCH --data '{"origin_point":[11,-12], "area":12347, "fire_boundary": [[[[115.6528663436689,-31.177579372720448],[116.20507608972612,-31.386375097597803],[116.36167288338414,-31.009993330384674],[115.77374807912422,-30.999004081706918],[115.6528663436689,-31.177579372720448]]]]}' http://localhost:8000/api/v1/bushfire/1/?format=json
+    """
+    class Meta:
+        queryset = Bushfire.objects.all()
+        resource_name = 'bushfirespatial'
+        authorization = Authorization()
+        #fields = ['origin_point', 'fire_boundary', 'area', 'fire_position']
+        fields = ['origin_point', 'fire_boundary','origin_point_mga','fb_validation_req']
+        #using extra fields to process some complex or related fields
+        extra_fields = ['district','area','tenure_ignition_point','fire_position','plantations','sss_data']
+        allowed_methods=['patch']
+        list_allowed_methods=[]
+
+    def hydrate(self, bundle):
+        for field_name in self._meta.extra_fields:
+            m = getattr(self,"hydrate_{}".format(field_name)) if hasattr(self,"hydrate_{}".format(field_name)) else None
+            if m:
+                m(bundle)
+        bundle.obj.modifier = bundle.request.user
+        return super(BushfireSpatialResource,self).hydrate(bundle)
+        
     def hydrate_origin_point(self, bundle):
         """
         Converts the json string format to the one required by tastypie's full_hydrate() method
         converts the string: [11,-12] --> POINT (11 -12)
         """
         if bundle.data.has_key('origin_point') and isinstance(bundle.data['origin_point'], list):
-            bundle.data['origin_point'] = Point(bundle.data['origin_point']).__str__()
+            bundle.data['origin_point'] = Point(bundle.data['origin_point'])
 
-        if bundle.data.has_key('origin_point_mga'):
-            bundle.data['origin_point_mga'] = bundle.data['origin_point_mga']
+        #print("processing origin point,set origin_point to {}".format(bundle.data["origin_point"]))
         return bundle
 
     def hydrate_fire_boundary(self, bundle):
-        if bundle.data.has_key('fire_boundary') and isinstance(bundle.data['fire_boundary'], list):
-            bundle.data['fire_boundary'] = MultiPolygon([Polygon(*p) for p in bundle.data['fire_boundary']]).__str__()
+        if not bundle.data.has_key('fire_boundary'):
+            #fire_boundary is not passed in
+            return
 
-            #if bundle.data.has_key('area') and bundle.data['area'].has_key('total_area') and bundle.data['area']['total_area']:
-            if bundle.data.has_key('area') and bundle.data['area'].has_key('total_area'):
-                bundle.obj.tenures_burnt.all().delete()
+        if bundle.data['fire_boundary'] == None:
+            #bushfire has no fire boundaries
+            bundle.obj.final_fire_boundary = False
+            bundle.obj.fireboundary_uploaded_by = None
+            bundle.obj.fireboundary_uploaded_date = None
+        elif isinstance(bundle.data['fire_boundary'], list):
+            #bushfire has fire boundaries
+            bundle.data['fire_boundary'] = MultiPolygon([Polygon(*p) for p in bundle.data['fire_boundary']])
+            bundle.obj.fireboundary_uploaded_by = bundle.request.user
+            bundle.obj.fireboundary_uploaded_date = timezone.now()
 
             if bundle.obj.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED:
                 bundle.obj.final_fire_boundary = True
+            else:
+                bundle.obj.final_fire_boundary = False
 
             if bundle.obj.is_reviewed:
                 bundle.obj.reviewed_by = None
                 bundle.obj.reviewed_date = None
                 bundle.obj.report_status = Bushfire.STATUS_FINAL_AUTHORISED
-
-        if not ( bundle.data.has_key('fire_boundary') and isinstance(bundle.data['fire_boundary'], (str, unicode)) ):
-            # bundle.data['fire_boundary'] is a string/unicode, therefore spatial data not changed, probably origin has moved only
-            bundle.obj.fire_boundary = None
-            bundle.obj.final_fire_boundary = False
-
-        if bundle.data.has_key('fb_validation_req'):
-            bundle.data['fb_validation_req'] = bundle.data['fb_validation_req']
-
+        #print("processing fire boundary,set fire_boundary to {}".format(bundle.data["fire_boundary"]))
         return bundle
 
-    def obj_update(self, bundle, **kwargs):
+    def hydrate_tenure_ignition_point(self,bundle):
+        if not bundle.data.has_key('tenure_ignition_point'):
+            #tenure_ignition_point is not passed in
+            return
 
-        if bundle.request.GET.has_key('checkpermission') and bundle.request.GET['checkpermission'] == 'true':
-            # Allows SSS to perform permission check
-            if is_external_user(bundle.request.user) or \
-               (not can_maintain_data(bundle.request.user) and bundle.obj.report_status >= Bushfire.STATUS_FINAL_AUTHORISED):
-                raise ImmediateHttpResponse(response=HttpUnauthorized())
-            else:
-                raise ImmediateHttpResponse(response=HttpAccepted())
-
-        # Allows BFRS and SSS to perform update only if permitted
-        if is_external_user(bundle.request.user):
-            return bundle
-
-        if not can_maintain_data(bundle.request.user) and bundle.obj.report_status >= Bushfire.STATUS_FINAL_AUTHORISED:
-            raise ImmediateHttpResponse(response=HttpUnauthorized())
-
-        self.full_hydrate(bundle)
-        #bundle.obj.sss_data = json.dumps(bundle.data)
-        sss_data = bundle.data
-        #import ipdb; ipdb.set_trace()
-        if sss_data.has_key('fire_boundary'):
-            sss_data.pop('fire_boundary')
-        #if sss_data.has_key('area') and sss_data.get('area').has_key('tenure_area'):
-        #    sss_data.get('area').pop('tenure_area') # necessary for the initial create stagei for display in form, since object not yet saved
-        bundle.obj.sss_data = json.dumps(sss_data)
-
-        if bundle.data.has_key('tenure_ignition_point') and bundle.data['tenure_ignition_point'] and \
-            bundle.data['tenure_ignition_point'].has_key('category') and bundle.data['tenure_ignition_point']['category']:
+        if bundle.data['tenure_ignition_point'] and bundle.data['tenure_ignition_point'].get('category'):
+            #origin point is within dpaw_tenure
             try:
                 bundle.obj.tenure = Tenure.objects.get(name__istartswith=bundle.data['tenure_ignition_point']['category'])
             except:
                 bundle.obj.tenure = Tenure.objects.get(name__iendswith='other')
-        elif bundle.data.has_key('tenure_ignition_point') and not bundle.data['tenure_ignition_point']:
+        else:
+            #origin point is not within dpaw_tenure
             bundle.obj.tenure = Tenure.objects.get(name__iendswith='other')
-
-        if bundle.data.has_key('area') and bundle.data['area'].has_key('layers') and bundle.data['area']['layers']:
-            update_areas_burnt(bundle.obj, bundle.data['area']['layers'])
+        #print("processing tenure_ignition_point,set tenure = {}".format(bundle.obj.tenure))
 
 
-        if bundle.data.has_key('area') and bundle.data['area'].has_key('total_area') and bundle.data['area']['total_area']:
+    def hydrate_area(self,bundle):
+        if not bundle.data.has_key('area'):
+            #area is not passed in
+            return
+        #print("processing area")
+
+        if (bundle.data.get('area') or {}).get('total_area') == None:
+            #bushfire has no fire boundary
             if bundle.obj.report_status < Bushfire.STATUS_INITIAL_AUTHORISED:
-                bundle.obj.area_unknown = False
-                initial_area = round(float(bundle.data['area']['total_area']), 2)
-                bundle.obj.initial_area = initial_area if initial_area > 0 else 0.01
+                if bundle.obj.fire_boundary:
+                    #before inital fire report has fire boundary
+                    bundle.obj.initial_area_unknown = False
+                    bundle.obj.initial_area = None
+                    bundle.obj.other_area = None
+                    #print("processing area, set inital_area_unkown to false, inital_area to null,other_area to null for initial report")
+            elif bundle.obj.final_fire_boundary:
+                #before submitted fire report has fire boundary
+                bundle.obj.area_limit = False
+                bundle.obj.area = None
+                bundle.obj.other_area = None
+                #print("processing area, set area_limit to false, area to null,other_area to null for submitted report")
+        else:
+            #bushfire has fire boundary
+            if (bundle.data.get('area') or {}).get('other_area'):
+                bundle.obj.other_area = round(float(bundle.data['area']['other_area']), 2)
+            else:
+                bundle.obj.other_area = 0
+
+            if bundle.obj.report_status < Bushfire.STATUS_INITIAL_AUTHORISED:
+                bundle.obj.initial_area_unknown = False
+                bundle.obj.initial_area = round(float(bundle.data['area']['total_area']), 2)
+                #print("processing area, set inital_area_unkown to false, inital_area to {},other_area to {} for initial report".format(bundle.obj.initial_area,bundle.obj.other_area))
             else:
                 bundle.obj.area_limit = False
-                area = round(float(bundle.data['area']['total_area']), 2)
-                bundle.obj.area = area if area > 0 else 0.01
+                bundle.obj.area = round(float(bundle.data['area']['total_area']), 2)
+                #print("processing area, set area_limit to false, area to {},other_area to {} for submitted report".format(bundle.obj.area,bundle.obj.other_area))
 
-        if bundle.data.has_key('area') and bundle.data['area'].has_key('other_area') and bundle.data['area']['other_area']:
-            other_area = round(float(bundle.data['area']['other_area']), 2)
-            bundle.obj.other_area = other_area if other_area > 0 else 0.01
+    def hydrate_fire_position(self,bundle):
+        if not bundle.data.has_key('fire_position'):
+            #fire_position is not passed in
+            return
+        if bundle.obj.fire_position_override:
+            #user override the fire position, ignore the fire_position 
+            #print("processing fire position, fire position is overriden by user, ignore the new fire position")
+            return
 
-        if bundle.data.has_key('fire_position') and bundle.data['fire_position']:
-            # only update if user has not over-ridden
-            if not bundle.obj.fire_position_override:
-                bundle.obj.fire_position = bundle.data['fire_position']
+        #print("processing fire position, set value to {}".format(bundle.data['fire_position']) )
+        bundle.obj.fire_position = bundle.data['fire_position']
 
-        if bundle.data.has_key('region_id') and bundle.data.has_key('district_id') and bundle.data['region_id'] and bundle.data['district_id']:
-            if bundle.data['district_id'] != bundle.obj.district.id and bundle.obj.report_status == Bushfire.STATUS_INITIAL:
-                district = District.objects.get(id=bundle.data['district_id'])
-                invalidate_bushfire(bundle.obj, district, bundle.request.user)
+
+    def hydrate_district(self,bundle):
+        if not bundle.data.get('region_id') or not bundle.data.get('district_id'):
+            #region_id or district_id is not passed in
+            return
+
+        if bundle.obj.report_status != Bushfire.STATUS_INITIAL:
+            #normal user can't move a submitted bushfire from one district to another district. 
+            #only the user in the group "FSS Datasets and Reporting Services" can do it from bfrs web application
+            return
+
+        bundle.obj.district = District.objects.get(id=bundle.data['district_id'])
+        bundle.obj.region = bundle.obj.district.region
+        #print("processing district, set district to {}".format(bundle.obj.district) )
+
+    def hydrate_sss_data(self,bundle):
+        #print("processing sss data" )
+        sss_data = bundle.data
+        
+        datas = []
+        for key in ["fire_boundary","plantations"]:
+            if sss_data.has_key(key):
+                datas.append((key,sss_data.pop(key)))
+
+        bundle.obj.sss_data = json.dumps(sss_data)
+        for data in datas:
+            sss_data[data[0]] = data[1]
+
+
+    def obj_update(self, bundle, **kwargs):
+        # Allows BFRS and SSS to perform update only if permitted
+        if is_external_user(bundle.request.user):
+            raise ImmediateHttpResponse(response=HttpUnauthorized())
+
+        if not can_maintain_data(bundle.request.user) and bundle.obj.report_status >= Bushfire.STATUS_FINAL_AUTHORISED:
+            raise ImmediateHttpResponse(response=HttpUnauthorized())
+
+        if bundle.request.GET.has_key('checkpermission') and bundle.request.GET['checkpermission'] == 'true':
+            #this is a permission checking request,return directly.
+            raise ImmediateHttpResponse(response=HttpAccepted())
+
+        self.full_hydrate(bundle)
+        #invalidate current bushfire if required.
+        bundle.obj,invalidated = invalidate_bushfire(bundle.obj, bundle.request.user) or (bundle.obj,False)
+
+        if not invalidated:
+            bundle.obj.save()
+
+        if bundle.data.get('area'):
+            #print("Clear tenure burnt data")
+            if bundle.obj.report_status != Bushfire.STATUS_INITIAL and bundle.data['area'].get('layers'):
+                #report is not a initial report, and has area burnt data, save it.
+                #print("Populate new tenure burnt data")
+                update_areas_burnt(bundle.obj, bundle.data['area']['layers'])
+            else:
+                #report is a initial report,or has no area burnt data. clear the existing area burnt data
+                #area burnt data is unavailable for initial report
+                bundle.obj.tenures_burnt.all().delete()
+
+        #save plantations
+        if bundle.data.has_key("plantations"):
+            #need to update plantations
+            if bundle.data.get("plantations"):
+                #has plantation data
+                BushfireProperty.objects.update_or_create(bushfire=bundle.obj,name="plantations",defaults={"value":json.dumps(bundle.data.get("plantations"))})
+            else:
+                #no plantation data,remove the plantations data from table
+                BushfireProperty.objects.filter(bushfire=bundle.obj,name="plantations").delete()
 
         if bundle.obj.report_status >=  Bushfire.STATUS_FINAL_AUTHORISED:
             # if bushfire has been authorised, update snapshot and archive old snapshot
             serialize_bushfire('final', 'SSS Update', bundle.obj)
+            #print("serizlie bushfire")
 
-        bundle.obj.save()
-        return bundle
-
+        if invalidated:
+            raise ImmediateHttpResponse(response=JsonResponse({"id":bundle.obj.id,"fire_number":bundle.obj.fire_number},status=280))
+        else:
+            return bundle
 
 v1_api = Api(api_name='v1')
 v1_api.register(BushfireResource())
+v1_api.register(BushfireSpatialResource())
 v1_api.register(ProfileResource())
 v1_api.register(RegionResource())
 v1_api.register(TenureResource())

@@ -8,6 +8,7 @@ def create_bushfirelist_view():
     from django.db import connection
     cursor = connection.cursor()
     cursor.execute('''
+    DROP VIEW IF EXISTS bfrs_bushfirelist_v;
     CREATE OR REPLACE VIEW bfrs_bushfirelist_v AS
     SELECT b.id,
     b.origin_point,
@@ -37,6 +38,7 @@ def create_bushfirelist_view():
     b.dfes_incident_no,
     b.job_code,
     b.fire_position,
+    b.sss_id,
     CASE WHEN b.fire_position_override IS NULL THEN NULL
          WHEN b.fire_position_override THEN 1
          ELSE 0
@@ -113,15 +115,16 @@ def create_bushfire_view():
     from django.db import connection
     cursor = connection.cursor()
     cursor.execute('''
+    DROP VIEW IF EXISTS bfrs_bushfire_v;
     CREATE OR REPLACE VIEW bfrs_bushfire_v AS
     SELECT b.id,
     b.origin_point,
     b.fb_validation_req,
-    b.created,
-    b.modified,
+    to_char(b.created at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI:SS') as created,
+    to_char(b.modified at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI:SS') as modified,
     b.name,
     b.fire_number,
-    b.year,
+    b.year::text || '/' || (b.year + 1)::text as financial_year,
     b.reporting_year,
     b.prob_fire_level,
     b.max_fire_level,
@@ -156,7 +159,7 @@ def create_bushfire_view():
          ELSE 'No'
     END as fire_not_found,
     b.other_info,
-    b.init_authorised_date,
+    to_char(b.init_authorised_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI:SS') as init_authorised_date,
     CASE WHEN b.dispatch_pw IS NULL THEN ''
          WHEN b.dispatch_pw = 1 THEN 'Yes'
          WHEN b.dispatch_pw = 2 THEN 'No'
@@ -167,15 +170,15 @@ def create_bushfire_view():
          WHEN b.dispatch_aerial THEN 'Yes'
          ELSE 'No'
     END as dispatch_aerial,
-    b.dispatch_pw_date,
-    b.dispatch_aerial_date,
-    b.fire_detected_date,
-    CASE WHEN b.fire_detected_date IS NULL THEN b.created
-         ELSE b.fire_detected_date
+    to_char(b.dispatch_pw_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI:SS') as dispatch_pw_date,
+    to_char(b.dispatch_aerial_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI:SS') as dispatch_aerial_date,
+    to_char(b.fire_detected_date at time zone 'Australia/Perth','DD/MM/YYYY') as fire_detected_date,
+    to_char(b.fire_contained_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI') as fire_contained_date,
+    to_char(b.fire_controlled_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI') as fire_controlled_date,
+    to_char(b.fire_safe_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI') as fire_safe_date,
+    CASE WHEN fire_detected_date IS NULL THEN created
+         ELSE fire_detected_date
     END as fire_detected_or_created,
-    b.fire_contained_date,
-    b.fire_controlled_date,
-    b.fire_safe_date,
     b.other_first_attack,
     b.other_initial_control,
     b.other_final_control,
@@ -198,7 +201,7 @@ def create_bushfire_view():
          WHEN initial_area_unknown THEN 'Yes'
          ELSE 'No'
     END as initial_area_unknown,
-    b.authorised_date,
+    to_char(b.authorised_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI:SS') as authorised_date,
     CASE WHEN b.report_status = 1 THEN 'Initial Fire Report'
          WHEN b.report_status = 2 THEN 'Notifications Submitted'
          WHEN b.report_status = 3 THEN 'Report Authorised'
@@ -228,22 +231,23 @@ def create_bushfire_view():
     WHERE b.archive = false AND b.report_status < {};
     '''.format(Bushfire.STATUS_INVALIDATED))
 
-def create_final_view():
+def create_final_fireboundary_view():
     """
     cursor.execute('''drop view bfrs_bushfire_final_fireboundary_v''')
     """
     from django.db import connection
     cursor = connection.cursor()
     cursor.execute('''
+    DROP VIEW IF EXISTS bfrs_bushfire_final_fireboundary_v;
     CREATE OR REPLACE VIEW bfrs_bushfire_final_fireboundary_v AS
     SELECT b.id,
     b.fire_boundary,
     b.fb_validation_req,
-    b.created,
-    b.modified,
+    to_char(b.created at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI:SS') as created,
+    to_char(b.modified at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI:SS') as modified,
     b.name,
     b.fire_number,
-    b.year,
+    b.year::text || '/' || (b.year + 1)::text as financial_year,
     b.reporting_year,
     b.prob_fire_level,
     b.max_fire_level,
@@ -278,7 +282,7 @@ def create_final_view():
          ELSE 'No'
     END as fire_not_found,
     b.other_info,
-    b.init_authorised_date,
+    to_char(b.init_authorised_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI:SS') as init_authorised_date,
     CASE WHEN b.dispatch_pw IS NULL THEN ''
          WHEN b.dispatch_pw = 1 THEN 'Yes'
          WHEN b.dispatch_pw = 2 THEN 'No'
@@ -289,15 +293,15 @@ def create_final_view():
          WHEN b.dispatch_aerial THEN 'Yes'
          ELSE 'No'
     END as dispatch_aerial,
-    b.dispatch_pw_date,
-    b.dispatch_aerial_date,
-    b.fire_detected_date,
-    CASE WHEN b.fire_detected_date IS NULL THEN b.created
-         ELSE b.fire_detected_date
+    to_char(b.dispatch_pw_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI:SS') as dispatch_pw_date,
+    to_char(b.dispatch_aerial_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI:SS') as dispatch_aerial_date,
+    to_char(b.fire_detected_date at time zone 'Australia/Perth','DD/MM/YYYY') as fire_detected_date,
+    to_char(b.fire_contained_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI') as fire_contained_date,
+    to_char(b.fire_controlled_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI') as fire_controlled_date,
+    to_char(b.fire_safe_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI') as fire_safe_date,
+    CASE WHEN fire_detected_date IS NULL THEN created
+         ELSE fire_detected_date
     END as fire_detected_or_created,
-    b.fire_contained_date,
-    b.fire_controlled_date,
-    b.fire_safe_date,
     b.other_first_attack,
     b.other_initial_control,
     b.other_final_control,
@@ -320,7 +324,7 @@ def create_final_view():
          WHEN initial_area_unknown THEN 'Yes'
          ELSE 'No'
     END as initial_area_unknown,
-    b.authorised_date,
+    to_char(b.authorised_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI:SS') as authorised_date,
     CASE WHEN b.report_status = 1 THEN 'Initial Fire Report'
          WHEN b.report_status = 2 THEN 'Notifications Submitted'
          WHEN b.report_status = 3 THEN 'Report Authorised'
@@ -345,7 +349,8 @@ def create_final_view():
     (SELECT name AS initial_control FROM bfrs_agency WHERE id = b.initial_control_id),
     (SELECT username AS modifier FROM auth_user WHERE id = b.modifier_id),
     (SELECT name AS region FROM bfrs_region WHERE id = b.region_id),
-    (SELECT name AS tenure FROM bfrs_tenure WHERE id = b.tenure_id)
+    (SELECT name AS tenure FROM bfrs_tenure WHERE id = b.tenure_id),
+    (SELECT username AS fireboundary_uploaded_by FROM auth_user WHERE id = b.fireboundary_uploaded_by_id)
     FROM bfrs_bushfire b
     WHERE b.archive = false AND b.report_status >= {} AND b.report_status < {};
     '''.format(Bushfire.STATUS_INITIAL_AUTHORISED, Bushfire.STATUS_INVALIDATED))
@@ -357,15 +362,16 @@ def create_fireboundary_view():
     from django.db import connection
     cursor = connection.cursor()
     cursor.execute('''
+    DROP VIEW IF EXISTS bfrs_bushfire_fireboundary_v;
     CREATE OR REPLACE VIEW bfrs_bushfire_fireboundary_v AS
     SELECT b.id,
     b.fire_boundary,
     b.fb_validation_req,
-    b.created,
-    b.modified,
+    to_char(b.created at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI:SS') as created,
+    to_char(b.modified at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI:SS') as modified,
     b.name,
     b.fire_number,
-    b.year,
+    b.year::text || '/' || (b.year + 1)::text as financial_year,
     b.reporting_year,
     b.prob_fire_level,
     b.max_fire_level,
@@ -400,7 +406,7 @@ def create_fireboundary_view():
          ELSE 'No'
     END as fire_not_found,
     b.other_info,
-    b.init_authorised_date,
+    to_char(b.init_authorised_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI:SS') as init_authorised_date,
     CASE WHEN b.dispatch_pw IS NULL THEN ''
          WHEN b.dispatch_pw = 1 THEN 'Yes'
          WHEN b.dispatch_pw = 2 THEN 'No'
@@ -411,15 +417,15 @@ def create_fireboundary_view():
          WHEN b.dispatch_aerial THEN 'Yes'
          ELSE 'No'
     END as dispatch_aerial,
-    b.dispatch_pw_date,
-    b.dispatch_aerial_date,
-    b.fire_detected_date,
-    CASE WHEN b.fire_detected_date IS NULL THEN b.created
-         ELSE b.fire_detected_date
+    to_char(b.dispatch_pw_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI:SS') as dispatch_pw_date,
+    to_char(b.dispatch_aerial_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI:SS') as dispatch_aerial_date,
+    to_char(b.fire_detected_date at time zone 'Australia/Perth','DD/MM/YYYY') as fire_detected_date,
+    to_char(b.fire_contained_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI') as fire_contained_date,
+    to_char(b.fire_controlled_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI') as fire_controlled_date,
+    to_char(b.fire_safe_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI') as fire_safe_date,
+    CASE WHEN fire_detected_date IS NULL THEN created
+         ELSE fire_detected_date
     END as fire_detected_or_created,
-    b.fire_contained_date,
-    b.fire_controlled_date,
-    b.fire_safe_date,
     b.other_first_attack,
     b.other_initial_control,
     b.other_final_control,
@@ -442,7 +448,7 @@ def create_fireboundary_view():
          WHEN initial_area_unknown THEN 'Yes'
          ELSE 'No'
     END as initial_area_unknown,
-    b.authorised_date,
+    to_char(b.authorised_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI:SS') as authorised_date,
     CASE WHEN b.report_status = 1 THEN 'Initial Fire Report'
          WHEN b.report_status = 2 THEN 'Notifications Submitted'
          WHEN b.report_status = 3 THEN 'Report Authorised'
@@ -467,11 +473,17 @@ def create_fireboundary_view():
     (SELECT name AS initial_control FROM bfrs_agency WHERE id = b.initial_control_id),
     (SELECT username AS modifier FROM auth_user WHERE id = b.modifier_id),
     (SELECT name AS region FROM bfrs_region WHERE id = b.region_id),
-    (SELECT name AS tenure FROM bfrs_tenure WHERE id = b.tenure_id)
+    (SELECT name AS tenure FROM bfrs_tenure WHERE id = b.tenure_id),
+    (SELECT username AS fireboundary_uploaded_by FROM auth_user WHERE id = b.fireboundary_uploaded_by_id)
     FROM bfrs_bushfire b
     WHERE b.archive = false AND b.report_status < {};
     '''.format(Bushfire.STATUS_INVALIDATED))
 
+def create_all_views():
+    create_bushfirelist_view()
+    create_bushfire_view()
+    create_final_fireboundary_view()
+    create_fireboundary_view()
 
 def test_view():
     cursor=connection.cursor()
@@ -488,18 +500,26 @@ def test_fireboundary_view():
     cursor.execute('''select fire_number, year, district_id from bfrs_bushfire_fireboundary_v''')
     return cursor.fetchall()
 
-def drop_view():
+def drop_bushfirelist_view():
     try:
         cursor=connection.cursor()
-        cursor.execute('''drop view bfrs_bushfire_v''')
+        cursor.execute('''drop view if exists bfrs_bushfirelist_v''')
         return cursor.fetchall()
     except:
         pass
 
-def drop_final_view():
+def drop_bushfire_view():
     try:
         cursor=connection.cursor()
-        cursor.execute('''drop view bfrs_bushfire_final_fireboundary_v''')
+        cursor.execute('''drop view if exists bfrs_bushfire_v''')
+        return cursor.fetchall()
+    except:
+        pass
+
+def drop_final_fireboundary_view():
+    try:
+        cursor=connection.cursor()
+        cursor.execute('''drop view if exists bfrs_bushfire_final_fireboundary_v''')
         return cursor.fetchall()
     except:
         pass
@@ -507,10 +527,16 @@ def drop_final_view():
 def drop_fireboundary_view():
     try:
         cursor=connection.cursor()
-        cursor.execute('''drop view bfrs_bushfire_fireboundary_v''')
+        cursor.execute('''drop view if exists bfrs_bushfire_fireboundary_v''')
         return cursor.fetchall()
     except:
         pass
+
+def drop_all_views():
+    drop_bushfirelist_view()
+    drop_bushfire_view()
+    drop_final_fireboundary_view()
+    drop_fireboundary_view()
 
 
 

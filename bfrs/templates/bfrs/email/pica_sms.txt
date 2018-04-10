@@ -1,0 +1,4 @@
+{% load email_tags %}
+PICA SMS - {{bushfire.fire_number}}
+
+Initial Bushfire has been submitted and is located at {{urls.initial_snapshot}}

@@ -1,0 +1,10 @@
+{% extends "./base_email.html" %}
+
+{% load email_tags %}
+
+{% block email_head %}
+<div>
+RDO Email - {{ "region"|field_value:bushfire|upper }}, {{bushfire.fire_number}}
+</div><br><br>
+{% endblock %}
+

@@ -22,20 +22,17 @@
           {% endcomment %}
 
         <!--<form action="" method="get">-->
-		<!--<form id="bushfire_filter" action="#" method="post">{% csrf_token %}-->
+	<form id="bushfire_filter" action="" method="get">
         <table class="table table-bordered table-striped table-condensed">
           <body>
 
             <tr>
               <td class="cbas">
-
-				{% comment %} ANY FILTER ADDED HERE, MUST ALSO BE ADDED IN THE FILTER LIST in BUSHFIRE.HTML JS (JS Function bushfire_filter){% endcomment %}
-
                 <div class="col-sm-2" >
                   <div id="div_id_region" class="form-group"> 
                     <label class="nowrap" for="{{ filter.form.region.id_for_label  }}">Region</label>
                     <div class="controls ">{{ form.region }}</div><br>
-		            <a href="javascript: bushfire_filter();"><button><i class="icon-refresh icon-white"></i> Update</button></a>
+		            <button type="submit"><i class="icon-refresh icon-white"></i> Update</button>
                   </div>
                 </div>
 
@@ -49,7 +46,7 @@
                 <div class="col-sm-2" >
                   <div id="div_id_year" class="form-group"> 
                     <label class="nowrap" for="{{ filter.form.year.id_for_label  }}">Year</label>
-                    <div class="controls ">{{ filter.form.year }}</div>
+                    <div class="controls ">{{ form.year }}</div>
                   </div>
                 </div>
 
@@ -57,7 +54,7 @@
                 <div class="col-sm-2" >
                   <div id="div_id_reporting_year" class="form-group"> 
                     <label class="nowrap" for="{{ filter.form.reporting_year.id_for_label  }}">Reporting Year</label>
-                    <div class="controls ">{{ filter.form.reporting_year }}</div>
+                    <div class="controls ">{{ form.reporting_year }}</div>
                   </div>
                 </div>
                 {% endif %}
@@ -65,7 +62,7 @@
                 <div class="col-sm-2" > 
                   <div id="div_id_report_status" class="form-group"> 
                     <label class="nowrap" for="{{ filter.form.report_status.id_for_label  }}">Report Status</label>
-                    <div class="controls ">{{ filter.form.report_status }}</div>
+                    <div class="controls ">{{ form.report_status }}</div>
                   </div>
                 </div>
 
@@ -80,25 +77,12 @@
                   </div>
                 </div>
 
-
-				{% comment %}
-                <div class="col-sm-2" > 
-                  <div id="div_id_filter_btn" class="form-group"> 
-                    <label class="nowrap"></label><br><br>
-		            <a href="javascript: bushfire_filter();"><button><i class="icon-refresh icon-white"></i> Update</button></a>
-                  </div>
-                </div>
-				{% endcomment %}
-
               </td>
             </tr>
 
           </body>
         </table>
-        <!--</form>-->
-        <!--
-		<a href="javascript: bushfire_filter();"><button><i class="icon-refresh icon-white"></i> Update</button></a>
-        -->
+        </form>
 
       </div>
     </div>

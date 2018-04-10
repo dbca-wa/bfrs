@@ -1,0 +1,17 @@
+{% extends "./base_email.html" %}
+
+{% load email_tags %}
+
+{% block email_head %}
+<div>
+---- PLEASE REPLY AS FOLLOWS: "<span style="color:red;">Incident: ABCDE12345</span>" on a single line without quotes (alphanumeric max. 32 chars) ----
+<br><br>
+DFES Email
+<br><br>
+Fire Number:{{bushfire.fire_number}}
+<br><br>
+(Lat/Lon) {{ "origin_point"|field_value:bushfire}}
+</div><br><br>
+{% endblock %}
+
+
