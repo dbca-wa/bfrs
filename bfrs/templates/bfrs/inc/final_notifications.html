@@ -53,7 +53,7 @@
             <th class="cbas">Fuel and fire behaviour *</th>
                 <td colspan="5" class="cbas" > 
                 {{form.fire_behaviour_unknown}} Unknown
-                <div class="div_fire_behaviour_unknown" style="display: true;">{% include "bfrs/fire_behaviour_fs.html" %}</div>
+                <div class="div_fire_behaviour_unknown" style="display: true;">{% include "bfrs/inc/fire_behaviour_fs.html" %}</div>
             </td>
         </tr>
         {% endcomment %}
@@ -136,15 +136,15 @@
     <tbody>
         <tr>
             <td class="cbas">
-                {% include "bfrs/tenure_veg.html" %}
+                {% include "bfrs/inc/tenure_veg.html" %}
             </td>
             <td class="cbas">
                 {{form.damage_unknown}} No damage to report
-                {% include "bfrs/damage_fs.html" %}
+                {% include "bfrs/inc/damage_fs.html" %}
             </td>
                 <td class="cbas">
                 {{form.injury_unknown}} No injuries/fatalities to report
-                {% include "bfrs/injuries_fs.html" %}
+                {% include "bfrs/inc/injuries_fs.html" %}
             </td>
         </tr>
     </tbody>
