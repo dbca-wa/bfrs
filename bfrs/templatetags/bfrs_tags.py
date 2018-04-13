@@ -401,6 +401,8 @@ def page_background():
         return "background-image:url('/static/img/dev.png')"
     elif settings.ENV_TYPE == "UAT":
         return "background-image:url('/static/img/uat.png')"
+    elif settings.ENV_TYPE == "TEST":
+        return "background-image:url('/static/img/test.png')"
     else:
         return "background-image:url('/static/img/dev.png')"
 
