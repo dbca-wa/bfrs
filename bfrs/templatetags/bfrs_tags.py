@@ -387,6 +387,23 @@ def settings_value(name):
     """
     return getattr(settings, name, "")
 
+@register.simple_tag
+def page_background():
+    """
+    Usage:
+        Set a image as html page's background to indicate the runtime environment (dev or uat)
+    """
+    if settings.ENV_TYPE == "PROD":
+        return ""
+    elif settings.ENV_TYPE == "LOCAL":
+        return "background-image:url('/static/img/local.png')"
+    elif settings.ENV_TYPE == "DEV":
+        return "background-image:url('/static/img/dev.png')"
+    elif settings.ENV_TYPE == "UAT":
+        return "background-image:url('/static/img/uat.png')"
+    else:
+        return "background-image:url('/static/img/dev.png')"
+
 @register.filter
 def test(name):
     import ipdb; ipdb.set_trace()
