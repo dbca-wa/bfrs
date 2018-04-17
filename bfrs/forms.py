@@ -127,6 +127,9 @@ class BushfireFilterForm(forms.ModelForm):
     region and district passed from this form (i.e. region and filter are also declared in the BushfireFilter class)
     """
 
+    YEAR_CHOICES = []
+    RPT_YEAR_CHOICES = []
+    STATUS_CHOICES = []
     try:
         YEAR_CHOICES = [[i['year'], i['year']] for i in Bushfire.objects.all().values('year').distinct()]
         RPT_YEAR_CHOICES = [[i['reporting_year'], i['reporting_year']] for i in Bushfire.objects.all().values('reporting_year').distinct()]
