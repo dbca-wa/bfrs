@@ -1,4 +1,5 @@
 import datetime
+import LatLon
 from dateutil import tz
 
 from django.contrib.auth.models import User
@@ -57,6 +58,26 @@ def field_value(field_name, bushfire=None):
     """
     if bushfire:
         try:
+            if field_name == "origin_point_geo":
+                return bushfire.origin_geo
+            elif field_name == "region":
+                return bushfire.region.name
+            elif field_name == "district":
+                return bushfire.district.name
+            elif field_name == "latitude_degree":
+                return LatLon.Latitude(bushfire.origin_point.get_y()).degree
+            elif field_name == "latitude_minute":
+                return LatLon.Latitude(bushfire.origin_point.get_y()).minute
+            elif field_name == "latitude_second":
+                return LatLon.Latitude(bushfire.origin_point.get_y()).second
+            elif field_name == "longitude_degree":
+                return LatLon.Longitude(bushfire.origin_point.get_x()).degree
+            elif field_name == "longitude_minute":
+                return LatLon.Longitude(bushfire.origin_point.get_x()).minute
+            elif field_name == "longitude_second":
+                return LatLon.Longitude(bushfire.origin_point.get_x()).second
+                
+
             value = getattr(bushfire, FIELD_MAPPING.get(field_name) or field_name)
             if field_name == "dfes_incident_no":
                 return value or "Not available"
@@ -66,12 +87,6 @@ def field_value(field_name, bushfire=None):
                 return "Yes" if value else "No"
             elif field_name == "dispatch_pw":
                 return "Yes" if value == 1 else "No"
-            elif field_name == "origin_point_geo":
-                return bushfire.origin_geo
-            elif field_name == "region":
-                return bushfire.region.name
-            elif field_name == "district":
-                return bushfire.district.name
             elif isinstance(value,datetime.datetime):
                 return value.astimezone(tz.gettz(settings.TIME_ZONE)).strftime('%Y-%m-%d %H:%M')
             else:

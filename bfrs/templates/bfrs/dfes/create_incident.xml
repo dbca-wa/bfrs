@@ -1,0 +1,70 @@
+{% load email_tags %}
+<?xml version="1.0" encoding="UTF-8"?>
+<ext-doc:DetailedCFSInformation 
+    xmlns:ext="http://leitsc-lib/2.0" 
+    xmlns:nc="http://niem.gov/niem/niem-core/2.0" 
+    xmlns:intel="http://niem.gov/niem/domains/intelligence/2.0" 
+    xmlns:s="http://niem.gov/niem/structures/2.0" 
+    xmlns:j="http://niem.gov/niem/domains/jxdm/4.0" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xmlns:scr="http://niem.gov/niem/domains/screening/2.0" 
+    xmlns:ext-doc="http://leitsc-lib/2.0/doc/DetailedCFSInformation" 
+    xsi:schemaLocation="http://leitsc-lib/2.0/doc/DetailedCFSInformation Schema/DetailedCFSInformationDocument.xsd">
+    <ext:Payload>
+        <ext:DataOwnerMetadata>
+            <ext:DataItemID>
+                <nc:IdentificationID>DBCA-{{fire_number}}</nc:IdentificationID>
+            </ext:DataItemID>
+            <nc:OrganizationIdentification>
+                <nc:IdentificationID>FE</nc:IdentificationID>
+            </nc:OrganizationIdentification>
+        </ext:DataOwnerMetadata>
+        <!-- how to populate property 'id' -->
+        <ext:ServiceCall s:id="incident001">
+            <nc:ActivityReasonText>Call for Service Request</nc:ActivityReasonText>
+            <!-- What value should be used here  -->
+            <j:ServiceCallMechanismText>BFRS</j:ServiceCallMechanismText>
+            <ext:ServiceCallAugmentation>
+                <!-- What value should be used here  -->
+                <ext:CallTypeText>Fire</ext:CallTypeText>
+                {% comment "uncomment this if require comment" %}
+                <ext:Comment>
+                    <nc:CommentText>A SINGLE LINE COMMENT</nc:CommentText>
+                </ext:Comment>
+                {% endcomment %}
+            </ext:ServiceCallAugmentation>
+            <ext:ServiceCallAugmentation>
+                <!-- What value should be used here  -->
+                <ext:CallPriority>?</ext:CallPriority>
+            </ext:ServiceCallAugmentation>
+            <nc:ActivityStatus>Initial</nc:ActivityStatus>
+        </ext:ServiceCall>
+        <!-- how to populate property 'id' -->
+        <ext:Location s:id="location001">
+            <nc:LocationDescriptionText>{{fire_position}}</nc:LocationDescriptionText>
+            <nc:LocationTwoDimensionalGeographicCoordinate>
+                <nc:GeographicCoordinateLatitude>
+                    <nc:LatitudeDegreeValue>{{latitude.degree}}</nc:LatitudeDegreeValue>
+                    <nc:LatitudeMinuteValue>{{latitude.minute}}</nc:LatitudeMinuteValue>
+                    <nc:LatitudeSecondValue>{{latitude.second}}</nc:LatitudeSecondValue>
+                </nc:GeographicCoordinateLatitude>
+                <nc:GeographicCoordinateLongitude>
+                    <nc:LongitudeDegreeValue>{{longitude.degree}}</nc:LongitudeDegreeValue>
+                    <nc:LongitudeMinuteValue>{{longitude.minute}}</nc:LongitudeMinuteValue>
+                    <nc:LongitudeSecondValue>{{longitude.second}}</nc:LongitudeSecondValue>
+                </nc:GeographicCoordinateLongitude>
+            </nc:LocationTwoDimensionalGeographicCoordinate>
+        </ext:Location>
+        <j:ActivityLocationAssociation>
+            <nc:ActivityReference s:ref="incident001"/>
+            <nc:LocationReference s:ref="location001"/>
+        </j:ActivityLocationAssociation>
+    </ext:Payload>
+    <ext:ExchangeMetadata>
+        <ext:DataSubmitterMetadata>
+            <nc:OrganizationIdentification>
+               <nc:IdentificationID>DBCA</nc:IdentificationID>
+            </nc:OrganizationIdentification>
+        </ext:DataSubmitterMetadata>
+    </ext:ExchangeMetadata>
+</ext-doc:DetailedCFSInformation>
