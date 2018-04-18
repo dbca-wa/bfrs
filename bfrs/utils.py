@@ -1044,22 +1044,17 @@ def update_email_domain():
             u.save()
 
 def refresh_gokart(request, fire_number=None, region=None, district=None, action=None):
-    request.session['refreshGokart'] = True
-    request.session['region'] = region if region else 'null'
-    request.session['district'] = district if district else 'null'
-    request.session['id'] = fire_number if fire_number else 'null'
-
-    if action:
-        request.session['action'] = action
-    else:
-        request.session['action'] = 'create' if 'create' in request.get_full_path() else 'update'
-
-def clear_gokart_session(request):
-    #request.session['refreshGokart'] = 'null'
-    request.session['region'] = 'null'
-    request.session['district'] = 'null'
-    #request.session['id'] = 'null'
-    #request.session['action'] = 'null'
+    request.session['refreshGokart'] = {
+        'ignoreIfNotOpen':'true',
+        'data':json.dumps({
+            'refresh': True,
+            'region' : region if region else None,
+            'district' : district if district else None,
+            'bushfireid' : fire_number if fire_number else None,
+            'action': action if action else ('create' if 'create' in request.get_full_path() else 'update')
+        })
+    }
+    request.session.modified = True
 
 
 def get_pbs_bushfires(fire_ids=None):

@@ -133,10 +133,7 @@
         gokart.call("open", open_options);
     }
 
-    if ({% clear_session %}) {
-        //console.log('1: object id  + {{request.session.id}}' );
-        gokart.call("open", {"action":"{{request.session.action}}", "region":{{request.session.region}}, "district":{{request.session.district}}, "bushfireid":"{{request.session.id}}", "refresh":true}, true);
-    }
+    {% refresh_gokart %}
 
    /* END - GoKart section */
 

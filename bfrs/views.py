@@ -33,7 +33,7 @@ from bfrs.utils import (breadcrumbs_li,
         export_final_csv, export_excel, 
         update_status, serialize_bushfire,
         rdo_email, pvs_email, fpc_email, pica_email, pica_sms, police_email, dfes_email, fssdrs_email,
-        invalidate_bushfire, is_external_user, can_maintain_data, refresh_gokart, clear_gokart_session, 
+        invalidate_bushfire, is_external_user, can_maintain_data, refresh_gokart,
         authorise_report, check_district_changed,
     )
 from bfrs.reports import BushfireReport, MinisterialReport, export_outstanding_fires 
@@ -249,10 +249,7 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
             bushfire = Bushfire.objects.get(id=self.request.GET.get('bushfire_id'))
             return TemplateResponse(request, template_confirm, context={'action': action, 'bushfire_id': bushfire.id})
         else:
-            try:
-                return  super(BushfireView, self).get(request, *args, **kwargs)
-            finally:
-                clear_gokart_session(request)
+            return  super(BushfireView, self).get(request, *args, **kwargs)
             
 
     def post(self, request, *args, **kwargs):
@@ -302,7 +299,8 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
 
         referrer = self.request.META.get('HTTP_REFERER')
         if referrer and not ('initial' in referrer or 'final' in referrer or 'create' in referrer):
-            refresh_gokart(self.request) #, fire_number="") #, region=None, district=None, action='update')
+            #refresh_gokart(self.request) #, fire_number="") #, region=None, district=None, action='update')
+            pass
         return context
 
 class BushfireInitialSnapshotView(LoginRequiredMixin, generic.DetailView):

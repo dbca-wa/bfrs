@@ -2,6 +2,7 @@ from django import template
 from bfrs.models import Bushfire, Region, District, current_finyear
 from django.contrib.gis.geos import Point, GEOSGeometry
 from django.conf import settings
+from django.utils.html import mark_safe
 import LatLon
 
 register = template.Library()
@@ -334,36 +335,18 @@ def toggle_sort(column,filters):
         return "order_by={}".format(column)
 
 @register.simple_tag(takes_context=True)
-def _clear_session(context):
+def refresh_gokart(context):
     """
     Usage::
-        {% clear_session %}
-    """
-    request = context['request']
-    if request.session.has_key('refreshGokart'): request.session.pop('refreshGokart')
-    if request.session.has_key('region'): request.session.pop('region')
-    if request.session.has_key('district'): request.session.pop('district')
-    if request.session.has_key('id'): request.session.pop('id')
-    if request.session.has_key('action'): request.session.pop('action')
-    request.session.modified = True
-    #return request
-
-@register.simple_tag(takes_context=True)
-def clear_session(context):
-    """
-    Usage::
-        {% clear_session %}
+        {% refresh_gokart %}
     """
     request = context['request']
     if request.session.has_key('refreshGokart'):
-        request.session.pop('refreshGokart')
-        #request.session.pop('region')
-        #request.session.pop('district')
-        #request.session.pop('id')
-        #request.session.pop('action')
-        request.session.modified = True
-        return 'true'
-    return 'false'
+        try:
+            return mark_safe('gokart.call("open", {data}, {ignoreIfNotOpen});'.format(**request.session.pop('refreshGokart')));
+        finally:
+            request.session.modified = True
+    return ''
 
 @register.filter(is_safe=False)
 def enum_name(id, arg=None):
