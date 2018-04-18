@@ -61,7 +61,7 @@ class BooleanFilter(django_filters.filters.BooleanFilter):
 
 BUSHFIRE_SORT_MAPPING={
     "modified":["modified","fire_number"],
-    "-modified":["modified","fire_number"],
+    "-modified":["-modified","fire_number"],
     "-dfes_incident_no":["-dfes_incident_no","fire_number"],
     "dfes_incident_no":["dfes_incident_no","fire_number"],
     "name":["name","fire_number"],
@@ -209,7 +209,6 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
         if "order_by" not in data:
             data["order_by"] = '-modified'
 
-        #print "{}".format(data)
         return kwargs
 
     def get_success_url(self):
