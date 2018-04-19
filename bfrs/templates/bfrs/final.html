@@ -191,7 +191,7 @@
 
       <input type="submit" value="Authorise" class="btn btn-primary btn-success" name="authorise_final" {% if object.report_status >= object.STATUS_FINAL_AUTHORISED %}title="Final Report already authorised on {{object.authorised_date}} by {{object.authorised_by}}" disabled{% elif is_authorised %}disabled{% else %}title="Save and authorise"{% endif %} />
 
-      <a id="id_cancel_btn" href="{% url 'main' %}" class="btn btn-primary btn-danger">Cancel</a>
+      <a id="id_cancel_btn" href="{% main_url %}" class="btn btn-primary btn-danger">Cancel</a>
       </p>
     </div>
   </div>

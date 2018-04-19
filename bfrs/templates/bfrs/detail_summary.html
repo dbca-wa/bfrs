@@ -176,7 +176,7 @@
       {% if final and can_maintain_data %}
           <a id="id_edit_btn" href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Final fire report authorised on {{bushfire.authorised_date|date:'Y-m-d H:i'}} by {{bushfire.authorised_by}}" class="btn btn-primary btn-info">Edit Authorised</a>
       {% endif %}
-      <a id="id_cancel_btn" href="{% url 'main' %}" class="btn btn-primary btn-info">Return</a>
+      <a id="id_cancel_btn" href="{% main_url %}" class="btn btn-primary btn-info">Return</a>
 
       </p>
     </div>

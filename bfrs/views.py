@@ -154,7 +154,10 @@ class ProfileView(LoginRequiredMixin, generic.FormView):
     success_url = 'main'
 
     def get_success_url(self):
-        return reverse('main')
+        if self.request and self.request.session.has_key("lastMainUrl"):
+            return self.request.session["lastMainUrl"]
+        else:
+            return reverse('main')
 
     def get_initial(self):
         profile, created = Profile.objects.get_or_create(user=self.request.user)
@@ -209,10 +212,16 @@ class BushfireView(LoginRequiredMixin, filter_views.FilterView):
         if "order_by" not in data:
             data["order_by"] = '-modified'
 
+        #save the current url as the lastMainUrl which can be used when redirect or return from other pages
+        self.request.session["lastMainUrl"] = self.request.get_full_path()
+
         return kwargs
 
     def get_success_url(self):
-        return reverse('main')
+        if self.request and self.request.session.has_key("lastMainUrl"):
+            return self.request.session["lastMainUrl"]
+        else:
+            return reverse('main')
 
     def get_initial(self):
         profile, created = Profile.objects.get_or_create(user=self.request.user)
@@ -366,7 +375,10 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
         return super(BushfireUpdateView, self).get_template_names()
 
     def get_success_url(self):
-        return reverse("home")
+        if self.request and self.request.session.has_key("lastMainUrl"):
+            return self.request.session["lastMainUrl"]
+        else:
+            return reverse('main')
 
     def get_initial(self):
 

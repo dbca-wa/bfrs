@@ -339,7 +339,7 @@
       {% if form.errors or damage_formset.errors|check_errors or injury_formset.errors|check_errors %}
         <a href="javascript: history.go(-1)" class="btn btn-danger">Cancel</a>
       {% else %}
-        <a id="id_cancel_btn" href="{% url 'main' %}" class="btn btn-primary btn-danger">Cancel</a>
+        <a id="id_cancel_btn" href="{% main_url %}" class="btn btn-primary btn-danger">Cancel</a>
       {% endif %}
 
       </p>

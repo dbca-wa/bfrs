@@ -1,5 +1,6 @@
 import json
 from django import template
+from django.core.urlresolvers import reverse
 from bfrs.models import Bushfire, Region, District, current_finyear
 from django.contrib.gis.geos import Point, GEOSGeometry
 from django.conf import settings
@@ -348,6 +349,18 @@ def refresh_gokart(context):
         return mark_safe('gokart.call("open", {0}, {1});'.format(json.dumps(gokart["data"]),gokart["ignoreIfNotOpen"]));
     else:
         return ''
+
+@register.simple_tag(takes_context=True)
+def main_url(context):
+    """
+    Usage::
+        {% main_url %}
+    """
+    request = context['request']
+    if request.session.has_key('lastMainUrl'):
+        return mark_safe(request.session.get("lastMainUrl"));
+    else:
+        return reverse('main')
 
 @register.filter(is_safe=False)
 def enum_name(id, arg=None):
