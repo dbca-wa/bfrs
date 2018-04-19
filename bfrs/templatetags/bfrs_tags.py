@@ -1,3 +1,4 @@
+import json
 from django import template
 from bfrs.models import Bushfire, Region, District, current_finyear
 from django.contrib.gis.geos import Point, GEOSGeometry
@@ -342,11 +343,11 @@ def refresh_gokart(context):
     """
     request = context['request']
     if request.session.has_key('refreshGokart'):
-        try:
-            return mark_safe('gokart.call("open", {data}, {ignoreIfNotOpen});'.format(**request.session.pop('refreshGokart')));
-        finally:
-            request.session.modified = True
-    return ''
+        gokart = request.session.pop('refreshGokart')
+        request.session.modified = True
+        return mark_safe('gokart.call("open", {0}, {1});'.format(json.dumps(gokart["data"]),gokart["ignoreIfNotOpen"]));
+    else:
+        return ''
 
 @register.filter(is_safe=False)
 def enum_name(id, arg=None):

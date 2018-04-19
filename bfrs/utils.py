@@ -1046,13 +1046,13 @@ def update_email_domain():
 def refresh_gokart(request, fire_number=None, region=None, district=None, action=None):
     request.session['refreshGokart'] = {
         'ignoreIfNotOpen':'true',
-        'data':json.dumps({
+        'data':{
             'refresh': True,
             'region' : region if region else None,
             'district' : district if district else None,
             'bushfireid' : fire_number if fire_number else None,
             'action': action if action else ('create' if 'create' in request.get_full_path() else 'update')
-        })
+        }
     }
     request.session.modified = True
 
