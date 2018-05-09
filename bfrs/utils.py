@@ -607,7 +607,7 @@ def update_status(request, bushfire, action):
             resp = pica_email(bushfire, urls,user_email)
             notification['PICA'] = 'Email Sent' if resp else 'Email failed'
 
-            resp = pica_sms(bushfire, urls)
+            resp = pica_sms(bushfire, urls,user_email)
             notification['PICA SMS'] = 'SMS Sent' if resp else 'SMS failed'
 
         bushfire.area = None # reset bushfire area
