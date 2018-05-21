@@ -171,6 +171,23 @@ class Profile(models.Model):
     def __str__(self):
         return 'username: {}, region: {}, district: {}'.format(self.user.username, self.region, self.district)
 
+@python_2_unicode_compatible
+class CaptureMethod(models.Model):
+    code = models.CharField(max_length=32,unique=True)
+    desc = models.CharField(max_length=128)
+
+    def to_dict(self):
+        """ Returns a dict of regions with their corresponding districts
+        """
+        qs=District.objects.filter(region_id=self.id)
+        return dict(id=self.id, code=self.code, desc=self.desc)
+
+    class Meta:
+        ordering = ['code']
+
+    def __str__(self):
+        return self.code
+
 
 @python_2_unicode_compatible
 class Region(models.Model):
@@ -350,6 +367,9 @@ class BushfireBase(Audit):
 
     fireboundary_uploaded_by = models.ForeignKey(User,editable=False,null=True,blank=True)
     fireboundary_uploaded_date = models.DateTimeField(verbose_name='Date fireboundary uploaded', null=True, blank=True,editable=False)
+
+    capturemethod = models.ForeignKey(CaptureMethod,editable=True,null=True,blank=True)
+    other_capturemethod = models.CharField(verbose_name="Other Capture Methdod", max_length=128, editable=True, null=True, blank=True)
 
     class Meta:
         abstract = True

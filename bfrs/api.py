@@ -8,7 +8,7 @@ from tastypie.resources import ModelResource, ALL, ALL_WITH_RELATIONS
 from tastypie.utils.mime import determine_format
 from tastypie.api import Api
 from tastypie import fields
-from bfrs.models import Profile, Region, District, Bushfire, Tenure, current_finyear,BushfireProperty
+from bfrs.models import Profile, Region, District, Bushfire, Tenure, current_finyear,BushfireProperty,CaptureMethod
 from bfrs.utils import update_areas_burnt, invalidate_bushfire, serialize_bushfire, is_external_user, can_maintain_data
 
 from django.contrib.auth.models import User
@@ -139,6 +139,29 @@ class ProfileResource(APIResource):
             return self.create_response(request, data={'error': str(e)}, response_class=HttpBadRequest)
         return self.create_response(request, data=data)
 
+class CaptureMethodResource(APIResource):
+    class Meta:
+        queryset = CaptureMethod.objects.all()
+        resource_name = 'capturemethod'
+        authorization= ReadOnlyAuthorization()
+        allowed_methods=[]
+        list_allowed_methods=[]
+
+    @property
+    def urls(self):
+        return [
+            url(
+                r"^(?P<resource_name>{})/$".format(self._meta.resource_name),
+                self.wrap_view('field_values'), name="api_field_values"),
+        ]
+
+    def field_values(self, request, **kwargs):
+        try:
+            qs = CaptureMethod.objects.all()
+        except FieldError as e:
+            return self.create_response(request, data={'error': str(e)}, response_class=HttpBadRequest)
+        return self.create_response(request, data=([q.to_dict() for q in qs]))
+
 class RegionResource(APIResource):
     class Meta:
         queryset = Region.objects.all()
@@ -227,7 +250,7 @@ class BushfireSpatialResource(ModelResource):
         #fields = ['origin_point', 'fire_boundary', 'area', 'fire_position']
         fields = ['origin_point', 'fire_boundary','origin_point_mga','fb_validation_req']
         #using extra fields to process some complex or related fields
-        extra_fields = ['district','area','tenure_ignition_point','fire_position','plantations','sss_data']
+        extra_fields = ['district','area','tenure_ignition_point','fire_position','plantations','sss_data','capturemethod','other_capturemethod']
         allowed_methods=['patch']
         list_allowed_methods=[]
 
@@ -332,6 +355,29 @@ class BushfireSpatialResource(ModelResource):
                 bundle.obj.area = round(float(bundle.data['area']['total_area']), 2)
                 #print("processing area, set area_limit to false, area to {},other_area to {} for submitted report".format(bundle.obj.area,bundle.obj.other_area))
 
+    def hydrate_capturemethod(self,bundle):
+        if not bundle.data.has_key('capturemethod'):
+            #capturemethod is not passed in
+            return
+        if bundle.data.get('capturemethod'):
+            bundle.obj.capturemethod = CaptureMethod.objects.get(id=bundle.data.get('capturemethod'))
+        else:
+            bundle.obj.capturemethod = None
+
+    def hydrate_other_capturemethod(self,bundle):
+        if not bundle.data.has_key('other_capturemethod'):
+            #other_capturemethod is not passed in
+            if bundle.data.has_key('capturemethod'):
+                #capturemethod is passed in
+                bundle.obj.other_capturemethod = None
+            else:
+                return
+
+        if bundle.data.get('other_capturemethod'):
+            bundle.obj.other_capturemethod = bundle.data.get('other_capturemethod')
+        else:
+            bundle.obj.other_capturemethod = None
+
     def hydrate_fire_position(self,bundle):
         if not bundle.data.has_key('fire_position'):
             #fire_position is not passed in
@@ -429,3 +475,4 @@ v1_api.register(BushfireSpatialResource())
 v1_api.register(ProfileResource())
 v1_api.register(RegionResource())
 v1_api.register(TenureResource())
+v1_api.register(CaptureMethodResource())

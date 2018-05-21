@@ -395,6 +395,12 @@ class BushfireUpdateView(LoginRequiredMixin, UpdateView):
             if sss.get('sss_id') :
                 initial['sss_id'] = sss['sss_id']
 
+            if sss.get('capturemethod'):
+                initial['capturemethod'] = sss['capturemethod']
+
+            if sss.get('other_capturemethod'):
+                initial['other_capturemethod'] = sss['other_capturemethod']
+
             if sss.get('area') and sss['area'].get('total_area'):
                 initial_area = round(float(sss['area']['total_area']), 2)
                 initial['initial_area'] = initial_area if initial_area > 0 else 0.01
