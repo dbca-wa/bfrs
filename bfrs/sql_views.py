@@ -1,4 +1,4 @@
-from bfrs.models import Bushfire
+from bfrs.models import Bushfire,CaptureMethod
 from django.db import connection
 
 def create_bushfirelist_view():
@@ -337,6 +337,13 @@ def create_final_fireboundary_view():
          WHEN b.archive THEN 'Yes'
          ELSE 'No'
     END as archive,
+    CASE WHEN m.code IS NULL THEN ''
+         ELSE m.code
+    END as capt_meth,
+    CASE WHEN m.code IS NULL THEN ''
+         WHEN m.code = '{2}' THEN b.other_capturemethod
+         ELSE m.desc
+    END as capt_desc,
     (SELECT username AS authorised_by FROM auth_user WHERE id = b.authorised_by_id),
     (SELECT name AS cause FROM bfrs_cause WHERE id = b.cause_id),
     (SELECT username AS creator FROM auth_user WHERE id = b.creator_id),
@@ -351,9 +358,9 @@ def create_final_fireboundary_view():
     (SELECT name AS region FROM bfrs_region WHERE id = b.region_id),
     (SELECT name AS tenure FROM bfrs_tenure WHERE id = b.tenure_id),
     (SELECT username AS fireboundary_uploaded_by FROM auth_user WHERE id = b.fireboundary_uploaded_by_id)
-    FROM bfrs_bushfire b
-    WHERE b.archive = false AND b.report_status >= {} AND b.report_status < {};
-    '''.format(Bushfire.STATUS_INITIAL_AUTHORISED, Bushfire.STATUS_INVALIDATED))
+    FROM bfrs_bushfire b LEFT JOIN bfrs_capturemethod m on b.capturemethod_id = m.id
+    WHERE b.archive = false AND b.report_status >= {0} AND b.report_status < {1};
+    '''.format(Bushfire.STATUS_INITIAL_AUTHORISED, Bushfire.STATUS_INVALIDATED,CaptureMethod.OTHER_CODE))
 
 def create_fireboundary_view():
     """
@@ -461,6 +468,13 @@ def create_fireboundary_view():
          WHEN b.archive THEN 'Yes'
          ELSE 'No'
     END as archive,
+    CASE WHEN m.code IS NULL THEN ''
+         ELSE m.code
+    END as capt_meth,
+    CASE WHEN m.code IS NULL THEN ''
+         WHEN m.code = '{1}' THEN b.other_capturemethod
+         ELSE m.desc
+    END as capt_desc,
     (SELECT username AS authorised_by FROM auth_user WHERE id = b.authorised_by_id),
     (SELECT name AS cause FROM bfrs_cause WHERE id = b.cause_id),
     (SELECT username AS creator FROM auth_user WHERE id = b.creator_id),
@@ -475,9 +489,9 @@ def create_fireboundary_view():
     (SELECT name AS region FROM bfrs_region WHERE id = b.region_id),
     (SELECT name AS tenure FROM bfrs_tenure WHERE id = b.tenure_id),
     (SELECT username AS fireboundary_uploaded_by FROM auth_user WHERE id = b.fireboundary_uploaded_by_id)
-    FROM bfrs_bushfire b
-    WHERE b.archive = false AND b.report_status < {};
-    '''.format(Bushfire.STATUS_INVALIDATED))
+    FROM bfrs_bushfire b LEFT JOIN bfrs_capturemethod m on b.capturemethod_id = m.id
+    WHERE b.archive = false AND b.report_status < {0};
+    '''.format(Bushfire.STATUS_INVALIDATED,CaptureMethod.OTHER_CODE))
 
 def create_all_views():
     create_bushfirelist_view()

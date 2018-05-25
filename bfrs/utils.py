@@ -117,7 +117,7 @@ def serialize_bushfire(auth_type, action, obj):
 def archive_snapshot(auth_type, action, obj):
         """ 
             allows archicing of existing snapshot before overwriting 
-            currently, can't find any code call this method
+            currently, can't find any code which call this method
         """
         cur_snapshot_history = obj.snapshot_history.all()
         SnapshotHistory.objects.create(
@@ -250,73 +250,18 @@ def check_district_changed(request, obj, form):
     return None
 
 
-def authorise_report(request, obj):
-    """ Sets the
-        1. initial report to 'Submitted' status, or
-        2. final report to 'Authorisd' status
+def get_missing_mandatory_fields(obj,action):
+    """ 
+    Return the missing mandatory fields for report to perfrom the 'action'
+    if no missing mandatory fields, return None
     """
-    template_summary = 'bfrs/detail_summary.html'
-    template_mandatory_fields = 'bfrs/mandatory_fields.html'
-    context = {
-        'is_authorised': True,
-        'object': obj,
-        'snapshot': obj,
-        'damages': obj.damages,
-        'injuries': obj.injuries,
-        'tenures_burnt': obj.tenures_burnt.order_by('id'),
-    }
+    if action == 'submit':
+        return check_mandatory_fields(obj, SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS, SUBMIT_MANDATORY_FORMSETS) or None
 
-    if request.POST.has_key('submit_initial') or request.POST.has_key('_save_and_submit'):
-        action = request.POST.get('submit_initial') if request.POST.has_key('submit_initial') else request.POST.get('_save_and_submit')
-        if action == 'Submit':
-            context['action'] = action
-            context['initial'] = True
-            context['mandatory_fields'] = check_mandatory_fields(obj, SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS, SUBMIT_MANDATORY_FORMSETS)
-
-            if context['mandatory_fields']:
-                return TemplateResponse(request, template_mandatory_fields, context=context)
-
-            return TemplateResponse(request, template_summary, context=context)
-
-    elif request.POST.has_key('authorise_final'):
-        action = request.POST.get('authorise_final')
-        if action == 'Authorise':
-            context['action'] = action
-            context['final'] = True
-            fields = AUTH_MANDATORY_FIELDS_FIRE_NOT_FOUND if obj.fire_not_found else AUTH_MANDATORY_FIELDS
-            dep_fields = AUTH_MANDATORY_DEP_FIELDS_FIRE_NOT_FOUND if obj.fire_not_found else AUTH_MANDATORY_DEP_FIELDS
-            context['mandatory_fields'] = check_mandatory_fields(obj, fields, dep_fields, AUTH_MANDATORY_FORMSETS)
-
-            if context['mandatory_fields']:
-                return TemplateResponse(request, template_mandatory_fields, context=context)
-
-            return TemplateResponse(request, template_summary, context=context)
-
-    elif request.POST.has_key('_save') and obj.is_final_authorised:
-        # the '_save' component will ensure all mandatory fields are (still) completed if FSSDRS group attempt to re-save after obj has already been final authorised
-        action = request.POST.get('_save')
-        if action == 'Authorise' or action == 'Save final':
-            context['action'] = action
-            context['final'] = True
-
-            context['mandatory_fields'] = check_mandatory_fields(obj, SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS, SUBMIT_MANDATORY_FORMSETS)
-            fields = AUTH_MANDATORY_FIELDS_FIRE_NOT_FOUND if obj.fire_not_found else AUTH_MANDATORY_FIELDS
-            dep_fields = AUTH_MANDATORY_DEP_FIELDS_FIRE_NOT_FOUND if obj.fire_not_found else AUTH_MANDATORY_DEP_FIELDS
-            context['mandatory_fields'] = context['mandatory_fields'] + check_mandatory_fields(obj, fields, dep_fields, AUTH_MANDATORY_FORMSETS)
-
-            if not obj.fire_not_found and context['mandatory_fields']:
-                logger.info('Delete Authorisation - FSSDRS user {} attempted to save an already Authorised/Reviewed report {}, with missing fields\n{}'.format(
-                    request.user.get_full_name(), obj.fire_number, context['mandatory_fields']
-                ))
-                update_status(request, obj, 'delete_authorisation_(missing_fields_-_FSSDRS)')
-                return HttpResponseRedirect(reverse("home"))
-
-            elif context['mandatory_fields']:
-                return TemplateResponse(request, template_mandatory_fields, context=context)
-
-            serialize_bushfire('Final', 'Post Authorised Update', obj)
-            return HttpResponseRedirect(reverse("home"))
-
+    elif action in ['save_final','save_reviewed','authorise']:
+        fields = AUTH_MANDATORY_FIELDS_FIRE_NOT_FOUND if obj.fire_not_found else AUTH_MANDATORY_FIELDS
+        dep_fields = AUTH_MANDATORY_DEP_FIELDS_FIRE_NOT_FOUND if obj.fire_not_found else AUTH_MANDATORY_DEP_FIELDS
+        return (check_mandatory_fields(obj, SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS, SUBMIT_MANDATORY_FORMSETS) + check_mandatory_fields(obj, fields, dep_fields, AUTH_MANDATORY_FORMSETS)) or None
     return None
 
 def create_areas_burnt(bushfire, tenure_layers):
@@ -577,7 +522,14 @@ def update_status(request, bushfire, action):
 
     notification = {}
     user_email = request.user.email if settings.CC_TO_LOGIN_USER else None
-    if action == 'Submit' and bushfire.report_status==Bushfire.STATUS_INITIAL:
+    if action == 'submit':
+        if bushfire.report_status >= Bushfire.STATUS_INVALIDATED:
+            #bushfire report is in an invalidated status, can't be submitted
+            raise Exception("Can't submit the '{1}' report({0}) ".format(bushfire.fire_number,bushfire.report_status_name))
+        elif bushfire.report_status > Bushfire.STATUS_INITIAL:
+            #bushfire report is already submiited
+            raise Exception("Report({0}) is already submitted".format(bushfire.fire_number))
+            
         bushfire.init_authorised_by = request.user
         bushfire.init_authorised_date = datetime.now(tz=pytz.utc)
         bushfire.report_status = Bushfire.STATUS_INITIAL_AUTHORISED
@@ -614,7 +566,14 @@ def update_status(request, bushfire, action):
         bushfire.final_fire_boundary = False # used to check if final boundary is updated in Final Report template - allows to toggle show()/hide() area_limit widget via js
         bushfire.save()
 
-    elif action == 'Authorise' and bushfire.report_status==Bushfire.STATUS_INITIAL_AUTHORISED:
+    elif action == 'authorise':
+        if bushfire.report_status >= Bushfire.STATUS_INVALIDATED:
+            #bushfire report is in an invalidated status, can't be submitted
+            raise Exception("Can't authorise the '{1}' report({0}) ".format(bushfire.fire_number,bushfire.report_status_name))
+        elif bushfire.report_status > Bushfire.STATUS_INITIAL_AUTHORISED:
+            #bushfire report is already authorised
+            raise Exception("Report({0}) is already authorised".format(bushfire.fire_number))
+
         bushfire.authorised_by = request.user
         bushfire.authorised_date = datetime.now(tz=pytz.utc)
         bushfire.report_status = Bushfire.STATUS_FINAL_AUTHORISED
@@ -628,7 +587,16 @@ def update_status(request, bushfire, action):
 
         bushfire.save()
 
-    elif action == 'mark_reviewed' and bushfire.can_review:
+    elif action == 'mark_reviewed':
+        if not bushfire.can_review:
+            if not self.is_final_authorised:
+                raise Exception("Please authorise the report({0}) before reviewing.".format(bushfire.fire_number))
+            elif not self.final_fire_boundary:
+                raise Exception("Please upload the final fire boundary for the report({0}) before reviewing.".format(bushfire.fire_number))
+            elif not self.area:
+                raise Exception("No need to review the report({0}) which has no burning area.".format(bushfire.fire_number))
+            else:
+                raise Exception("No need to reivew the report({0}) which has no fire found".format(bushfire.fire_number))
         bushfire.reviewed_by = request.user
         bushfire.reviewed_date = datetime.now(tz=pytz.utc)
         bushfire.report_status = Bushfire.STATUS_REVIEWED
@@ -642,7 +610,9 @@ def update_status(request, bushfire, action):
 
         bushfire.save()
 
-    elif (action == 'delete_final_authorisation' or action == 'delete_authorisation_(missing_fields_-_FSSDRS)') and bushfire.is_final_authorised:
+    elif (action == 'delete_final_authorisation' or action == 'delete_authorisation_(missing_fields_-_FSSDRS)'):
+        if not bushfire.is_final_authorised:
+            raise Exception("The report({0}) is not authorised.".format(bushfire.fire_number))
         if bushfire.is_reviewed:
             bushfire.reviewed_by = None
             bushfire.reviewed_date = None
@@ -656,7 +626,9 @@ def update_status(request, bushfire, action):
         serialize_bushfire(action, action, bushfire)
         bushfire.save()
 
-    elif action == 'delete_review' and bushfire.is_reviewed:
+    elif action == 'delete_review':
+        if not bushfire.is_reviewed:
+            raise Exception("The report({0}) is not reviewed.".format(bushfire.fire_number))
         bushfire.reviewed_by = None
         bushfire.reviewed_date = None
         bushfire.report_status = Bushfire.STATUS_FINAL_AUTHORISED

@@ -1,0 +1,54 @@
+<table class="table table-bordered table-striped table-condensed">
+    <tbody>
+        <tr>
+            <th >Created
+              {% if object.created %}
+                at {{object.created|date:'Y-m-d H:i'}} 
+              {% endif %}
+              {% if object.creator %}
+                by {{object.creator.first_name}}  {{object.creator.last_name}}
+              {% endif %}
+            </th>
+        </tr>
+
+        {% if object.is_init_authorised %}
+        <tr>
+            <th >Submitted 
+              {% if object.init_authorised_date %}
+                at {{object.init_authorised_date|date:'Y-m-d H:i'}} 
+              {% endif %}
+              {% if object.init_authorised_by %}
+                by {{object.init_authorised_by.first_name}}  {{object.init_authorised_by.last_name}} 
+              {% endif %}
+            </th>
+        </tr>
+        {% endif %}
+
+        {% if object.is_final_authorised %}
+        <tr>
+            <th >Authorised 
+              {% if object.authorised_date %}
+                at {{object.authorised_date|date:'Y-m-d H:i'}} 
+              {% endif %}
+              {% if object.authorised_by %}
+                by {{object.authorised_by.first_name}}  {{object.authorised_by.last_name}} 
+              {% endif %}
+            </th>
+        </tr>
+        {% endif %}
+
+        {% if object.is_reviewed %}
+        <tr>
+            <th >Reviewed
+              {% if object.reviewed_date %}
+                at {{object.reviewed_date|date:'Y-m-d H:i'}} 
+              {% endif %}
+              {% if object.reviewed_by %}
+                by {{object.reviewed_by.first_name}}  {{object.reviewed_by.last_name}} 
+              {% endif %}
+            </th>
+        </tr>
+        {% endif %}
+  </tbody>
+</table>
+

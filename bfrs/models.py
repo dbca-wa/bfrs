@@ -173,6 +173,7 @@ class Profile(models.Model):
 
 @python_2_unicode_compatible
 class CaptureMethod(models.Model):
+    OTHER_CODE = "999"
     code = models.CharField(max_length=32,unique=True)
     desc = models.CharField(max_length=128)
 
@@ -236,6 +237,7 @@ class BushfireBase(Audit):
         (STATUS_INVALIDATED, 'Invalidated'),
         (STATUS_MISSING_FINAL, 'Outstanding Fires'), # This is not really a status, and is never set - used for filtering qs only
     )
+    REPORT_STATUS_MAP = dict(REPORT_STATUS_CHOICES)
 
     FIRE_LEVEL_CHOICES = (
         (1, 1),
@@ -375,6 +377,10 @@ class BushfireBase(Audit):
         abstract = True
 
     @property
+    def report_status_name(self):
+        return self.REPORT_STATUS_MAP.get(self.report_status,"Unknown")
+
+    @property
     def can_submit(self):
         return True if not self.missing_initial() else False
 
@@ -393,15 +399,15 @@ class BushfireBase(Audit):
 
     @property
     def is_init_authorised(self):
-        return True if self.init_authorised_by and self.init_authorised_date and self.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED else False
+        return True if self.init_authorised_by and self.init_authorised_date and self.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED and self.report_status < Bushfire.STATUS_INVALIDATED else False
 
     @property
     def is_final_authorised(self):
-        return True if self.authorised_by and self.authorised_date and self.report_status >= Bushfire.STATUS_FINAL_AUTHORISED else False
+        return True if self.authorised_by and self.authorised_date and self.report_status >= Bushfire.STATUS_FINAL_AUTHORISED and self.report_status < Bushfire.STATUS_INVALIDATED else False
 
     @property
     def is_reviewed(self):
-        return True if self.reviewed_by and self.reviewed_date and self.report_status >= Bushfire.STATUS_REVIEWED else False
+        return True if self.reviewed_by and self.reviewed_date and self.report_status >= Bushfire.STATUS_REVIEWED and self.report_status < Bushfire.STATUS_INVALIDATED else False
 
     @property
     def other_contact(self):

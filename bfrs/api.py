@@ -250,7 +250,7 @@ class BushfireSpatialResource(ModelResource):
         #fields = ['origin_point', 'fire_boundary', 'area', 'fire_position']
         fields = ['origin_point', 'fire_boundary','origin_point_mga','fb_validation_req']
         #using extra fields to process some complex or related fields
-        extra_fields = ['district','area','tenure_ignition_point','fire_position','plantations','sss_data','capturemethod','other_capturemethod']
+        extra_fields = ['district','area','tenure_ignition_point','fire_position','plantations','sss_data','capturemethod']
         allowed_methods=['patch']
         list_allowed_methods=[]
 
@@ -361,21 +361,14 @@ class BushfireSpatialResource(ModelResource):
             return
         if bundle.data.get('capturemethod'):
             bundle.obj.capturemethod = CaptureMethod.objects.get(id=bundle.data.get('capturemethod'))
+            if bundle.obj.capturemethod.code == CaptureMethod.OTHER_CODE:
+                #other capture method
+                bundle.obj.other_capturemethod = bundle.data.get('other_capturemethod') or ""
+            else:
+                #not other capture method
+                bundle.obj.other_capturemethod = None
         else:
             bundle.obj.capturemethod = None
-
-    def hydrate_other_capturemethod(self,bundle):
-        if not bundle.data.has_key('other_capturemethod'):
-            #other_capturemethod is not passed in
-            if bundle.data.has_key('capturemethod'):
-                #capturemethod is passed in
-                bundle.obj.other_capturemethod = None
-            else:
-                return
-
-        if bundle.data.get('other_capturemethod'):
-            bundle.obj.other_capturemethod = bundle.data.get('other_capturemethod')
-        else:
             bundle.obj.other_capturemethod = None
 
     def hydrate_fire_position(self,bundle):

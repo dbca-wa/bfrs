@@ -99,10 +99,6 @@
         (Linked valid bushfire <a href="{% url 'bushfire:bushfire_initial' object.valid_bushfire.id %}">{{object.valid_bushfire.fire_number}}</a>)
       </h2>
     </h1>
-    {% elif action == 'Submit' %}
-      <h1>Confirm action 'Mark Notification Report Submitted'</h1>
-    {% elif action == 'Authorise' %}
-      <h1>Confirm action 'Mark Final Report Authorised'</h1>
     {% else %}
       <h1>Bushfire Detail</h1>
     {% endif %}
@@ -121,17 +117,19 @@
 <table class="table table-bordered table-striped table-condensed">
     <tbody>
         <tr>
-          <th colspan="6" style="background: black; color: white; text-align: left; font-size: 16px; padding: 12px;" > BUSHFIRE NOTIFICATION (submit within 30 mins of detection)</th>
+          <th colspan="6" style="background: black; color: white; text-align: left; font-size: 16px; padding: 12px;" > BUSHFIRE NOTIFICATION 
+          {% if  object.report_status == object.STATUS_INITIAL  %}
+          (submit within 30 mins of detection)
+          {% endif %}
+          </th>
         </tr>
 
         <tr>
             <th class="cbas">District *</th>
             <td colspan="2" class="cbas">
                 {% if can_maintain_data %}
-                  {% if not action or not is_init_authorised %}
-                    {{form.region}}<span style="margin:20;"></span>
-                    {{form.district}}
-                  {% endif %}
+                  {{form.region}}<span style="margin:20;"></span>
+                  {{form.district}}
                 {% else %}
                   {% if object %}
                     {{object.region}}<span style="margin:20;"></span>{{object.district}}
@@ -296,11 +294,11 @@
   </tbody>
 </table>
 
-<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+<div class="panel-group" id="report_accordion" role="tablist" aria-multiselectable="true">
   <div class="panel-default">
     <div role="tab" id="pn_fire_behaviour">
       <h4 class="panel-title">
-        <a role="button" data-toggle="collapse" data-parent="#accordion" href="#fire_behaviour" aria-expanded="true" aria-controls="fire_behaviour">
+        <a role="button" data-toggle="collapse" data-parent="#report_accordion" href="#fire_behaviour" aria-expanded="true" aria-controls="fire_behaviour">
           <div colspan="6" style="background: black; color: white; text-align: left; font-size: 16px; padding: 12px;" > FIRE REPORT (Click to expand/collapse)</div>
         </a>
       </h4>
@@ -311,29 +309,39 @@
   </div>
 </div>
 
+<div class="panel-group" id="timeline_accordion" role="tablist" aria-multiselectable="true">
+  <div class="panel-default">
+    <div role="tab" id="pn_report_timeline">
+      <h4 class="panel-title">
+        <a role="button" data-toggle="collapse" data-parent="#timeline_accordion" href="#report_timeline" aria-expanded="true" aria-controls="report_timeline">
+          <div colspan="6" style="background: black; color: white; text-align: left; font-size: 16px; padding: 12px;" > REPORT TIMELINE (Click to expand/collapse)</div>
+        </a>
+      </h4>
+    </div>
+    <div id="report_timeline" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pn_report_timeline">
+        {% include "bfrs/inc/report_timeline.html" %}
+    </div>
+  </div>
+</div>
 
-{% if not action %}
+
 <div class="navbar navbar-fixed-bottom">
   <div class="navbar-inner">
     <div class="container">
       <p class="pull-right">
-      {% if object.report_status != object.STATUS_INVALIDATED or not object.report_status %}
-        {% if create or initial %}
-
-          <input type="submit" value="Save draft" class="btn btn-primary btn-success" name="_save" {% if is_init_authorised %}title="Submitted Notification report cannot be edited" disabled{% endif %} />
-
-          {% if create %}
-            <input type="submit" value="Submit" class="btn btn-primary btn-success" name="_save_and_submit" />
-          {% else %}
-            <input type="submit" value="Submit" class="btn btn-primary btn-success" name="submit_initial" {% if is_init_authorised %}title="Notification Report already submitted" disabled{% else %}title="Save and submit"{% endif %} />
-          {% endif %}
-
-        {% else %}
-
-          <input type="submit" {% if object.report_status and object.report_status >= object.STATUS_INITIAL_AUTHORISED %}value="Save final"{% else %} value="Save draft"{% endif %} class="btn btn-primary btn-success" name="_save" {% if bushfire.is_final_authorised and not can_maintain_data %}title="Final Report cannot be edited" disabled{% endif %} />
-          <input type="submit" value="Authorise" class="btn btn-primary btn-success" name="authorise_final" {% if object.report_status >= object.STATUS_FINAL_AUTHORISED %}title="Final Report already authorised on {{object.authorised_date|date:'Y-m-d H:i'}} by {{object.authorised_by}}" disabled{% elif bushfire.is_final_authorised and not can_maintain_data %}disabled{% else %}title="Save and authorise"{% endif %} />
-
-        {% endif %}
+      {% if object.pk is None %}
+        <button type="submit" value="create" class="btn btn-primary btn-success" name="action" >Create</button>
+        <button type="submit" value="submit" class="btn btn-primary btn-warining" name="action" >Create and Submit</button>
+      {% elif object.report_status == object.STATUS_INITIAL %}
+        <button type="submit" value="save_draft" class="btn btn-primary btn-success" name="action" title="Save draft">Save draft</button>
+        <button type="submit" value="submit" class="btn btn-primary btn-warning" name="action" title="Save and submit" />Save and Submit</button>
+      {% elif object.report_status == object.STATUS_INITIAL_AUTHORISED %}
+        <button type="submit" value="save_submitted" class="btn btn-primary btn-success" name="action">Save final</button>
+        <button type="submit" value="authorise" class="btn btn-primary btn-warning" name="action" title="Save and authorise">Save and Authorise</button>
+      {% elif object.report_status == object.STATUS_FINAL_AUTHORISED %}
+        <button type="submit" value="save_final" class="btn btn-primary btn-success" name="action">Save final</button>
+      {% elif object.report_status == object.STATUS_REVIEWED %}
+        <button type="submit" value="save_reviewed" class="btn btn-primary btn-success" name="action">Save final</button>
       {% endif %}
 
       {% if form.errors or damage_formset.errors|check_errors or injury_formset.errors|check_errors %}
@@ -346,28 +354,8 @@
     </div>
   </div>
 </div>
-{% endif %}
 
 </form>
-
-
-{% if action %}
-<!-- This section to allow redirect confirmation -->
-<form action="" method="post">{% csrf_token %}
-  <div>
-    <input type="hidden" name="bushfire_id" value="{{snapshot.id}}" />
-    <input type="hidden" name="action" value="{{action}}" />
-    <input type="hidden" name="confirm_action" value="yes" />
-    <input type="submit" class="btn" value="{% trans "Yes, I'm sure" %}" />
-    {% if object.report_status < object.STATUS_INITIAL_AUTHORISED %}
-        <a id="id_cancel_btn" href="{% url 'bushfire:bushfire_initial' bushfire.id %}" class="btn btn-primary btn-danger">Cancel</a>
-    {% else %}
-        <a id="id_cancel_btn" href="{% url 'bushfire:bushfire_final' bushfire.id %}" class="btn btn-primary btn-danger">Cancel</a>
-    {% endif %}
-  </div>
-</form>
-{% endif %}
-
 
 
 <script>

@@ -1,0 +1,18 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+{% load staticfiles %}
+{% load bfrs_tags %}
+
+{% block breadcrumbs %}
+<ul class="breadcrumb">
+  <li><a href="{% url 'main' %}">{% trans 'Bushfire Overview' %}</a> <span class="divider">/</span></li>
+</ul>
+{% endblock %}
+
+{% block content_title %}
+    <P class="errornote" style="white-space:pre">{{message}}</P>
+{% endblock %}
+
+{% block content %}
+{% endblock %}
+
