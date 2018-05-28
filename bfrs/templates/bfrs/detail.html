@@ -309,21 +309,7 @@
   </div>
 </div>
 
-<div class="panel-group" id="timeline_accordion" role="tablist" aria-multiselectable="true">
-  <div class="panel-default">
-    <div role="tab" id="pn_report_timeline">
-      <h4 class="panel-title">
-        <a role="button" data-toggle="collapse" data-parent="#timeline_accordion" href="#report_timeline" aria-expanded="true" aria-controls="report_timeline">
-          <div colspan="6" style="background: black; color: white; text-align: left; font-size: 16px; padding: 12px;" > REPORT TIMELINE (Click to expand/collapse)</div>
-        </a>
-      </h4>
-    </div>
-    <div id="report_timeline" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pn_report_timeline">
-        {% include "bfrs/inc/report_timeline.html" %}
-    </div>
-  </div>
-</div>
-
+{% include "bfrs/inc/report_timeline.html" %}
 
 <div class="navbar navbar-fixed-bottom">
   <div class="navbar-inner">
