@@ -1,4 +1,5 @@
 import traceback
+import collections
 import sys
 
 from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpResponseNotAllowed
@@ -202,9 +203,13 @@ class BushfireView(ExceptionMixin,LoginRequiredMixin, filter_views.FilterView):
     filterset_class = BushfireFilter
     template_name = 'bfrs/bushfire.html'
     paginate_by = 50
+    actions = collections.OrderedDict([("select_action","------------"),("merge","Link/Merge"),("remove_duplication","Link/Duplication")])
 
     def get_filterset_kwargs(self, filterset_class):
         kwargs = super(BushfireView,self).get_filterset_kwargs(filterset_class)
+        if (self.request.method == "POST"):
+            #get the filter data from post
+            kwargs["data"] = self.request.POST
         data = dict(kwargs["data"].iteritems()) if kwargs["data"] else {}
         kwargs["data"] = data
         filters = "&".join(["{}={}".format(k,v) for k,v in data.iteritems() if k in BushfireFilter.Meta.fields])
@@ -277,50 +282,91 @@ class BushfireView(ExceptionMixin,LoginRequiredMixin, filter_views.FilterView):
             
 
     def post(self, request, *args, **kwargs):
-        if self.request.POST.has_key('bushfire_id'):
+        action = self.request.POST.get('action')
+        if not action :
+            raise Exception("Action is missing.")
+
+        # Delete Review
+        # Delete Final Authorisation
+        # Mark Final Report as Reviewed
+        if action in ('delete_review','delete_final_authorisation','mark_reviewed'):
             bushfire = Bushfire.objects.get(id=self.request.POST.get('bushfire_id'))
+            update_status(request, bushfire, action)
+            refresh_gokart(request, fire_number=bushfire.fire_number) #, region=None, district=None, action='update')
 
-        if self.request.POST.has_key('action'):
-            action = self.request.POST.get('action')
+        # Archive / Unarchive
+        elif action in ('archive','unarchive'):
+            bushfire = Bushfire.objects.get(id=self.request.POST.get('bushfire_id'))
+            update_status(request, bushfire, action)
 
-            # Delete Review
-            if action == 'delete_review' and bushfire.is_reviewed:
-                logger.info('Action Delete Review {} - FSSDRS user {}'.format(bushfire.fire_number, request.user.get_full_name()))
-                update_status(request, bushfire, action)
+        elif action in self.actions:
+            selected_ids = self.request.POST.getlist("selected_ids")
+            if selected_ids:
+                selected_ids = [int(identity) for identity in selected_ids] 
 
-            # Delete Final Authorisation
-            elif action == 'delete_final_authorisation' and bushfire.report_status==Bushfire.STATUS_FINAL_AUTHORISED:
-                logger.info('Action Delete Authorisation {} - FSSDRS user {}'.format(bushfire.fire_number, request.user.get_full_name()))
-                update_status(request, bushfire, action)
+            self.selected_ids = selected_ids
+            errors = []
 
-            # Mark Final Report as Reviewed
-            elif action == 'mark_reviewed' and bushfire.can_review:
-                update_status(request, bushfire, action)
+            if action == 'select_action':
+                errors = ["Please select an action to perform"]
+                self.errors = errors
+                return  super(BushfireView, self).get(request, *args, **kwargs)
 
-            # Archive
-            elif action == 'archive' and bushfire.report_status>=Bushfire.STATUS_FINAL_AUTHORISED:
-                bushfire.archive = True
-            elif action == 'unarchive' and bushfire.archive:
-                bushfire.archive = False
+            elif not selected_ids:
+                errors = ["Please choose busfires before performing action ({})".format(self.actions.get(action))]
+                self.errors = errors
+                return  super(BushfireView, self).get(request, *args, **kwargs)
 
-            bushfire.save()
+            elif action in ["select_action","merge","remove_duplication"]:
+                step = self.request.POST.get("step") or "select_primary_bushfire"
+                bushfires = Bushfire.objects.filter(id__in = selected_ids)
+                if len(bushfires) != len(selected_ids):
+                    #some bushfire don't exist
+                    errors.append(["The bushfire({}) doesn't exist".format(identity) for identity in selected_ids if not any([r.id == identity for r in bushfires])] )
+                else:
+                    if len(bushfires) < 2:
+                        errors.append("Please choose at least two bushfires for action '{}'".format(self.actions.get(action)))
 
-        refresh_gokart(request, fire_number=bushfire.fire_number) #, region=None, district=None, action='update')
+                if errors:
+                    #failed
+                    self.errors = errors
+                    return  super(BushfireView, self).get(request, *args, **kwargs)
+
+                if step == "select_primary_bushfire":
+                    raise Exception("Action({})is under developing".format(self.actions.get(action)))
+                elif step == "confirm":
+                    raise Exception("Action({})is under developing".format(self.actions.get(action)))
+                else:
+                    raise Exception("Unknown step({1}) for action({0})".format(action,step))
+            else:
+                raise Exception("Action({})is under developing".format(self.actions.get(action)))
+        else:
+            raise Exception("Unknown action({})" .format(action))
 
         return HttpResponseRedirect(self.get_success_url())
+
+    def merge_bushfires(self,request,*args,**kwargs):
+        raise Exception("Under developing")
+
+    def remove_duplication_bushfires(self,request,*args,**kwargs):
+        raise Exception("Under developing")
 
     def get_context_data(self, **kwargs):
         context = super(BushfireView, self).get_context_data(**kwargs)
         # update context with form - filter is already in the context
+        context["errors"] = self.errors if hasattr(self,"errors") else None
         context['form'] = BushfireFilterForm(initial=context["filter"].data)
+        context['order_by'] = context["filter"].data["order_by"]
         context['filters'] = "{}{}".format(reverse('main'),self._filters)
         context['filters_without_order'] = "{}{}".format(reverse('main'),self._filters_without_order)
         context['sss_url'] = settings.SSS_URL
         context['can_maintain_data'] = can_maintain_data(self.request.user)
         context['is_external_user'] = is_external_user(self.request.user)
+        context['selected_ids'] = self.selected_ids if hasattr(self,"selected_ids") else None
+        context['actions'] = self.actions
         #if context["paginator"].num_pages == 1: 
         #    context['is_paginated'] = False
-
+    
         referrer = self.request.META.get('HTTP_REFERER')
         if referrer and not ('initial' in referrer or 'final' in referrer or 'create' in referrer):
             #refresh_gokart(self.request) #, fire_number="") #, region=None, district=None, action='update')

@@ -614,11 +614,16 @@ def update_status(request, bushfire, action):
         if not bushfire.is_final_authorised:
             raise Exception("The report({0}) is not authorised.".format(bushfire.fire_number))
         if bushfire.is_reviewed:
+            #already reviewed, remove the review status
             bushfire.reviewed_by = None
             bushfire.reviewed_date = None
 
         if not bushfire.area:
             bushfire.final_fire_boundary = False
+
+        if bushfire.archive:
+            #already archived, reset to unarchived
+            bushfire.archive = False
 
         bushfire.authorised_by = None
         bushfire.authorised_date = None
@@ -634,6 +639,23 @@ def update_status(request, bushfire, action):
         bushfire.report_status = Bushfire.STATUS_FINAL_AUTHORISED
         serialize_bushfire(action, action, bushfire)
         bushfire.save()
+    elif action == 'archive':
+        if bushfire.report_status < Bushfire.STATUS_FINAL_AUTHORISED:
+            raise Exception("The report({0}) is not authorised.".format(bushfire.fire_number))
+        elif bushfire.report_status >= Bushfire.STATUS_INVALIDATED:
+            raise Exception("The report({0}) is invalidated.".format(bushfire.fire_number))
+        elif bushfire.archive:
+            raise Exception("The report({0}) is already archived".format(bushfire.fire_number))
+        bushfire.archive = True
+        bushfire.save()
+    elif action == 'unarchive':
+        if not bushfire.archive:
+            raise Exception("The report({0}) is not archived".format(bushfire.fire_number))
+        bushfire.archive = False
+        bushfire.save()
+
+
+
 
     return notification
 
