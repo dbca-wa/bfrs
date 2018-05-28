@@ -258,8 +258,8 @@ class MinisterialReport():
 
         writer.writerow([
             "Region",
-            "DBCA Tenure",
-            "Area DBCA Tenure",
+            "DBCA Interest",
+            "Area DBCA Interest",
             "Total All Area",
             "Total Area",
         ])
@@ -303,8 +303,8 @@ class MinisterialReport():
         hdr = sheet1.row(row_no())
         hdr = sheet1.row(row_no())
         hdr.write(col_no(), "Region", style=style_bold_gen)
-        hdr.write(col_no(), "DBCA Tenure", style=style_bold_gen)
-        hdr.write(col_no(), "Area DBCA Tenure", style=style_bold_gen)
+        hdr.write(col_no(), "DBCA Interest", style=style_bold_gen)
+        hdr.write(col_no(), "Area DBCA Interest", style=style_bold_gen)
         hdr.write(col_no(), "Total All Tenure", style=style_bold_gen)
         hdr.write(col_no(), "Total Area", style=style_bold_gen)
 
@@ -363,7 +363,7 @@ class MinisterialReport():
         return response
 
     def display(self):
-        print '{}\t{}\t{}\t{}\t{}'.format('Region', 'DBCA Tenure', 'Area DBCA Tenure', 'Total All Area', 'Total Area').expandtabs(20)
+        print '{}\t{}\t{}\t{}\t{}'.format('Region', 'DBCA Interest', 'Area DBCA Interest', 'Total All Area', 'Total Area').expandtabs(20)
         for row in self.rpt_map:
             for region, data in row.iteritems():
                 print '{}\t{}\t{}\t{}\t{}'.format(region, data['pw_tenure'], data['area_pw_tenure'], data['total_all_tenure'], data['total_area']).expandtabs(20)
@@ -635,8 +635,8 @@ class MinisterialReport268():
         hdr = sheet1.row(row_no())
         hdr = sheet1.row(row_no())
         hdr.write(col_no(), "Region", style=style_bold_gen)
-        hdr.write(col_no(), "DBCA Tenure", style=style_bold_gen)
-        hdr.write(col_no(), "Area DBCA Tenure", style=style_bold_gen)
+        hdr.write(col_no(), "DBCA Interest", style=style_bold_gen)
+        hdr.write(col_no(), "Area DBCA Interest", style=style_bold_gen)
         hdr.write(col_no(), "Total All Tenure", style=style_bold_gen)
         hdr.write(col_no(), "Total Area", style=style_bold_gen)
 
@@ -815,8 +815,8 @@ class MinisterialReportAuth():
 
         writer.writerow([
             "Region",
-            "DBCA Tenure",
-            "Area DBCA Tenure",
+            "DBCA Interest",
+            "Area DBCA Interest",
             "Total All Area",
             "Total Area",
         ])
@@ -860,8 +860,8 @@ class MinisterialReportAuth():
         hdr = sheet1.row(row_no())
         hdr = sheet1.row(row_no())
         hdr.write(col_no(), "Region", style=style_bold_gen)
-        hdr.write(col_no(), "DBCA Tenure", style=style_bold_gen)
-        hdr.write(col_no(), "Area DBCA Tenure", style=style_bold_gen)
+        hdr.write(col_no(), "DBCA Interest", style=style_bold_gen)
+        hdr.write(col_no(), "Area DBCA Interest", style=style_bold_gen)
         hdr.write(col_no(), "Total All Tenure", style=style_bold_gen)
         hdr.write(col_no(), "Total Area", style=style_bold_gen)
 
@@ -920,7 +920,7 @@ class MinisterialReportAuth():
         return response
 
     def display(self):
-        print '{}\t{}\t{}\t{}\t{}'.format('Region', 'DBCA Tenure', 'Area DBCA Tenure', 'Total All Area', 'Total Area').expandtabs(20)
+        print '{}\t{}\t{}\t{}\t{}'.format('Region', 'DBCA Interest', 'Area DBCA Interest', 'Total All Area', 'Total Area').expandtabs(20)
         for row in self.rpt_map:
             for region, data in row.iteritems():
                 print '{}\t{}\t{}\t{}\t{}'.format(region, data['pw_tenure'], data['area_pw_tenure'], data['total_all_tenure'], data['total_area']).expandtabs(20)
@@ -1152,10 +1152,10 @@ class QuarterlyReport():
         hdr = sheet1.row(row_no())
         hdr = sheet1.row(row_no())
         hdr.write(col_no(), "Region", style=style_bold_gen)
-        hdr.write(col_no(), "DBCA Tenure", style=style_bold_gen)
-        hdr.write(col_no(), "Area DBCA Tenure", style=style_bold_gen)
-        hdr.write(col_no(), "Non DBCA Tenure", style=style_bold_gen)
-        hdr.write(col_no(), "Area Non DBCA Tenure", style=style_bold_gen)
+        hdr.write(col_no(), "DBCA Interest", style=style_bold_gen)
+        hdr.write(col_no(), "Area DBCA Interest", style=style_bold_gen)
+        hdr.write(col_no(), "Non DBCA Interest", style=style_bold_gen)
+        hdr.write(col_no(), "Area Non DBCA Interest", style=style_bold_gen)
         hdr.write(col_no(), "Total All Tenure", style=style_bold_gen)
         hdr.write(col_no(), "Total Area", style=style_bold_gen)
 
@@ -1235,7 +1235,7 @@ class QuarterlyReport():
         return response
 
     def display(self):
-        print '{}\t{}\t{}\t{}\t{}\t{}\t{}'.format('Region', 'DBCA Tenure', 'Area PDBCA Tenure', 'Non DBCA Tenure', 'Area Non DBCA Tenure', 'Total All Area', 'Total Area').expandtabs(20)
+        print '{}\t{}\t{}\t{}\t{}\t{}\t{}'.format('Region', 'DBCA Interest', 'Area DBCA Interest', 'Non DBCA Interest', 'Area Non DBCA Interest', 'Total All Area', 'Total Area').expandtabs(20)
         for row in self.rpt_map:
             for region, data in row.iteritems():
                 if region and data:
@@ -2277,7 +2277,7 @@ class BushfireIndicator():
 
         hdr = sheet1.row(row_no())
         hdr.write(0, 'Report', style=style)
-        hdr.write(1, 'Bushfire By Cause Report')
+        hdr.write(1, 'Bushfire Indicator Report')
 
         hdr = sheet1.row(row_no())
         hdr.write(0, 'Fin Year', style=style)
