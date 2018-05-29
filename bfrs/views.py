@@ -202,8 +202,10 @@ class BushfireView(ExceptionMixin,LoginRequiredMixin, filter_views.FilterView):
     #model = Bushfire
     filterset_class = BushfireFilter
     template_name = 'bfrs/bushfire.html'
+    select_primary_bushfire_template = 'bfrs/select_primary_bushfire.html'
+    link_bushfire_confirm_template = 'bfrs/link_bushfire_confirm.html'
     paginate_by = 50
-    actions = collections.OrderedDict([("select_action","------------"),("merge","Link/Merge"),("remove_duplication","Link/Duplication")])
+    actions = collections.OrderedDict([("select_action","------------"),("merge_reports","Link/Merge"),("invalidate_duplicated_reports","Link/Duplication")])
 
     def get_filterset_kwargs(self, filterset_class):
         kwargs = super(BushfireView,self).get_filterset_kwargs(filterset_class)
@@ -317,25 +319,69 @@ class BushfireView(ExceptionMixin,LoginRequiredMixin, filter_views.FilterView):
                 self.errors = errors
                 return  super(BushfireView, self).get(request, *args, **kwargs)
 
-            elif action in ["select_action","merge","remove_duplication"]:
+            elif action in ["select_action","merge_reports","invalidate_duplicated_reports"]:
                 step = self.request.POST.get("step") or "select_primary_bushfire"
                 bushfires = Bushfire.objects.filter(id__in = selected_ids)
                 if len(bushfires) != len(selected_ids):
                     #some bushfire don't exist
-                    errors.append(["The bushfire({}) doesn't exist".format(identity) for identity in selected_ids if not any([r.id == identity for r in bushfires])] )
+                    errors += ["The bushfire({}) doesn't exist".format(identity) for identity in selected_ids if not any([r.id == identity for r in bushfires])]
                 else:
                     if len(bushfires) < 2:
                         errors.append("Please choose at least two bushfires for action '{}'".format(self.actions.get(action)))
+                    errors += ["The bushfire({0}) with status ({1}) is not eligible for action ({2}).".format(bf.fire_number,bf.report_status_name,self.actions.get(action)) for bf in bushfires if bf.report_status >= Bushfire.STATUS_INVALIDATED ]
 
                 if errors:
                     #failed
                     self.errors = errors
                     return  super(BushfireView, self).get(request, *args, **kwargs)
 
+                primary_bushfire_id = self.request.POST.get("primary_bushfire_id") or None
+                primary_bushfire = None
+                if primary_bushfire_id:
+                    primary_bushfire_id = int(primary_bushfire_id)
+                    try:
+                        primary_bushfire = next(bf for bf in bushfires if bf.id == primary_bushfire_id)
+                    except StopIteration:
+                        #chosen bushfire is not in the bushfire list
+                        primary_bushfire_id = None
+                        errors.append("Chosen primary bushfire is in the bushfire lists")
+
+
+                context = {
+                    "errors":errors,
+                    "action":action,
+                    "action_name":self.actions.get(action),
+                    "primary_bushfire_id": primary_bushfire_id,
+                    "title":"Merging bushfire reports" if action == "merge_reports" else "Invalidate duplicated bushfire reports",
+                    "bushfires":bushfires
+                }
                 if step == "select_primary_bushfire":
-                    raise Exception("Action({})is under developing".format(self.actions.get(action)))
+                    return TemplateResponse(request, self.select_primary_bushfire_template, context=context)
+                elif step == "selected_primary_bushfire":
+                    if not primary_bushfire_id:
+                        #do not chosen any bushfire as primary bushfire
+                        errors.append("Please choose a primary bushfire for '{}'".format(self.actions.get(action)))
+
+                    if errors:
+                        return TemplateResponse(request, self.select_primary_bushfire_template, context=context)
+                    
+                    #temperary change the report status to the target status after the link action
+                    for bushfire in bushfires:
+                        if bushfire.id != primary_bushfire_id:
+                            bushfire.report_status = Bushfire.STATUS_MERGED if action == "merge" else Bushfire.STATUS_DUPLICATED
+                    """
+                    if primary_bushfire.report_status >= Bushfire.STATUS_FINAL_AUTHORISED:
+                        #chosen primary bushfire is final authorised, change it to submitted
+                        primary_bushfire.report_status = Bushfire.STATUS_INITIAL_AUTHORISED
+                    """
+
+                    return TemplateResponse(request, self.link_bushfire_confirm_template, context=context)
+
                 elif step == "confirm":
-                    raise Exception("Action({})is under developing".format(self.actions.get(action)))
+                    if action == "merge":
+                        return self.merge_bushfires(request,bushfires,primary_bushfire)
+                    else:
+                        return self.invalidate_duplicated_reports(request,bushfires,primary_bushfire)
                 else:
                     raise Exception("Unknown step({1}) for action({0})".format(action,step))
             else:
@@ -345,10 +391,10 @@ class BushfireView(ExceptionMixin,LoginRequiredMixin, filter_views.FilterView):
 
         return HttpResponseRedirect(self.get_success_url())
 
-    def merge_bushfires(self,request,*args,**kwargs):
+    def merge_bushfires(self,request,bushfires,primary_bushfire,*args,**kwargs):
         raise Exception("Under developing")
 
-    def remove_duplication_bushfires(self,request,*args,**kwargs):
+    def invalidate_duplicated_reports(self,request,bushfires,primary_bushfire,*args,**kwargs):
         raise Exception("Under developing")
 
     def get_context_data(self, **kwargs):

@@ -1,0 +1,123 @@
+{% load i18n %}
+{% load static from staticfiles %}
+{% load bfrs_tags %}
+{% load humanize %}
+
+<tr>
+    <th class="cbas" style="width:20%">Date and time fire detected *</th>
+    <td class="cbas" style="width:30%">{{bushfire.fire_detected_date|date:'Y-m-d H:i'}}</td>
+
+    <th class="cbas" style="width:20%">DFES Incident no.</th>
+    <td class="cbas" style="width:30%">{{bushfire.dfes_incident_no}}</td>
+</tr>
+
+<tr>
+    <th class="cbas" >Position of fire</th>
+    <td class="cbas">
+        {{bushfire.fire_position}}<br>{% if bushfire.fire_position_override %} SSS overide - {{bushfire.fire_position_override|yesno:"Yes,No"}} {% endif %}
+    </td>
+
+    <th class="cbas" >Point of origin</th>
+    <td class="cbas">
+        {{bushfire.origin_geo|is_none}} <br>
+        {{bushfire.origin_point_mga}}
+    </td>
+</tr>
+
+<tr>
+    <th class="cbas">Tenure of ignition point *{% if bushfire.other_tenure %}<br> Other Tenure{% endif %}</th>
+    <td class="cbas">{{bushfire.tenure}}{% if bushfire.other_tenure %}<br> {{bushfire.get_other_tenure_display}} {% endif %}</td>
+
+    <th class="cbas">Duty Officer *</th>
+    <td class="cbas">{{bushfire.duty_officer|is_none}}</td>
+</tr>
+<tr>
+    <th class="cbas">P&W Resource dispatched *{% if bushfire.dispatch_pw == object.DISPATCH_PW_YES %}<br>Date and time of dispatch{% endif %}</th>
+    <td class="cbas">{{bushfire.get_dispatch_pw_display}}{% if bushfire.dispatch_pw == object.DISPATCH_PW_YES %}<br>{{bushfire.dispatch_pw_date|date:'Y-m-d H:i'}} {% endif %}</td>
+
+	        <th class="cbas">Aerial support requested *<br><br><div class=div_dispatch_aerial_date style="display: none;">Date and time of request</div></th>
+    <td class="cbas">{{bushfire.dispatch_aerial|yesno:"Yes,No"}}{% if bushfire.dispatch_aerial|yesno:"Yes,No" == 'Yes' %}<br>{{bushfire.dispatch_aerial_date|date:'Y-m-d H:i'}} {% endif %}</td>
+</tr>
+
+<tr>
+	    <th class="cbas" id="id_th_initial_controlling_agency">Initial controlling agency *</th>
+    <td class="cbas">{{bushfire.initial_control}} <br>{% if bushfire.other_initial_control %} Other initial controlling agency: {{bushfire.other_initial_control}} {% endif %}</td>
+
+    <th class="cbas">Area of fire at arrival (ha) *</th>
+    <td class="cbas">{% if bushfire.initial_area_unknown %}Unknown{% else %}{{bushfire.initial_area}}{% endif %}</td>
+</tr>
+
+<tr>
+    <th class="cbas">Probable Fire Level *</th>
+    <td class="cbas">{{bushfire.prob_fire_level}}</td>
+
+    <th class="cbas">Investigation required *</th>
+    <td class="cbas">{{bushfire.investigation_req|yesno:"Yes,No"}}</td>
+</tr>
+
+<tr>
+    <th class="cbas">Media Alert Required *</th>
+    <td class="cbas">{{bushfire.media_alert_req|yesno:"Yes,No"}} {% if bushfire.media_alert_req|yesno:"Yes,No" == 'Yes' %}<br> <span>call PICA on 9219 9999</span>{% endif %}</td>
+
+    <th class="cbas">Park and/or Trail *<br>potentially impacted</th>
+    <td class="cbas">{{bushfire.park_trail_impacted|yesno:"Yes,No"}} {% if bushfire.park_trail_impacted|yesno:"Yes,No" == 'Yes' %}<br> <span>PVS will be notified by email</span>{% endif %}</td>
+</tr>
+{% if bushfire.report_status > bushfire.STATUS_INITIAL  and bushfire.report_status < bushfire.STATUS_INVALIDATED %}
+<tr>
+    <th class="cbas">Fire Cause *
+        <div class=div_cause style="display: none;">Other Cause *</div>
+        <div class=div_cause_escape style="display: none;">Prescribed Burn ID *</div>
+    </th>
+    <td class="cbas">
+        <div>{{bushfire.cause_state|cause_state}}<div>
+        <div>{{bushfire.cause}}</div>
+        {% if bushfire.other_cause %} <div>{{bushfire.other_cause|is_none}}</div> {% endif %}
+        {% if bushfire.prescribed_burn_id %} <div>{{bushfire.prescribed_burn_id|is_none}}</div> {% endif %}
+    </td>
+
+    <th class="cbas">Arson squad notified *</th>
+    <td class="cbas">
+        {{bushfire.arson_squad_notified|yesno:"Yes,No"}}{% if bushfire.arson_squad_notified|yesno:"Yes,No" == 'Yes' %}<br>Police offence no {{bushfire.offence_no}} {% endif %}
+    </td>
+</tr>
+
+{% if object.is_init_authorised_by %} 
+<tr>
+    <th class="cbas" style="font-weight:normal;">Authorised By</th>
+    <td class="cbas">{{bushfire.init_authorised_by}}</td>
+
+    <th class="cbas" style="font-weight:normal;">Authorised Date</th>
+    <td class="cbas">{{bushfire.init_authorised_date|date:'Y-m-d H:i'}}</td>
+</tr>
+{% endif %}
+
+
+<tr>
+	    <th class="cbas" id="id_th_fire_contained_date" title=" Fire spread has been halted, though the fire may still be burning freely within the perimeter of the fire control lines">Date fire contained <i class="icon-info-sign icon-white"></i> *</th>
+    <td class="cbas">{{bushfire.fire_contained_date|date:'Y-m-d H:i'}}</td>
+
+    <th class="cbas" id="id_th_initial_attack_agency">Initial attack agency *<br><br><div class=div_other_first_attack style="display: none;">Other initial attack agency *</div></th>
+    <td class="cbas">{{bushfire.first_attack}}<br>{% if bushfire.other_first_attack %} {{bushfire.other_first_attack}} {% endif %}</td>
+</tr>
+
+<tr>
+	    <th class="cbas" id="id_th_fire_controlled_date" title="Complete perimeter of fire is secured and no breakaway is expected">Date fire controlled <i class="icon-info-sign icon-white"></i> *</th>
+    <td class="cbas">{{bushfire.fire_controlled_date|date:'Y-m-d H:i'}}</td>
+
+    <th class="cbas" id="id_th_final_controlling_agency">Final controlling agency *<br><br><div class=div_other_final_control style="display: none;">Other final controlling agency *</div></th>
+    <td class="cbas">{{bushfire.final_control}} <br>{% if bushfire.other_final_control %} {{bushfire.other_final_control}} {% endif %}</td>
+</tr>
+
+<tr>
+    <th class="cbas" title='Placeholder ...'>Date fire inactive <i class="icon-info-sign icon-white"></i> *</th>
+    <td class="cbas">{{bushfire.fire_safe_date|date:'Y-m-d H:i'}}</td>
+
+    <th class="cbas">Final fire size (ha) *</th>
+    <td class="cbas">{{bushfire.area}}</td>
+</tr>
+
+<tr>
+    <th class="cbas">Maximum Fire Level *</th>
+    <td colspan="3" class="cbas">{{bushfire.max_fire_level}}</td>
+</tr>
+{% endif %}

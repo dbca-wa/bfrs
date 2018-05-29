@@ -86,7 +86,7 @@
             <th class="cbas">P&W Fire no. *</th>
             <td colspan="2" class="cbas">{{snapshot.fire_number}}</td>
 
-            <th class="cbas" style="font-weight:normal;">DFES Incident no.</th>
+            <th class="cbas">DFES Incident no.</th>
             <td colspan="2" class="cbas">{{snapshot.dfes_incident_no}}</td>
         </tr>
 
@@ -96,7 +96,7 @@
                 {{snapshot.fire_position}}<br>{% if snapshot.fire_position_override %} SSS overide - {{snapshot.fire_position_override|yesno:"Yes,No"}} {% endif %}
             </td>
 
-            <th class="cbas" style="font-weight:normal;">Point of origin</th>
+            <th class="cbas">Point of origin</th>
             <td colspan="5" class="cbas">
                 {{snapshot.origin_geo|is_none}} <br>
                 {{snapshot.origin_point_mga}}

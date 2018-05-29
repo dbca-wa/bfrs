@@ -229,6 +229,8 @@ class BushfireBase(Audit):
     STATUS_REVIEWED               = 4
     STATUS_INVALIDATED            = 5
     STATUS_MISSING_FINAL          = 6 # This is not really a status, and is never set - used for filtering qs only
+    STATUS_MERGED                 = 100
+    STATUS_DUPLICATED             = 101
     REPORT_STATUS_CHOICES = (
         (STATUS_INITIAL, 'Initial Fire Report'),
         (STATUS_INITIAL_AUTHORISED, 'Notifications Submitted'),
@@ -236,6 +238,8 @@ class BushfireBase(Audit):
         (STATUS_REVIEWED, 'Reviewed'),
         (STATUS_INVALIDATED, 'Invalidated'),
         (STATUS_MISSING_FINAL, 'Outstanding Fires'), # This is not really a status, and is never set - used for filtering qs only
+        (STATUS_MERGED, 'Merged'),
+        (STATUS_DUPLICATED, 'Duplicated')
     )
     REPORT_STATUS_MAP = dict(REPORT_STATUS_CHOICES)
 

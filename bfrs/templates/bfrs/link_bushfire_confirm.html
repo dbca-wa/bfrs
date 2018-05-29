@@ -1,0 +1,125 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+{% load static from staticfiles %}
+{% load bfrs_tags %}
+{% load humanize %}
+
+{% block breadcrumbs %}
+<ul class="breadcrumb">
+  <li><a href="{% url 'main' %}">{% trans 'Bushfire Overview' %}</a></li>
+  <li>{% trans action_name %}</li>
+  <li>{% trans 'Confirm' %}</li>
+</ul>
+{% endblock %}
+
+
+{% block content %}
+<script>
+    function toggle(target,elementId){
+        if ($(target).hasClass('icon-chevron-down')) {
+            $(target).removeClass('icon-chevron-down')
+            $(target).addClass('icon-chevron-right')
+            $("#" + elementId).hide()
+        } else {
+            $(target).removeClass('icon-chevron-right')
+            $(target).addClass('icon-chevron-down')
+            $("#" + elementId).show()
+        }
+
+    }
+</script>
+
+{% if errors %}
+<div style="margin-bottom:10px" class="alert alert-danger fade in">
+    <a href="#" class="close" data-dismiss="alert">&times;</a>
+    <ul>
+    {% for error in errors %}
+        <li>{{error}}</li>
+    {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<form action="" method="post">
+{% csrf_token %}
+<input type="hidden" name="action" value="{{action}}">
+<input type="hidden" name="primary_bushfire_id" value="{{primary_bushfire_id}}">
+
+{% for bushfire in bushfires %}
+{% if bushfire.id == primary_bushfire_id %}
+<input type="hidden" name="selected_ids" value="{{bushfire.id}}">
+<table class="table table-bordered table-striped table-condensed">
+    <thead>
+        <tr>
+          <th style="background: black; color: white; text-align: left; font-size: 16px; width:20%;valign:center" > 
+            <input type="radio" id="id_radio_{{bushfire.id}}" name="primary_bushfire_id" value="{{bushfire.id}}"  {% if bushfire.id == primary_bushfire_id %} checked {% endif %} disabled>
+            {{bushfire.fire_number}}
+          </th>
+          <th style="background: black; color: white; text-align: left; font-size: 16px; width:30%" > 
+            {{bushfire.region}}<span style="padding-left:20px;">{{bushfire.district}}</span>
+          </th>
+          <th colspan="2" style="background: black; color: white; text-align: left; font-size: 16px;" > 
+            <span style="text-transform:none">
+            {{bushfire.name}}
+            </span>
+            <div style="float:right">
+            {{bushfire.report_status_name}}  <i style="padding-left:30px;cursor:pointer" onclick="toggle(this,'id_body_{{bushfire.id}}')" class="icon-chevron-down" ></i></span>
+
+            </div>
+          </th>
+        </tr>
+    </thead>
+    <tbody id="id_body_{{bushfire.id}}">
+    {% include 'bfrs/inc/detail_4_link.html' %}
+    </tbody>
+</table>
+{% endif %}
+{% endfor %}
+
+{% for bushfire in bushfires %}
+{% if bushfire.id != primary_bushfire_id %}
+<input type="hidden" name="selected_ids" value="{{bushfire.id}}">
+<table class="table table-bordered table-striped table-condensed">
+    <thead>
+        <tr>
+          <th style="background: black; color: white; text-align: left; font-size: 16px; width:20%;valign:center" > 
+            <input type="radio" id="id_radio_{{bushfire.id}}" name="primary_bushfire_id" value="{{bushfire.id}}"  {% if bushfire.id == primary_bushfire_id %} checked {% endif %} disabled>
+            {{bushfire.fire_number}}
+          </th>
+          <th style="background: black; color: white; text-align: left; font-size: 16px; width:30%" > 
+            {{bushfire.region}}<span style="padding-left:20px;">{{bushfire.district}}</span>
+          </th>
+          <th colspan="2" style="background: black; color: white; text-align: left; font-size: 16px;" > 
+            <span style="text-transform:none">
+            {{bushfire.name}}
+            </span>
+            <div style="float:right">
+            {{bushfire.report_status_name}}  <i style="padding-left:30px;cursor:pointer" onclick="toggle(this,'id_body_{{bushfire.id}}')" class="icon-chevron-down" ></i></span>
+
+            </div>
+          </th>
+        </tr>
+    </thead>
+    <tbody id="id_body_{{bushfire.id}}">
+    {% include 'bfrs/inc/detail_4_link.html' %}
+    </tbody>
+</table>
+{% endif %}
+{% endfor %}
+
+
+<div class="navbar navbar-fixed-bottom">
+  <div class="navbar-inner">
+    <div class="container">
+      <p class="pull-right">
+        <button type="submit" value="confirm" class="btn btn-primary btn-success" name="step" >Confirm {{action_name}}</button>
+        <button type="submit" value="select_primary_bushfire" class="btn btn-primary btn-secondary" name="step" >Select Primary Bushfire Again</button>
+        <a id="id_cancel_btn" href="{% main_url %}" class="btn btn-primary btn-danger">Cancel</a>
+      </p>
+    </div>
+  </div>
+</div>
+
+</form>
+
+{% endblock %}
