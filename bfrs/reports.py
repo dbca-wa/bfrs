@@ -26,6 +26,17 @@ logger = logging.getLogger(__name__)
 DISCLAIMER = 'Any discrepancies between the total and the sum of the individual values is due to rounding.'
 MISSING_MAP = []
 
+region_order = {
+    'Goldfields':-97,
+    'Kimberley':-100,
+    'Midwest':-98,
+    'Pilbara':-99,
+    'South Coast':-95,
+    'South West':-199,
+    'Swan':-200,
+    'Warren':-198,
+    'Wheatbelt':-96
+}
 
 def style(bold=False, num_fmt='#,##0', horz_align=Alignment.HORZ_GENERAL, colour=None):
     style = XFStyle()
@@ -179,7 +190,7 @@ class MinisterialReport():
 
         rpt_map = []
         item_map = {}
-        for region in Region.objects.filter(forest_region=True).order_by('id'):
+        for region in sorted(Region.objects.filter(forest_region=True),cmp=lambda r1,r2: cmp(region_order.get(r1.name,r1.id),region_order.get(r2.name,r2.id))):
             map_auth = [i for i in rpt_map_auth if i.has_key(region.name)][0]
             map_268  = [i for i in rpt_map_268 if i.has_key(region.name)][0]
             rpt_map.append({
@@ -212,7 +223,7 @@ class MinisterialReport():
             {'': ''}
         )
 
-        for region in Region.objects.filter(forest_region=False).order_by('id'):
+        for region in sorted(Region.objects.filter(forest_region=False),cmp=lambda r1,r2: cmp(region_order.get(r1.name,r1.id),region_order.get(r2.name,r2.id))):
             map_auth = [i for i in rpt_map_auth if i.has_key(region.name)][0]
             map_268  = [i for i in rpt_map_268 if i.has_key(region.name)][0]
             rpt_map.append({
@@ -479,7 +490,6 @@ class MinisterialReport268():
         else:
             outstanding_fires = list(Bushfire.objects.filter(report_status__in=[Bushfire.STATUS_INITIAL_AUTHORISED]).values_list('fire_number', flat=True))
 
-        forest_regions = list(qs_regions.filter(forest_region=True).values_list('id', flat=True))
         pbs_fires_dict = get_pbs_bushfires(outstanding_fires)
 
         if not dbca_initial_control:
@@ -522,7 +532,7 @@ class MinisterialReport268():
         net_forest_total_all_tenure = 0
         net_forest_total_area     = 0
 
-        for region in Region.objects.filter(forest_region=True).order_by('id'):
+        for region in sorted(Region.objects.filter(forest_region=True),cmp=lambda r1,r2: cmp(region_order.get(r1.name,r1.id),region_order.get(r2.name,r2.id))):
             if data_268_pw.has_key(region.id):
                 pw_tenure      = data_268_pw[region.id]['number']
                 area_pw_tenure = data_268_pw[region.id]['area']
@@ -565,7 +575,7 @@ class MinisterialReport268():
         net_nonforest_total_all_tenure = 0
         net_nonforest_total_area     = 0
 
-        for region in Region.objects.filter(forest_region=False).order_by('id'):
+        for region in sorted(Region.objects.filter(forest_region=False),cmp=lambda r1,r2: cmp(region_order.get(r1.name,r1.id),region_order.get(r2.name,r2.id))):
             if data_268_pw.has_key(region.id):
                 pw_tenure      = data_268_pw[region.id]['number']
                 area_pw_tenure = data_268_pw[region.id]['area']
@@ -737,7 +747,7 @@ class MinisterialReportAuth():
         net_forest_total_all_area = 0
         net_forest_total_area     = 0
 
-        for region in Region.objects.filter(forest_region=True).order_by('id'):
+        for region in sorted(Region.objects.filter(forest_region=True),cmp=lambda r1,r2: cmp(region_order.get(r1.name,r1.id),region_order.get(r2.name,r2.id))):
             row1 = qs1.get(region_id=region.id) if qs1.filter(region_id=region.id).count() > 0 else {}
             row2 = qs2.get(region_id=region.id) if qs2.filter(region_id=region.id).count() > 0 else {}
 
@@ -773,7 +783,7 @@ class MinisterialReportAuth():
         net_nonforest_area_pw_tenure = 0
         net_nonforest_total_all_area = 0
         net_nonforest_total_area     = 0
-        for region in Region.objects.filter(forest_region=False).order_by('id'):
+        for region in sorted(Region.objects.filter(forest_region=False),cmp=lambda r1,r2: cmp(region_order.get(r1.name,r1.id),region_order.get(r2.name,r2.id))):
             row1 = qs1.get(region_id=region.id) if qs1.filter(region_id=region.id).count() > 0 else {}
             row2 = qs2.get(region_id=region.id) if qs2.filter(region_id=region.id).count() > 0 else {}
 
@@ -1772,7 +1782,7 @@ class RegionByTenureReport():
         col_no = lambda c=count(): next(c)
         row.write(col_no(), '')
         row.write(col_no(), '' )
-        for i in Tenure.objects.all().order_by('id'):
+        for i in Tenure.objects.all().order_by('name'):
             row.write(col_no(), i.name, style=style)
         row.write(col_no(), "Total", style=style)
 
