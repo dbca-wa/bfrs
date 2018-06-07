@@ -1261,54 +1261,74 @@ class BushfireByTenureReport():
         # Group By Region
         year = current_finyear()
         #qs = Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED)
-        qs = Bushfire.objects.filter(authorised_by__isnull=False).exclude(report_status=Bushfire.STATUS_INVALIDATED)
-        
-        qs0 = qs.filter(year=year).values('tenure_id').annotate(count=Count('tenure_id'), area=Sum('area') )
-        qs1 = qs.filter(year=year-1).values('tenure_id').annotate(count=Count('tenure_id'), area=Sum('area') )
-        qs2 = qs.filter(year=year-2).values('tenure_id').annotate(count=Count('tenure_id'), area=Sum('area') )
+        count_sql = """
+        SELECT a.tenure_id,count(*) 
+        FROM (
+            SELECT 
+                CASE WHEN tenure_id = {other_tenure} AND other_tenure = 1 THEN {private_property_tenure}
+                     WHEN tenure_id = {other_tenure} AND other_tenure = 2 THEN {other_crown_tenure}
+                     WHEN tenure_id = {other_tenure} THEN {other_tenure}
+                     ELSE tenure_id
+                END AS tenure_id,
+                fire_number
+            FROM bfrs_bushfire
+            WHERE report_status in {report_status} AND year={year} 
+            ) a
+        GROUP BY a.tenure_id
+"""
+        area_sql = """
+        SELECT a.tenure_id, sum(a.area) AS area 
+        FROM bfrs_areaburnt a JOIN bfrs_bushfire b ON a.bushfire_id = b.id 
+        WHERE b.report_status in {report_status} AND b.year={year} 
+        GROUP BY a.tenure_id 
+"""
 
         rpt_map = []
         item_map = {}
-        net_count0 = 0
-        net_count1 = 0
-        net_count2 = 0
-        net_area0  = 0
-        net_area1  = 0
-        net_area2  = 0
+        counts = []
+        areas = []
+        other_tenure = Tenure.objects.get(name="Other")
+        private_property_tenure = Tenure.objects.get(name="Private Property")
+        other_crown_tenure = Tenure.objects.get(name="Other Crown")
+        with connection.cursor() as cursor:
+            for y in (year - 2,year - 1,year):
+                year_counts = {"total":0}
+                year_areas = {"total":0}
+                counts.append(year_counts)
+                areas.append(year_areas)
+                cursor.execute(count_sql.format(report_status="(3,4)",year=y,other_tenure=other_tenure.id,private_property_tenure=private_property_tenure.id,other_crown_tenure=other_crown_tenure.id))
+                for result in cursor.fetchall():
+                    year_counts[result[0]] = result[1]
+                    year_counts["total"] += result[1]
+                cursor.execute(area_sql.format(report_status="(3,4)",year=y))
+                for result in cursor.fetchall():
+                    year_areas[result[0]] = result[1]
+                    year_areas["total"] += result[1]
+
 
         for tenure in Tenure.objects.all().order_by('id'):
-            row0 = qs0.get(tenure_id=tenure.id) if qs0.filter(tenure_id=tenure.id).count() > 0 else {}
-            row1 = qs1.get(tenure_id=tenure.id) if qs1.filter(tenure_id=tenure.id).count() > 0 else {}
-            row2 = qs2.get(tenure_id=tenure.id) if qs2.filter(tenure_id=tenure.id).count() > 0 else {}
-
-            count0 = row0.get('count') if row0.get('count') else 0
-            area0  = row0.get('area') if row0.get('area') else 0
-
-            count1 = row1.get('count') if row1.get('count') else 0
-            area1  = row1.get('area') if row1.get('area') else 0
-
-            count2 = row2.get('count') if row2.get('count') else 0
-            area2  = row2.get('area') if row2.get('area') else 0
-
             rpt_map.append(
-                {tenure.name: dict(count2=count2, count1=count1, count0=count0, area2=area2, area1=area1, area0=area0)}
+                {tenure.name: dict(
+                    count2=counts[0].get(tenure.id,0), 
+                    count1=counts[1].get(tenure.id,0), 
+                    count0=counts[2].get(tenure.id,0), 
+                    area2=areas[0].get(tenure.id,0), 
+                    area1=areas[1].get(tenure.id,0), 
+                    area0=areas[2].get(tenure.id,0)
+                )}
             )
                 
-            net_count0      += count0 
-            net_count1      += count1 
-            net_count2      += count2 
-            net_area0       += area0 
-            net_area1       += area1 
-            net_area2       += area2 
-
         rpt_map.append(
-            {'Total': dict(count2=net_count2, count1=net_count1, count0=net_count0, area2=net_area2, area1=net_area1, area0=net_area0)}
+            {'Total': dict(
+                count2=counts[0].get("total",0), 
+                count1=counts[1].get("total",0), 
+                count0=counts[2].get("total",0), 
+                area2=areas[0].get("total",0), 
+                area1=areas[1].get("total",0), 
+                area0=areas[2].get("total",0)
+            )}
         )
 
-        # add a white space/line between forest and non-forest region tabulated info
-        #rpt_map.append(
-        #    {'': ''}
-        #)
 
         return rpt_map, item_map
 
