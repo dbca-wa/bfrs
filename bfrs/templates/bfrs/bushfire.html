@@ -55,7 +55,7 @@
 <div style="margin-bottom:10px">
     <select id="id_action" name="action">
         {% for k,v in actions.items %}
-        <option value="{{k}}" >{{v}}</option>
+        <option value="{{k}}" {% if action == k %} selected {% endif %}>{{v}}</option>
         {% endfor %}
 
     </select>
@@ -131,6 +131,10 @@
 			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="Edit initial fire report"><font color="red"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-edit icon-white"></i></font></a>
             {% elif bushfire.report_status == bushfire.STATUS_INVALIDATED %}
 			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="View the invalidated initial fire report"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-ban-circle icon-white"></i></a>
+            {% elif bushfire.report_status == bushfire.STATUS_MERGED %}
+			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="View the merged fire report"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-ban-circle icon-white"></i></a>
+            {% elif bushfire.report_status == bushfire.STATUS_DUPLICATED %}
+			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="View the duplicated fire report"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-ban-circle icon-white"></i></a>
 		    {% else %}
 			<a href="{% url 'bushfire:initial_snapshot' bushfire.id %}" title="Notifications fire report submitted on {{bushfire.init_authorised_date|date:'Y-m-d H:i'}} by {{bushfire.init_authorised_by}}"><span style="display:none">{{bushfire.report_status}}</span><font color="green"><i class="icon-ok icon-white"></i></font></a>
 		    {% endif %}
@@ -139,12 +143,12 @@
 		<td align="center">
             {% if bushfire.report_status == bushfire.STATUS_INITIAL_AUTHORISED %}
 			<a href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Edit final fire report"><span style="display:none">{{bushfire.report_status}}</span><font color="red"><i class="icon-edit icon-white"></i></red></a>
-            {% elif bushfire.report_status >= bushfire.STATUS_FINAL_AUTHORISED and bushfire.report_status != bushfire.STATUS_INVALIDATED%}
+            {% elif bushfire.report_status >= bushfire.STATUS_FINAL_AUTHORISED and bushfire.report_status < bushfire.STATUS_INVALIDATED%}
 			<a href="{% url 'bushfire:final_snapshot' bushfire.id %}" title="Final fire report authorised on {{bushfire.authorised_date}} by {{bushfire.authorised_by}}"><span style="display:none">{{bushfire.report_status}}</span><font color="green"><i class="icon-ok icon-white"></i></font></a>
 		    {% endif %}
 		</td>
 
-        {% if can_maintain_data %}
+        {% if can_maintain_data and bushfire.report_status < bushfire.STATUS_INVALIDATED %}
          <td>
            {% if bushfire.report_status >= bushfire.STATUS_FINAL_AUTHORISED %}
              {% if bushfire.is_reviewed %}
@@ -176,10 +180,10 @@
           <table class="table table-bordered table-striped table-condensed">
             <tbody>
               <tr>
-                <th>Region</th>
-                <td>{{ bushfire.region.name }}</td>
+                <th>Status</th>
+                <td>{{ bushfire.report_status_name }}</td>
                 <th colspan="1">District</th>
-                <td>{{ bushfire.district.name }}</td>
+                <td>{{bushfire.region.name}} - {{ bushfire.district.name }}</td>
               </tr>
               <tr>
                 <th colspan="1">Creator</th>
@@ -284,32 +288,45 @@
 
 {% if not is_paginated %}
     var sortList = undefined;
-{% if 'fire_number'|sort_class:form.initial == "headerSortDown" %}
-    sortList = [[0,0]]
-{% elif 'fire_number'|sort_class:form.initial == "headerSortUp" %}
-    sortList = [[0,1]]
-{% elif 'dfes_incident_no'|sort_class:form.initial == "headerSortDown" %}
-    sortList = [[1,0]]
-{% elif 'dfes_incident_no'|sort_class:form.initial == "headerSortUp" %}
-    sortList = [[1,1]]
-{% elif 'name'|sort_class:form.initial == "headerSortDown" %}
-    sortList = [[2,0]]
-{% elif 'name'|sort_class:form.initial == "headerSortUp" %}
-    sortList = [[2,1]]
-{% elif 'job_code'|sort_class:form.initial == "headerSortDown" %}
-    sortList = [[3,0]]
-{% elif 'job_code'|sort_class:form.initial == "headerSortUp" %}
-    sortList = [[3,1]]
-{% endif %}
-    $("#table").tablesorter({
-        cssHeader:"headerSort",
-        sortList:sortList,
-        headers:{
-            4:{sorter:false},
-            5:{sorter:false},
-            6:{sorter:false},
-        }
-    });
+    {% if 'fire_number'|sort_class:form.initial == "headerSortDown" %}
+        sortList = [[0,0]]
+    {% elif 'fire_number'|sort_class:form.initial == "headerSortUp" %}
+        sortList = [[0,1]]
+    {% elif 'dfes_incident_no'|sort_class:form.initial == "headerSortDown" %}
+        sortList = [[1,0]]
+    {% elif 'dfes_incident_no'|sort_class:form.initial == "headerSortUp" %}
+        sortList = [[1,1]]
+    {% elif 'name'|sort_class:form.initial == "headerSortDown" %}
+        sortList = [[2,0]]
+    {% elif 'name'|sort_class:form.initial == "headerSortUp" %}
+        sortList = [[2,1]]
+    {% elif 'job_code'|sort_class:form.initial == "headerSortDown" %}
+        sortList = [[3,0]]
+    {% elif 'job_code'|sort_class:form.initial == "headerSortUp" %}
+        sortList = [[3,1]]
+    {% endif %}
+    {% if actions %}
+        $("#table").tablesorter({
+            cssHeader:"headerSort",
+            sortList:sortList,
+            headers:{
+                0:{sorter:false},
+                5:{sorter:false},
+                6:{sorter:false},
+                7:{sorter:false},
+            }
+        });
+    {% else %}
+        $("#table").tablesorter({
+            cssHeader:"headerSort",
+            sortList:sortList,
+            headers:{
+                4:{sorter:false},
+                5:{sorter:false},
+                6:{sorter:false},
+            }
+        });
+    {% endif %}
 {% endif %}
 
     $("[data-toggle=myCollapse]").click(function( ev ) {

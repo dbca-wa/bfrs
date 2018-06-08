@@ -8,10 +8,10 @@
 
 {% block bushfire_head %}
 <div>
-Report has been reviewed by user {{"reviewed_by"|field_value:bushfire}} at {{"reviewed_date"|field_value:bushfire}}.
+Report has been reviewed by user {% field_value "reviewed_by" bushfire %} at {% field_value "reviewed_date" bushfire %}.
 <br>
 <br>
-The report is located at <a href={{urls.final_snapshot}}>{{urls.final_snapshot}}</a>
+The report is located at {% field_value "url_link" bushfire request "final_snapshot" %}
 </div><br>
 {% endblock %}
 

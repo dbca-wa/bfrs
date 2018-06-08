@@ -506,7 +506,7 @@ class Bushfire(BushfireBase):
 
     def clean(self):
         # create the bushfire fire number
-        if not self.id or self.district != Bushfire.objects.get(id=self.id).district:
+        if not self.id and not self.fire_number:
             try:
                 self.fire_number = ' '.join(['BF', str(self.year), self.district.code, '{0:03d}'.format(self.next_id(self.district))])
             except:

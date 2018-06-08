@@ -36,7 +36,6 @@ from bfrs.utils import (breadcrumbs_li,
         create_areas_burnt, update_areas_burnt_fs, update_damage_fs, update_injury_fs, 
         export_final_csv, export_excel, 
         update_status, serialize_bushfire,
-        rdo_email, pvs_email, fpc_email, pica_email, pica_sms, police_email, dfes_email, fssdrs_email,
         is_external_user, can_maintain_data, refresh_gokart,
         check_district_changed,get_missing_mandatory_fields
     )
@@ -164,6 +163,8 @@ class ExceptionMixin(object):
             else:
                 context["message"] = "".join(traceback.format_exception_only(exc_type,exc_value))
 
+            traceback.print_exc()
+
             return TemplateResponse(request, self.template_exception, context=context)
 
 class ProfileView(ExceptionMixin,LoginRequiredMixin, generic.FormView):
@@ -288,18 +289,24 @@ class BushfireView(ExceptionMixin,LoginRequiredMixin, filter_views.FilterView):
         if not action :
             raise Exception("Action is missing.")
 
+        self.action = action
         # Delete Review
         # Delete Final Authorisation
         # Mark Final Report as Reviewed
-        if action in ('delete_review','delete_final_authorisation','mark_reviewed'):
-            bushfire = Bushfire.objects.get(id=self.request.POST.get('bushfire_id'))
-            update_status(request, bushfire, action)
-            refresh_gokart(request, fire_number=bushfire.fire_number) #, region=None, district=None, action='update')
-
-        # Archive / Unarchive
-        elif action in ('archive','unarchive'):
-            bushfire = Bushfire.objects.get(id=self.request.POST.get('bushfire_id'))
-            update_status(request, bushfire, action)
+        if action == "confirm":
+            confirm_action = self.request.POST.get("confirm_action")
+            if not confirm_action:
+                raise Exception("Confirm action is missing.")
+            elif confirm_action in ('delete_review','delete_final_authorisation','mark_reviewed'):
+                bushfire = Bushfire.objects.get(id=self.request.POST.get('bushfire_id'))
+                update_status(request, bushfire, confirm_action)
+                refresh_gokart(request, fire_number=bushfire.fire_number) #, region=None, district=None, action='update')
+            # Archive / Unarchive
+            elif confirm_action in ('archive','unarchive'):
+                bushfire = Bushfire.objects.get(id=self.request.POST.get('bushfire_id'))
+                update_status(request, bushfire, confirm_action)
+            else:
+                raise Exception("Unknown confirm action({})".format(confirm_action))
 
         elif action in self.actions:
             selected_ids = self.request.POST.getlist("selected_ids")
@@ -322,7 +329,7 @@ class BushfireView(ExceptionMixin,LoginRequiredMixin, filter_views.FilterView):
             elif action in ["select_action","merge_reports","invalidate_duplicated_reports"]:
                 step = self.request.POST.get("step") or "select_primary_bushfire"
                 bushfires = Bushfire.objects.filter(id__in = selected_ids)
-                if len(bushfires) != len(selected_ids):
+                if bushfires.count() != len(selected_ids):
                     #some bushfire don't exist
                     errors += ["The bushfire({}) doesn't exist".format(identity) for identity in selected_ids if not any([r.id == identity for r in bushfires])]
                 else:
@@ -362,13 +369,15 @@ class BushfireView(ExceptionMixin,LoginRequiredMixin, filter_views.FilterView):
                         #do not chosen any bushfire as primary bushfire
                         errors.append("Please choose a primary bushfire for '{}'".format(self.actions.get(action)))
 
+                    context["target_status"] = "MERGED" if action == "merge_reports" else "DUPLICATED"
+
                     if errors:
                         return TemplateResponse(request, self.select_primary_bushfire_template, context=context)
                     
                     #temperary change the report status to the target status after the link action
-                    for bushfire in bushfires:
-                        if bushfire.id != primary_bushfire_id:
-                            bushfire.report_status = Bushfire.STATUS_MERGED if action == "merge" else Bushfire.STATUS_DUPLICATED
+                    #for bushfire in bushfires:
+                    #    if bushfire.id != primary_bushfire_id:
+                    #        bushfire.report_status = Bushfire.STATUS_MERGED if action == "merge_reports" else Bushfire.STATUS_DUPLICATED
                     """
                     if primary_bushfire.report_status >= Bushfire.STATUS_FINAL_AUTHORISED:
                         #chosen primary bushfire is final authorised, change it to submitted
@@ -378,10 +387,7 @@ class BushfireView(ExceptionMixin,LoginRequiredMixin, filter_views.FilterView):
                     return TemplateResponse(request, self.link_bushfire_confirm_template, context=context)
 
                 elif step == "confirm":
-                    if action == "merge":
-                        return self.merge_bushfires(request,bushfires,primary_bushfire)
-                    else:
-                        return self.invalidate_duplicated_reports(request,bushfires,primary_bushfire)
+                    update_status(request, (primary_bushfire,bushfires.exclude(id=primary_bushfire_id)), action,self.actions.get(action))
                 else:
                     raise Exception("Unknown step({1}) for action({0})".format(action,step))
             else:
@@ -390,12 +396,6 @@ class BushfireView(ExceptionMixin,LoginRequiredMixin, filter_views.FilterView):
             raise Exception("Unknown action({})" .format(action))
 
         return HttpResponseRedirect(self.get_success_url())
-
-    def merge_bushfires(self,request,bushfires,primary_bushfire,*args,**kwargs):
-        raise Exception("Under developing")
-
-    def invalidate_duplicated_reports(self,request,bushfires,primary_bushfire,*args,**kwargs):
-        raise Exception("Under developing")
 
     def get_context_data(self, **kwargs):
         context = super(BushfireView, self).get_context_data(**kwargs)
@@ -410,6 +410,8 @@ class BushfireView(ExceptionMixin,LoginRequiredMixin, filter_views.FilterView):
         context['is_external_user'] = is_external_user(self.request.user)
         context['selected_ids'] = self.selected_ids if hasattr(self,"selected_ids") else None
         context['actions'] = self.actions
+        if hasattr(self,"action"):
+            context['action'] = self.action
         #if context["paginator"].num_pages == 1: 
         #    context['is_paginated'] = False
     
@@ -470,24 +472,45 @@ class BushfireUpdateView(ExceptionMixin,LoginRequiredMixin, UpdateView):
     model = Bushfire
     form_class = BushfireUpdateForm
     template_name = 'bfrs/detail.html'
+    template_merged = 'bfrs/detail_merged.html'
     template_summary = 'bfrs/detail_summary.html'
     template_error = 'bfrs/error.html'
     template_exception = 'exception.html'
     template_mandatory_fields = 'bfrs/mandatory_fields.html'
+
+    @property
+    def editable(self):
+        """
+        True if editable;otherwise return false
+        """
+        obj = self.get_object()
+        if is_external_user(self.request.user):
+            return False
+        elif obj is None or obj.report_status is None:
+            return True
+        elif obj.report_status == Bushfire.STATUS_MERGED :
+            return True
+        elif obj.report_status >= Bushfire.STATUS_INVALIDATED :
+            return False
+        elif 'initial' in self.request.get_full_path() and obj.is_init_authorised:
+            return False
+        elif 'final' in self.request.get_full_path() and obj.is_final_authorised and not can_maintain_data(self.request.user):
+            return False
+        return True
 
     def get_template_names(self):
         """
         use 'bfrs/detail.html' for editing
         use 'bfrs/detail_summary.html' for readonly
         """
-        obj = self.get_object()
-        if is_external_user(self.request.user):
+        if self.editable:
+            obj = self.get_object()
+            if obj and obj.report_status == Bushfire.STATUS_MERGED :
+                return [self.template_merged]
+            else:
+                return super(BushfireUpdateView, self).get_template_names()
+        else:
             return [self.template_summary]
-        elif 'initial' in self.request.get_full_path() and obj.is_init_authorised:
-            return [self.template_summary]
-        elif 'final' in self.request.get_full_path() and obj.is_final_authorised and not can_maintain_data(self.request.user):
-            return [self.template_summary]
-        return super(BushfireUpdateView, self).get_template_names()
 
     def get_success_url(self):
         if self.request and self.request.session.has_key("lastMainUrl"):
@@ -604,12 +627,18 @@ class BushfireUpdateView(ExceptionMixin,LoginRequiredMixin, UpdateView):
                 #confirm_action is missing
                 #will not happen in the nomal scenario
                 raise Exception("Confirm action is missing")
+
+            response = check_district_changed(self.request, self.object, form)
+            if response:
+                #district is changed, following the district changing logic.
+                return response
+
             update_status(self.request, self.object, confirm_action)
             refresh_gokart(self.request, fire_number=self.object.fire_number, region=self.object.region.id, district=self.object.district.id)
             return HttpResponseRedirect(self.get_success_url())
 
         expected_status = None
-        if action == "create":
+        if action == "create" or (action == "submit" and self.object is None):
             pass
         elif action in ["save_draft","submit"]:
             expected_status = self.object.STATUS_INITIAL
@@ -762,6 +791,18 @@ class BushfireUpdateView(ExceptionMixin,LoginRequiredMixin, UpdateView):
             context = {}
 
         bushfire = self.get_object()
+        if not self.editable or (bushfire and bushfire.report_status == Bushfire.STATUS_MERGED):
+            context.update({
+                'initial':'initial' in self.request.get_full_path(),
+                'final':'final' in self.request.get_full_path(),
+                'snapshot': bushfire,
+                'damages': bushfire.damages.all(),
+                'injuries': bushfire.injuries.all(),
+                'tenures_burnt': bushfire.tenures_burnt.all(),
+                'can_maintain_data': can_maintain_data(self.request.user),
+            })
+            return context
+
         form_class = self.get_form_class()
         form = self.get_form(form_class)
 

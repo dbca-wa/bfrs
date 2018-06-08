@@ -39,12 +39,13 @@ DFES_EMAIL = env('DFES_EMAIL') or None
 FSSDRS_EMAIL = env('FSSDRS_EMAIL') or None
 EMAIL_TO_SMS_FROMADDRESS = env('EMAIL_TO_SMS_FROMADDRESS') or None
 SMS_POSTFIX = env('SMS_POSTFIX', 'sms_postfix')
-MEDIA_ALERT_SMS_TOADDRESS_MAP = env('MEDIA_ALERT_SMS_TOADDRESS_MAP', 'pica_sms_to')
+MEDIA_ALERT_SMS_TOADDRESS_MAP = env('MEDIA_ALERT_SMS_TOADDRESS_MAP') or None
 ALLOW_EMAIL_NOTIFICATION = (os.environ.get('ALLOW_EMAIL_NOTIFICATION') or 'false').lower() in ["true", "on", "1", "debug","yes"]
 EMAIL_EXCLUSIONS = env('EMAIL_EXCLUSIONS', [])
 CC_EMAIL = env('CC_EMAIL') or None
 BCC_EMAIL = env('BCC_EMAIL') or None
 SUPPORT_EMAIL = env('SUPPORT_EMAIL') or None
+MERGE_BUSHFIRE_EMAIL = env('MERGE_BUSHFIRE_EMAIL') or None
 
 INTERNAL_EMAIL = env('INTERNAL_EMAIL',['dbca.wa.gov.au','dpaw.wa.gov.au'])
 SSS_URL = env('SSS_URL', 'sss_redirect_url')

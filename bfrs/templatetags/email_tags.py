@@ -4,15 +4,20 @@ from dateutil import tz
 
 from django.contrib.auth.models import User
 from django import template
-from bfrs.models import Bushfire
 from django.conf import settings
+from django.utils.safestring import mark_safe
+
+from bfrs.models import Bushfire
+from bfrs import utils
 
 register = template.Library()
 
 
 @register.inclusion_tag('bfrs/email/bushfire_details.html',takes_context=True)
-def bushfire_details(context,*args):
-    context["bushfire_fields"]=args
+def bushfire_details(context,bushfire,*fields):
+    context["bushfire_fields"]=fields
+    context["cur_bushfire"] = bushfire
+
     return context
 
 @register.simple_tag(takes_context=True)
@@ -51,8 +56,8 @@ def field_label(field_name, bushfire=None):
         return value
 
 
-@register.filter(is_safe=False)
-def field_value(field_name, bushfire=None):
+@register.simple_tag()
+def field_value(field_name, bushfire=None, request=None, url_type="auto",is_upper=None):
     """
     Return the value of model field to dispay in the email
     """
@@ -61,9 +66,32 @@ def field_value(field_name, bushfire=None):
             if field_name == "origin_point_geo":
                 return bushfire.origin_geo
             elif field_name == "region":
-                return bushfire.region.name
+                if is_upper == True:
+                    return bushfire.region.name.upper()
+                else:
+                    return bushfire.region.name
             elif field_name == "district":
-                return bushfire.district.name
+                if is_upper == True:
+                    return bushfire.district.name.upper()
+                else:
+                    return bushfire.district.name
+            elif field_name == "fire_number":
+                if request:
+                    return mark_safe("<a href='{}'>{}</a>".format(utils.get_bushfire_url(request,bushfire,url_type),bushfire.fire_number))
+                else:
+                    return bushfire.fire_number
+            elif field_name == "url_link":
+                if request:
+                    return mark_safe("<a href='{0}'>{0}</a>".format(utils.get_bushfire_url(request,bushfire,url_type)))
+                else:
+                    return ""
+            elif field_name == "url":
+                if request:
+                    return utils.get_bushfire_url(request,bushfire,url_type)
+                else:
+                    return ""
+            elif field_name == "report_status":
+                return bushfire.report_status_name
             elif field_name == "latitude_degree":
                 return LatLon.Latitude(bushfire.origin_point.get_y()).degree
             elif field_name == "latitude_minute":

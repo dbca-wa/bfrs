@@ -149,6 +149,7 @@ def invalidate_bushfire(obj, user,cur_obj=None):
     with transaction.atomic():
         #invalidate the current object
         cur_obj.report_status = Bushfire.STATUS_INVALIDATED
+        cur_obj.invalid_details = obj.invalid_details or "Moved from '{}' to '{}'".format(cur_obj.district.name,obj.district.name)
         cur_obj.modifier = user
         cur_obj.sss_id = None
         cur_obj.save()
@@ -170,6 +171,7 @@ def invalidate_bushfire(obj, user,cur_obj=None):
         obj.region = obj.district.region
         obj.valid_bushfire = None
         obj.fire_not_found = False
+        obj.invalid_details = None
         obj.save()
 
         # link the new bushfire to the old invalidated bushfire
@@ -209,13 +211,30 @@ def check_district_changed(request, obj, form):
     Checks if district is changed from within the bushfire reporting system (FSSDRS Group can do this)
     Further, primary use case is to update the district from SSS, which then executes the equiv code below from bfrs/api.py
     """
-    if request.POST.has_key('district') and not request.POST.get('district'):
-        return None
+    confirm_action = False
+    if request.POST.has_key('action') and request.POST.get('action')=='confirm':
+        #confirm action
+        confirm_action = True
+        if request.POST.has_key('confirm_action') and request.POST.get('confirm_action') == 'invalidate':
+            #'invalidate' confirm action
+            if request.POST.has_key('district') and not request.POST.get('district'):
+                #district is missing, throw exception
+                raise Exception("District is missing.")
+            elif not obj:
+                #bushfire report is missing.
+                raise Exception("Bushfire id is missing or does not exist.")
+        else:
+            #other confirm action
+            return None
+    else:
+        #other action
+        if request.POST.has_key('district') and not request.POST.get('district'):
+            return None
 
     if obj:
         cur_obj = Bushfire.objects.get(id=obj.id)
         district = District.objects.get(id=request.POST['district']) if request.POST.has_key('district') else None # get the district from the form
-        if request.POST.has_key('action') and request.POST.get('action')=='invalidate' and cur_obj.report_status!=Bushfire.STATUS_INVALIDATED:
+        if confirm_action and cur_obj.report_status!=Bushfire.STATUS_INVALIDATED:
             obj.invalid_details = request.POST.get('invalid_details')
             obj.district = district
             obj.region = district.region
@@ -502,23 +521,34 @@ def update_damage_fs(bushfire, damage_formset):
 
     return 1
 
-def bushfire_urls(request, bushfire):
-    urls = {}
+def get_bushfire_url(request, bushfire,url_type):
     if bushfire.report_status >= Bushfire.STATUS_INVALIDATED:
-        return urls
+        return request.build_absolute_uri(reverse('bushfire:bushfire_initial', kwargs={'pk':bushfire.id}))
 
-    if bushfire.report_status == Bushfire.STATUS_INITIAL:
-        urls["initial"]=request.build_absolute_uri(reverse('bushfire:bushfire_initial', kwargs={'pk':bushfire.id}))
-    if bushfire.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED:
-        urls["initial_snapshot"]=request.build_absolute_uri(reverse('bushfire:initial_snapshot', kwargs={'pk':bushfire.id}))
-        urls["final"]=request.build_absolute_uri(reverse('bushfire:bushfire_final', kwargs={'pk':bushfire.id}))
-    if bushfire.report_status >= Bushfire.STATUS_FINAL_AUTHORISED:
-        urls["final_snapshot"]=request.build_absolute_uri(reverse('bushfire:final_snapshot', kwargs={'pk':bushfire.id}))
+    if url_type == "initial":
+        if bushfire.report_status == Bushfire.STATUS_INITIAL:
+            return request.build_absolute_uri(reverse('bushfire:bushfire_initial', kwargs={'pk':bushfire.id}))
+    elif url_type == "initial_snapshot":
+        if bushfire.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED:
+            return request.build_absolute_uri(reverse('bushfire:initial_snapshot', kwargs={'pk':bushfire.id}))
+    elif url_type == "final":
+        if bushfire.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED:
+            return request.build_absolute_uri(reverse('bushfire:bushfire_final', kwargs={'pk':bushfire.id}))
+    elif url_type == "final_snapshot":
+        if bushfire.report_status >= Bushfire.STATUS_FINAL_AUTHORISED:
+            return request.build_absolute_uri(reverse('bushfire:final_snapshot', kwargs={'pk':bushfire.id}))
+    elif url_type == "auto":
+        if bushfire.report_status >= Bushfire.STATUS_FINAL_AUTHORISED:
+            return request.build_absolute_uri(reverse('bushfire:final_snapshot', kwargs={'pk':bushfire.id}))
+        elif bushfire.report_status == Bushfire.STATUS_INITIAL_AUTHORISED:
+            return request.build_absolute_uri(reverse('bushfire:bushfire_final', kwargs={'pk':bushfire.id}))
+        else:
+            return request.build_absolute_uri(reverse('bushfire:bushfire_initial', kwargs={'pk':bushfire.id}))
 
-    return urls
+    return ""
 
 
-def update_status(request, bushfire, action):
+def update_status(request, bushfire, action,action_name=""):
 
     notification = {}
     user_email = request.user.email if settings.CC_TO_LOGIN_USER else None
@@ -535,31 +565,81 @@ def update_status(request, bushfire, action):
         bushfire.report_status = Bushfire.STATUS_INITIAL_AUTHORISED
         bushfire.save()
         serialize_bushfire('initial', action, bushfire)
-        urls = bushfire_urls(request, bushfire)
 
         # send emails
         if BushfireProperty.objects.filter(bushfire=bushfire,name="plantations").count() > 0:
-            resp = fpc_email(bushfire, urls,user_email)
+            resp = send_email({
+                "bushfire":bushfire, 
+                "user_email":user_email,
+                "to_email":settings.FPC_EMAIL,
+                "request":request,
+                "subject":'FPC Email - Initial Bushfire submitted - {}'.format(bushfire.fire_number),
+                "template":"bfrs/email/fpc_email.html"
+            })
             notification['FPC'] = 'Email Sent' if resp else 'Email failed'
 
-        resp = rdo_email(bushfire, urls,user_email)
+        resp = send_email({
+            "bushfire":bushfire, 
+            "user_email":user_email,
+            "to_email":rdo_email_addresses(bushfire),
+            "request":request,
+            "subject":'RDO Email - {}, Initial Bushfire submitted - {}'.format(bushfire.region.name.upper(), bushfire.fire_number),
+            "template":"bfrs/email/rdo_email.html"
+        })
         notification['RDO'] = 'Email Sent' if resp else 'Email failed'
 
-        resp = dfes_email(bushfire, urls,user_email)
-        notification['DFES'] = 'Email Sent' if resp else 'Email failed'
+        if not bushfire.dfes_incident_no:
+            #no dfes incident no, send email to dfes
+            resp = send_email({
+                "bushfire":bushfire, 
+                "user_email":user_email,
+                "to_email":settings.DFES_EMAIL,
+                "request":request,
+                "subject":'DFES Email - Initial Bushfire submitted - {}'.format(bushfire.fire_number),
+                "template":"bfrs/email/dfes_email.html"
+            })
+            notification['DFES'] = 'Email Sent' if resp else 'Email failed'
 
-        resp = police_email(bushfire, urls,user_email)
+        resp = send_email({
+            "bushfire":bushfire, 
+            "user_email":user_email,
+            "to_email":settings.POLICE_EMAIL,
+            "request":request,
+            "subject":'POLICE Email - Initial Bushfire submitted {}, and an investigation is required - {}'.format(bushfire.fire_number, 'Yes' if bushfire.investigation_req else 'No'),
+            "template":"bfrs/email/police_email.html"
+        })
         notification['POLICE'] = 'Email Sent' if resp else 'Email failed'
 
         if bushfire.park_trail_impacted:
-            resp = pvs_email(bushfire, urls,user_email)
+            resp = send_email({
+                "bushfire":bushfire, 
+                "user_email":user_email,
+                "to_email":settings.PVS_EMAIL,
+                "request":request,
+                "subject":'PVS Email - Initial Bushfire submitted - {}'.format(bushfire.fire_number),
+                "template":"bfrs/email/pvs_email.html"
+            })
             notification['PVS'] = 'Email Sent' if resp else 'Email failed'
 
         if bushfire.media_alert_req :
-            resp = pica_email(bushfire, urls,user_email)
+            resp = send_email({
+                "bushfire":bushfire, 
+                "user_email":user_email,
+                "to_email":settings.PICA_EMAIL,
+                "request":request,
+                "subject":'PICA Email - Initial Bushfire submitted - {}'.format(bushfire.fire_number),
+                "template":"bfrs/email/pica_email.html"
+            })
             notification['PICA'] = 'Email Sent' if resp else 'Email failed'
 
-            resp = pica_sms(bushfire, urls,user_email)
+            resp = send_sms({
+                "bushfire":bushfire, 
+                "user_email":user_email,
+                "phones":settings.MEDIA_ALERT_SMS_TOADDRESS_MAP,
+                "request":request,
+                "failed_subject":'Failed to send PICA SMS. {}'.format(bushfire.fire_number),
+                "template":"bfrs/email/pica_sms.txt"
+            })
             notification['PICA SMS'] = 'SMS Sent' if resp else 'SMS failed'
 
         bushfire.area = None # reset bushfire area
@@ -580,9 +660,15 @@ def update_status(request, bushfire, action):
         bushfire.save()
         serialize_bushfire('final', action, bushfire)
 
-        urls = bushfire_urls(request, bushfire)
         # send emails
-        resp = fssdrs_email(bushfire, urls,user_email, status='final')
+        resp = send_email({
+            "bushfire":bushfire, 
+            "user_email":user_email,
+            "to_email":settings.FSSDRS_EMAIL,
+            "request":request,
+            "subject":'FSSDRS Email - Final Fire report has been authorised - {}'.format(bushfire.fire_number),
+            "template":"bfrs/email/fssdrs_authorised_email.html"
+        })
         notification['FSSDRS-Auth'] = 'Email Sent' if resp else 'Email failed'
 
         bushfire.save()
@@ -603,14 +689,20 @@ def update_status(request, bushfire, action):
         bushfire.save()
         serialize_bushfire('review', action, bushfire)
 
-        urls = bushfire_urls(request, bushfire)
         # send emails
-        resp = fssdrs_email(bushfire, urls,user_email, status='review')
-        notification['FSSDRS-Auth'] = 'Email Sent' if resp else 'Email failed'
+        resp = send_email({
+            "bushfire":bushfire, 
+            "user_email":user_email,
+            "to_email":settings.FSSDRS_EMAIL,
+            "request":request,
+            "subject":'FSSDRS Email - Final Fire report has been reviewed - {}'.format(bushfire.fire_number),
+            "template":"bfrs/email/fssdrs_reviewed_email.html"
+        })
+        notification['FSSDRS-Review'] = 'Email Sent' if resp else 'Email failed'
 
         bushfire.save()
 
-    elif (action == 'delete_final_authorisation' or action == 'delete_authorisation_(missing_fields_-_FSSDRS)'):
+    elif action in ('delete_final_authorisation' , 'delete_authorisation_(missing_fields_-_FSSDRS)', 'delete_authorisation(merge_bushfires)'):
         if not bushfire.is_final_authorised:
             raise Exception("The report({0}) is not authorised.".format(bushfire.fire_number))
         if bushfire.is_reviewed:
@@ -653,10 +745,120 @@ def update_status(request, bushfire, action):
             raise Exception("The report({0}) is not archived".format(bushfire.fire_number))
         bushfire.archive = False
         bushfire.save()
+    elif action == "merge_reports":
+        #merge bushfires into another bushfire
+        #validate the parameters
+        primary_bushfire,merged_bushfires = bushfire
+        if not primary_bushfire:
+            raise Exception("Primary bushfire is missing")
+        elif not primary_bushfire.pk:
+            raise Exception("Primary bushfire is not created")
+        elif primary_bushfire.report_status >= Bushfire.STATUS_INVALIDATED:
+            raise Exception("The bushfire({1}) is '{2}' and is not eligible to be a primary bushfire for '{0}'.".format(action_name,primary_bushfire.id,primary_bushfire.report_status_name))
+        
+        if not merged_bushfires:
+            raise Exception("Merged bushfires is missing")
+        invalid_bushfires = [ bf for bf in merged_bushfires if not bf.pk ]
+        if invalid_bushfires:
+            raise Exception("{} bushfires are not created yet.".format(len(invalid_bushfires)))
+        invalid_bushfires = [ bf for bf in merged_bushfires if bf.report_status >= Bushfire.STATUS_INVALIDATED ] 
+        if invalid_bushfires:
+            raise Exception("The bushfires({1}) are not eligible for '{0}'".format(action_name,["{}<{}>".format(bf.fire_number,bf.report_status_name) for bf in invalid_bushfires]))
 
+        with transaction.atomic():
+            #clean the final fire boundary related data: burning area, final fire boundary flag, 
+            primary_bushfire.tenures_burnt.all().delete()
+            primary_bushfire.final_fire_boundary = False
+            primary_bushfire.area = None
+            primary_bushfire.other_area = None
 
+            if primary_bushfire.report_status >= Bushfire.STATUS_FINAL_AUTHORISED:
+                #if primary bushfire is final authorised, then remove the authorisation 
+                update_status(request,primary_bushfire,'delete_authorisation(merge_bushfires)')
+            else:
+                primary_bushfire.save()
+                
+            #update merged bushfires to merged status and link to the primary bushfire
+            for bf in merged_bushfires:
+                bf.invalid_details = "Merged to bushfire '{}'".format(primary_bushfire.fire_number)
+                bf.valid_bushfire = primary_bushfire
+                if bf.report_status >= Bushfire.STATUS_FINAL_AUTHORISED:
+                    bf.report_status = Bushfire.STATUS_MERGED
+                    serialize_bushfire("final", "Merge", bf)
+                else:
+                    bf.report_status = Bushfire.STATUS_MERGED
+                bf.save()
 
+                #if some bushfires were merged into this bushfire, then relink those merged bushfire to new primary bushfire
+                for mbf in bf.bushfire_invalidated.filter(report_status = Bushfire.STATUS_MERGED):
+                    mbf.invalid_details = "Merged to bushfire '{}'".format(primary_bushfire.fire_number)
+                    mbf.valid_bushfire = primary_bushfire
+                    mbf.save()
 
+            #send emails
+        resp = send_email({
+            "bushfire":primary_bushfire, 
+            "related_bushfires":merged_bushfires,
+            "user_email":user_email,
+            "to_email":concat_email_addresses(settings.MERGE_BUSHFIRE_EMAIL,rdo_email_addresses(primary_bushfire,merged_bushfires)),
+            "request":request,
+            "title_4_related_bushfires":"The merged bushfires are listed below.",
+            "subject":'{0} Email - Merge bushfires({2}) to primary bushfire ({1})'.format(action_name,primary_bushfire.fire_number,",".join([bf.fire_number for bf in merged_bushfires])),
+            "template":"bfrs/email/merge_bushfires_email.html"
+        })
+        notification['invalidate_duplicated_bushfire'] = 'Email Sent' if resp else 'Email failed'
+
+    elif action == "invalidate_duplicated_reports":
+        #validate the parameters
+        primary_bushfire,duplicated_bushfires = bushfire
+        if not primary_bushfire:
+            raise Exception("Primary bushfire is missing")
+        elif not primary_bushfire.pk:
+            raise Exception("Primary bushfire is not created")
+        elif primary_bushfire.report_status >= Bushfire.STATUS_INVALIDATED:
+            raise Exception("The bushfire({1}) is '{2}' and is not eligible to be a primary bushfire for '{0}'.".format(action_name,primary_bushfire.id,primary_bushfire.report_status_name))
+        
+        if not duplicated_bushfires:
+            raise Exception("Duplicated bushfires is missing")
+        invalid_bushfires = [ bf for bf in duplicated_bushfires if not bf.pk ]
+        if invalid_bushfires:
+            raise Exception("{} bushfires are not created yet.".format(len(invalid_bushfires)))
+        invalid_bushfires = [ bf for bf in duplicated_bushfires if bf.report_status >= Bushfire.STATUS_INVALIDATED ] 
+        if invalid_bushfires:
+            raise Exception("The bushfires({1}) are not eligible for '{0}'".format(action_name,["{}<{}>".format(bf.fire_number,bf.report_status_name) for bf in invalid_bushfires]))
+
+        with transaction.atomic():
+            #update duplicated bushfires to duplicated status and link to the primary bushfire
+            for bf in duplicated_bushfires:
+                bf.invalid_details = "Duplicated with bushfire '{}'".format(primary_bushfire.fire_number)
+                bf.valid_bushfire = primary_bushfire
+                if bf.report_status >= Bushfire.STATUS_FINAL_AUTHORISED:
+                    bf.report_status = Bushfire.STATUS_DUPLICATED
+                    serialize_bushfire("final", "Invalidate_duplicated_reports", bf)
+                else:
+                    bf.report_status = Bushfire.STATUS_DUPLICATED
+                bf.save()
+                #if some bushfires were duplicated with this bushfire, then relink those duplicated bushfire to new primary bushfire
+                for dbf in bf.bushfire_invalidated.filter(report_status = Bushfire.STATUS_DUPLICATED):
+                    dbf.invalid_details = "Duplicated with bushfire '{}'".format(primary_bushfire.fire_number)
+                    dbf.valid_bushfire = primary_bushfire
+                    dbf.save()
+
+        #send emails
+        resp = send_email({
+            "bushfire":primary_bushfire, 
+            "related_bushfires":duplicated_bushfires,
+            "user_email":user_email,
+            "to_email":rdo_email_addresses(primary_bushfire,duplicated_bushfires),
+            "request":request,
+            "title_4_related_bushfires":"The duplciated bushfires are listed below.",
+            "subject":'{0} Email - Duplicated bushfires({2}) are linked to bushfire ({1})'.format(action_name,primary_bushfire.fire_number,",".join([bf.fire_number for bf in duplicated_bushfires])),
+            "template":"bfrs/email/invalidate_duplicated_bushfires_email.html"
+        })
+        notification['invalidate_duplicated_bushfire'] = 'Email Sent' if resp else 'Email failed'
+    else:
+        raise Exception("Unknow action({})".format(action))
+        
     return notification
 
 NOTIFICATION_FIELDS = [
@@ -718,202 +920,193 @@ def notifications_to_html(bushfire, url):
 
     return msg
 
-def addEmailAddress(addresses,user_email):
+def concat_strings(*args):
     """
-    Add email address to addresses
+    Try not to create new list object if possible
+    return None if no args'
+           the args if no merging is required
+           a new list object which conbine all email addresses after removing duplcated email address
     """
-    if user_email:
-        if addresses:
-            if user_email in addresses:
-                return addresses
-            else:
+    if not args:
+        return None
+        
+    created = False
+    result = None
+    for addresses in args:
+        if not addresses:
+            #None or empty list. ignore
+            continue
+        if result is None:
+            #first non empyt address list, try to use it as the result list
+            result = addresses
+            continue
+        if isinstance(addresses,list) or isinstance(addresses,tuple):
+            #address list
+            if isinstance(result,list) or isinstance(result,tuple):
+                for address in addresses:
+                    if address in result:
+                        #already in result,ignore
+                        continue
+                    elif created:
+                        #result list is a new created list, add it to list directly
+                        result.append(address)
+                    elif isinstance(result,tuple):
+                        #create a new list to combine the result and current address
+                        result = list(result)
+                        result.append(address)
+                        created = True
+                    else:
+                        #create a new list to combine the result and current address
+                        result = result + [address]
+                        created = True
+            elif result in addresses:
+                #result is already in addresses
+                continue
+            elif isinstance(addresses,tuple):
+                #create a list to combine the result and current address list
                 result = list(addresses)
-                result.append(user_email)
-                return result
+                result.append(result)
+                created = True
+            else:
+                #create a list to combine the result and current address list
+                result = addresses + [result]
+                created = True
         else:
-            return [user_email]
+            #addresses is just a single email address
+            if isinstance(result,list) or isinstance(result,tuple):
+                if addresses in result:
+                    #already in result, ignore
+                    continue
+                elif created:
+                    #result list is a new created list, add it to list directly
+                    result.append(addresses)
+                elif isinstance(result,tuple):
+                    #create a new list to combine the result and current address
+                    result = list(result)
+                    result.append(addresses)
+                    created = True
+                else:
+                    #create a new list to combine the result and current address
+                    result = result + [addresses]
+                    created = True
+            elif addresses == result:
+                #address is same as the result,ignore
+                continue
+            else:
+                #create a new list to combine the result and current addresses
+                result = [result,addresses]
+                created = True
+
+    return result
+
+def concat_email_addresses(*args):
+    result = concat_strings(*args)
+    if not result:
+        return None
+    elif isinstance(result,list) or isinstance(result,tuple):
+        return result
     else:
-        return addresses
+        return [result]
 
-def rdo_email(bushfire, urls,user_email):
-    if not settings.ALLOW_EMAIL_NOTIFICATION or bushfire.fire_number in settings.EMAIL_EXCLUSIONS:
-       return
+def send_email(context):
+    if not settings.ALLOW_EMAIL_NOTIFICATION or context["bushfire"].fire_number in settings.EMAIL_EXCLUSIONS:
+        #email notification is disabled.        `
+        return
 
+    #clear the send_failed status if it is true
+    if context.get("send_failed"):
+        del context["send_failed"]
+
+    subject = context.get("subject") or ""
+    if settings.ENV_TYPE != "PROD":
+        subject += ' ({})'.format(settings.ENV_TYPE)
+    body = render_to_string(context["template"],context=context)
+    message = EmailMessage(
+        subject=subject, 
+        body=body, 
+        from_email=context.get("from_email",settings.FROM_EMAIL), 
+        to=context.get("to_email") or None, 
+        cc=concat_email_addresses(context.get("cc_email",settings.CC_EMAIL),context.get("user_email")), 
+        bcc=context.get("bcc_email",settings.BCC_EMAIL))
+    message.content_subtype = 'html'
+    ret = message.send()
+
+    if not ret :
+        subject = (context.get("failed_subject") or "Failed to send email \" {}\"").format(subject)
+        context["send_failed"] = True
+        context["original_subject"] = context.get("subject") or ""
+        email_address = lambda address: (address if isinstance(address,str) else ";".join(address))if address else ""
+        context["original_from_email"] = email_address(context.get("from_email",settings.FROM_EMAIL))
+        context["original_to_email"] = email_address(context.get("to_email"))
+        context["original_cc_email"] = email_address(concat_email_addresses(context.get("cc_email",settings.CC_EMAIL),context.get("user_email")))
+        context["original_bcc_email"] = email_address(context.get("bcc_email",settings.BCC_EMAIL))
+        context["from_email"] = settings.FROM_EMAIL
+        context["to_email"] = settings.SUPPORT_EMAIL
+        context["cc_email"] = context.get("user_email") or None
+        context["send_date"] = str(datetime.now())
+        if "bcc_email" in context:
+            del context["bcc_email"]
+
+        body = render_to_string(context["template"],context=context)
+
+        logger.error(subject)
+        support_email(subject,body,context.get("user_email"))
+
+    return ret
+
+def rdo_email_addresses(bushfire,related_bushfires=None):
     region_name = bushfire.region.name.upper()
-    to_email = getattr(settings, region_name.replace(' ', '_') + '_EMAIL')
-    subject = 'RDO Email - {}, Initial Bushfire submitted - {}'.format(region_name, bushfire.fire_number)
-    if settings.ENV_TYPE != "PROD":
-        subject += ' ({})'.format(settings.ENV_TYPE)
+    to_email = getattr(settings, region_name.replace(' ', '_') + '_EMAIL') or []
+    #add all email address for related_bushfires to to_email
+    if related_bushfires:
+        for bf in related_bushfires:
+            region_name = bf.region.name.upper()
+            for address in getattr(settings, region_name.replace(' ', '_') + '_EMAIL') or []:
+                if address not in to_email:
+                    to_email.append(address)
 
-    body = render_to_string("bfrs/email/rdo_email.html",context={"urls":urls,"bushfire":bushfire})
+    return to_email
 
-    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=to_email, cc=addEmailAddress(settings.CC_EMAIL,user_email), bcc=settings.BCC_EMAIL)
-    message.content_subtype = 'html'
-    ret = message.send()
-
-    if not ret:
-        msg = 'Failed to send RDO Email. {}'.format(bushfire.fire_number)
-        logger.error(msg)
-        support_email(msg,msg,user_email)
-
-    return ret
-
-
-def pvs_email(bushfire, urls,user_email):
-    if not settings.ALLOW_EMAIL_NOTIFICATION or bushfire.fire_number in settings.EMAIL_EXCLUSIONS:
-       return
-
-    subject = 'PVS Email - Initial Bushfire submitted - {}'.format(bushfire.fire_number)
-    if settings.ENV_TYPE != "PROD":
-        subject += ' ({})'.format(settings.ENV_TYPE)
-
-    body = render_to_string("bfrs/email/pvs_email.html",context={"urls":urls,"bushfire":bushfire})
-
-    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.PVS_EMAIL, cc=addEmailAddress(settings.CC_EMAIL,user_email), bcc=settings.BCC_EMAIL)
-    message.content_subtype = 'html'
-    ret = message.send()
-
-    if not ret:
-        msg = 'Failed to send PVS Email. {}'.format(bushfire.fire_number)
-        logger.error(msg)
-        support_email(msg, msg,user_email)
-
-    return ret
-
-def fpc_email(bushfire, urls,user_email):
-    if not settings.ALLOW_EMAIL_NOTIFICATION or bushfire.fire_number in settings.EMAIL_EXCLUSIONS:
-       return
-
-    subject = 'FPC Email - Initial Bushfire submitted - {}'.format(bushfire.fire_number)
-    if settings.ENV_TYPE != "PROD":
-        subject += ' ({})'.format(settings.ENV_TYPE)
-
-    body = render_to_string("bfrs/email/fpc_email.html",context={"urls":urls,"bushfire":bushfire})
-
-    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.FPC_EMAIL, cc=addEmailAddress(settings.CC_EMAIL,user_email), bcc=settings.BCC_EMAIL)
-    message.content_subtype = 'html'
-    ret = message.send()
-
-    if not ret:
-        msg = 'Failed to send FPC Email. {}'.format(bushfire.fire_number)
-        logger.error(msg)
-        support_email(msg, msg,user_email)
-
-    return ret
-
-
-def pica_email(bushfire, urls,user_email):
-    if not settings.ALLOW_EMAIL_NOTIFICATION or bushfire.fire_number in settings.EMAIL_EXCLUSIONS:
-       return
-
-    subject = 'PICA Email - Initial Bushfire submitted - {}'.format(bushfire.fire_number)
-    if settings.ENV_TYPE != "PROD":
-        subject += ' ({})'.format(settings.ENV_TYPE)
-
-    body = render_to_string("bfrs/email/pica_email.html",context={"urls":urls,"bushfire":bushfire})
-
-    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.PICA_EMAIL, cc=addEmailAddress(settings.CC_EMAIL,user_email), bcc=settings.BCC_EMAIL)
-    message.content_subtype = 'html'
-    ret = message.send()
-
-    if not ret:
-        msg = 'Failed to send PICA Email. {}'.format(bushfire.fire_number)
-        logger.error(msg)
-        support_email(msg, msg,user_email)
-
-    return ret
-
-
-def pica_sms(bushfire, urls, user_email):
-    if not settings.ALLOW_EMAIL_NOTIFICATION or bushfire.fire_number in settings.EMAIL_EXCLUSIONS:
+def send_sms(context):
+    if not settings.ALLOW_EMAIL_NOTIFICATION or context["bushfire"].fire_number in settings.EMAIL_EXCLUSIONS or not context.get("phones"):
        return
 
 #    if 'bfrs-prod' not in os.getcwd():
 #       return
 
-    message = render_to_string("bfrs/email/pica_sms.txt",context={"urls":urls,"bushfire":bushfire})
+    message = render_to_string(context["template"],context=context)
     message = message.strip()
-    TO_SMS_ADDRESS = [phone_no + '@' + settings.SMS_POSTFIX for phone_no in settings.MEDIA_ALERT_SMS_TOADDRESS_MAP.values()]
+
+    TO_SMS_ADDRESS = None
+    if isinstance(context["phones"],list):
+        TO_SMS_ADDRESS = [phone_no + '@' + settings.SMS_POSTFIX for phone_no in context["phones"]]
+    elif isinstance(context["phones"],dict):
+        TO_SMS_ADDRESS = [phone_no + '@' + settings.SMS_POSTFIX for phone_no in context["phones"].values()]
+    else:
+        TO_SMS_ADDRESS = [context["phones"] + '@' + settings.SMS_POSTFIX]
     ret = send_mail('', message, settings.EMAIL_TO_SMS_FROMADDRESS, TO_SMS_ADDRESS)
 
-    if not ret:
-        msg = 'Failed to send PICA SMS. {}'.format(bushfire.fire_number)
-        logger.error(msg)
-        support_email(msg, msg,user_email)
+    if not ret :
+        subject = context.get("failed_subject") or "Failed to send sms"
+        context["original_subject"] = context.get("subject") or ""
+        email_address = lambda address: (address if isinstance(address,str) else ";".join(address))if address else ""
+        context["original_from_email"] = email_address(context.get("from_email",settings.FROM_EMAIL))
+        context["from_email"] = settings.FROM_EMAIL
+        context["to_email"] = settings.SUPPORT_EMAIL
+        context["cc_email"] = context.get("user_email") or None
+        context["send_failed"] = True
+        context["send_date"] = str(datetime.now())
+        context["sms_message"] = message
 
-    return ret
+        body = render_to_string("bfrs/email/send_sms_failed.html",context=context)
 
+        logger.error(ret)
+        support_email(subject,body,context.get("user_email"))
 
-def dfes_email(bushfire, urls,user_email):
-    if (not settings.ALLOW_EMAIL_NOTIFICATION or
-        bushfire.fire_number in settings.EMAIL_EXCLUSIONS or
-        bushfire.dfes_incident_no != ''):
-       return
-
-    subject = 'DFES Email - Initial Bushfire submitted - {}'.format(bushfire.fire_number)
-    if settings.ENV_TYPE != "PROD":
-        subject += ' ({})'.format(settings.ENV_TYPE)
-
-    body = render_to_string("bfrs/email/dfes_email.html",context={"urls":urls,"bushfire":bushfire})
-
-    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.DFES_EMAIL, cc=addEmailAddress(settings.CC_EMAIL,user_email), bcc=settings.BCC_EMAIL)
-    message.content_subtype = 'html'
-    ret = message.send()
-    
-    if not ret:
-        msg = 'Failed to send DFES Email. {}'.format(bushfire.fire_number)
-        logger.error(msg)
-        support_email(msg, msg,user_email)
-        
-    return ret
-
-def police_email(bushfire, urls,user_email):
-    if not settings.ALLOW_EMAIL_NOTIFICATION or bushfire.fire_number in settings.EMAIL_EXCLUSIONS:
-       return
-
-    subject = 'POLICE Email - Initial Bushfire submitted {}, and an investigation is required - {}'.format(bushfire.fire_number, 'Yes' if bushfire.investigation_req else 'No')
-    if settings.ENV_TYPE != "PROD":
-        subject += ' ({})'.format(settings.ENV_TYPE)
-
-    body = render_to_string("bfrs/email/police_email.html",context={"urls":urls,"bushfire":bushfire})
-
-    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.POLICE_EMAIL, cc=addEmailAddress(settings.CC_EMAIL,user_email), bcc=settings.BCC_EMAIL)
-    message.content_subtype = 'html'
-    ret = message.send()
-    
-    if not ret:
-        msg = 'Failed to send POLICE Email. {}'.format(bushfire.fire_number)
-        logger.error(msg)
-        support_email(msg, msg,user_email)
-        
-    return ret
-
-def fssdrs_email(bushfire, urls,user_email, status='final'):
-    if not settings.ALLOW_EMAIL_NOTIFICATION:
-       return
-
-    subject = 'FSSDRS Email - Final Fire report has been authorised - {}'.format(bushfire.fire_number)
-    if settings.ENV_TYPE != "PROD":
-        subject += ' ({})'.format(settings.ENV_TYPE)
-
-    if status == 'final':
-        body = render_to_string("bfrs/email/fssdrs_authorised_email.html",context={"urls":urls,"bushfire":bushfire})
-    else:
-        body = render_to_string("bfrs/email/fssdrs_reviewed_email.html",context={"urls":urls,"bushfire":bushfire})
-
-    message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.FSSDRS_EMAIL, cc=addEmailAddress(settings.CC_EMAIL,user_email), bcc=settings.BCC_EMAIL)
-    message.content_subtype = 'html'
-    ret = message.send()
-    
-    if not ret:
-        msg = 'Failed to send FSSDRS Email. {}'.format(bushfire.fire_number)
-        logger.error(msg)
-        support_email(msg, msg,user_email)
-        
     return ret
 
 def support_email(subject, body,user_email):
-    if not settings.SUPPORT_EMAIL:
+    if not settings.SUPPORT_EMAIL and not user_email:
        return
 
     message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=settings.SUPPORT_EMAIL,cc=[user_email] if user_email else None)

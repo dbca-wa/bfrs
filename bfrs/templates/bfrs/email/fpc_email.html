@@ -8,7 +8,7 @@
 
 {% block other_bushfire_detail %}
 <br>
-<div>Plantations within 3km of origin point ({{ "origin_point_geo"|field_value:bushfire }})</div>
+<div>Plantations within 3km of origin point ({% field_value "origin_point_geo" bushfire %})</div>
 <table style="border:1px solid black; border-collapse: collapse;">
     <tr>
         <th style="border:1px solid black; text-align: center;padding:2px 10px 2px 10px;">ogc_fid</th>
