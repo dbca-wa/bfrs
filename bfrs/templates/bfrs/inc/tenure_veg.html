@@ -25,11 +25,12 @@
                 {% else %}
                   <td>{{ form.other_area.value }}</td>
                 {% endif %}
+                  <td>&nbsp;</td>
                 {{form.other_area.as_hidden}}
               </tr>
               <tr>
                 <td><input id="id_tenure_1" name="private_tenure" type="text" value="Private Property"></td>
-                {% if object.tenures_burnt.all|tenures_burnt:"Private Property" > 0 %}
+                {% if object.tenures_burnt.all|filter_tenures_burnt:"Private Property"  %}
                   <!-- Required for viewed snapshots -->
                   <td><input id="id_area_1" name="private_area" type="number" step="0.01" min="0" max="{{ object.other_area|floatformat:'2' }}" value="{{ object.tenures_burnt.all|tenures_burnt:"Private Property" }}"></td>
                 {% else %}
@@ -39,7 +40,7 @@
               </tr>
               <tr>
                 <td><input id="id_tenure_2" name="other_crown_tenure" type="text" value="Other Crown"></td>
-                {% if object.tenures_burnt.all|tenures_burnt:"Other Crown" > 0 %}
+                {% if object.tenures_burnt.all|filter_tenures_burnt:"Other Crown" %}
                   <!-- Required for viewed snapshots -->
                   <td><input id="id_area_2" name="other_crown_area" type="number" step="0.01" min="0" max="{{ object.other_area|floatformat:'2' }}" value="{{ object.tenures_burnt.all|tenures_burnt:"Other Crown" }}"></td>
                 {% else %}
