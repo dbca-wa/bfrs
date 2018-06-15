@@ -73,95 +73,93 @@
   </div>
 </div>
 
+{% if submit_actions %}
+<form action="" method="post">
+{% csrf_token %}
+{% endif %}
+
 <table class="table table-bordered table-striped table-condensed">
     <tbody>
         <tr>
-          <th colspan="6" style="background: black; color: white; text-align: left; font-size: 16px; padding: 12px;" > BUSHFIRE NOTIFICATION 
-            {% if  object.report_status == object.STATUS_INITIAL  %}
-            (submit within 30 mins of detection)
-            {% endif %}
+          <th colspan="4" style="background: black; color: white; text-align: left; font-size: 16px; padding: 12px;" > BUSHFIRE NOTIFICATION 
           </th>
         </tr>
-
         <tr>
-            <th class="cbas">District *</th>
-            <td colspan="2" class="cbas">{{snapshot.region}}<span style="margin:20;"></span>{{snapshot.district}}</td>
+            <th class="cbas" style="width:25%">District *</th>
+            <td class="cbas" style="wdith:25%">{{form.region.as_widget}}<span style="margin:20;"></span>{{form.district.as_widget}}</td>
 
-            <th class="cbas">Financial Year *</th>
-            <td colspan="2" class="cbas">{{snapshot.year|fin_year}}</td>
+            <th class="cbas" style="width:25%">Financial Year *</th>
+            <td class="cbas" style="width:25%">{{form.year.as_widget}}</td>
         </tr>
 
         <tr>
             <th class="cbas">Fire name *</th>
-            <td colspan="2" class="cbas">{{snapshot.name}}</td>
+            <td class="cbas">{{form.name.as_widget}}</td>
 
             <th class="cbas">Date and time fire detected *</th>
-            <td colspan="2" class="cbas">{{snapshot.fire_detected_date|date:'Y-m-d H:i'}}</td>
+            <td class="cbas">{{form.fire_detected_date.as_widget}}</td>
         </tr>
 
         <tr>
             <th class="cbas">P&W Fire no. *</th>
-            <td colspan="2" class="cbas">{{snapshot.fire_number}}</td>
+            <td class="cbas">{{form.fire_number.as_widget}}</td>
 
             <th class="cbas">DFES Incident no.</th>
-            <td colspan="2" class="cbas">{{snapshot.dfes_incident_no}}</td>
+            <td class="cbas">{{form.dfes_incident_no.as_widget}}</td>
         </tr>
 
         <tr>
-            <th width="25%" class="cbas" style="font-weight:normal;">Position of fire<br>(street address, or km from landmark/suburb)</th>
-            <td colspan="2" class="cbas">
-                {{snapshot.fire_position}}<br>{% if snapshot.fire_position_override %} SSS overide - {{snapshot.fire_position_override|yesno:"Yes,No"}} {% endif %}
+            <th class="cbas">Position of fire</th>
+            <td class="cbas">
+                {{form.fire_position.as_widget}}
             </td>
 
             <th class="cbas">Point of origin</th>
-            <td colspan="5" class="cbas">
-                {{snapshot.origin_geo|is_none}} <br>
-                {{snapshot.origin_point_mga}}
-            </td>
+            <td class="cbas">{{form.origin_point.as_widget}} </td>
         </tr>
 
         <tr>
-            <th class="cbas">Tenure of ignition point *{% if snapshot.other_tenure %}<br> Other Tenure{% endif %}</th>
-            <td colspan="2" class="cbas">{{snapshot.tenure}}{% if snapshot.other_tenure %}<br> {{snapshot.get_other_tenure_display}} {% endif %}</td>
+            <th class="cbas">Tenure of ignition point *</th>
+            <td class="cbas">{{form.tenure.as_widget}}</td>
 
             <th class="cbas">Duty Officer *</th>
-            <td colspan="2" class="cbas">{{snapshot.duty_officer|is_none}}</td>
+            <td class="cbas">{{form.duty_officer.as_widget}}</td>
         </tr>
         <tr>
-            <th class="cbas">P&W Resource dispatched *{% if snapshot.dispatch_pw == object.DISPATCH_PW_YES %}<br>Date and time of dispatch{% endif %}</th>
-            <td colspan="2" class="cbas">{{snapshot.get_dispatch_pw_display}}{% if snapshot.dispatch_pw == object.DISPATCH_PW_YES %}<br>{{snapshot.dispatch_pw_date|date:'Y-m-d H:i'}} {% endif %}</td>
+            <th class="cbas">P&W Resource dispatched *</th>
+            <td class="cbas">{{form.dispatch_pw.as_widget}}</td>
 
-	    <th class="cbas">Aerial support requested *<br><br><div class=div_dispatch_aerial_date style="display: none;">Date and time of request</div></th>
-            <td colspan="2" class="cbas">{{snapshot.dispatch_aerial|yesno:"Yes,No"}}{% if snapshot.dispatch_aerial|yesno:"Yes,No" == 'Yes' %}<br>{{snapshot.dispatch_aerial_date|date:'Y-m-d H:i'}} {% endif %}</td>
+	        <th class="cbas">Aerial support requested *</th>
+            <td class="cbas">{{form.dispatch_aerial.as_widget}}</td>
         </tr>
 
         <tr>
-	    <th class="cbas" id="id_th_initial_controlling_agency">Initial controlling agency *</th>
-            <td colspan="2" class="cbas">{{snapshot.initial_control}} <br>{% if snapshot.other_initial_control %} Other initial controlling agency: {{snapshot.other_initial_control}} {% endif %}</td>
+	        <th class="cbas" id="id_th_initial_controlling_agency">Initial controlling agency *</th>
+            <td class="cbas">{{form.initial_control.as_widget}}</td>
 
             <th class="cbas">Area of fire at arrival (ha) *</th>
-            <td colspan="2" class="cbas">{% if snapshot.initial_area_unknown %}Unknown{% else %}{{snapshot.initial_area}}{% endif %}</td>
+            <td class="cbas">{{form.initial_area_unknown.as_widget }}</td>
         </tr>
 
         <tr>
             <th class="cbas">Probable Fire Level *</th>
-            <td colspan="2" class="cbas">{{snapshot.prob_fire_level}}</td>
+            <td class="cbas">{{form.prob_fire_level.as_widget}}</td>
 
             <th class="cbas">Investigation required *</th>
-            <td colspan="2" class="cbas">{{snapshot.investigation_req|yesno:"Yes,No"}}</td>
+            <td class="cbas">{{form.investigation_req.as_widget}}</td>
         </tr>
 
         <tr>
             <th class="cbas">Media Alert Required *</th>
-            <td colspan="2" class="cbas">{{snapshot.media_alert_req|yesno:"Yes,No"}} {% if snapshot.media_alert_req|yesno:"Yes,No" == 'Yes' %}<br> <span>call PICA on 9219 9999</span>{% endif %}</td>
+            <td class="cbas">{{form.media_alert_req.as_widget}} </td>
 
             <th class="cbas">Park and/or Trail *<br>potentially impacted</th>
-            <td colspan="2" class="cbas">{{snapshot.park_trail_impacted|yesno:"Yes,No"}} {% if snapshot.park_trail_impacted|yesno:"Yes,No" == 'Yes' %}<br> <span>PVS will be notified by email</span>{% endif %}</td>
+            <td class="cbas">{{form.park_trail_impacted.as_widget}}</td>
         </tr>
 
         <tr>
             <th class="cbas" style="font-weight:normal;">Other information<br>(include Burn ID if cause is escape)</th>
-            <td colspan="5" class="cbas">{{snapshot.other_info|is_none}}</td>
+            <td colspan="3" class="cbas">{{form.other_info.as_widget}}</td>
         </tr>
 
 
@@ -173,86 +171,140 @@
     <div role="tab" id="pn_fire_behaviour">
       <h4 class="panel-title">
         <a role="button" data-toggle="collapse" data-parent="#accordion" href="#fire_behaviour" aria-expanded="true" aria-controls="fire_behaviour">
-          <div colspan="6" style="background: black; color: white; text-align: left; font-size: 16px; padding: 12px;" > FIRE REPORT (Click to expand/collapse)</div>
+          <div style="background: black; color: white; text-align: left; font-size: 16px; padding: 12px;" > FIRE REPORT (Click to expand/collapse)</div>
         </a>
       </h4>
     </div>
-    <div id="fire_behaviour" {% if initial %}class="panel-collapse collapse in" {% else %} class="panel-collapse collapse in" {% endif %} role="tabpanel" aria-labelledby="pn_fire_behaviour">
-        {% include "bfrs/inc/final_notification_summary.html" %}
+    <div id="fire_behaviour" role="tabpanel" aria-labelledby="pn_fire_behaviour" class="panel-collapse collapse in">
+      <table class="table table-bordered table-striped table-condensed">
+          <tbody>
+              <tr>
+                  <th class="cbas" style="width:25%">Fire not found</th>
+                  <td class="cbas" style="width:25%">{{form.fire_not_found.as_widget}}</td>
+      
+                  <th class="cbas" style="width:25%">Fire monitored only</th>
+                  <td class="cbas" style="width:25%">{{form.fire_monitored_only.as_widget}}</td>
+              </tr>
+      
+              <tr>
+                  <th id="id_th_field_officer" class="cbas" >P&W Field Officer</th>
+                  <td class="cbas">{{form.field_officer.as_widget}}</td>
+      
+                  <th class="cbas">Job code *</th>
+                  <td class="cbas">{{form.job_code.as_widget}}</td>
+              </tr>
+              <tr>
+                  <th class="cbas">Details</th>
+                  <td class="cbas" colspan=3>{{form.invalid_details.as_widget}}</td>
+              </tr>
+        </tbody>
+      </table>
+      
+      {% if not object.fire_not_found %}
+      <table class="table table-bordered table-striped table-condensed">
+          <tbody>
+              <tr>
+                  <th class="cbas" style="width:25%">Fire Cause *
+                  </th>
+                  <td class="cbas" style="width:25%">
+                      {{form.cause.as_widget}}
+                  </td>
+      
+                  <th class="cbas" style="width:25%">Arson squad notified *</th>
+                  <td class="cbas" style="width:25%">{{form.arson_squad_notified.as_widget}}</td>
+              </tr>
+      
+              <tr>
+           	      <th class="cbas" id="id_th_fire_contained_date" title=" Fire spread has been halted, though the fire may still be burning freely within the perimeter of the fire control lines">Date fire contained <i class="icon-info-sign icon-white"></i> *</th>
+                  <td class="cbas">{{form.fire_contained_date.as_widget}}</td>
+      
+                  <th class="cbas" id="id_th_initial_attack_agency">Initial attack agency *</th>
+                  <td class="cbas">{{form.first_attack.as_widget}}</td>
+              </tr>
+      
+              <tr>
+      	          <th class="cbas" id="id_th_fire_controlled_date" title="Complete perimeter of fire is secured and no breakaway is expected">Date fire controlled <i class="icon-info-sign icon-white"></i> *</th>
+                  <td class="cbas">{{form.fire_controlled_date.as_widget}}</td>
+      
+                  <th class="cbas" id="id_th_final_controlling_agency">Final controlling agency *</th>
+                  <td class="cbas">{{form.final_control.as_widget}}</td>
+              </tr>
+      
+              <tr>
+                  <th class="cbas" title='Placeholder ...'>Date fire inactive <i class="icon-info-sign icon-white"></i> *</th>
+                  <td class="cbas">{{form.fire_safe_date.as_widget}}</td>
+      
+                  <th class="cbas">Final fire size (ha) *</th>
+                  <td class="cbas">{{form.area.as_widget}}</td>
+              </tr>
+      
+              <tr>
+                  <th class="cbas">Maximum Fire Level *</th>
+                  <td colspan="3" class="cbas">{{form.max_fire_level.widget}}</td>
+              </tr>
+      
+      
+              {% if can_maintain_data %}
+              <tr>
+                  <th class="cbas" >Reporting Year</th>
+                  <td colspan="3" class="cbas">{{form.reporting_year.as_widget}}</td>
+              </tr>
+              {% endif %}
+      
+        </tbody>
+      </table>
+      
+      <table class="table table-bordered table-striped table-condensed cbas">
+          <thead>
+              <th class="cbas">Tenure of burnt area *</th>
+              <th class="cbas">Damage</th>
+              <th class="cbas" >Injuries and Fatalities</th>
+          </thead>
+          <tbody>
+              <tr>
+                  <td class="cbas">{% include "bfrs/inc/tenure_veg_display.html" %}</td>
+                  <td class="cbas">
+                      {{form.damage_unknown.as_widget}}
+                      {% if damages is not None %} {% include "bfrs/inc/damage_fs_display.html" %}{% endif %}
+                  </td>
+                  <td class="cbas">
+                      {{form.injury_unknown.as_widget}}
+                      {% if injuries is not None %} {% include "bfrs/inc/injuries_fs_display.html" %}{% endif %}
+                  </td>
+              </tr>
+          </tbody>
+      </table>
+      {% endif %} <!-- div_form_invalidate -->
     </div>
   </div>
 </div>
 
 {% include "bfrs/inc/report_timeline.html" %}
 
-
-{% if not action %}
+{% if submit_actions or link_actions %}
 <div class="navbar navbar-fixed-bottom">
   <div class="navbar-inner">
     <div class="container">
-      <p class="pull-right">
-
-      {% if final and can_maintain_data %}
-          <a id="id_edit_btn" href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Final fire report authorised on {{bushfire.authorised_date|date:'Y-m-d H:i'}} by {{bushfire.authorised_by}}" class="btn btn-primary btn-info">Edit Authorised</a>
-      {% endif %}
-      <a id="id_cancel_btn" href="{% main_url %}" class="btn btn-primary btn-info">Return</a>
-
+        <p class="pull-right">
+        {% if submit_actions %}
+            {% if action %}
+                <input type="hidden" name="confirm_action" value="{{action}}" />
+            {% endif %}
+            {% for submit_action in submit_actions %}
+            <button type="submit" class="btn btn-primary {{submit_action.2}}"  name="action" value="{{submit_action.0}}"/>{{submit_action.1}} </button>
+            {% endfor %}
+        {% endif %}
+        {% for link_action in link_actions %}
+        <button type="button" class="btn btn-primary {{link_action.2}}"  onclick="window.location='{{link_action.0}}'">{{link_action.1}} </button>
+        {% endfor %}
       </p>
     </div>
   </div>
 </div>
 {% endif %}
 
-{% if action %}
-<!-- This section to allow redirect confirmation -->
-<form action="" method="post">{% csrf_token %}
-<div class="navbar navbar-fixed-bottom">
-  <div class="navbar-inner">
-    <div class="container">
-      <p class="pull-left">
-
-        <input type="hidden" name="bushfire_id" value="{{snapshot.id}}" />
-        <input type="hidden" name="confirm_action" value="{{action}}" />
-        <button type="submit" class="btn btn-primary btn-success"  name="action" value="confirm"/>{% trans "Yes, I'm sure" %} </button>
-           {% comment %}
-           <!-- Below line causes an error in the Django Formset -->
-        <a href="javascript: history.go(-1)" class="btn btn-danger">Cancel</a>
-           {% endcomment %}
-        {% if object.report_status < object.STATUS_INITIAL_AUTHORISED %}
-            <a id="id_cancel_btn" href="{% url 'bushfire:bushfire_initial' snapshot.id %}" class="btn btn-primary btn-danger">Cancel</a>
-        {% else %}
-            <a id="id_cancel_btn" href="{% url 'bushfire:bushfire_final' snapshot.id %}" class="btn btn-primary btn-danger">Cancel</a>
-        {% endif %}
-      </p>
-    </div>
-  </div>
-</div>
+{% if submit_actions %}
 </form>
 {% endif %}
-
-<script>
-
-{% if final %}
-    $('.panel-collapse').collapse('show');
-{% endif %}
-
-/* Fire not Found */
-//$('#id_fire_not_found').on('change', function() {
-//    fire_not_found();
-//}).change();
-
-
-{% if snapshot.fire_not_found %}
-    $(".div_form_invalidate *").prop('disabled',true).css({ opacity: 0.8  });
-    $(".div_invalid_details").show();
-    $(".div_fire_not_found").hide();
-{% else %}
-    $(".div_form_invalidate *").prop('disabled',false).css({ opacity: 1  });
-    $(".div_invalid_details").hide();
-    $(".div_fire_not_found").show();
-{% endif %}
-/* END - Fire not Found */
-
-</script>
 
 {% endblock %}

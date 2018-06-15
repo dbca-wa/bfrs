@@ -1,3 +1,5 @@
+import LatLon
+
 from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.template.loader import render_to_string
@@ -1503,5 +1505,28 @@ def export_excel(request, queryset):
 
     return response
 export_final_csv.short_description = u"Export Excel"
+
+
+
+def dms_coordinate(point):
+    if not point:
+        return None
+
+    c=LatLon.LatLon(LatLon.Longitude(point.get_x()), LatLon.Latitude(point.get_y()))
+    latlon = c.to_string('d% %m% %S% %H')
+    lon = latlon[0].split(' ')
+    lat = latlon[1].split(' ')
+
+    # need to format float number (seconds) to 1 dp
+    lon[2] = str(round(eval(lon[2]), 1))
+    lat[2] = str(round(eval(lat[2]), 1))
+
+    # Degrees Minutes Seconds Hemisphere
+    lat_str = lat[0] + u'\N{DEGREE SIGN} ' + lat[1].zfill(2) + '\' ' + lat[2].zfill(4) + '\" ' + lat[3]
+    lon_str = lon[0] + u'\N{DEGREE SIGN} ' + lon[1].zfill(2) + '\' ' + lon[2].zfill(4) + '\" ' + lon[3]
+
+    return 'Lat/Lon ' + lat_str + ', ' + lon_str
+
+    
 
 

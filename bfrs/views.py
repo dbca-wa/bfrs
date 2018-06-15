@@ -29,7 +29,7 @@ from bfrs.models import (Profile, Bushfire, BushfireSnapshot,BushfireProperty,
         Tenure, AreaBurnt,
         SNAPSHOT_INITIAL, SNAPSHOT_FINAL,
     )
-from bfrs.forms import (ProfileForm, BushfireFilterForm, BushfireUpdateForm,
+from bfrs.forms import (ProfileForm, BushfireFilterForm, BushfireUpdateForm,MergedBushfireForm,
         AreaBurntFormSet, InjuryFormSet, DamageFormSet, PDFReportForm,
     )
 from bfrs.utils import (breadcrumbs_li,
@@ -498,6 +498,12 @@ class BushfireUpdateView(ExceptionMixin,LoginRequiredMixin, UpdateView):
             return False
         return True
 
+    def get_form_class(self):
+        obj = self.get_object()
+        if obj and obj.report_status == Bushfire.STATUS_MERGED :
+            return MergedBushfireForm
+        else:
+            return BushfireUpdateForm
     def get_template_names(self):
         """
         use 'bfrs/detail.html' for editing
@@ -642,6 +648,8 @@ class BushfireUpdateView(ExceptionMixin,LoginRequiredMixin, UpdateView):
             pass
         elif action in ["save_draft","submit"]:
             expected_status = self.object.STATUS_INITIAL
+        elif action in ["save_merged","submit"]:
+            expected_status = self.object.STATUS_MERGED
         elif action in ["save_submitted","authorise"]:
             expected_status = self.object.STATUS_INITIAL_AUTHORISED
         elif action == "save_final":
@@ -790,8 +798,11 @@ class BushfireUpdateView(ExceptionMixin,LoginRequiredMixin, UpdateView):
         except:
             context = {}
 
+        form_class = self.get_form_class()
+        form = self.get_form(form_class)
+
         bushfire = self.get_object()
-        if not self.editable or (bushfire and bushfire.report_status == Bushfire.STATUS_MERGED):
+        if bushfire and bushfire.report_status == Bushfire.STATUS_MERGED:
             context.update({
                 'initial':'initial' in self.request.get_full_path(),
                 'final':'final' in self.request.get_full_path(),
@@ -800,11 +811,23 @@ class BushfireUpdateView(ExceptionMixin,LoginRequiredMixin, UpdateView):
                 'injuries': bushfire.injuries.all(),
                 'tenures_burnt': bushfire.tenures_burnt.all(),
                 'can_maintain_data': can_maintain_data(self.request.user),
+                'form':form,
+                'link_actions':[(self.get_success_url(),'Return','btn-info')],
+                'submit_actions':[('save_merged','Save','btn-success')],
             })
             return context
-
-        form_class = self.get_form_class()
-        form = self.get_form(form_class)
+        elif not self.editable:
+            context.update({
+                'initial':'initial' in self.request.get_full_path(),
+                'final':'final' in self.request.get_full_path(),
+                'snapshot': bushfire,
+                'damages': bushfire.damages.all(),
+                'injuries': bushfire.injuries.all(),
+                'tenures_burnt': bushfire.tenures_burnt.all(),
+                'can_maintain_data': can_maintain_data(self.request.user),
+                'form':form
+            })
+            return context
 
         area_burnt_formset = None
         if self.request.POST.has_key('sss_create'):

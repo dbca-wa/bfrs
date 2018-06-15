@@ -72,6 +72,8 @@ SNAPSHOT_TYPE_CHOICES = (
     (SNAPSHOT_FINAL, 'Final'),
 )
 
+User.OTHER = User.objects.get(username='other')
+
 def current_finyear():
     return datetime.now().year if datetime.now().month>6 else datetime.now().year-1
 
@@ -414,6 +416,10 @@ class BushfireBase(Audit):
         return True if self.reviewed_by and self.reviewed_date and self.report_status >= Bushfire.STATUS_REVIEWED and self.report_status < Bushfire.STATUS_INVALIDATED else False
 
     @property
+    def is_invalidated(self):
+        return self.report_status >= Bushfire.STATUS_INVALIDATED
+
+    @property
     def other_contact(self):
         return 'Name: {}, Agency: {}, Phone: {}'.format(self.other_field_officer, self.other_field_officer_agency, self.other_field_officer_phone)
 
@@ -444,6 +450,13 @@ class BushfireBase(Audit):
         lon_str = lon[0] + u'\N{DEGREE SIGN} ' + lon[1].zfill(2) + '\' ' + lon[2].zfill(4) + '\" ' + lon[3]
 
         return 'Lat/Lon ' + lat_str + ', ' + lon_str
+
+
+    #simulate a dict object 
+    def __getitem__(self,name):
+        return getattr(self,name)
+    def get(self,name,default = None):
+        return getattr(self,name) if hasattr(self,name) else default
 
 
 class BushfireSnapshot(BushfireBase):
@@ -555,6 +568,7 @@ class Tenure(models.Model):
 
     def __str__(self):
         return self.name
+Tenure.OTHER = Tenure.objects.get(name="Other")
 
 
 @python_2_unicode_compatible
@@ -577,6 +591,8 @@ class Cause(models.Model):
 
     def __str__(self):
         return self.name
+Cause.OTHER = Cause.objects.get(name="Other (specify)")
+Cause.ESCAPE_DPAW_BURNING = Cause.objects.get(name="Escape P&W burning")
 
 @python_2_unicode_compatible
 class Agency(models.Model):
@@ -590,6 +606,7 @@ class Agency(models.Model):
     def __str__(self):
         return self.name
 
+Agency.OTHER = Agency.objects.get(name="OTHER")
 
 @python_2_unicode_compatible
 class InjuryType(models.Model):
