@@ -149,7 +149,7 @@ class BoundField(forms.boundfield.BoundField):
         Returns the value for this BoundField, using the initial value if
         the form is not bound or the data otherwise.
         """
-        if not self.form.is_bound:
+        if not self.form.is_bound or isinstance(self.field.widget,basewidgets.DisplayWidget):
             data = self.initial
         else:
             data = self.field.bound_data(
@@ -218,17 +218,17 @@ class CompoundBoundField(BoundField):
         if self.name == "cause":
             #import ipdb;ipdb.set_trace()
             pass
+        html_layout,field_names = self.field.get_layout(self)
         html = super(CompoundBoundField,self).as_widget(widget,attrs,only_initial)
-        if callable(self.field.html_layout):
-            html_layout,field_names = self.field.html_layout(self)
-            html = super(CompoundBoundField,self).as_widget(widget,attrs,only_initial)
-            if field_names:
+        if field_names:
+            if isinstance(self.field.widget,basewidgets.DisplayWidget):
                 return safestring.SafeText(html_layout.format(html,*[f.as_widget(only_initial=only_initial) for f in self.related_fields if f.name in field_names]))
             else:
-                return html
+                return safestring.SafeText(html_layout.format(html,*["<span id='{}_container'>{}</span>".format(f.auto_id,f.as_widget(only_initial=only_initial)) for f in self.related_fields if f.name in field_names]))
+        elif html_layout:
+            return safestring.SafeText(html_layout.format(html))
         else:
-            html = super(CompoundBoundField,self).as_widget(widget,attrs,only_initial)
-            return safestring.SafeText(self.field.html_layout.format(html,*[f.as_widget(only_initial=only_initial) for f in self.related_fields]))
+            return html
 
     def as_text(self, attrs=None, **kwargs):
         """
@@ -272,7 +272,7 @@ class BaseModelFormMetaclass(forms.models.ModelFormMetaclass):
             if config:
                 setattr(attrs["Meta"],"fields",config)
 
-        for item in ("other_fields","editable_fields","ordered_fields"):
+        for item in ("other_fields","extra_update_fields","ordered_fields"):
             if 'Meta' in attrs and not hasattr(attrs['Meta'],item):
                 config = BaseModelFormMetaclass.meta_item_from_base(bases,item)
                 if config:
@@ -303,14 +303,19 @@ class BaseModelFormMetaclass(forms.models.ModelFormMetaclass):
     
 
         new_class = super(BaseModelFormMetaclass, mcs).__new__(mcs, name, bases, attrs)
+        if name == "SubmittedBushfireForm":
+            #import ipdb;ipdb.set_trace()
+            pass
         meta = getattr(new_class,"Meta") if hasattr(new_class,"Meta") else None
         opts = getattr(new_class,"_meta") if hasattr(new_class,"_meta") else None
         if not opts or not meta or not meta.model:
             return new_class
 
 
-        for item in ("other_fields","editable_fields","ordered_fields"):
-            if not hasattr(opts,item):
+        for item in ("other_fields","extra_update_fields","ordered_fields"):
+            if hasattr(meta,item) :
+                setattr(opts,item,getattr(meta,item))
+            else:
                 setattr(opts,item,None)
 
         if hasattr(opts,"field_classes") and opts.field_classes:
@@ -389,6 +394,11 @@ class BaseModelFormMetaclass(forms.models.ModelFormMetaclass):
                 if field in new_class.all_base_fields:
                     new_class.base_fields[field] = new_class.all_base_fields[field]
 
+        editable_fields = [name for name,field in new_class.base_fields.iteritems() if not isinstance(field.widget,basewidgets.DisplayWidget)]
+        setattr(opts,'editable_fields',editable_fields)
+        setattr(opts,'db_update_fields',editable_fields + list((getattr(opts,"extra_update_fields") or [])))
+
+        
         return new_class
 
 class ModelForm(six.with_metaclass(BaseModelFormMetaclass, forms.models.BaseModelForm)):
@@ -406,17 +416,83 @@ class ModelForm(six.with_metaclass(BaseModelFormMetaclass, forms.models.BaseMode
             else:
                 self.initial = self.instance
 
+    def is_editable(self,name):
+        return self._meta.editable_fields is None or name in self._meta.editable_fields
+
+    def boolvalue(self,cleaned_data,name,default=None):
+        if name in cleaned_data:
+            cleaned_data[name] = cleaned_data[name] == True or cleaned_data[name] in ('True','true','1')
+            return cleaned_data[name]
+        else:
+            cleaned_data[name] = default
+            return default
+
+    def intvalue(self,cleaned_data,name,default=None):
+        if name in cleaned_data and cleaned_data[name] is not None:
+            if isinstance(cleaned_data[name],basestring):
+                cleaned_data[name] = cleaned_data[name].strip()
+                if cleaned_data[name]:
+                    cleaned_data[name] = int(cleaned_data[name])
+                else:
+                    cleaned_data[name] = default
+            else:
+                cleaned_data[name] = int(cleaned_data[name])
+            return cleaned_data[name]
+        else:
+            cleaned_data[name] = default
+            return default
+
+    def floatvalue(self,cleaned_data,name,default=None):
+        if name in cleaned_data and cleaned_data[name] is not None:
+            if isinstance(cleaned_data[name],basestring):
+                cleaned_data[name] = cleaned_data[name].strip()
+                if cleaned_data[name]:
+                    cleaned_data[name] = float(cleaned_data[name])
+                else:
+                    cleaned_data[name] = default
+            else:
+                cleaned_data[name] = float(cleaned_data[name])
+            return cleaned_data[name]
+        else:
+            cleaned_data[name] = default
+            return default
+
+    def save(self, commit=True):
+        """
+        Save this form's self.instance object if commit=True. Otherwise, add
+        a save_m2m() method to the form which can be called after the instance
+        is saved manually at a later time. Return the model instance.
+        """
+        if self.instance.pk and hasattr(self._meta,"db_update_fields") and self._meta.editable_fields:
+            if self.errors:
+                raise ValueError(
+                    "The %s could not be %s because the data didn't validate." % (
+                        self.instance._meta.object_name,
+                        'created' if self.instance._state.adding else 'changed',
+                    )
+                )
+            if commit:
+                # If committing, save the instance and the m2m data immediately.
+                self.instance.save(update_fields=self._meta.db_update_fields)
+                self._save_m2m()
+            else:
+                # If not committing, add a method to the form to allow deferred
+                # saving of m2m data.
+                self.save_m2m = self._save_m2m
+        else:
+            super(ModelForm,self).save(commit)
+        return self.instance
+
     def full_clean(self):
         if self._meta.editable_fields is None:
-            super(self,ModelForm).full_clean()
-        import ipdb;ipdb.set_trace()    
+            super(ModelForm,self).full_clean()
         opt_fields = self._meta.fields
         fields = self.fields
         try:
             self._meta.fields = self._meta.editable_fields
-            self.editable_fields = self.editable_fields if hasattr(self,'editable_fields') else [f for f in self.fields if f.name in self._meta.fields]
-            self.fields = self.editalbe_fields
-            super(self,ModelForm).full_clean()
+            self.editable_fields = self.editable_fields if hasattr(self,'editable_fields') else dict([(n,f) for n,f in self.fields.iteritems() if n in self._meta.fields])
+            self.fields = self.editable_fields
+            super(ModelForm,self).full_clean()
         finally:
             self._meta.fields = opt_fields
             self.fields = fields

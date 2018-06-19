@@ -1,4 +1,4 @@
-from django.forms.widgets import Widget
+from django.forms.widgets import Widget,TextInput,Select,RadioSelect,CheckboxInput
 from django.core.cache import caches
 from django.urls import reverse
 from django.db import models
@@ -88,13 +88,17 @@ class HyperlinkTextDisplay(DisplayWidget):
                 index += 1
             return reverse(self.url_name,kwargs=kwargs)
 
-hyperlink_classes = {}
+widget_classes = {}
+widget_class_id = 0
 def HyperlinkDisplayFactory(url_name,field_name,widget_class,ids=[("id","pk")],baseclass=HyperlinkTextDisplay):
-    key = hashlib.md5("{}{}".format(url_name,field_name).encode('utf-8')).hexdigest()
-    cls = hyperlink_classes.get(key)
+    global widget_class_id
+    key = hashlib.md5("{}{}{}".format(baseclass.__name__,url_name,field_name).encode('utf-8')).hexdigest()
+    cls = widget_classes.get(key)
     if not cls:
-        cls = type(key,(baseclass,),{"url_name":url_name,"widget_class":widget_class,"ids":ids})
-        hyperlink_classes[key] = cls
+        widget_class_id += 1
+        class_name = "{}_{}".format(baseclass.__name,widget_class_id)
+        cls = type(class_name,(baseclass,),{"url_name":url_name,"widget_class":widget_class,"ids":ids})
+        widget_classes[key] = cls
     return cls
 
 
@@ -131,6 +135,108 @@ class TemplateDisplay(DisplayWidget):
         return safestring.SafeText(self.template.format(self.widget.render(name,value,attrs,renderer)))
 
 
+class DatetimeInput(TextInput):
+    def render(self,name,value,attrs=None,renderer=None):
+        html = super(DatetimeInput,self).render(name,value,attrs)
+        datetime_picker = """
+        <script type="text/javascript">
+            $("#{}").datetimepicker({{ 
+                format: "Y-m-d H:i" ,
+                maxDate:true,
+                step: 30,
+            }}); 
+        </script>
+        """.format(attrs["id"])
+        return safestring.SafeText("{}{}".format(html,datetime_picker))
 
 
+class TemplateWidgetMixin(object):
+    template = ""
+
+    def render(self,name,value,attrs=None,renderer=None):
+        widget_html = super(TemplateWidgetMixin,self).render(name,value,attrs)
+        return safestring.SafeText(self.template.format(widget_html))
+
+
+def TemplateWidgetFactory(widget_class,template):
+    global widget_class_id
+    key = hashlib.md5("{}{}{}".format(widget_class.__name__,TemplateWidgetMixin.__name__,template).encode('utf-8')).hexdigest()
+    cls = widget_classes.get(key)
+    if not cls:
+        widget_class_id += 1
+        class_name = "{}_template_{}".format(widget_class.__name__,widget_class_id)
+        cls = type(class_name,(TemplateWidgetMixin,widget_class),{"template":template})
+        widget_classes[key] = cls
+    return cls
+
+
+class SwitchWidgetMixin(object):
+    html = ""
+    switch_template = ""
+    true_value = True
+    reverse = False
+    html_id = None
+
+    def render(self,name,value,attrs=None,renderer=None):
+        if not self.html_id:
+            html_id = "{}_related_html".format( attrs.get("id"))
+            wrapped_html = "<span id='{}' {} >{}</span>".format(html_id,"style='dispaly:none'" if (not self.reverse and value != self.true_value) or (self.reverse and value == self.true_value) else "" ,self.html)
+        else:
+            html_id = self.html_id
+            wrapped_html = """
+            <script type="text/javascript">
+            $(document).ready() {{
+                $('#{}').hide()
+            }}
+            </script>
+            """.format(html_id)
+        
+        show_html = "$('#{0}').show();".format(html_id)
+        hide_html = "$('#{0}').hide();".format(html_id)
+
+        attrs = attrs or {}
+        if isinstance(self,RadioSelect):
+            attrs["onclick"]="""
+                if (this.value === '{0}') {{
+                    {1}
+                }} else {{
+                    {2}
+                }}
+            """.format(str(self.true_value),hide_html if self.reverse else show_html,show_html if self.reverse else hide_html)
+        elif isinstance(self,CheckboxInput):
+            attrs["onclick"]="""
+                if (this.checked) {{
+                    {0}
+                }} else {{
+                    {1}
+                }}
+            """.format(hide_html if self.reverse else show_html,show_html if self.reverse else hide_html)
+        elif isinstance(self,Select):
+            attrs["onchange"]="""
+                if (this.value === '{0}') {{
+                    {1}
+                }} else {{
+                    {2}
+                }}
+            """.format(str(self.true_value),hide_html if self.reverse else show_html,show_html if self.reverse else hide_html)
+        else:
+            raise Exception("Not implemented")
+
+        widget_html = super(SwitchWidgetMixin,self).render(name,value,attrs)
+        return safestring.SafeText(self.switch_template.format(widget_html,wrapped_html))
+
+def SwitchWidgetFactory(widget_class,html=None,true_value=True,template="{0}<br>{1}",html_id=None,reverse=False):
+    global widget_class_id
+    if html_id:
+        template="""{0}
+        {1}
+        """
+    key = hashlib.md5("{}{}{}{}{}{}".format(widget_class.__name__,true_value,template,html,html_id,reverse).encode('utf-8')).hexdigest()
+    cls = widget_classes.get(key)
+    if not cls:
+        widget_class_id += 1
+        class_name = "{}_{}".format(widget_class.__name__,widget_class_id)
+        cls = type(class_name,(SwitchWidgetMixin,widget_class),{"switch_template":template,"true_value":true_value,"html":html,"reverse":reverse,"html_id":html_id})
+        widget_classes[key] = cls
+    return cls
 
