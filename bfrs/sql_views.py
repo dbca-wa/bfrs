@@ -91,6 +91,12 @@ def create_bushfirelist_view():
          WHEN b.archive THEN 1
          ELSE 0
     END as archive,
+    CASE WHEN b.valid_bushfire_id is null THEN NULL
+         ELSE (SELECT report_status FROM bfrs_bushfire WHERE id = b.valid_bushfire_id)
+    END as linked_bushfire_status,
+    CASE WHEN b.valid_bushfire_id is null THEN NULL
+         ELSE (SELECT fire_number FROM bfrs_bushfire WHERE id = b.valid_bushfire_id)
+    END as linked_bushfire_number,
     b.authorised_by_id,
     b.cause_id,
     b.creator_id,
@@ -105,8 +111,8 @@ def create_bushfirelist_view():
     b.region_id,
     b.tenure_id
     FROM bfrs_bushfire b
-    WHERE b.archive = false AND b.report_status < {};
-    '''.format(Bushfire.STATUS_INVALIDATED))
+    WHERE b.archive = false AND (b.report_status < {0} OR b.report_status = {1});
+    '''.format(Bushfire.STATUS_INVALIDATED,Bushfire.STATUS_MERGED))
 
 def create_bushfire_view():
     """
@@ -170,6 +176,12 @@ def create_bushfire_view():
          WHEN b.dispatch_aerial THEN 'Yes'
          ELSE 'No'
     END as dispatch_aerial,
+    CASE WHEN b.valid_bushfire_id is null THEN NULL
+         ELSE (SELECT report_status FROM bfrs_bushfire WHERE id = b.valid_bushfire_id)
+    END as linked_bushfire_status,
+    CASE WHEN b.valid_bushfire_id is null THEN NULL
+         ELSE (SELECT fire_number FROM bfrs_bushfire WHERE id = b.valid_bushfire_id)
+    END as linked_bushfire_number,
     to_char(b.dispatch_pw_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI:SS') as dispatch_pw_date,
     to_char(b.dispatch_aerial_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI:SS') as dispatch_aerial_date,
     to_char(b.fire_detected_date at time zone 'Australia/Perth','DD/MM/YYYY') as fire_detected_date,
@@ -228,8 +240,8 @@ def create_bushfire_view():
     (SELECT name AS region FROM bfrs_region WHERE id = b.region_id),
     (SELECT name AS tenure FROM bfrs_tenure WHERE id = b.tenure_id)
     FROM bfrs_bushfire b
-    WHERE b.archive = false AND b.report_status < {};
-    '''.format(Bushfire.STATUS_INVALIDATED))
+    WHERE b.archive = false AND (b.report_status < {0} OR b.report_status = {1});
+    '''.format(Bushfire.STATUS_INVALIDATED,Bushfire.STATUS_MERGED))
 
 def create_final_fireboundary_view():
     """
