@@ -26,7 +26,6 @@ from bfrs.utils import (can_maintain_data,)
 from . import baseforms
 from . import basewidgets
 from .basefields import CompoundFieldFactory,OtherOptionFieldFactory,SwitchFieldFactory,CompoundField
-from . import baselayouts
 from . import basefields
 from .utils import update_damage_fs, update_injury_fs
 
@@ -494,7 +493,7 @@ class BaseBushfireViewForm(baseforms.ModelForm):
             "__all__":forms.fields.CharField,
             "dispatch_pw":SwitchFieldFactory(Bushfire,"dispatch_pw",("dispatch_pw_date",),field_class=basefields.ChoiceFieldFactory(Bushfire.DISPATCH_PW_CHOICES,choice_class=forms.TypedChoiceField),true_value=1),
             "dispatch_aerial":SwitchFieldFactory(Bushfire,"dispatch_aerial",("dispatch_aerial_date",),field_class=basefields.ChoiceFieldFactory(YESNO_CHOICES)),
-            "arson_squad_notified":SwitchFieldFactory(Bushfire,"arson_squad_notified",("offence_no",),policy=baselayouts.ALWAYS,on_layout="{0}<br>Police offence no: {1}",field_class=basefields.ChoiceFieldFactory(YESNO_CHOICES)),
+            "arson_squad_notified":SwitchFieldFactory(Bushfire,"arson_squad_notified",("offence_no",),policy=basefields.ALWAYS,on_layout="{0}<br>Police offence no: {1}",field_class=basefields.ChoiceFieldFactory(YESNO_CHOICES)),
             "initial_area":CompoundFieldFactory(InitialAreaField,Bushfire,"initial_area"),
             "initial_control":OtherOptionFieldFactory(Bushfire,"initial_control",("other_initial_control",),other_option=Agency.OTHER),
             "first_attack":OtherOptionFieldFactory(Bushfire,"first_attack",("other_first_attack",),other_option=Agency.OTHER),
