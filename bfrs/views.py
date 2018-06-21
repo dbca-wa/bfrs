@@ -29,7 +29,8 @@ from bfrs.models import (Profile, Bushfire, BushfireSnapshot,BushfireProperty,
         Tenure, AreaBurnt,
         SNAPSHOT_INITIAL, SNAPSHOT_FINAL,
     )
-from bfrs.forms import (ProfileForm, BushfireFilterForm, BushfireUpdateForm,MergedBushfireForm,SubmittedBushfireForm,InitialBushfireForm,BushfireSnapshotForm,BushfireCreateForm,
+from bfrs.forms import (ProfileForm, BushfireFilterForm, BushfireUpdateForm,MergedBushfireForm,SubmittedBushfireForm,InitialBushfireForm,BushfireSnapshotViewForm,BushfireCreateForm,
+        BushfireViewForm,InitialBushfireFSSGForm,AuthorisedBushfireFSSGForm,ReviewedBushfireFSSGForm,SubmittedBushfireFSSGForm,
         AuthorisedBushfireForm,ReviewedBushfireForm,AreaBurntFormSet, InjuryFormSet, DamageFormSet, PDFReportForm,
     )
 from bfrs.utils import (breadcrumbs_li,
@@ -54,9 +55,33 @@ from django_filters.widgets import BooleanWidget
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from reversion_compare.views import HistoryCompareDetailView
 
+from .utils import invalidate_bushfire
+
 import logging
 logger = logging.getLogger(__name__)
 
+
+class FormRequestMixin(object):
+    """
+    Add request initial parameter to form
+    """
+    def get_form_kwargs(self):
+        """
+        Returns the keyword arguments for instantiating the form.
+        """
+        kwargs = super(FormRequestMixin, self).get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
+
+class MainUrlMixin(object):
+    """
+    get last main page url
+    """
+    def get_main_url(self):
+        if self.request and self.request.session.has_key("lastMainUrl"):
+            return self.request.session["lastMainUrl"]
+        else:
+            return reverse('main')
 
 class BooleanFilter(django_filters.filters.BooleanFilter):
     field_class = forms.BooleanField
@@ -167,17 +192,11 @@ class ExceptionMixin(object):
 
             return TemplateResponse(request, self.template_exception, context=context)
 
-class ProfileView(ExceptionMixin,LoginRequiredMixin, generic.FormView):
+class ProfileView(ExceptionMixin,MainUrlMixin,LoginRequiredMixin, generic.FormView):
     model = Profile
     form_class = ProfileForm
     template_name = 'registration/profile.html'
     success_url = 'main'
-
-    def get_success_url(self):
-        if self.request and self.request.session.has_key("lastMainUrl"):
-            return self.request.session["lastMainUrl"]
-        else:
-            return reverse('main')
 
     def get_initial(self):
         profile, created = Profile.objects.get_or_create(user=self.request.user)
@@ -193,12 +212,12 @@ class ProfileView(ExceptionMixin,LoginRequiredMixin, generic.FormView):
         if form.is_valid():
             if 'cancel' not in self.request.POST:
                 form.save()
-            return HttpResponseRedirect(self.get_success_url())
+            return HttpResponseRedirect(self.get_main_url())
 
         return TemplateResponse(request, self.template_name)
 
 
-class BushfireView(ExceptionMixin,LoginRequiredMixin, filter_views.FilterView):
+class BushfireView(ExceptionMixin,MainUrlMixin,LoginRequiredMixin, filter_views.FilterView):
 #class BushfireView(LoginRequiredMixin, generic.ListView):
     #model = Bushfire
     filterset_class = BushfireFilter
@@ -242,12 +261,6 @@ class BushfireView(ExceptionMixin,LoginRequiredMixin, filter_views.FilterView):
         self.request.session["lastMainUrl"] = self.request.get_full_path()
 
         return kwargs
-
-    def get_success_url(self):
-        if self.request and self.request.session.has_key("lastMainUrl"):
-            return self.request.session["lastMainUrl"]
-        else:
-            return reverse('main')
 
     def get_initial(self):
         profile, created = Profile.objects.get_or_create(user=self.request.user)
@@ -395,7 +408,7 @@ class BushfireView(ExceptionMixin,LoginRequiredMixin, filter_views.FilterView):
         else:
             raise Exception("Unknown action({})" .format(action))
 
-        return HttpResponseRedirect(self.get_success_url())
+        return HttpResponseRedirect(self.get_main_url())
 
     def get_context_data(self, **kwargs):
         context = super(BushfireView, self).get_context_data(**kwargs)
@@ -421,7 +434,7 @@ class BushfireView(ExceptionMixin,LoginRequiredMixin, filter_views.FilterView):
             pass
         return context
 
-class BushfireInitialSnapshotView(ExceptionMixin,LoginRequiredMixin, generic.DetailView):
+class BushfireInitialSnapshotView(ExceptionMixin,FormRequestMixin,MainUrlMixin,LoginRequiredMixin, generic.DetailView):
     """
     To view the initial static data (after notifications 'Submitted')
 
@@ -429,66 +442,37 @@ class BushfireInitialSnapshotView(ExceptionMixin,LoginRequiredMixin, generic.Det
     model = Bushfire
     template_name = 'bfrs/bushfire_detail.html'
 
-    def get_success_url(self):
-        if self.request and self.request.session.has_key("lastMainUrl"):
-            return self.request.session["lastMainUrl"]
-        else:
-            return reverse('main')
-
-    def get_form_kwargs(self):
-        """
-        Returns the keyword arguments for instantiating the form.
-        """
-        kwargs = super(BushfireUpdateView, self).get_form_kwargs()
-        kwargs["request"] = self.request
-        return kwargs
-
     def get_context_data(self, **kwargs):
         context = super(BushfireInitialSnapshotView, self).get_context_data(**kwargs)
         self.object = self.get_object()
 
         context.update({
             'initial': True,
-            'form': BushfireSnapshotForm(instance=self.object.initial_snapshot),
+            'form': BushfireSnapshotViewForm(instance=self.object.initial_snapshot),
             'damages': self.object.initial_snapshot.damage_snapshot.exclude(snapshot_type=SNAPSHOT_FINAL) if hasattr(self.object.initial_snapshot, 'damage_snapshot') else None,
             'injuries': self.object.initial_snapshot.injury_snapshot.exclude(snapshot_type=SNAPSHOT_FINAL) if hasattr(self.object.initial_snapshot, 'injury_snapshot') else None,
             'tenures_burnt': self.object.initial_snapshot.tenures_burnt_snapshot.exclude(snapshot_type=SNAPSHOT_FINAL).order_by('id') if hasattr(self.object.initial_snapshot, 'tenures_burnt_snapshot') else None,
-            'link_actions':[(self.get_success_url(),'Return','btn-info')],
+            'link_actions':[(self.get_main_url(),'Return','btn-info')],
         })
         return context
 
-
-class BushfireFinalSnapshotView(ExceptionMixin,LoginRequiredMixin, generic.DetailView):
+class BushfireFinalSnapshotView(ExceptionMixin,FormRequestMixin,MainUrlMixin,LoginRequiredMixin, generic.DetailView):
     """
     To view the final static data (after report 'Authorised')
     """
     model = Bushfire
     template_name = 'bfrs/bushfire_detail.html'
 
-    def get_form_kwargs(self):
-        """
-        Returns the keyword arguments for instantiating the form.
-        """
-        kwargs = super(BushfireUpdateView, self).get_form_kwargs()
-        kwargs["request"] = self.request
-        return kwargs
-
-    def get_success_url(self):
-        if self.request and self.request.session.has_key("lastMainUrl"):
-            return self.request.session["lastMainUrl"]
-        else:
-            return reverse('main')
-
     def get_context_data(self, **kwargs):
         context = super(BushfireFinalSnapshotView, self).get_context_data(**kwargs)
         self.object = self.get_object()
 
-        link_actions = [(self.get_success_url(),'Return','btn-info')] 
+        link_actions = [(self.get_main_url(),'Return','btn-info')] 
         if can_maintain_data(self.request.user):
             link_actions.insert(0,(reverse('bushfire:bushfire_final',kwargs={"pk":self.object.id}) ,'Edit Authorised','btn-success'))
         context.update({
             'final': True,
-            'form': BushfireSnapshotForm(instance=self.object.final_snapshot),
+            'form': BushfireSnapshotViewForm(instance=self.object.final_snapshot),
             'damages': self.object.final_snapshot.damage_snapshot.exclude(snapshot_type=SNAPSHOT_INITIAL) if hasattr(self.object.final_snapshot, 'damage_snapshot') else None,
             'injuries': self.object.final_snapshot.injury_snapshot.exclude(snapshot_type=SNAPSHOT_INITIAL) if hasattr(self.object.final_snapshot, 'injury_snapshot') else None,
             'tenures_burnt': self.object.final_snapshot.tenures_burnt_snapshot.exclude(snapshot_type=SNAPSHOT_INITIAL).order_by('id') if hasattr(self.object.final_snapshot, 'tenures_burnt_snapshot') else None,
@@ -499,82 +483,41 @@ class BushfireFinalSnapshotView(ExceptionMixin,LoginRequiredMixin, generic.Detai
 
 
 @method_decorator(csrf_exempt, name='dispatch')
-class BushfireUpdateView(ExceptionMixin,LoginRequiredMixin, UpdateView):
+class BushfireUpdateView(ExceptionMixin,FormRequestMixin,MainUrlMixin,LoginRequiredMixin, UpdateView):
     """ Class will Create a new Bushfire and Update an existing Bushfire object"""
 
     model = Bushfire
     form_class = BushfireUpdateForm
-    template_name = 'bfrs/detail.html'
-    new_template_name = 'bfrs/bushfire_detail.html'
-    template_merged = 'bfrs/detail_merged.html'
-    template_summary = 'bfrs/detail_summary.html'
+    template_name = 'bfrs/bushfire_detail.html'
     template_error = 'bfrs/error.html'
     template_exception = 'exception.html'
+    template_confirm = 'bfrs/confirm.html'
     template_mandatory_fields = 'bfrs/mandatory_fields.html'
-
-    def get_form_kwargs(self):
-        """
-        Returns the keyword arguments for instantiating the form.
-        """
-        kwargs = super(BushfireUpdateView, self).get_form_kwargs()
-        kwargs["request"] = self.request
-        if (not self.object or not self.object.pk) and "sss_create" in self.request.POST:
-            if "data" in kwargs:
-                del kwargs["data"]
-        return kwargs
-
-
-    @property
-    def editable(self):
-        """
-        True if editable;otherwise return false
-        """
-        obj = self.get_object()
-        if is_external_user(self.request.user):
-            return False
-        elif obj is None or obj.report_status is None:
-            return True
-        elif obj.report_status == Bushfire.STATUS_MERGED :
-            return True
-        elif obj.report_status >= Bushfire.STATUS_INVALIDATED :
-            return False
-        elif 'initial' in self.request.get_full_path() and obj.is_init_authorised:
-            return False
-        elif 'final' in self.request.get_full_path() and obj.is_final_authorised and not can_maintain_data(self.request.user):
-            return False
-        return True
 
     def get_form_class(self):
         obj = self.get_object()
+        cls = BushfireViewForm
         if is_external_user(self.request.user):
-            return BushfireViewForm
+            cls = BushfireViewForm
         elif obj is None or obj.report_status is None:
-            return BushfireCreateForm
+            cls = BushfireCreateForm
         elif obj.report_status == Bushfire.STATUS_MERGED :
-            return MergedBushfireForm
+            cls = MergedBushfireForm
         elif obj.report_status >= Bushfire.STATUS_INVALIDATED :
-            return BushfireViewForm
+            cls = BushfireViewForm
         elif 'initial' in self.request.get_full_path():
-            return BushfireViewForm if obj.is_init_authorised else InitialBushfireForm
+            cls = BushfireViewForm if obj.is_init_authorised else (InitialBushfireFSSGForm if can_maintain_data(self.request.user) else InitialBushfireForm)
         elif 'final' in self.request.get_full_path():
-            if obj.is_final_authorised and not can_maintain_data(self.request.user):
-                return BushfireViewForm
+            if obj.report_status == Bushfire.STATUS_INITIAL_AUTHORISED:
+                cls = SubmittedBushfireFSSGForm if can_maintain_data(self.request.user) else SubmittedBushfireForm
+            elif not can_maintain_data(self.request.user):
+                cls = BushfireViewForm
+            elif obj.report_status == Bushfire.STATUS_FINAL_AUTHORISED:
+                cls = AuthorisedBushfireFSSGForm if can_maintain_data(self.request.user) else AuthorisedBushfireForm
             else:
-                return AuthorisedBushfireForm if obj.report_status == Bushfire.STATUS_FINAL_AUTHORISED else ReviewedBushfireForm
-        else:
-            return SubmittedBushfireForm
-    def get_template_names(self):
-        """
-        use 'bfrs/detail.html' for editing
-        use 'bfrs/detail_summary.html' for readonly
-        """
-        return [self.new_template_name]
+                cls = ReviewedBushfireFSSGForm if can_maintain_data(self.request.user) else ReviewedBushfireForm
 
-    def get_success_url(self):
-        if self.request and self.request.session.has_key("lastMainUrl"):
-            return self.request.session["lastMainUrl"]
-        else:
-            return reverse('main')
+        return cls
 
     def get_initial(self):
         """
@@ -593,7 +536,7 @@ class BushfireUpdateView(ExceptionMixin,LoginRequiredMixin, UpdateView):
     def get(self, request, *args, **kwargs):
         if not self.get_object() and is_external_user(self.request.user):
             # external user cannot create bushfire
-            return TemplateResponse(request, 'bfrs/error.html', context={'is_external_user': True, 'status':401}, status=401)
+            return TemplateResponse(request, self.template_error, context={'is_external_user': True, 'status':401}, status=401)
 
         return super(BushfireUpdateView, self).get(request, *args, **kwargs)
 
@@ -637,26 +580,25 @@ class BushfireUpdateView(ExceptionMixin,LoginRequiredMixin, UpdateView):
                 raise Exception("Confirm action is missing")
 
             if confirm_action == "invalidate":
-                if request.POST.has_key('district') and not request.POST.get('district'):
+                if self.request.POST.has_key('district') and not self.request.POST.get('district'):
                     #district is missing, throw exception
                     raise Exception("District is missing.")
                 elif not self.object:
                     #bushfire report is missing.
                     raise Exception("Bushfire id is missing or does not exist.")
-                
                 district = District.objects.get(id=self.request.POST['district']) # get the district from the form
                 if self.object.report_status!=Bushfire.STATUS_INVALIDATED:
                     self.object.invalid_details = request.POST.get('invalid_details')
                     self.object.district = district
                     self.object.region = district.region
-                    invalidate_bushfire(self.object, request.user,cur_obj)
+                    invalidate_bushfire(self.object, self.request.user)
                     return HttpResponseRedirect(reverse("home"))
                 else:
                     raise Exception("Bushfire has already been invalidated.")
             else:
                 update_status(self.request, self.object, confirm_action)
                 refresh_gokart(self.request, fire_number=self.object.fire_number, region=self.object.region.id, district=self.object.district.id)
-                return HttpResponseRedirect(self.get_success_url())
+                return HttpResponseRedirect(self.get_main_url())
 
         form_class = self.get_form_class()
         form = self.get_form(form_class)
@@ -680,12 +622,14 @@ class BushfireUpdateView(ExceptionMixin,LoginRequiredMixin, UpdateView):
             #report's status was changed after showing the page and before saving
             raise Exception("The status of the report({}) was changed from '{}' to '{}'".format(self.object.fire_number,self.object.REPORT_STATUS_MAP.get(expected_status),self.object.report_status_name))
 
+        #get the original district to check whether the district is changed or not
         origin_district = self.object.district if self.object else None
         origin_fire_number = self.object.fire_number if self.object else None
         new_district = None
         if form.is_valid():
             new_district = form.instance.district
             if origin_district is None or form.instance.district == origin_district:
+                #district is not changed
                 return self.form_valid(request, form,action)
             else:
                 #district has been changed
@@ -699,17 +643,13 @@ class BushfireUpdateView(ExceptionMixin,LoginRequiredMixin, UpdateView):
                 )
                 context={
                     'action': 'invalidate',
-                    'district': form["district"].id,
+                    'district': new_district.id,
                     'message': message,
                 }
-                return TemplateResponse(request, 'bfrs/confirm.html', context=context)
+                return TemplateResponse(request, self.template_confirm, context=context)
         else:
-            return self.form_invalid(request, form)
-
-
-    def form_invalid(self, request, form):
-        context = self.get_context_data()
-        return self.render_to_response(context)
+            context = self.get_context_data()
+            return self.render_to_response(context)
 
     @transaction.atomic
     def form_valid(self, request, form, action,area_burnt_formset=None, injury_formset=None, damage_formset=None):
@@ -720,15 +660,7 @@ class BushfireUpdateView(ExceptionMixin,LoginRequiredMixin, UpdateView):
         
         if action in ["submit","authorise","save_final","save_reviewed"]:
             #show confirm page
-            context = {
-                'is_authorised': True,
-                'object':self. object,
-                'snapshot': self.object,
-                'damages': self.object.damages,
-                'injuries': self.object.injuries,
-                'action':action,
-                'tenures_burnt': self.object.tenures_burnt.order_by('id')
-            }
+            context = self.get_context_data()
             missing_fields = get_missing_mandatory_fields(self.object,action)
             if missing_fields:
                 if action in ["save_final","save_reviewed"]:
@@ -738,13 +670,20 @@ class BushfireUpdateView(ExceptionMixin,LoginRequiredMixin, UpdateView):
                 context['mandatory_fields'] = missing_fields
                 return TemplateResponse(request, self.template_mandatory_fields, context=context)
             elif action in ["submit","authorise"]:
+                context["confirm_action"] = action
+                context["form"] = BushfireViewForm(instance=self.object)
+                context["submit_actions"]=[("confirm","Yes, I'm sure",'btn-success')]
+                if action == "submit":
+                    context["link_actions"]=[(reverse("bushfire:bushfire_initial",kwargs={"pk":self.object.pk}),"Cancel","btn-danger")]
+                else:
+                    context["link_actions"]=[(reverse("bushfire:bushfire_final",kwargs={"pk":self.object.pk}),"Cancel","btn-danger")]
                 #show confirm page
-                return TemplateResponse(request, self.template_summary, context=context)
+                return TemplateResponse(request, self.template_name, context=context)
             elif action in ["save_final","save_reviewed"]:
                 #create a snapshot
                 serialize_bushfire('final', action, self.object)
 
-        return HttpResponseRedirect(self.get_success_url())
+        return HttpResponseRedirect(self.get_main_url())
 
     def get_context_data(self, **kwargs):
         bushfire = self.get_object()
@@ -754,14 +693,12 @@ class BushfireUpdateView(ExceptionMixin,LoginRequiredMixin, UpdateView):
         submit_actions = None
         context.update({
             'initial':'initial' in self.request.get_full_path(),
-            'final':'final' in self.request.get_full_path(),
             'create':False if bushfire else True,
             'can_maintain_data': can_maintain_data(self.request.user),
-            'link_actions':[(self.get_success_url(),'Return','btn-info')],
+            'link_actions':[(self.get_main_url(),'Return','btn-info')],
             'submit_actions':context['form'].submit_actions,
         })
 
-        print(str(context))
         return context
 
 

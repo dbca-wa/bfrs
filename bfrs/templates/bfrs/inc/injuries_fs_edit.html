@@ -12,7 +12,7 @@
 
                    <td>
                         {% if injury_form.instance.pk %}{{ injury_form.DELETE }}{% endif %}
-                        {{ form.id }}
+                        {{ injury_form.id }}
 
                         {% for field in injury_form %} 
                           {% if field.errors %}

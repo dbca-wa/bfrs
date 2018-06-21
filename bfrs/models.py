@@ -81,10 +81,11 @@ def reporting_years():
     """ Returns: [[2016, '2016/2017'], [2017, '2017/2018']] """
     try:
         yrs = list(Bushfire.objects.values_list('reporting_year', flat=True).distinct())
-        if current_finyear() not in yrs:
-            yrs.append(datetime.now().year)
-        if current_finyear() + 1 not in yrs:
-            yrs.append(datetime.now().year + 1)
+        finyear = current_finyear()
+        for y in (finyear,finyear + 1):
+            if y not in yrs:
+                yrs.append(y)
+        yrs.sort()
         return [[yr, '/'.join([str(yr),str(yr+1)])] for yr in yrs]
     except:
         return [[None, None]]
@@ -569,6 +570,8 @@ class Tenure(models.Model):
     def __str__(self):
         return self.name
 Tenure.OTHER = Tenure.objects.get(name="Other")
+Tenure.PRIVATE_PROPERTY = Tenure.objects.get(name="Private Property")
+Tenure.OTHER_CROWN = Tenure.objects.get(name="Other Crown")
 
 
 @python_2_unicode_compatible

@@ -4,7 +4,7 @@
             <th>Damage Type</th>
             <th>Number</th>
 
-                {% for damage in damages.all %}
+                {% for damage in form.damages.all %}
                 <tr>
                     <td>{{ damage.damage_type }}</td>
                     <td>{{ damage.number }}</td>

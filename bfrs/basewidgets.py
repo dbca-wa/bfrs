@@ -19,6 +19,7 @@ class TextDisplay(DisplayWidget):
 
 class FinancialYearDisplay(DisplayWidget):
     def render(self,name,value,attrs=None,renderer=None):
+        value = int(value)
         return "{}/{}".format(value,value+1)
 
 class DmsCoordinateDisplay(DisplayWidget):
@@ -180,16 +181,19 @@ class SwitchWidgetMixin(object):
     def render(self,name,value,attrs=None,renderer=None):
         if not self.html_id:
             html_id = "{}_related_html".format( attrs.get("id"))
-            wrapped_html = "<span id='{}' {} >{}</span>".format(html_id,"style='dispaly:none'" if (not self.reverse and value != self.true_value) or (self.reverse and value == self.true_value) else "" ,self.html)
+            wrapped_html = "<span id='{}' {} >{}</span>".format(html_id,"style='display:none'" if (not self.reverse and value != self.true_value) or (self.reverse and value == self.true_value) else "" ,self.html)
         else:
             html_id = self.html_id
-            wrapped_html = """
-            <script type="text/javascript">
-            $(document).ready() {{
-                $('#{}').hide()
-            }}
-            </script>
-            """.format(html_id)
+            if (not self.reverse and value == self.true_value) or (self.reverse and value != self.true_value):
+                wrapped_html = ""
+            else:
+                wrapped_html = """
+                <script type="text/javascript">
+                $(document).ready(function() {{
+                    $('#{}').hide()
+                }})
+                </script>
+                """.format(html_id)
         
         show_html = "$('#{0}').show();".format(html_id)
         hide_html = "$('#{0}').hide();".format(html_id)

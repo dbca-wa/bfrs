@@ -3,7 +3,7 @@
         <tbody>
             <th>Injury Type</th>
             <th>Number</th>
-            {% for injury in injuries.all %}
+            {% for injury in form.injuries.all %}
             <tr>
                 <td>{{ injury.injury_type }}</td>
                 <td>{{ injury.number }}</td>

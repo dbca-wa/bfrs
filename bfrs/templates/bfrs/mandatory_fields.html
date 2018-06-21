@@ -6,7 +6,7 @@
 {% block breadcrumbs %}
 <ul class="breadcrumb">
   <li><a href="{% url 'main' %}">{% trans 'Bushfire Overview' %}</a> <span class="divider"></span></li>
-  {% if action == 'submit' %}
+  {% if object.report_status == object.STATUS_INITIAL %}
     <li><a href="{% url 'bushfire:bushfire_initial' object.id %}">{{object.fire_number}}</a> <span class="divider"></span></li>
   {% else  %}
     <li><a href="{% url 'bushfire:bushfire_final' object.id %}">{{object.fire_number}}</a> <span class="divider"></span></li>
@@ -28,14 +28,8 @@
         {% endfor %}
       </ol>
     {% endif %}
-    <form action="" method="post">{% csrf_token %}
     <div>
-        {% comment %}
-        <a id="id_ok_btn" {% if initial %} href="{% url 'bushfire:bushfire_initial' object.id %}" {% elif final %} href="{% url 'bushfire:bushfire_final' object.id %}"{% endif %} class="btn btn-info">Edit bushfire</a>
-        <a id="id_cancel_btn" href="javascript: history.go(-1)" class="btn btn-info">Return</a>
-        {% endcomment %}
-        <a id="id_ok_btn" {% if action == 'submit' %} href="{% url 'bushfire:bushfire_initial' object.id %}" {% else %} href="{% url 'bushfire:bushfire_final' object.id %}"{% endif %} class="btn btn-info">Return</a>
+        <a id="id_ok_btn" {% if object.report_status == object.STATUS_INITIAL %} href="{% url 'bushfire:bushfire_initial' object.id %}" {% else %} href="{% url 'bushfire:bushfire_final' object.id %}"{% endif %} class="btn btn-info">Return</a>
     </div>
-    </form>
 {% endblock %}
 

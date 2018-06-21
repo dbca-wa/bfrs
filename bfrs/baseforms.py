@@ -18,7 +18,10 @@ class ConfigDict(dict):
         self.all_key = all_key
 
     def __contains__(self,name):
-        return name in self.data or (self.all_key and self.all_key in self.data)
+        if name in self.data:
+            return False if self.data[name] is None else True
+        else:
+            return self.all_key and self.all_key in self.data
 
     def __getitem__(self,name):
         try:
@@ -197,18 +200,6 @@ class CompoundBoundField(BoundField):
             raise TypeError
         return list(self.__iter__())[idx]
 
-    @property
-    def errors(self):
-        """
-        Returns an ErrorList for this field. Returns an empty ErrorList
-        if there are none.
-        """
-        errors = self.form.errors.get(self.name, self.form.error_class())
-        for field in self.related_fields:
-            for err in field.errors:
-                errors.append(err)
-        return errors
-
     def as_widget(self, widget=None, attrs=None, only_initial=False):
         """
         Renders the field by rendering the passed widget, adding any HTML
@@ -221,10 +212,7 @@ class CompoundBoundField(BoundField):
         html_layout,field_names = self.field.get_layout(self)
         html = super(CompoundBoundField,self).as_widget(widget,attrs,only_initial)
         if field_names:
-            if isinstance(self.field.widget,basewidgets.DisplayWidget):
-                return safestring.SafeText(html_layout.format(html,*[f.as_widget(only_initial=only_initial) for f in self.related_fields if f.name in field_names]))
-            else:
-                return safestring.SafeText(html_layout.format(html,*["<span id='{}_container'>{}</span>".format(f.auto_id,f.as_widget(only_initial=only_initial)) for f in self.related_fields if f.name in field_names]))
+            return safestring.SafeText(html_layout.format(html,*[f.as_widget(only_initial=only_initial) for f in self.related_fields if f.name in field_names]))
         elif html_layout:
             return safestring.SafeText(html_layout.format(html))
         else:
@@ -295,7 +283,9 @@ class BaseModelFormMetaclass(forms.models.ModelFormMetaclass):
                         setattr(attrs['Meta'],item,config)
                     else:
                         setattr(attrs['Meta'],item,config.data if isinstance(config,ConfigDict) else config)
-
+        if name == 'InitialBushfireFSSGForm':
+            #import ipdb;ipdb.set_trace()
+            pass
         #add "__all__" support in configuration
         if 'Meta' in attrs and hasattr(attrs['Meta'],'widgets'):
             #add "__all__" support in widgets configuration

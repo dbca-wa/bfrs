@@ -41,6 +41,8 @@ class _JSONEncoder(json.JSONEncoder):
     def default(self,obj):
         if isinstance(obj,models.Model):
             return obj.pk
+        elif callable(obj) or isinstance(obj,staticmethod):
+            return id(obj)
         return json.JSONEncoder.default(self,obj)
 
 class_id = 0
@@ -76,6 +78,8 @@ choices_classes = {}
 class ChoiceFieldMixin(object):
     def __init__(self,*args,**kwargs):
         kwargs["choices"] = self.CHOICES
+        if "min_value" in kwargs:
+            del kwargs["min_value"]
         super(ChoiceFieldMixin,self).__init__(*args,**kwargs)
 
 def ChoiceFieldFactory(choices,choice_class=forms.ChoiceField):
@@ -108,7 +112,7 @@ class SwitchField(CompoundField):
     on_layout = None
     off_layout = None
     edit_layout = None
-    true_value = True
+    true_value = 'True'
 
     @classmethod
     def init_kwargs(cls,model,field_name,related_field_names,kwargs):
@@ -116,10 +120,12 @@ class SwitchField(CompoundField):
             kwargs["on_layout"] = u"{{}}<br>{}".format("{}" * len(related_field_names))
 
         if not kwargs.get("off_layout"):
-            kwargs["off_layout"] = None
+            kwargs["off_layout"] = u"{}"
 
         if not kwargs.get("edit_layout"):
             kwargs["edit_layout"] = u"{{}}<br>{}".format("{}" * len(related_field_names))
+
+        kwargs["true_value"] = str(kwargs['true_value']) if "true_value" in kwargs else 'True'
 
         return kwargs
 
@@ -128,7 +134,8 @@ class SwitchField(CompoundField):
         return a tuple(layout,enable related field list) for view
         """
         val1 = f.value()
-        if (not self.reverse and val1) or (self.reverse and not val1):
+        val1_str = str(val1) if val1 is not None else ""
+        if (not self.reverse and val1_str == self.true_value) or (self.reverse and not val1_str == self.true_value):
             if self.policy == ALWAYS:
                 return (self.off_layout if self.reverse else self.on_layout,f.field.related_field_names)
             else:
@@ -146,7 +153,9 @@ class SwitchField(CompoundField):
         return a tuple(layout,enable related field list) for edit
         """
         val1 = f.value()
-        if (not self.reverse and not val1) or (self.reverse and val1):
+        val1_str = str(val1) if val1 is not None else ""
+        if (not self.reverse and val1_str != self.true_value) or (self.reverse and val1_str == self.true_value):
+            #print("{}={} true_value={}   reverse={}".format(f.name,val1,self.true_value,self.reverse))
             for rf in f.related_fields:
                 hide_field(rf.field)
             

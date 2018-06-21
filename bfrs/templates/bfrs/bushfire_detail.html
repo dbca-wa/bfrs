@@ -42,6 +42,67 @@
 
 {% block content %}
 
+  {% if form.errors %}
+      <h1 class="errornote">
+        <p>Form Errors</p>
+        <button type="button" class="close" data-dismiss="alert">×</button>
+        <ul>
+        {% for field in form %} 
+            {% if field.errors %}
+            <li>{{ field.label }}: {{ field.errors|striptags }}</li>
+            {{ field.meta  }}
+            {% endif %}
+        {% endfor %}
+
+        {% if form.non_field_errors %}
+            <li>{{ form.non_field_errors  }}</li>
+        {% endif %}
+        </ul>
+      </h1>
+  {% endif %}
+
+  {% if not object.damage_unknown and damage_formset.errors|check_errors %}
+      <h1 class="errornote">
+        <p>Damage formset Errors</p>
+        <button type="button" class="close" data-dismiss="alert">×</button>
+        <ul>
+        {% for damage_form in form.damage_formset %} 
+          {% for field in damage_form %} 
+            {% if field.errors %}
+              <li>{{ field.label }}: {{ field.errors|striptags }}</li>
+              {{ field.meta  }}
+            {% endif %}
+          {% endfor %}
+        {% endfor %}
+
+        {% if damage_formset.non_field_errors %}
+          <li>{{ damage_formset.non_field_errors }}</li>
+        {% endif %}
+        </ul>
+      </h1>
+  {% endif %}
+
+  {% if not object.injury_unknown and injury_formset.errors|check_errors %}
+      <h1 class="errornote">
+        <p>Injury formset Errors</p>
+        <button type="button" class="close" data-dismiss="alert">×</button>
+        <ul>
+        {% for injury_form in injury_formset %} 
+          {% for field in injury_form %} 
+            {% if field.errors %}
+              <li>{{ field.label }}: {{ field.errors|striptags }}</li>
+              {{ field.meta  }}
+            {% endif %}
+          {% endfor %}
+        {% endfor %}
+
+        {% if injury_formset.non_field_errors %}
+          <li>{{ injury_formset.non_field_errors }}</li>
+        {% endif %}
+        </ul>
+      </h1>
+  {% endif %}
+
 
 <div>
   <div style='float: left;'>
@@ -57,7 +118,13 @@
                 invalidated
             {% endif %}
             on {{object.modified|date:'Y-m-d H:i'}} by {{object.modifier}}</font>
-        (Linked valid bushfire <a href="{% url 'bushfire:bushfire_initial' object.valid_bushfire.id %}">{{object.valid_bushfire.fire_number}}</a>)
+        (Linked valid bushfire 
+        {% if object.valid_bushfire.report_status == object.STATUS_INITIAL %}
+            <a href="{% url 'bushfire:bushfire_initial' object.valid_bushfire.id %}">
+        {% else %}
+            <a href="{% url 'bushfire:bushfire_final' object.valid_bushfire.id %}">
+        {% endif %}
+        {{object.valid_bushfire.fire_number}}</a>)
       </h2>
     </h1>
     {% elif action == 'submit' %}
@@ -69,13 +136,17 @@
     {% endif %}
   </div>
   <div style='float: right;'>
-	  <a href="#" onclick='openGokart({"action": "select", "region":{{bushfire.region.id}},"district":{{bushfire.district.id}},"bushfireid":"{{bushfire.fire_number}}" });' title="Open report in SSS">View in SSS</a></td>
+	  <a href="#" onclick='openGokart({"action": "select", "region":{{object.region.id}},"district":{{object.district.id}},"bushfireid":"{{bushfire.fire_number}}" });' title="Open report in SSS">View in SSS</a></td>
   </div>
 </div>
 
 {% if submit_actions %}
 <form action="" method="post">
 {% csrf_token %}
+{% endif %}
+
+{% if confirm_action %}
+    <input type="hidden" name="confirm_action" value={{confirm_action}}>
 {% endif %}
 
 {% if not object.pk %}
@@ -85,6 +156,9 @@
     <tbody>
         <tr>
           <th colspan="4" style="background: black; color: white; text-align: left; font-size: 16px; padding: 12px;" > BUSHFIRE NOTIFICATION 
+          {% if  object.report_status == object.STATUS_INITIAL  %}
+          <span style="color:red;padding-left:20px">(submit within 30 mins of detection)</span>
+          {% endif %}
           </th>
         </tr>
         <tr>
@@ -188,10 +262,12 @@
                   <th class="cbas" style="width:20%;font-weight:normal;">Fire monitored only</th>
                   <td class="cbas" style="width:30%">{{form.fire_monitored_only.as_widget}}</td>
               </tr>
+              {% if object.report_status > object.STATUS_INVALIDATED %}
               <tr id="invalid_details_row">
                   <th class="cbas">Invalid Details</th>
                   <td class="cbas" colspan=3>{{form.invalid_details.as_widget}}</td>
               </tr>
+              {% endif %}
       
               <tr>
                   <th id="id_th_field_officer" class="cbas" >P&W Field Officer</th>
@@ -203,7 +279,6 @@
         </tbody>
       </table>
       
-      {% if not object.fire_not_found %}
       <div id="fire_report_section">
       <table class="table table-bordered table-striped table-condensed">
           <tbody>
@@ -246,7 +321,7 @@
                   <th class="cbas">Final fire size (ha) *</th>
                   {% if can_maintain_data %}
                   <td class="cbas">{{form.area.as_widget}}</td>
-                  <th class="cbas" >Reporting Year</th>
+                  <th class="cbas" style="font-weight:normal;">Reporting Year</th>
                   <td class="cbas">{{form.reporting_year.as_widget}}</td>
                   {% else %}
                   <td colspan=3 class="cbas">{{form.area.as_widget}}</td>
@@ -264,29 +339,29 @@
           </thead>
           <tbody>
               <tr>
-                  <td class="cbas" style="width:33%">{% include "bfrs/inc/tenure_veg_display.html" %}</td>
+                  <td class="cbas" style="width:33%">
+                    {% include "bfrs/inc/tenure_veg_display.html" %}
+                  </td>
                   <td class="cbas" style="width:33%">
                       {{form.damage_unknown.as_widget}}
-                      {% if form.damages is not None %} 
-                        {% include "bfrs/inc/damage_fs_display.html" %}
-                      {% elif form.damage_formset is not None %} 
+                      {% if form.damage_formset is not None %} 
                         {% include "bfrs/inc/damage_fs_edit.html" %}
+                      {% elif not object.damage_unknown and form.damages is not None %} 
+                        {% include "bfrs/inc/damage_fs_display.html" %}
                       {% endif %}
                   </td>
                   <td class="cbas">
                       {{form.injury_unknown.as_widget}}
-                      {% if injuries is not None %} {% include "bfrs/inc/injuries_fs_display.html" %}{% endif %}
-                      {% if form.injuries is not None %} 
-                        {% include "bfrs/inc/injuries_fs_display.html" %}
-                      {% elif form.injury_formset is not None %} 
+                      {% if form.injury_formset is not None %} 
                         {% include "bfrs/inc/injuries_fs_edit.html" %}
+                      {% elif not object.injury_unknown and form.injuries is not None %} 
+                        {% include "bfrs/inc/injuries_fs_display.html" %}
                       {% endif %}
                   </td>
               </tr>
           </tbody>
       </table>
       </div>
-      {% endif %} <!-- div_form_invalidate -->
     </div>
   </div>
 </div>
@@ -319,4 +394,20 @@
 </form>
 {% endif %}
 
+<script type="text/javascript">
+    $(document).ready(function(){
+        if ('{{object.fire_not_found}}' === 'True') {
+            $('#fire_report_section').hide()
+        }
+        if ($('#id_fire_not_found').length === 1) {
+            $('#id_fire_not_found').click(function(){
+                if (this.checked) {
+                    $('#fire_report_section').hide()
+                } else {
+                    $('#fire_report_section').show()
+                }
+            })
+        }
+    })
+</script>
 {% endblock %}
