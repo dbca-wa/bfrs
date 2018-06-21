@@ -177,7 +177,18 @@ def create_bushfire_view():
          ELSE 'No'
     END as dispatch_aerial,
     CASE WHEN b.valid_bushfire_id is null THEN NULL
-         ELSE (SELECT report_status FROM bfrs_bushfire WHERE id = b.valid_bushfire_id)
+         ELSE (SELECT 
+            CASE WHEN lb.report_status = 1 THEN 'Initial Fire Report'
+                 WHEN lb.report_status = 2 THEN 'Notifications Submitted'
+                 WHEN lb.report_status = 3 THEN 'Report Authorised'
+                 WHEN lb.report_status = 4 THEN 'Reviewed'
+                 WHEN lb.report_status = 5 THEN 'Invalidated'
+                 WHEN lb.report_status = 6 THEN 'Outstanding Fires'
+                 WHEN lb.report_status = 100 THEN 'Merged Fires'
+                 WHEN lb.report_status = 101 THEN 'Duplicate Fires'
+                 ELSE lb.report_status::text
+            END as report_status
+         FROM bfrs_bushfire lb WHERE lb.id = b.valid_bushfire_id)
     END as linked_bushfire_status,
     CASE WHEN b.valid_bushfire_id is null THEN NULL
          ELSE (SELECT fire_number FROM bfrs_bushfire WHERE id = b.valid_bushfire_id)
@@ -220,6 +231,8 @@ def create_bushfire_view():
          WHEN b.report_status = 4 THEN 'Reviewed'
          WHEN b.report_status = 5 THEN 'Invalidated'
          WHEN b.report_status = 6 THEN 'Outstanding Fires'
+         WHEN b.report_status = 100 THEN 'Merged Fires'
+         WHEN b.report_status = 101 THEN 'Duplicate Fires'
          ELSE b.report_status::text
     END as report_status,
     CASE WHEN b.archive IS NULL THEN ''
@@ -343,6 +356,8 @@ def create_final_fireboundary_view():
          WHEN b.report_status = 4 THEN 'Reviewed'
          WHEN b.report_status = 5 THEN 'Invalidated'
          WHEN b.report_status = 6 THEN 'Outstanding Fires'
+         WHEN b.report_status = 100 THEN 'Merged Fires'
+         WHEN b.report_status = 101 THEN 'Duplicate Fires'
          ELSE b.report_status::text
     END as report_status,
     CASE WHEN b.archive IS NULL THEN ''
@@ -474,6 +489,8 @@ def create_fireboundary_view():
          WHEN b.report_status = 4 THEN 'Reviewed'
          WHEN b.report_status = 5 THEN 'Invalidated'
          WHEN b.report_status = 6 THEN 'Outstanding Fires'
+         WHEN b.report_status = 100 THEN 'Merged Fires'
+         WHEN b.report_status = 101 THEN 'Duplicate Fires'
          ELSE b.report_status::text
     END as report_status,
     CASE WHEN b.archive IS NULL THEN ''
