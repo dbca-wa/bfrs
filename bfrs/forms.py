@@ -13,6 +13,7 @@ from django.forms.models import inlineformset_factory, formset_factory, BaseInli
 from django.contrib import messages
 from django.contrib.auth.models import User, Group
 from django.contrib.gis.geos import Point, GEOSGeometry, Polygon, MultiPolygon, GEOSException
+from django.utils import timezone
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Fieldset, ButtonHolder, Submit, Div, HTML
@@ -376,6 +377,43 @@ class FireCauseField(CompoundField):
         """.format(Cause.OTHER.id,f.related_fields[1].auto_id,Cause.ESCAPE_DPAW_BURNING.id,f.related_fields[2].auto_id)
         return ("{1}<br>{0}<br>{2}{3}",f.field.related_field_names)
 
+class InitialAreaField(CompoundField):
+    related_field_names = ("fire_boundary","initial_area_unknown")
+    def _view_layout(self,f):
+        if f.value():
+            return ("{0}",None)
+        else:
+            area_unknown = f.related_fields[1].value()
+            if area_unknown:
+                return ("{1}",("initial_area_unknown",))
+            else:
+                return ("",None)
+
+    def _edit_layout(self,f):
+        initial_boundary = True if f.related_fields[0].value() else False
+        if initial_boundary:
+            f.field.widget.attrs["disabled"] = True
+            return ("{0}",None)
+        else:
+            area_unknown = f.related_fields[1].value()
+
+            f.field.widget.attrs = f.field.widget.attrs or {}
+            if area_unknown:
+                f.field.widget.attrs["disabled"] = True
+                f.field.widget.attrs["style"] = "display:none"
+
+            f.related_fields[1].field.widget.attrs = f.related_fields[1].field.widget.attrs or {}
+            f.related_fields[1].field.widget.attrs["onclick"]="""
+            if (this.checked) {{
+                $("#{0}").hide();
+                $("#{0}").prop("disabled",true);
+            }} else {{
+                $("#{0}").show();
+                $("#{0}").prop("disabled",false);
+            }}
+            """.format(f.auto_id)
+            return ("{1}<br>{0}",("initial_area_unknown",))
+
 class FinalAreaField(CompoundField):
     related_field_names = ("final_fire_boundary","area_limit")
     def _view_layout(self,f):
@@ -451,14 +489,13 @@ class BaseBushfireViewForm(baseforms.ModelForm):
                     'archive','authorised_by','init_authorised_by','reviewed_by','valid_bushfire','fireboundary_uploaded_by',
                     'fireboundary_uploaded_date','capturemethod','other_capturemethod',"sss_data","sss_id")
         labels = {
-            "initial_area_unknown":"Area of fire at arrival(ha)",
         }
         field_classes = {
             "__all__":forms.fields.CharField,
             "dispatch_pw":SwitchFieldFactory(Bushfire,"dispatch_pw",("dispatch_pw_date",),field_class=basefields.ChoiceFieldFactory(Bushfire.DISPATCH_PW_CHOICES,choice_class=forms.TypedChoiceField),true_value=1),
             "dispatch_aerial":SwitchFieldFactory(Bushfire,"dispatch_aerial",("dispatch_aerial_date",),field_class=basefields.ChoiceFieldFactory(YESNO_CHOICES)),
             "arson_squad_notified":SwitchFieldFactory(Bushfire,"arson_squad_notified",("offence_no",),policy=baselayouts.ALWAYS,on_layout="{0}<br>Police offence no: {1}",field_class=basefields.ChoiceFieldFactory(YESNO_CHOICES)),
-            "initial_area_unknown":SwitchFieldFactory(Bushfire,"initial_area_unknown",("initial_area",),policy=baselayouts.ALWAYS,on_layout="Unknown",off_layout="{1}",reverse=True,edit_layout="{0} Unknown<br>{1}"),
+            "initial_area":CompoundFieldFactory(InitialAreaField,Bushfire,"initial_area"),
             "initial_control":OtherOptionFieldFactory(Bushfire,"initial_control",("other_initial_control",),other_option=Agency.OTHER),
             "first_attack":OtherOptionFieldFactory(Bushfire,"first_attack",("other_first_attack",),other_option=Agency.OTHER),
             "final_control":OtherOptionFieldFactory(Bushfire,"final_control",("other_final_control",),other_option=Agency.OTHER),
@@ -574,8 +611,11 @@ class BaseBushfireEditForm(BushfireViewForm):
                 cleaned_data["dispatch_aerial_date"] = None
 
 
-        if self.is_editable('initial_area_unknown'):
-            if self.boolvalue(cleaned_data,'initial_area_unknown'):
+        if self.is_editable('initial_area'):
+            if self.instance.fire_boundary and not self.instance.final_fire_boundary:
+                #user can't edit intial area if report has fire boundary 
+                cleaned_data['initial_area'] = self.instance.initial_area
+            elif self.boolvalue(cleaned_data,'initial_area_unknown'):
                 cleaned_data['initial_area'] = None
 
         if self.is_editable('dfes_incident_no'):
@@ -868,7 +908,7 @@ class InitialBushfireForm(SubmittedBushfireForm):
             "other_info":None,
             "investigation_req":forms.RadioSelect(renderer=HorizontalRadioRenderer),
             "prob_fire_level":forms.RadioSelect(renderer=HorizontalRadioRenderer),
-            "initial_area_unknown":None,
+            "initial_area_unknown":basewidgets.TemplateWidgetFactory(widget_class=forms.CheckboxInput,template="{} Unknown"),
             "initial_area":forms.widgets.NumberInput(attrs={"step":0.01,"min":0}),
             "initial_control":None,
             "other_initial_control":None,
@@ -894,6 +934,7 @@ class BushfireCreateForm(InitialBushfireForm):
         self.plantations = None
         if "sss_data" not in self.initial:
             return
+        self.is_bound = False
         sss = json.loads(self.initial['sss_data'])
         if sss.get('area') and sss['area'].get('total_area'):
             initial_area = round(float(sss['area']['total_area']), 2)
@@ -926,6 +967,8 @@ class BushfireCreateForm(InitialBushfireForm):
             self.initial['district'] = District.objects.get(id=sss['district_id'])
 
     def _post_clean(self):
+        if not self.cleaned_data.get('sss_data'):
+            raise Exception('sss_data is missing')
         sss = json.loads(self.cleaned_data["sss_data"])
 
         if sss.get('tenure_ignition_point') and sss['tenure_ignition_point'].get('category'):
@@ -945,14 +988,17 @@ class BushfireCreateForm(InitialBushfireForm):
         if self.instance.initial_area_unknown:
             self.instance.initial_area = None
             self.instance.other_area = None
-        else:
-            if sss.get('area') and sss['area'].get('total_area'):
+        elif sss.get('area'):
+            if sss['area'].get('total_area'):
                 initial_area = round(float(sss['area']['total_area']), 2)
                 self.instance.initial_area = initial_area if initial_area > 0 else 0.01
 
-            if sss.get('area') and sss['area'].get('other_area'):
+            if sss['area'].get('other_area'):
                 other_area = round(float(sss['area']['other_area']), 2)
                 self.instance.other_area = other_area if other_area > 0 else 0.01
+
+            #if "layers" in sss['area']:
+            #    del sss['area']['layers']
             
         if sss.has_key('fire_position'):
             if not self.instance.fire_position_override:

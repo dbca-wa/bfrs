@@ -285,46 +285,7 @@ def get_missing_mandatory_fields(obj,action):
         return (check_mandatory_fields(obj, SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS, SUBMIT_MANDATORY_FORMSETS) + check_mandatory_fields(obj, fields, dep_fields, AUTH_MANDATORY_FORMSETS)) or None
     return None
 
-def create_areas_burnt(bushfire, tenure_layers):
-    """
-    Creates the initial bushfire record together with AreaBurnt FormSet from BushfireUpdateView (Operates on data dict from SSS)
-    Uses sss_dict - used by get_context_data, to display initial sss_data supplied from SSS system
-    """
-    # aggregate the area's in like tenure types
-    aggregated_sums = defaultdict(float)
-    for layer in tenure_layers:
-        for d in tenure_layers[layer]['areas']:
-            aggregated_sums[d["category"]] += d["area"]
-
-
-    area_unknown = 0.0
-    category_unknown = []
-    new_area_burnt_list = []
-    for category, area in aggregated_sums.iteritems():
-        tenure_qs = Tenure.objects.filter(name=category)
-        if tenure_qs:
-            new_area_burnt_list.append({
-                'tenure': tenure_qs[0],
-                'area': round(area, 2)
-            })
-
-        elif area:
-            area_unknown += area
-            if category not in category_unknown:
-                category_unknown.append(category)
-
-    if area_unknown > 0:
-        new_area_burnt_list.append({'tenure': Tenure.objects.get(name='Unknown'), 'area': round(area_unknown, 2)})
-        logger.info('Unknown Tenure categories: ({}). May need to add these categories to the Tenure Table'.format(category_unknown))
-
-    AreaBurntFormSet = inlineformset_factory(Bushfire, AreaBurnt, extra=len(new_area_burnt_list), min_num=0, validate_min=True, exclude=())
-    area_burnt_formset = AreaBurntFormSet(instance=bushfire, prefix='area_burnt_fs')
-    for subform, data in zip(area_burnt_formset.forms, new_area_burnt_list):
-        subform.initial = data
-
-    return area_burnt_formset
-
-def update_areas_burnt(bushfire, tenure_layers):
+def update_areas_burnt(bushfire, burning_area):
     """
     Updates AreaBurnt model attached to the bushfire record from api.py, via REST API (Operates on data dict from SSS)
     Uses sss_dict
@@ -333,9 +294,13 @@ def update_areas_burnt(bushfire, tenure_layers):
 
     # aggregate the area's in like tenure types
     aggregated_sums = defaultdict(float)
-    for layer in tenure_layers:
-        for d in tenure_layers[layer]['areas']:
-            aggregated_sums[d["category"]] += d["area"]
+    for layer in burning_area["layers"]:
+        for d in burning_area["layers"][layer]['areas']:
+            if d["category"] in ["Freehold"]:
+                #Freehold is blonging to "Private Property"
+                aggregated_sums[d["Private Property"]] += d["area"]
+            else:
+                aggregated_sums[d["category"]] += d["area"]
 
     area_unknown = 0.0
     category_unknown = []
@@ -350,54 +315,18 @@ def update_areas_burnt(bushfire, tenure_layers):
                 category_unknown.append(category)
 
     if area_unknown > 0:
-        new_area_burnt_object.append(AreaBurnt(bushfire=bushfire, tenure=Tenure.objects.get(name='Unknown'), area=round(area_unknown, 2)))
         logger.info('Unknown Tenure categories: ({}). May need to add these categories to the Tenure Table'.format(category_unknown))
+
+    if "other_area" in burning_area:
+        area_unknown += burning_area["other_area"]
+
+    if area_unknown > 0:
+        new_area_burnt_object.append(AreaBurnt(bushfire=bushfire, tenure=Tenure.objects.get(name='Unknown'), area=round(area_unknown, 2)))
 
     try:
         with transaction.atomic():
             AreaBurnt.objects.filter(bushfire=bushfire).delete()
             AreaBurnt.objects.bulk_create(new_area_burnt_object)
-    except IntegrityError:
-        return 0
-
-    return 1
-
-def update_areas_burnt_fs(bushfire, area_burnt_formset):
-    """
-    Creates the AreaBurnt Model, from the area_burnt_formset
-
-    At first object create time, formset values are saved to the newly created bushfire object
-
-    Currently, it is not used in the system, because areas in dpaw tenure are only updated through rest api; and areas outside dpaw tenure are updated directly in views
-    """
-    deleted_fs_tenure = []
-    updated_fs_object = []
-    for form in area_burnt_formset:
-        if not hasattr(form,"cleaned_data") or not form.cleaned_data:
-            continue
-        tenure = form.cleaned_data.get('tenure')
-        area = form.cleaned_data.get('area')
-        remove = form.cleaned_data.get('DELETE')
-
-        if remove:
-            if tenure:
-                #this object exists in database, removed by user
-                deleted_fs_tenure.append(tenure)
-            else:
-                #this object doesn't exist in database,ignore it
-                pass
-        elif form.is_valid():
-            #this is a valid object
-            updated_fs_object.append(AreaBurnt(bushfire=bushfire, tenure=tenure, area=area))
-
-    try:
-        with transaction.atomic():
-            #delete removed objects
-            if deleted_fs_tenure:
-                AreaBurnt.objects.filter(bushfire=bushfire,tenure__in=deleted_fs_tenure).delete()
-            #update changed objects
-            for obj in updated_fs_object:
-                AreaBurnt.objects.update_or_create(bushfire=obj.bushfire,tenure=obj.tenure,defaults={"area":area})
     except IntegrityError:
         return 0
 

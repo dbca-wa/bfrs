@@ -34,7 +34,7 @@ from bfrs.forms import (ProfileForm, BushfireFilterForm, BushfireUpdateForm,Merg
         AuthorisedBushfireForm,ReviewedBushfireForm,AreaBurntFormSet, InjuryFormSet, DamageFormSet, PDFReportForm,
     )
 from bfrs.utils import (breadcrumbs_li,
-        create_areas_burnt, update_areas_burnt_fs, update_damage_fs, update_injury_fs, 
+        update_damage_fs, update_injury_fs, 
         export_final_csv, export_excel, 
         update_status, serialize_bushfire,
         is_external_user, can_maintain_data, refresh_gokart,
