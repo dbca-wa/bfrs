@@ -322,7 +322,6 @@ class SelectableSelect(forms.Select):
         return safestring.SafeText(u"""
         {}
         <script type="text/javascript">
-        $(document).ready(function(){{
             $("#{}").selectpicker({{
               style: 'btn-default',
               size: 6,
@@ -330,7 +329,6 @@ class SelectableSelect(forms.Select):
               dropupAuto: false,
               closeOnDateSelect: true,
             }});
-        }})
         </script>
         """.format(html,html_id))
 
