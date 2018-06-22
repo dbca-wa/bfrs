@@ -148,8 +148,9 @@
 		    {% endif %}
 		</td>
 
-        {% if can_maintain_data and bushfire.report_status < bushfire.STATUS_INVALIDATED %}
+        {% if can_maintain_data  %}
          <td>
+           {% if bushfire.report_status < bushfire.STATUS_INVALIDATED %}
            {% if bushfire.report_status >= bushfire.STATUS_FINAL_AUTHORISED %}
              {% if bushfire.is_reviewed %}
              <a href="{% url 'main' %}?bushfire_id={{bushfire.id}}&action=delete_review" title="Delete review"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-trash icon-white"></i></a>
@@ -169,6 +170,7 @@
            {% elif bushfire.can_review %}
            <a href="{% url 'main' %}?bushfire_id={{bushfire.id}}&action=mark_reviewed" title="Mark Report as Reviewed"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-thumbs-up"></i></a>
            {% endif %}
+           {% endif %}
 
 		 </td>
          {% endif %}
@@ -176,7 +178,7 @@
       </tr>
 
       <tr class="myCollapse row-details expand-child" id="{{bushfire.id}}">
-        <td colspan="9">
+        <td colspan="{% if can_maintain_data and actions %} 8 {% elif can_maintain_data or actions %} 7 {% else %} 6 {% endif %}">
           <table class="table table-bordered table-striped table-condensed">
             <tbody>
               <tr>
