@@ -29,7 +29,7 @@ from bfrs.models import (Profile, Bushfire, BushfireSnapshot,BushfireProperty,
         Tenure, AreaBurnt,
         SNAPSHOT_INITIAL, SNAPSHOT_FINAL,
     )
-from bfrs.forms import (ProfileForm, BushfireFilterForm, BushfireUpdateForm,MergedBushfireForm,SubmittedBushfireForm,InitialBushfireForm,BushfireSnapshotViewForm,BushfireCreateForm,
+from bfrs.forms import (ProfileForm, BushfireFilterForm,MergedBushfireForm,SubmittedBushfireForm,InitialBushfireForm,BushfireSnapshotViewForm,BushfireCreateForm,
         BushfireViewForm,InitialBushfireFSSGForm,AuthorisedBushfireFSSGForm,ReviewedBushfireFSSGForm,SubmittedBushfireFSSGForm,
         AuthorisedBushfireForm,ReviewedBushfireForm,AreaBurntFormSet, InjuryFormSet, DamageFormSet, PDFReportForm,
     )
@@ -339,7 +339,7 @@ class BushfireView(ExceptionMixin,MainUrlMixin,LoginRequiredMixin, filter_views.
                 self.errors = errors
                 return  super(BushfireView, self).get(request, *args, **kwargs)
 
-            elif action in ["select_action","merge_reports","invalidate_duplicated_reports"]:
+            elif action in ["merge_reports","invalidate_duplicated_reports"]:
                 step = self.request.POST.get("step") or "select_primary_bushfire"
                 bushfires = Bushfire.objects.filter(id__in = selected_ids)
                 if bushfires.count() != len(selected_ids):
@@ -366,14 +366,15 @@ class BushfireView(ExceptionMixin,MainUrlMixin,LoginRequiredMixin, filter_views.
                         primary_bushfire_id = None
                         errors.append("Chosen primary bushfire is in the bushfire lists")
 
-
+                forms = [BushfireViewForm(instance=bf) for bf in bushfires]
                 context = {
                     "errors":errors,
                     "action":action,
                     "action_name":self.actions.get(action),
                     "primary_bushfire_id": primary_bushfire_id,
                     "title":"Merging bushfire reports" if action == "merge_reports" else "Invalidate duplicated bushfire reports",
-                    "bushfires":bushfires
+                    "bushfires":bushfires,
+                    "forms":forms
                 }
                 if step == "select_primary_bushfire":
                     return TemplateResponse(request, self.select_primary_bushfire_template, context=context)
@@ -487,7 +488,6 @@ class BushfireUpdateView(ExceptionMixin,FormRequestMixin,MainUrlMixin,LoginRequi
     """ Class will Create a new Bushfire and Update an existing Bushfire object"""
 
     model = Bushfire
-    form_class = BushfireUpdateForm
     template_name = 'bfrs/bushfire_detail.html'
     template_error = 'bfrs/error.html'
     template_exception = 'exception.html'

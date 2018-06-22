@@ -25,9 +25,9 @@ from bfrs.utils import (can_maintain_data,)
 
 from . import baseforms
 from . import basewidgets
-from .basefields import CompoundFieldFactory,OtherOptionFieldFactory,SwitchFieldFactory,CompoundField
 from . import basefields
 from .utils import update_damage_fs, update_injury_fs
+from . import fields
 
 YESNO_CHOICES = (
     (True, 'Yes'),
@@ -174,297 +174,6 @@ class BushfireFilterForm(forms.ModelForm):
         fields = ('region', 'district')
         model = Bushfire
 
-
-class BushfireUpdateForm(forms.ModelForm):
-    dispatch_aerial = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
-    prob_fire_level = forms.ChoiceField(choices=Bushfire.FIRE_LEVEL_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
-    max_fire_level = forms.ChoiceField(choices=Bushfire.FIRE_LEVEL_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
-    investigation_req = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
-    cause_state = forms.ChoiceField(choices=Bushfire.CAUSE_STATE_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
-    origin_point_str = forms.CharField(required=False, widget=DisplayOnlyField())#, widget=forms.TextInput(attrs={'readonly':'readonly'}))
-    media_alert_req = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
-    park_trail_impacted = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
-    dispatch_pw = forms.ChoiceField(choices=Bushfire.DISPATCH_PW_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
-    other_tenure = forms.ChoiceField(choices=Bushfire.IGNITION_POINT_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
-    arson_squad_notified = forms.ChoiceField(choices=YESNO_CHOICES, widget=forms.RadioSelect(renderer=HorizontalRadioRenderer), required=False)
-    reporting_year = forms.ChoiceField(choices=REPORTING_YEAR_CHOICES, required=False, initial=REPORTING_YEAR_CHOICES[0][0])
-
-    def __init__(self, *args, **kwargs):
-        super (BushfireUpdateForm,self ).__init__(*args,**kwargs)
-        # order alphabetically, but with username='other', as first item in list
-        active_users = User.objects.filter(groups__name='Users').filter(is_active=True).exclude(username__icontains='admin').extra(select={'other': "CASE WHEN username='other' THEN 0 ELSE 1 END"}).order_by('other', 'username')
-        self.fields['field_officer'].queryset = active_users
-        self.fields['duty_officer'].queryset = active_users.exclude(username='other')
-        self.fields['reporting_year'].initial = current_finyear()
-
-        # For use when debugging outside SSS - need to create an origin_point manually
-        #from django.contrib.gis.geos import Point, GEOSGeometry
-        #self.fields['origin_point'].initial = GEOSGeometry(Point(122.45, -33.15))
-        #self.fields['region'].initial = 1
-        #self.fields['district'].initial = 1
-
-    class Meta:
-        model = Bushfire
-        fields = ('sss_data', 'sss_id',
-                  'region', 'district', 'dfes_incident_no',
-                  'name', 'year', 'prob_fire_level', 'max_fire_level', 'duty_officer',
-                  'field_officer', 'other_field_officer', 'other_field_officer_agency', 'other_field_officer_phone',
-                  'media_alert_req', 'park_trail_impacted', 'fire_position', 'fire_position_override',
-                  'fire_detected_date', 'dispatch_pw_date', 'dispatch_aerial_date',
-                  'other_info',
-                  'cause', 'cause_state', 'other_cause', 'prescribed_burn_id', 'tenure', 'other_tenure',
-                  'dispatch_pw', 'dispatch_aerial',
-                  'investigation_req',
-                  'initial_area', 'initial_area_unknown', 'area', 'area_limit', 'other_area',
-                  'origin_point_str', 'origin_point', 'origin_point_mga', 'fire_boundary',
-                  'fire_not_found', 'fire_monitored_only', 'invalid_details',
-                  'fire_contained_date', 'fire_controlled_date', 'fire_safe_date',
-                  'first_attack', 'initial_control', 'final_control',
-                  'other_first_attack', 'other_initial_control', 'other_final_control',
-                  'arson_squad_notified', 'offence_no', 'job_code', 'reporting_year',
-                  'damage_unknown','injury_unknown',
-                 )
-
-    def clean(self):
-        cleaned_data = super(BushfireUpdateForm, self).clean()
-
-        # Resetting forms fields declared above to None (from '') if None if not set in form
-        if not self.cleaned_data['dispatch_pw']: self.cleaned_data['dispatch_pw'] = None
-        if not self.cleaned_data['dispatch_aerial']: self.cleaned_data['dispatch_aerial'] = None
-        if not self.cleaned_data['prob_fire_level']: self.cleaned_data['prob_fire_level'] = None
-        if not self.cleaned_data['max_fire_level']: self.cleaned_data['max_fire_level'] = None
-        if not self.cleaned_data['investigation_req']: self.cleaned_data['investigation_req'] = None
-        if not self.cleaned_data['cause_state']: self.cleaned_data['cause_state'] = None
-        if not self.cleaned_data['media_alert_req']: self.cleaned_data['media_alert_req'] = None
-        if not self.cleaned_data['park_trail_impacted']: self.cleaned_data['park_trail_impacted'] = None
-        if not self.cleaned_data['other_tenure']: self.cleaned_data['other_tenure'] = None
-
-        if self.cleaned_data.has_key('job_code') and self.cleaned_data['job_code']:
-            job_code = self.cleaned_data['job_code']
-            if not job_code.isalpha() or len(job_code)!=3 or not job_code.isupper():
-                self.add_error('job_code', 'Must be alpha characters, length 3, and uppercase, eg. UOV')
-
-        if self.cleaned_data.has_key('fire_detected_date') and self.cleaned_data['fire_detected_date']:
-            if self.cleaned_data.has_key('dispatch_pw_date') and self.cleaned_data['dispatch_pw_date'] and self.cleaned_data['dispatch_pw_date'] < self.cleaned_data['fire_detected_date']:
-                self.add_error('dispatch_pw_date', 'Datetime must not be before Fire Detected Datetime.')
-            if self.cleaned_data.has_key('dispatch_aerial_date') and self.cleaned_data['dispatch_aerial_date'] and self.cleaned_data['dispatch_aerial_date'] < self.cleaned_data['fire_detected_date']:
-                self.add_error('dispatch_aerial_date', 'Datetime must not be before Fire Detected Datetime.')
-
-        # FINAL Form
-        if self.cleaned_data['fire_not_found']:
-            self.cleaned_data['max_fire_level'] = None
-            self.cleaned_data['arson_squad_notified'] = None
-            self.cleaned_data['fire_contained_date'] = None
-            self.cleaned_data['fire_controlled_date'] = None
-            self.cleaned_data['fire_safe_date'] = None
-            self.cleaned_data['first_attack'] = None
-            self.cleaned_data['final_control'] = None
-            self.cleaned_data['other_first_attack'] = None
-            self.cleaned_data['other_initial_control'] = None
-            self.cleaned_data['other_final_control'] = None
-            self.cleaned_data['area'] = None
-            self.cleaned_data['area_limit'] = False
-            self.cleaned_data['arson_squad_notified'] = None
-            self.cleaned_data['offence_no'] = None
-            self.cleaned_data['reporting_year'] = None #current_finyear()
-            self.cleaned_data['region_id'] = self.initial['region']
-            self.cleaned_data['district_id'] = self.initial['district']
-            return cleaned_data
-        if self.cleaned_data['fire_monitored_only']:
-            self.cleaned_data['first_attack'] = None
-            self.cleaned_data['other_first_attack'] = None
-        else:
-            self.cleaned_data['invalid_details'] = None
-
-        if self.cleaned_data['arson_squad_notified'] == '':
-            self.cleaned_data['arson_squad_notified'] = None
-        else:
-            self.cleaned_data['arson_squad_notified'] = eval(self.cleaned_data['arson_squad_notified'])
-
-        if self.cleaned_data.has_key('year') and self.cleaned_data.has_key('reporting_year') and int(self.cleaned_data['reporting_year']) < int(self.cleaned_data['year']):
-            self.add_error('reporting_year', 'Cannot be before report financial year, {}/{}.'.format(self.cleaned_data['year'], int(self.cleaned_data['year'])+1))
-
-        if self.cleaned_data.has_key('fire_detected_date') and self.cleaned_data['fire_detected_date']:
-            if self.cleaned_data.has_key('fire_contained_date') and self.cleaned_data['fire_contained_date'] and self.cleaned_data['fire_contained_date'] < self.cleaned_data['fire_detected_date']:
-                self.add_error('fire_contained_date', 'Datetime must not be before Fire Detected Datetime - {}.'.format(self.cleaned_data['fire_detected_date']))
-
-        if self.cleaned_data.has_key('fire_contained_date') and self.cleaned_data['fire_contained_date']:
-            if self.cleaned_data.has_key('fire_controlled_date') and self.cleaned_data['fire_controlled_date'] and self.cleaned_data['fire_controlled_date'] < self.cleaned_data['fire_contained_date']:
-                self.add_error('fire_controlled_date', 'Datetime must not be before Fire Contained Datetime.')
-
-        if self.cleaned_data.has_key('fire_controlled_date') and self.cleaned_data['fire_controlled_date']:
-            if self.cleaned_data.has_key('fire_safe_date') and self.cleaned_data['fire_safe_date'] and self.cleaned_data['fire_safe_date'] < self.cleaned_data['fire_controlled_date']:
-                self.add_error('fire_safe_date', 'Datetime must not be before Fire Controlled Datetime.')
-
-        if self.cleaned_data.has_key('dispatch_pw_date') and self.cleaned_data['dispatch_pw_date'] and int(self.cleaned_data['dispatch_pw']) == Bushfire.DISPATCH_PW_NO:
-            self.cleaned_data['dispatch_pw_date'] = None
-        if self.cleaned_data.has_key('dispatch_aerial_date') and self.cleaned_data['dispatch_aerial_date'] and eval(self.cleaned_data['dispatch_aerial']) == False:
-            self.cleaned_data['dispatch_aerial_date'] = None
-
-        if self.cleaned_data.has_key('dispatch_pw') and self.cleaned_data['dispatch_pw']:
-            self.cleaned_data['dispatch_pw'] = int(self.cleaned_data['dispatch_pw'])
-
-        if self.cleaned_data.has_key('other_tenure') and self.cleaned_data['other_tenure']:
-            self.cleaned_data['other_tenure'] = int(self.cleaned_data['other_tenure'])
-
-        if self.cleaned_data.has_key('field_officer') and self.cleaned_data['field_officer'] and self.cleaned_data['field_officer'].username != 'other':
-            self.cleaned_data['other_field_officer'] = None
-            self.cleaned_data['other_field_officer_agency'] = None
-            self.cleaned_data['other_field_officer_phone'] = None
-
-        return cleaned_data
-
-class FireCauseField(CompoundField):
-    related_field_names = ("cause_state","other_cause","prescribed_burn_id")
-    def _view_layout(self,f):
-        cause = f.value()
-        cause_state = f.related_fields[0].value()
-        if cause and cause == Cause.OTHER:
-            if cause_state == Bushfire.CAUSE_STATE_KNOWN:
-                return ("Known<br>{}<br>{}",("other_cause",))
-            elif cause_state == Bushfire.CAUSE_STATE_POSSIBLE:
-                return ("Possible<br>{}<br>{}",("other_cause",))
-            else:
-                return ("{}<br>{}",("other_cause",))
-        elif cause and cause == Cause.ESCAPE_DPAW_BURNING:
-            if cause_state == Bushfire.CAUSE_STATE_KNOWN:
-                return ("Known<br>{}<br>Burn ID: {}",("prescribed_burn_id",))
-            elif cause_state == Bushfire.CAUSE_STATE_POSSIBLE:
-                return ("Possible<br>{}<br>Burn ID: {}",("prescribed_burn_id",))
-            else:
-                return ("{}<br>Burn ID: {}",("prescribed_burn_id",))
-        elif cause:
-            if cause_state == Bushfire.CAUSE_STATE_KNOWN:
-                return ("Known<br>{}",None)
-            elif cause_state == Bushfire.CAUSE_STATE_POSSIBLE:
-                return ("Possible<br>{}",None)
-            else:
-                return ("{}",None)
-        else:
-            if cause_state == Bushfire.CAUSE_STATE_KNOWN:
-                return ("Known",None)
-            elif cause_state == Bushfire.CAUSE_STATE_POSSIBLE:
-                return ("Possible",None)
-            else:
-                return ("",None)
-
-    def _edit_layout(self,f):
-        cause = f.value()
-        if cause == Cause.OTHER.id:
-            basefields.hide_field(f.related_fields[2].field)
-        elif cause == Cause.ESCAPE_DPAW_BURNING.id:
-            basefields.hide_field(f.related_fields[1].field)
-        else:
-            basefields.hide_field(f.related_fields[1].field)
-            basefields.hide_field(f.related_fields[2].field)
-        f.field.widget.attrs = f.field.widget.attrs or {}
-        f.field.widget.attrs["onchange"]="""
-        if (this.value === '{0}') {{
-            $("#{1}").show();
-            $("#{1}").prop("disabled",false);
-        }} else {{
-            $("#{1}").hide();
-            $("#{1}").prop("disabled",true);
-        }}
-        if(this.value === '{2}') {{
-            $("#{3}").show()
-            $("#{3}").prop("disabled",false);
-        }} else {{
-            $("#{3}").hide()
-            $("#{3}").prop("disabled",true);
-        }}
-        """.format(Cause.OTHER.id,f.related_fields[1].auto_id,Cause.ESCAPE_DPAW_BURNING.id,f.related_fields[2].auto_id)
-        return ("{1}<br>{0}<br>{2}{3}",f.field.related_field_names)
-
-class InitialAreaField(CompoundField):
-    related_field_names = ("fire_boundary","initial_area_unknown")
-    def _view_layout(self,f):
-        if f.value():
-            return ("{0}",None)
-        else:
-            area_unknown = f.related_fields[1].value()
-            if area_unknown:
-                return ("{1}",("initial_area_unknown",))
-            else:
-                return ("",None)
-
-    def _edit_layout(self,f):
-        initial_boundary = True if f.related_fields[0].value() else False
-        if initial_boundary:
-            f.field.widget.attrs["disabled"] = True
-            return ("{0}",None)
-        else:
-            area_unknown = f.related_fields[1].value()
-
-            f.field.widget.attrs = f.field.widget.attrs or {}
-            if area_unknown:
-                f.field.widget.attrs["disabled"] = True
-                f.field.widget.attrs["style"] = "display:none"
-
-            f.related_fields[1].field.widget.attrs = f.related_fields[1].field.widget.attrs or {}
-            f.related_fields[1].field.widget.attrs["onclick"]="""
-            if (this.checked) {{
-                $("#{0}").hide();
-                $("#{0}").prop("disabled",true);
-            }} else {{
-                $("#{0}").show();
-                $("#{0}").prop("disabled",false);
-            }}
-            """.format(f.auto_id)
-            return ("{1}<br>{0}",("initial_area_unknown",))
-
-class FinalAreaField(CompoundField):
-    related_field_names = ("final_fire_boundary","area_limit")
-    def _view_layout(self,f):
-        return ("{0}",None)
-
-    def _edit_layout(self,f):
-        final_boundary = f.related_fields[0].value()
-        if final_boundary:
-            f.field.widget.attrs["disabled"] = True
-            return ("{0}",None)
-        else:
-            area_limit = f.related_fields[1].value()
-            f.field.widget.attrs = f.field.widget.attrs or {}
-            if not area_limit:
-                f.field.widget.attrs["disabled"] = True
-                f.field.widget.attrs["style"] = "display:none"
-
-            f.related_fields[1].field.widget.attrs = f.related_fields[1].field.widget.attrs or {}
-            f.related_fields[1].field.widget.attrs["onclick"]="""
-            if (this.checked) {{
-                $("#{0}").show();
-                $("#{0}").prop("disabled",false);
-            }} else {{
-                $("#{0}").hide();
-                $("#{0}").prop("disabled",true);
-            }}
-            """.format(f.auto_id)
-            return ("{{1}} Area < {}ha<span style='margin: 20px;'></span>{{0}}".format(settings.AREA_THRESHOLD),("area_limit",))
-
-class FirePositionField(CompoundField):
-    related_field_names = ("fire_position_override",)
-    def _view_layout(self,f):
-        return ("{0}<br>SSS override - {1}",self.related_field_names)
-
-    def _edit_layout(self,f):
-        override = f.related_fields[0].value()
-        f.field.widget.attrs = f.field.widget.attrs or {}
-        if not override:
-            f.field.widget.attrs["disabled"] = True
-
-        f.field.widget.attrs = f.field.widget.attrs or {}
-
-        f.related_fields[0].field.widget.attrs = f.related_fields[0].field.widget.attrs or {}
-        f.related_fields[0].field.widget.attrs["onclick"]="""
-            if (this.checked) {{
-                $("#{0}").prop("disabled",false);
-            }} else {{
-                $("#{0}").prop("disabled",true);
-            }}
-            """.format(f.auto_id)
-        return ("{0}<br>{1} SSS override",self.related_field_names)
-
 class BaseBushfireViewForm(baseforms.ModelForm):
     submit_actions = None
     injury_formset = None
@@ -484,30 +193,32 @@ class BaseBushfireViewForm(baseforms.ModelForm):
 
     class Meta:
         model = Bushfire
-        exclude = ('fb_validation_req','init_authorised_date','authorised_date','reviewed_date','report_status',
+        exclude = ('fb_validation_req','init_authorised_date','authorised_date','reviewed_date',
                     'archive','authorised_by','init_authorised_by','reviewed_by','valid_bushfire','fireboundary_uploaded_by',
                     'fireboundary_uploaded_date','capturemethod','other_capturemethod',"sss_data","sss_id")
+        other_fields = ("report_status",)
         labels = {
         }
         field_classes = {
             "__all__":forms.fields.CharField,
-            "dispatch_pw":SwitchFieldFactory(Bushfire,"dispatch_pw",("dispatch_pw_date",),field_class=basefields.ChoiceFieldFactory(Bushfire.DISPATCH_PW_CHOICES,choice_class=forms.TypedChoiceField),true_value=1),
-            "dispatch_aerial":SwitchFieldFactory(Bushfire,"dispatch_aerial",("dispatch_aerial_date",),field_class=basefields.ChoiceFieldFactory(YESNO_CHOICES)),
-            "arson_squad_notified":SwitchFieldFactory(Bushfire,"arson_squad_notified",("offence_no",),policy=basefields.ALWAYS,on_layout="{0}<br>Police offence no: {1}",field_class=basefields.ChoiceFieldFactory(YESNO_CHOICES)),
-            "initial_area":CompoundFieldFactory(InitialAreaField,Bushfire,"initial_area"),
-            "initial_control":OtherOptionFieldFactory(Bushfire,"initial_control",("other_initial_control",),other_option=Agency.OTHER),
-            "first_attack":OtherOptionFieldFactory(Bushfire,"first_attack",("other_first_attack",),other_option=Agency.OTHER),
-            "final_control":OtherOptionFieldFactory(Bushfire,"final_control",("other_final_control",),other_option=Agency.OTHER),
-            "tenure":OtherOptionFieldFactory(Bushfire,"tenure",("other_tenure",),other_option=Tenure.OTHER,policy=basefields.DATA_MAP,other_layout={1:"{0}<br>Private Property",2:"{0}<br>Other Crown"}),
-            "origin_point":SwitchFieldFactory(Bushfire,"origin_point",("origin_point_mga",),true_value="",reverse=True,on_layout=u"{}",off_layout=u"{}<br>{}"),
-            "field_officer":OtherOptionFieldFactory(Bushfire,"field_officer",("other_field_officer","other_field_officer_agency","other_field_officer_phone"),other_option=User.OTHER,policy=basefields.ALWAYS,other_layout=u"{}<br> Name: {}<br> Agency: {}<br> Phone: {}"),
-            "cause":CompoundFieldFactory(FireCauseField,Bushfire,"cause"),
-            "area":CompoundFieldFactory(FinalAreaField,Bushfire,"area"),
-            "fire_position":CompoundFieldFactory(FirePositionField,Bushfire,"fire_position"),
+            "dispatch_pw":basefields.SwitchFieldFactory(Bushfire,"dispatch_pw",("dispatch_pw_date",),field_class=basefields.ChoiceFieldFactory(Bushfire.DISPATCH_PW_CHOICES,choice_class=forms.TypedChoiceField),true_value=1),
+            "dispatch_aerial":basefields.SwitchFieldFactory(Bushfire,"dispatch_aerial",("dispatch_aerial_date",),field_class=basefields.ChoiceFieldFactory(YESNO_CHOICES)),
+            "arson_squad_notified":basefields.SwitchFieldFactory(Bushfire,"arson_squad_notified",("offence_no",),policy=basefields.ALWAYS,on_layout="{0}<br>Police offence no: {1}",field_class=basefields.ChoiceFieldFactory(YESNO_CHOICES)),
+            "initial_area":basefields.CompoundFieldFactory(fields.InitialAreaField,Bushfire,"initial_area"),
+            "initial_control":basefields.OtherOptionFieldFactory(Bushfire,"initial_control",("other_initial_control",),other_option=Agency.OTHER),
+            "first_attack":basefields.OtherOptionFieldFactory(Bushfire,"first_attack",("other_first_attack",),other_option=Agency.OTHER),
+            "final_control":basefields.OtherOptionFieldFactory(Bushfire,"final_control",("other_final_control",),other_option=Agency.OTHER),
+            "tenure":basefields.OtherOptionFieldFactory(Bushfire,"tenure",("other_tenure",),other_option=Tenure.OTHER,policy=basefields.DATA_MAP,other_layout={1:"{0}<br>Private Property",2:"{0}<br>Other Crown"}),
+            "origin_point":basefields.SwitchFieldFactory(Bushfire,"origin_point",("origin_point_mga",),true_value="",reverse=True,on_layout=u"{}",off_layout=u"{}<br>{}"),
+            "field_officer":basefields.OtherOptionFieldFactory(Bushfire,"field_officer",("other_field_officer","other_field_officer_agency","other_field_officer_phone"),other_option=User.OTHER,policy=basefields.ALWAYS,other_layout=u"{}<br> Name: {}<br> Agency: {}<br> Phone: {}"),
+            "cause":basefields.CompoundFieldFactory(fields.FireCauseField,Bushfire,"cause"),
+            "area":basefields.CompoundFieldFactory(fields.FinalAreaField,Bushfire,"area"),
+            "fire_position":basefields.CompoundFieldFactory(fields.FirePositionField,Bushfire,"fire_position"),
             "investigation_req":basefields.ChoiceFieldFactory(YESNO_CHOICES),
             "media_alert_req":basefields.ChoiceFieldFactory(YESNO_CHOICES),
             "park_trail_impacted":basefields.ChoiceFieldFactory(YESNO_CHOICES),
             "prob_fire_level":basefields.ChoiceFieldFactory(Bushfire.FIRE_LEVEL_CHOICES,choice_class=forms.TypedChoiceField),
+            "report_status":basefields.ChoiceFieldFactory(Bushfire.REPORT_STATUS_CHOICES,choice_class=forms.TypedChoiceField),
             "other_tenure":basefields.ChoiceFieldFactory(Bushfire.IGNITION_POINT_CHOICES,choice_class=forms.TypedChoiceField),
             "reporting_year":basefields.ChoiceFieldFactory(REPORTING_YEAR_CHOICES,choice_class=forms.TypedChoiceField),
         
@@ -537,6 +248,7 @@ class BaseBushfireViewForm(baseforms.ModelForm):
             "arson_squad_notified":basewidgets.BooleanDisplay(),
             "dispatch_pw":basewidgets.BooleanDisplay(),
             "dispatch_aerial":basewidgets.BooleanDisplay(),
+            "report_status":basewidgets.ChoiceWidgetFactory("reportstatus",Bushfire.REPORT_STATUS_CHOICES)(),
         }
 
 
@@ -810,7 +522,7 @@ class SubmittedBushfireForm(MergedBushfireForm):
         field_classes = {
             "__all__":forms.fields.CharField,
             "max_fire_level":basefields.ChoiceFieldFactory(Bushfire.FIRE_LEVEL_CHOICES,choice_class=forms.TypedChoiceField),
-            "fire_not_found":SwitchFieldFactory(Bushfire,"fire_not_found",("invalid_details",),true_value=True),
+            "fire_not_found":basefields.SwitchFieldFactory(Bushfire,"fire_not_found",("invalid_details",),true_value=True),
         }
         widgets = {
             "dfes_incident_no":None,
@@ -834,8 +546,8 @@ class SubmittedBushfireForm(MergedBushfireForm):
             "area":forms.widgets.NumberInput(attrs={"step":0.01,"min":0,"max":settings.AREA_THRESHOLD}),
             "area_limit":None,
             "invalid_details":None,
-            "damage_unknown":basewidgets.SwitchWidgetFactory(widget_class=basewidgets.TemplateWidgetFactory(widget_class=forms.CheckboxInput,template="{} No damage to report"),html_id="div_damage_unknown",reverse=True),
-            "injury_unknown":basewidgets.SwitchWidgetFactory(widget_class=basewidgets.TemplateWidgetFactory(widget_class=forms.CheckboxInput,template="{} No injuries/fatalities to report"),html_id="div_injury_unknown",reverse=True),
+            "damage_unknown":basewidgets.SwitchWidgetFactory(widget_class=basewidgets.TemplateWidgetFactory(widget_class=forms.CheckboxInput,template="{} No damage to report"),html_id="div_damage_unknown",reverse=True)(),
+            "injury_unknown":basewidgets.SwitchWidgetFactory(widget_class=basewidgets.TemplateWidgetFactory(widget_class=forms.CheckboxInput,template="{} No injuries/fatalities to report"),html_id="div_injury_unknown",reverse=True)(),
             
         }
 
@@ -888,9 +600,6 @@ class InitialBushfireForm(SubmittedBushfireForm):
     submit_actions = [('save_draft','Save draft','btn-success'),('submit','Save and Submit','btn-warning')]
     class Meta:
         model = Bushfire
-        exclude = ('fb_validation_req','init_authorised_date','authorised_date','reviewed_date','report_status',
-                    'archive','authorised_by','init_authorised_by','reviewed_by','valid_bushfire','fireboundary_uploaded_by',
-                    'fireboundary_uploaded_date','capturemethod','other_capturemethod')
         extra_update_fields = ('modified',)
         field_classes = {
             "__all__":forms.fields.CharField,
@@ -907,7 +616,7 @@ class InitialBushfireForm(SubmittedBushfireForm):
             "other_info":None,
             "investigation_req":forms.RadioSelect(renderer=HorizontalRadioRenderer),
             "prob_fire_level":forms.RadioSelect(renderer=HorizontalRadioRenderer),
-            "initial_area_unknown":basewidgets.TemplateWidgetFactory(widget_class=forms.CheckboxInput,template="{} Unknown"),
+            "initial_area_unknown":basewidgets.TemplateWidgetFactory(widget_class=forms.CheckboxInput,template="{} Unknown")(),
             "initial_area":forms.widgets.NumberInput(attrs={"step":0.01,"min":0}),
             "initial_control":None,
             "other_initial_control":None,
@@ -1039,6 +748,9 @@ class BushfireCreateForm(InitialBushfireForm):
 
     class Meta:
         model = Bushfire
+        exclude = ('fb_validation_req','init_authorised_date','authorised_date','reviewed_date','report_status',
+                    'archive','authorised_by','init_authorised_by','reviewed_by','valid_bushfire','fireboundary_uploaded_by',
+                    'fireboundary_uploaded_date','capturemethod','other_capturemethod')
         field_classes = {
         }
         widgets = {

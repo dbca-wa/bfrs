@@ -45,62 +45,62 @@
 <input type="hidden" name="action" value="{{action}}">
 <input type="hidden" name="primary_bushfire_id" value="{{primary_bushfire_id}}">
 
-{% for bushfire in bushfires %}
-{% if bushfire.id == primary_bushfire_id %}
-<input type="hidden" name="selected_ids" value="{{bushfire.id}}">
+{% for form in forms %}
+{% if form.instance.id == primary_bushfire_id %}
+<input type="hidden" name="selected_ids" value="{{form.instance.id}}">
 <table class="table table-bordered table-striped table-condensed">
     <thead>
         <tr>
           <th style="background: black; color: white; text-align: left; font-size: 16px; width:20%;valign:center" > 
-            <input type="radio" id="id_radio_{{bushfire.id}}" name="primary_bushfire_id" value="{{bushfire.id}}"  {% if bushfire.id == primary_bushfire_id %} checked {% endif %} disabled>
-            {{bushfire.fire_number}}
+            <input type="radio" id="id_radio_{{form.instance.id}}" name="primary_bushfire_id" value="{{form.instance.id}}"  {% if form.instance.id == primary_bushfire_id %} checked {% endif %} disabled>
+            {{form.fire_number.as_widget}}
           </th>
           <th style="background: black; color: white; text-align: left; font-size: 16px; width:30%" > 
-            {{bushfire.region}}<span style="padding-left:20px;">{{bushfire.district}}</span>
+            {{form.region.as_widget}}<span style="padding-left:20px;">{{form.district.as_widget}}</span>
           </th>
           <th colspan="2" style="background: black; color: white; text-align: left; font-size: 16px;" > 
             <span style="text-transform:none">
-            {{bushfire.name}}
+            {{form.name.as_widget}}
             </span>
             <div style="float:right">
-            {{bushfire.report_status_name}}  <i style="padding-left:30px;cursor:pointer" onclick="toggle(this,'id_body_{{bushfire.id}}')" class="icon-chevron-down" ></i></span>
+            {{form.report_status.as_widget}}  <i style="padding-left:30px;cursor:pointer" onclick="toggle(this,'id_body_{{form.instance.id}}')" class="icon-chevron-down" ></i></span>
 
             </div>
           </th>
         </tr>
     </thead>
-    <tbody id="id_body_{{bushfire.id}}">
+    <tbody id="id_body_{{form.instance.id}}">
     {% include 'bfrs/inc/detail_4_link.html' %}
     </tbody>
 </table>
 {% endif %}
 {% endfor %}
 
-{% for bushfire in bushfires %}
-{% if bushfire.id != primary_bushfire_id %}
-<input type="hidden" name="selected_ids" value="{{bushfire.id}}">
+{% for form in forms %}
+{% if form.instance.id != primary_bushfire_id %}
+<input type="hidden" name="selected_ids" value="{{form.instance.id}}">
 <table class="table table-bordered table-striped table-condensed">
     <thead>
         <tr>
           <th style="background: black; color: white; text-align: left; font-size: 16px; width:20%;valign:center" > 
-            <input type="radio" id="id_radio_{{bushfire.id}}" name="primary_bushfire_id" value="{{bushfire.id}}"  {% if bushfire.id == primary_bushfire_id %} checked {% endif %} disabled>
-            {{bushfire.fire_number}}
+            <input type="radio" id="id_radio_{{form.instance.id}}" name="primary_bushfire_id" value="{{form.instance.id}}"  {% if form.instance.id == primary_bushfire_id %} checked {% endif %} disabled>
+            {{form.fire_number.as_widget}}
           </th>
           <th style="background: black; color: white; text-align: left; font-size: 16px; width:30%" > 
-            {{bushfire.region}}<span style="padding-left:20px;">{{bushfire.district}}</span>
+            {{form.region.as_widget}}<span style="padding-left:20px;">{{form.district.as_widget}}</span>
           </th>
           <th colspan="2" style="background: black; color: white; text-align: left; font-size: 16px;" > 
             <span style="text-transform:none">
-            {{bushfire.name}}
+            {{form.name.as_widget}}
             </span>
             <div style="float:right">
-            {{bushfire.report_status_name}} ({{target_status}})  <i style="padding-left:30px;cursor:pointer" onclick="toggle(this,'id_body_{{bushfire.id}}')" class="icon-chevron-down" ></i></span>
+            {{form.report_status.as_widget}} ({{target_status}})  <i style="padding-left:30px;cursor:pointer" onclick="toggle(this,'id_body_{{form.instance.id}}')" class="icon-chevron-down" ></i></span>
 
             </div>
           </th>
         </tr>
     </thead>
-    <tbody id="id_body_{{bushfire.id}}">
+    <tbody id="id_body_{{form.instance.id}}">
     {% include 'bfrs/inc/detail_4_link.html' %}
     </tbody>
 </table>

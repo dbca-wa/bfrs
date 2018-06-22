@@ -318,7 +318,6 @@ class BaseModelFormMetaclass(forms.models.ModelFormMetaclass):
         field_list = []
         kwargs = {}
         db_field = True
-    
         for field_name in opts.other_fields or []:
             try:
                 model_field = model._meta.get_field(field_name)

@@ -11,7 +11,8 @@ import utils
 to_str = lambda o: "" if o is None else str(o)
 
 class DisplayWidget(Widget):
-    pass
+    def __deepcopy__(self, memo):
+        return self
 
 class TextDisplay(DisplayWidget):
     def render(self,name,value,attrs=None,renderer=None):
@@ -241,6 +242,51 @@ def SwitchWidgetFactory(widget_class,html=None,true_value=True,template="{0}<br>
         widget_class_id += 1
         class_name = "{}_{}".format(widget_class.__name__,widget_class_id)
         cls = type(class_name,(SwitchWidgetMixin,widget_class),{"switch_template":template,"true_value":true_value,"html":html,"reverse":reverse,"html_id":html_id})
+        widget_classes[key] = cls
+    return cls
+
+class ChoiceDisplay(DisplayWidget):
+    choices = None
+    def __init__(self,choices=None,**kwargs):
+        super(ChoiceDisplay,self).__init__(**kwargs)
+        if not self.choices:
+            #class object has not a choices,use the passed in choices
+            if isinstance(choices,list) or isinstance(choices,tuple):
+                self.choices = dict(choices)
+            elif isinstance(choices,dict):
+                self.choices = choices
+            else:
+                raise Exception("Choices must be a dictionary or can be converted to a  dictionary.")
+            
+    def render(self,name,value,attrs=None,renderer=None):
+        if self.__class__.choices:
+            return self.__class__.choices.get(value,value)
+        elif isinstance(self.choices,dict):
+            return self.choices.get(value,value)
+        else:
+            for choice in self.choices:
+                if choice[0] == value:
+                    return choice[1]
+
+            return value
+
+
+def ChoiceWidgetFactory(name,choices):
+    global widget_class_id
+    widget_class = ChoiceDisplay
+    if isinstance(choices,list) or isinstance(choices,tuple):
+        choices = dict(choices)
+    elif isinstance(choices,dict):
+        choices = choices
+    else:
+        raise Exception("Choices must be a dictionary or can be converted to a  dictionary.")
+
+    key = hashlib.md5("{}{}".format(widget_class.__name__,name).encode('utf-8')).hexdigest()
+    cls = widget_classes.get(key)
+    if not cls:
+        widget_class_id += 1
+        class_name = "{}_{}".format(widget_class.__name__,name)
+        cls = type(class_name,(widget_class,),{"choices":choices})
         widget_classes[key] = cls
     return cls
 
