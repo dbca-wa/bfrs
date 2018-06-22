@@ -252,7 +252,7 @@
         </a>
       </h4>
     </div>
-    <div id="fire_behaviour" role="tabpanel" aria-labelledby="pn_fire_behaviour" class="panel-collapse collapse in">
+    <div id="fire_behaviour" role="tabpanel" aria-labelledby="pn_fire_behaviour" {% if object.report_status > object.STATUS_INITIAL and object.report_status < object.STATUS_INVALIDATED%} class="panel-collapse collapse in" {% else %} class="panel-collapse collapse" {% endif %}>
       <table class="table table-bordered table-striped table-condensed">
           <tbody>
               <tr>
@@ -408,6 +408,11 @@
                 }
             })
         }
+        {% if object.report_status > object.STATUS_INITIAL and object.report_status < object.STATUS_INVALIDATED%}
+            $('.panel-collapse').collapse('show')
+        {% else %}
+            $('.panel-collapse').collapse('hide')
+        {% endif %}
     })
 </script>
 {% endblock %}
