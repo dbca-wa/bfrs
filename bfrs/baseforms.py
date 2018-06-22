@@ -152,7 +152,7 @@ class BoundField(forms.boundfield.BoundField):
         Returns the value for this BoundField, using the initial value if
         the form is not bound or the data otherwise.
         """
-        if not self.form.is_bound or isinstance(self.field.widget,basewidgets.DisplayWidget):
+        if not self.form.is_bound or isinstance(self.field.widget,basewidgets.DisplayWidget) or self.field.widget.attrs.get("disabled"):
             data = self.initial
         else:
             data = self.field.bound_data(
