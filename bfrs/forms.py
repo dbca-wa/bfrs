@@ -309,8 +309,8 @@ class BaseBushfireEditForm(BushfireViewForm):
     def clean(self):
         cleaned_data = super(BaseBushfireEditForm,self).clean()
 
-        for name in ('prob_fire_level','max_fire_level','investigation_req','cause_state','media_alert_req','park_trail_impacted'):
-            if self.is_editable(name) and not cleaned_data[name]:
+        for name in ('prob_fire_level','max_fire_level','investigation_req','cause_state','media_alert_req','park_trail_impacted','job_code','fire_detected_date','dispatch_pw_date','dispatch_aerial_date','fire_contained_date','fire_controlled_date','fire_safe_date','initial_control','first_attack','final_control'):
+            if self.is_editable(name) and not cleaned_data.get(name):
                 cleaned_data[name] = None
 
         if self.is_editable('dispatch_pw'):
@@ -321,32 +321,38 @@ class BaseBushfireEditForm(BushfireViewForm):
             if not self.boolvalue(cleaned_data,'dispatch_aerial'):
                 cleaned_data["dispatch_aerial_date"] = None
 
-
         if self.is_editable('initial_area'):
-            if self.instance.fire_boundary and not self.instance.final_fire_boundary:
-                #user can't edit intial area if report has fire boundary 
+            if self.instance.report_status != Bushfire.STATUS_INITIAL or (self.instance.fire_boundary and not self.instance.final_fire_boundary):
+                #submitted report or has fire boundary, can't edit initial area
                 cleaned_data['initial_area'] = self.instance.initial_area
             elif self.boolvalue(cleaned_data,'initial_area_unknown'):
                 cleaned_data['initial_area'] = None
 
         if self.is_editable('dfes_incident_no'):
             if not self.can_maintain_data and self.instance.dfes_incident_no:
+                #normal user can't change dfes incident no
                 cleaned_data['dfes_incident_no'] = self.instance.dfes_incident_no
-
+            else:
+                incident_no = cleaned_data.get('dfes_incident_no')
+                if incident_no and (not incident_no.isdigit() or len(incident_no) != 6):
+                    self.add_error('dfes_incident_no', 'Must be six digital numbers')
+ 
         if self.is_editable('fire_position'):
             if not self.boolvalue(cleaned_data,'fire_position_override'):
                 cleaned_data["fire_position"] = self.instance.fire_position if self.instance else None
 
         if self.is_editable('job_code'):
-            if cleaned_data.has_key('job_code') and cleaned_data['job_code']:
-                job_code = cleaned_data['job_code']
-                if not job_code.isalpha() or len(job_code)!=3 or not job_code.isupper():
-                    self.add_error('job_code', 'Must be alpha characters, length 3, and uppercase, eg. UOV')
+            job_code = cleaned_data.get('job_code')
+            if job_code and (not job_code.isalpha() or len(job_code)!=3 or not job_code.isupper()):
+                self.add_error('job_code', 'Must be alpha characters, length 3, and uppercase, eg. UOV')
 
         if self.is_editable('tenure'):
             if self.instance and self.instance.pk:
+                #tenure from sss, can't be changed
                 cleaned_data['tenure'] = self.instance.tenure
+
             if 'tenure' in cleaned_data:
+                #new report, data is sent from sss
                 if cleaned_data['tenure'] !=Tenure.OTHER:
                     cleaned_data["other_tenure"] = None
                 else:
@@ -355,12 +361,10 @@ class BaseBushfireEditForm(BushfireViewForm):
                 cleaned_data['tenure'] = None
                 cleaned_data["other_tenure"] = None
 
-        for item in ('fire_detected_date','dispatch_pw_date','dispatch_aerial_date','fire_contained_date','fire_controlled_date','fire_safe_date'):
-            if self.is_editable(item) and (item not in cleaned_data  or not cleaned_data[item]):
-                cleaned_data[item] = None
-
-        if self.cleaned_data.has_key('year') and self.cleaned_data.has_key('reporting_year') and int(self.cleaned_data['reporting_year']) < int(self.cleaned_data['year']):
-            self.add_error('reporting_year', 'Cannot be before report financial year, {}/{}.'.format(self.cleaned_data['year'], int(self.cleaned_data['year'])+1))
+        if self.is_editable('reporting_year'):
+            reporting_year = self.intvalue(cleaned_data,'reporting_year')
+            if reporting_year is not None and reporting_year < self.instance.year:
+                self.add_error('reporting_year', 'Cannot be before report financial year, {}/{}.'.format(self.instance.year, self.instance.year + 1))
 
         if self.is_editable('field_officer'):
             if 'field_officer' in cleaned_data:
@@ -384,8 +388,6 @@ class BaseBushfireEditForm(BushfireViewForm):
             cleaned_data['other_first_attack'] = None
             cleaned_data['final_control'] = None
             cleaned_data['other_final_control'] = None
-            cleaned_data['initial_control'] = None
-            cleaned_data['other_initial_control'] = None
             cleaned_data['area'] = None
             cleaned_data['area_limit'] = False
             cleaned_data['arson_squad_notified'] = None
@@ -407,6 +409,7 @@ class BaseBushfireEditForm(BushfireViewForm):
 
             if self.is_editable('area'):
                 if self.instance and self.instance.final_fire_boundary:
+                    #have fire boundary, area and area limit is not editable
                     cleaned_data['area'] = self.instance.area
                     cleaned_data['area_limit'] = False
                 elif self.boolvalue(cleaned_data,'area_limit'):
@@ -424,6 +427,12 @@ class BaseBushfireEditForm(BushfireViewForm):
                     cleaned_data['other_first_attack'] = None
                 else:
                     cleaned_data['invalid_details'] = None
+
+        #initialize agency related fields
+        for  item in (('initial_control','other_initial_control'),('first_attack','other_first_attack'),('final_control','other_final_control')):
+            if self.is_editable(item[0]):
+                if cleaned_data.get(item[0]) != Agency.OTHER:
+                    cleaned_data[item[1]] = None
 
         if any([self.is_editable(item) for item in ('fire_detected_date','dispatch_pw_te','dispatch_aerial_date','fire_contained_date','fire_controlled_date','fire_safe_date')]) :
             fire_detected_date = cleaned_data['fire_detected_date'] if 'fire_detected_date' in cleaned_data  else (self.instance.fire_detected_date if self.instance else None)
