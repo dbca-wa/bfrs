@@ -409,9 +409,9 @@
             })
         }
         {% if object.report_status > object.STATUS_INITIAL and object.report_status < object.STATUS_INVALIDATED%}
-            $('.panel-collapse').collapse('show')
+            $('#fire_behaviour').collapse('show')
         {% else %}
-            $('.panel-collapse').collapse('hide')
+            $('#fire_behaviour').collapse('hide')
         {% endif %}
     })
 </script>
