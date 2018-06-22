@@ -526,7 +526,7 @@ class SubmittedBushfireForm(MergedBushfireForm):
         }
         widgets = {
             "dfes_incident_no":None,
-            "field_officer":None,
+            "field_officer":basewidgets.SelectableSelect(),
             "other_field_officer":None,
             "other_field_officer_agency":None,
             "other_field_officer_phone":None,
@@ -608,7 +608,7 @@ class InitialBushfireForm(SubmittedBushfireForm):
             "__all__": basewidgets.TextDisplay(),
             "name":None,
             "fire_detected_date":basewidgets.DatetimeInput(),
-            "duty_officer":None,
+            "duty_officer":basewidgets.SelectableSelect(),
             "dispatch_pw":forms.RadioSelect(renderer=HorizontalRadioRenderer),
             "dispatch_pw_date":basewidgets.DatetimeInput(),
             "fire_position_override":None,

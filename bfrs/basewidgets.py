@@ -1,4 +1,4 @@
-from django.forms.widgets import Widget,TextInput,Select,RadioSelect,CheckboxInput
+from django import forms
 from django.core.cache import caches
 from django.urls import reverse
 from django.db import models
@@ -10,7 +10,7 @@ import utils
 
 to_str = lambda o: "" if o is None else str(o)
 
-class DisplayWidget(Widget):
+class DisplayWidget(forms.Widget):
     def __deepcopy__(self, memo):
         return self
 
@@ -137,7 +137,7 @@ class TemplateDisplay(DisplayWidget):
         return safestring.SafeText(self.template.format(self.widget.render(name,value,attrs,renderer)))
 
 
-class DatetimeInput(TextInput):
+class DatetimeInput(forms.TextInput):
     def render(self,name,value,attrs=None,renderer=None):
         html = super(DatetimeInput,self).render(name,value,attrs)
         datetime_picker = """
@@ -201,7 +201,7 @@ class SwitchWidgetMixin(object):
         hide_html = "$('#{0}').hide();".format(html_id)
 
         attrs = attrs or {}
-        if isinstance(self,RadioSelect):
+        if isinstance(self,forms.RadioSelect):
             attrs["onclick"]="""
                 if (this.value === '{0}') {{
                     {1}
@@ -209,7 +209,7 @@ class SwitchWidgetMixin(object):
                     {2}
                 }}
             """.format(self.true_value,hide_html if self.reverse else show_html,show_html if self.reverse else hide_html)
-        elif isinstance(self,CheckboxInput):
+        elif isinstance(self,forms.CheckboxInput):
             attrs["onclick"]="""
                 if (this.checked) {{
                     {0}
@@ -217,7 +217,7 @@ class SwitchWidgetMixin(object):
                     {1}
                 }}
             """.format(hide_html if self.reverse else show_html,show_html if self.reverse else hide_html)
-        elif isinstance(self,Select):
+        elif isinstance(self,forms.Select):
             attrs["onchange"]="""
                 if (this.value === '{0}') {{
                     {1}
@@ -291,4 +291,46 @@ def ChoiceWidgetFactory(name,choices):
         cls = type(class_name,(widget_class,),{"choices":choices})
         widget_classes[key] = cls
     return cls
+
+html_id_seq = 0
+class SelectableSelect(forms.Select):
+    def __init__(self,**kwargs):
+        if kwargs.get("attrs"):
+            if kwargs["attrs"].get("class"):
+                kwargs["attrs"]["class"] = "{} selectpicker dropup".format(kwargs["attrs"]["class"])
+            else:
+                kwargs["attrs"]["class"] = "selectpicker dropup"
+        else:
+            kwargs["attrs"] = {"class":"selectpicker dropup"}
+        super(SelectableSelect,self).__init__(**kwargs)
+
+
+    def render(self,name,value,attrs=None,renderer=None):
+        global html_id_seq
+        html_id = attrs.get("id",None) if attrs else None
+        if not html_id:
+            html_id_seq += 1
+            html_id = "auto_id_{}".format(html_id_seq)
+            if attrs is None:
+                attrs = {"id":html_id}
+            else:
+                attrs["id"] = html_id
+
+        html = super(SelectableSelect,self).render(name,value,attrs)
+
+
+        return safestring.SafeText(u"""
+        {}
+        <script type="text/javascript">
+        $(document).ready(function(){{
+            $("#{}").selectpicker({{
+              style: 'btn-default',
+              size: 6,
+              liveSearch: true,
+              dropupAuto: false,
+              closeOnDateSelect: true,
+            }});
+        }})
+        </script>
+        """.format(html,html_id))
 

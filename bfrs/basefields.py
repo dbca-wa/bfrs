@@ -229,8 +229,6 @@ class OtherOptionField(CompoundField):
 
     def _view_layout(self,f):
         val1 = f.value()
-        #if f.name == "field_officer":
-        #    import ipdb;ipdb.set_trace()
         if val1 == self.other_option:
             val2 = f.related_fields[0].value()
             if self.policy == ALWAYS:
@@ -249,6 +247,10 @@ class OtherOptionField(CompoundField):
         return a tuple(layout,enable related field list) for edit
         """
         val1 = f.value()
+        if isinstance(val1,basestring):
+            val1 = int(val1) if val1 else None
+        #if f.name == "field_officer":
+        #    import ipdb;ipdb.set_trace()
         other_value = self.other_option.id if hasattr(self.other_option,"id") else self.other_option
         if val1 != other_value:
             for rf in f.related_fields:
