@@ -180,12 +180,13 @@ class SwitchWidgetMixin(object):
     html_id = None
 
     def render(self,name,value,attrs=None,renderer=None):
+        value_str = str(value) if value is not None else ""
         if not self.html_id:
             html_id = "{}_related_html".format( attrs.get("id"))
-            wrapped_html = "<span id='{}' {} >{}</span>".format(html_id,"style='display:none'" if (not self.reverse and value != self.true_value) or (self.reverse and value == self.true_value) else "" ,self.html)
+            wrapped_html = "<span id='{}' {} >{}</span>".format(html_id,"style='display:none'" if (not self.reverse and value_str != self.true_value) or (self.reverse and value_str == self.true_value) else "" ,self.html)
         else:
             html_id = self.html_id
-            if (not self.reverse and value == self.true_value) or (self.reverse and value != self.true_value):
+            if (not self.reverse and value_str == self.true_value) or (self.reverse and value_str != self.true_value):
                 wrapped_html = ""
             else:
                 wrapped_html = """
@@ -207,7 +208,7 @@ class SwitchWidgetMixin(object):
                 }} else {{
                     {2}
                 }}
-            """.format(str(self.true_value),hide_html if self.reverse else show_html,show_html if self.reverse else hide_html)
+            """.format(self.true_value,hide_html if self.reverse else show_html,show_html if self.reverse else hide_html)
         elif isinstance(self,CheckboxInput):
             attrs["onclick"]="""
                 if (this.checked) {{
@@ -223,7 +224,7 @@ class SwitchWidgetMixin(object):
                 }} else {{
                     {2}
                 }}
-            """.format(str(self.true_value),hide_html if self.reverse else show_html,show_html if self.reverse else hide_html)
+            """.format(self.true_value,hide_html if self.reverse else show_html,show_html if self.reverse else hide_html)
         else:
             raise Exception("Not implemented")
 
@@ -238,6 +239,7 @@ def SwitchWidgetFactory(widget_class,html=None,true_value=True,template="{0}<br>
         """
     key = hashlib.md5("{}{}{}{}{}{}".format(widget_class.__name__,true_value,template,html,html_id,reverse).encode('utf-8')).hexdigest()
     cls = widget_classes.get(key)
+    true_value = str(true_value) if true_value is not None else ""
     if not cls:
         widget_class_id += 1
         class_name = "{}_{}".format(widget_class.__name__,widget_class_id)

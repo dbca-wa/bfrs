@@ -39,7 +39,7 @@ class FireCauseField(basefields.CompoundField):
                 return ("",None)
 
     def _edit_layout(self,f):
-        cause = f.value()
+        cause = int(f.value())
         if cause == Cause.OTHER.id:
             basefields.hide_field(f.related_fields[2].field)
         elif cause == Cause.ESCAPE_DPAW_BURNING.id:

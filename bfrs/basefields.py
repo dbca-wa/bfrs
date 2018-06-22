@@ -125,7 +125,7 @@ class SwitchField(CompoundField):
         if not kwargs.get("edit_layout"):
             kwargs["edit_layout"] = u"{{}}<br>{}".format("{}" * len(related_field_names))
 
-        kwargs["true_value"] = str(kwargs['true_value']) if "true_value" in kwargs else 'True'
+        kwargs["true_value"] = (str(kwargs['true_value']) if kwargs['true_value'] is not None else "" ) if "true_value" in kwargs else 'True'
 
         return kwargs
 
