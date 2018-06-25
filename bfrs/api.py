@@ -1,7 +1,9 @@
+import traceback
 from django.conf.urls import url
 from django.conf import settings
 from django.utils import timezone
 from django.http import JsonResponse
+from django.core.exceptions import ValidationError
 from tastypie.resources import ModelResource, Resource
 from tastypie.authorization import Authorization, ReadOnlyAuthorization, DjangoAuthorization
 from tastypie.resources import ModelResource, ALL, ALL_WITH_RELATIONS
@@ -343,8 +345,8 @@ class BushfireSpatialResource(ModelResource):
             #bushfire has fire boundary
             if (bundle.data.get('area') or {}).get('other_area'):
                 bundle.obj.other_area = round(float(bundle.data['area']['other_area']), 2)
-                if boundle.obj.other_area < 0:
-                    raise Exception("The sum of dbca interested burning area and other burning area is larger than the total burning area.\r\nPleace check the three layers ('cddp:legislated_lands_and_waters','cddp:dept_interest_lands_and_waters','cddp:other_tenures')")
+                if bundle.obj.other_area < 0:
+                    raise ValidationError("The sum({}) of burning area({}) is larger than the total burning area ({}).\r\nPleace check the three layers ('cddp:legislated_lands_and_waters','cddp:dept_interest_lands_and_waters','cddp:other_tenures')".format(round(bundle.data["area"]["total_area"] - bundle.data["area"]["other_area"],2) ,dict([(name,round(layer["total_area"],2)) for name,layer in bundle.data["area"]["layers"].iteritems()]),round(bundle.data["area"]["total_area"],2)))
             else:
                 bundle.obj.other_area = 0
 
@@ -415,54 +417,58 @@ class BushfireSpatialResource(ModelResource):
 
 
     def obj_update(self, bundle, **kwargs):
-        # Allows BFRS and SSS to perform update only if permitted
-        if is_external_user(bundle.request.user):
-            raise ImmediateHttpResponse(response=HttpUnauthorized())
-
-        if not can_maintain_data(bundle.request.user) and bundle.obj.report_status >= Bushfire.STATUS_FINAL_AUTHORISED:
-            raise ImmediateHttpResponse(response=HttpUnauthorized())
-
-        if bundle.request.GET.has_key('checkpermission') and bundle.request.GET['checkpermission'] == 'true':
-            #this is a permission checking request,return directly.
-            raise ImmediateHttpResponse(response=HttpAccepted())
-
-        self.full_hydrate(bundle)
-        #invalidate current bushfire if required.
-        bundle.obj,invalidated = invalidate_bushfire(bundle.obj, bundle.request.user) or (bundle.obj,False)
-
-        if not invalidated:
-            bundle.obj.save()
-
-        if bundle.data.get('area'):
-            #print("Clear tenure burnt data")
-            if bundle.obj.report_status != Bushfire.STATUS_INITIAL and bundle.data['area'].get('layers'):
-                #report is not a initial report, and has area burnt data, save it.
-                #print("Populate new tenure burnt data")
-                update_areas_burnt(bundle.obj, bundle.data['area'])
+        try:
+            # Allows BFRS and SSS to perform update only if permitted
+            if is_external_user(bundle.request.user):
+                raise ImmediateHttpResponse(response=HttpUnauthorized())
+    
+            if not can_maintain_data(bundle.request.user) and bundle.obj.report_status >= Bushfire.STATUS_FINAL_AUTHORISED:
+                raise ImmediateHttpResponse(response=HttpUnauthorized())
+    
+            if bundle.request.GET.has_key('checkpermission') and bundle.request.GET['checkpermission'] == 'true':
+                #this is a permission checking request,return directly.
+                raise ImmediateHttpResponse(response=HttpAccepted())
+    
+            self.full_hydrate(bundle)
+            #invalidate current bushfire if required.
+            bundle.obj,invalidated = invalidate_bushfire(bundle.obj, bundle.request.user) or (bundle.obj,False)
+    
+            if not invalidated:
+                bundle.obj.save()
+    
+            if bundle.data.get('area'):
+                #print("Clear tenure burnt data")
+                if bundle.obj.report_status != Bushfire.STATUS_INITIAL and bundle.data['area'].get('layers'):
+                    #report is not a initial report, and has area burnt data, save it.
+                    #print("Populate new tenure burnt data")
+                    update_areas_burnt(bundle.obj, bundle.data['area'])
+                else:
+                    #report is a initial report,or has no area burnt data. clear the existing area burnt data
+                    #area burnt data is unavailable for initial report
+                    bundle.obj.tenures_burnt.all().delete()
+    
+            #save plantations
+            if bundle.data.has_key("plantations"):
+                #need to update plantations
+                if bundle.data.get("plantations"):
+                    #has plantation data
+                    BushfireProperty.objects.update_or_create(bushfire=bundle.obj,name="plantations",defaults={"value":json.dumps(bundle.data.get("plantations"))})
+                else:
+                    #no plantation data,remove the plantations data from table
+                    BushfireProperty.objects.filter(bushfire=bundle.obj,name="plantations").delete()
+    
+            if bundle.obj.report_status >=  Bushfire.STATUS_FINAL_AUTHORISED:
+                # if bushfire has been authorised, update snapshot and archive old snapshot
+                serialize_bushfire('final', 'SSS Update', bundle.obj)
+                #print("serizlie bushfire")
+    
+            if invalidated:
+                raise ImmediateHttpResponse(response=JsonResponse({"id":bundle.obj.id,"fire_number":bundle.obj.fire_number},status=280))
             else:
-                #report is a initial report,or has no area burnt data. clear the existing area burnt data
-                #area burnt data is unavailable for initial report
-                bundle.obj.tenures_burnt.all().delete()
-
-        #save plantations
-        if bundle.data.has_key("plantations"):
-            #need to update plantations
-            if bundle.data.get("plantations"):
-                #has plantation data
-                BushfireProperty.objects.update_or_create(bushfire=bundle.obj,name="plantations",defaults={"value":json.dumps(bundle.data.get("plantations"))})
-            else:
-                #no plantation data,remove the plantations data from table
-                BushfireProperty.objects.filter(bushfire=bundle.obj,name="plantations").delete()
-
-        if bundle.obj.report_status >=  Bushfire.STATUS_FINAL_AUTHORISED:
-            # if bushfire has been authorised, update snapshot and archive old snapshot
-            serialize_bushfire('final', 'SSS Update', bundle.obj)
-            #print("serizlie bushfire")
-
-        if invalidated:
-            raise ImmediateHttpResponse(response=JsonResponse({"id":bundle.obj.id,"fire_number":bundle.obj.fire_number},status=280))
-        else:
-            return bundle
+                return bundle
+        except:
+            traceback.print_exc()
+            raise
 
 v1_api = Api(api_name='v1')
 v1_api.register(BushfireResource())
