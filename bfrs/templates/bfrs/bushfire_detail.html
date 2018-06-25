@@ -270,10 +270,10 @@
               {% endif %}
       
               <tr>
-                  <th id="id_th_field_officer" class="cbas" >P&W Field Officer</th>
+                  <th id="id_th_field_officer" class="cbas" >Field Officer *</th>
                   <td class="cbas">{{form.field_officer.as_widget}}</td>
       
-                  <th class="cbas">Job code *</th>
+                  <th class="cbas" id="id_job_code_th">Job code *</th>
                   <td class="cbas">{{form.job_code.as_widget}}</td>
               </tr>
         </tbody>
@@ -398,13 +398,20 @@
     $(document).ready(function(){
         if ('{{object.fire_not_found}}' === 'True') {
             $('#fire_report_section').hide()
+            $('#id_job_code_th').html("Job code")
+            $('#id_job_code_th').attr('style',"font-weight:normal")
+        } else {
         }
         if ($('#id_fire_not_found').length === 1) {
             $('#id_fire_not_found').click(function(){
                 if (this.checked) {
                     $('#fire_report_section').hide()
+                    $('#id_job_code_th').html("Job code")
+                    $('#id_job_code_th').attr('style',"font-weight:normal")
                 } else {
                     $('#fire_report_section').show()
+                    $('#id_job_code_th').html("Job code *")
+                    $('#id_job_code_th').attr('style',"font-weight:bold")
                 }
             })
         }

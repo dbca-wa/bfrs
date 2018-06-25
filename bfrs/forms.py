@@ -401,7 +401,7 @@ class BaseBushfireEditForm(BushfireViewForm):
             cleaned_data['area_limit'] = False
             cleaned_data['arson_squad_notified'] = None
             cleaned_data['offence_no'] = None
-            cleaned_data['reporting_year'] = None #current_finyear()
+            cleaned_data['reporting_year'] = self.instance.reporting_year if self.instance and self.instance.reporting_year else current_finyear()
             if self.is_editable('region'):
                 cleaned_data['region'] = self.initial['region']
             if self.is_editable('district'):
