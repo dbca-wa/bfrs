@@ -235,7 +235,7 @@ def update_areas_burnt(bushfire, burning_area):
         for d in burning_area["layers"][layer]['areas']:
             if d["category"] in ["Freehold"]:
                 #Freehold is blonging to "Private Property"
-                aggregated_sums[d["Private Property"]] += d["area"]
+                aggregated_sums["Private Property"] += d["area"]
             else:
                 aggregated_sums[d["category"]] += d["area"]
 
