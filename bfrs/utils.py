@@ -154,7 +154,7 @@ def invalidate_bushfire(obj, user,cur_obj=None):
         cur_obj.invalid_details = obj.invalid_details or "Moved from '{}' to '{}'".format(cur_obj.district.name,obj.district.name)
         cur_obj.modifier = user
         cur_obj.sss_id = None
-        cur_obj.save()
+        cur_obj.save(update_fields=["report_status","invalid_details","modifier","modified","sss_id"])
 
         # create a new object as a copy of existing
         obj.pk = None
@@ -201,75 +201,12 @@ def invalidate_bushfire(obj, user,cur_obj=None):
 
         # link the old invalidate bushfire to the new (valid) bushfire - fwd link
         cur_obj.valid_bushfire = obj
-        cur_obj.save()
+        cur_obj.save(update_fields=["valid_bushfire"])
 
         if obj.report_status >= Bushfire.STATUS_FINAL_AUTHORISED:
             serialize_bushfire('Final', 'Update District ({} --> {})'.format(cur_obj.district.code, obj.district.code), obj)
 
     return (obj,True)
-
-def check_district_changed(request, obj, form):
-    """
-    Checks if district is changed from within the bushfire reporting system (FSSDRS Group can do this)
-    Further, primary use case is to update the district from SSS, which then executes the equiv code below from bfrs/api.py
-    """
-    confirm_action = False
-    if request.POST.has_key('action') and request.POST.get('action')=='confirm':
-        #confirm action
-        confirm_action = True
-        if request.POST.has_key('confirm_action') and request.POST.get('confirm_action') == 'invalidate':
-            #'invalidate' confirm action
-            if request.POST.has_key('district') and not request.POST.get('district'):
-                #district is missing, throw exception
-                raise Exception("District is missing.")
-            elif not obj:
-                #bushfire report is missing.
-                raise Exception("Bushfire id is missing or does not exist.")
-        else:
-            #other confirm action
-            return None
-    else:
-        #other action
-        if request.POST.has_key('district') and not request.POST.get('district'):
-            return None
-
-    if obj:
-        cur_obj = Bushfire.objects.get(id=obj.id)
-        district = District.objects.get(id=request.POST['district']) if request.POST.has_key('district') else None # get the district from the form
-        if confirm_action and cur_obj.report_status!=Bushfire.STATUS_INVALIDATED:
-            obj.invalid_details = request.POST.get('invalid_details')
-            obj.district = district
-            obj.region = district.region
-            obj,saved = invalidate_bushfire(obj, request.user,cur_obj)
-            if not saved:
-                obj.save()
-            return HttpResponseRedirect(reverse("home"))
-
-        #elif district != cur_obj.district and not request.POST.has_key('fire_not_found'):
-        elif district != cur_obj.district :
-            #if cur_obj.fire_not_found and form.is_valid():
-            if form.is_valid():
-                # logic below to save object, present to allow final form change from fire_not_found=True --> to fire_not_found=False. Will allow correct fire_number invalidation
-                obj = form.save(commit=False)
-                obj.modifier = request.user
-                obj.region = cur_obj.region # this will allow invalidate_bushfire() to invalidate and create the links as necessary if user confirms in the confirm page
-                obj.district = cur_obj.district
-                obj.fire_number = cur_obj.fire_number
-                obj.save()
-
-                message = 'District has changed (from {} to {}). This action will invalidate the existing bushfire and create  a new bushfire with the new district, and a new fire number.'.format(
-                    cur_obj.district.name,
-                    district.name
-                )
-                context={
-                    'action': 'invalidate',
-                    'district': district.id,
-                    'message': message,
-                }
-                return TemplateResponse(request, 'bfrs/confirm.html', context=context)
-
-    return None
-
 
 def get_missing_mandatory_fields(obj,action):
     """ 
@@ -478,8 +415,21 @@ def get_bushfire_url(request, bushfire,url_type):
 
     return ""
 
+def save_model(instance,update_fields,extra_update_fields):
+    if update_fields == "__all__" or extra_update_fields == "__all__":
+        #save all
+        instance.save()
+    elif not update_fields and not extra_update_fields:
+        #both update_fields and extra_update_fields are none or empty, save all
+        instance.save()
+    elif not update_fields:
+        instance.save(update_fields=extra_update_fields)
+    elif not extra_update_fields:
+        instance.save(update_fields=update_fields)
+    else:
+        instance.save(update_fields=extra_update_fields + update_fields)
 
-def update_status(request, bushfire, action,action_name=""):
+def update_status(request, bushfire, action,action_name="",update_fields=None):
 
     notification = {}
     user_email = request.user.email if settings.CC_TO_LOGIN_USER else None
@@ -494,7 +444,8 @@ def update_status(request, bushfire, action,action_name=""):
         bushfire.init_authorised_by = request.user
         bushfire.init_authorised_date = datetime.now(tz=pytz.utc)
         bushfire.report_status = Bushfire.STATUS_INITIAL_AUTHORISED
-        bushfire.save()
+
+        save_model(bushfire,update_fields,["init_authorised_by","init_authorised_date","report_status"])
         serialize_bushfire('initial', action, bushfire)
 
         # send emails
@@ -575,7 +526,7 @@ def update_status(request, bushfire, action,action_name=""):
 
         bushfire.area = None # reset bushfire area
         bushfire.final_fire_boundary = False # used to check if final boundary is updated in Final Report template - allows to toggle show()/hide() area_limit widget via js
-        bushfire.save()
+        save_model(bushfire,None,["area","final_fire_boundary"])
 
     elif action == 'authorise':
         if bushfire.report_status >= Bushfire.STATUS_INVALIDATED:
@@ -588,7 +539,7 @@ def update_status(request, bushfire, action,action_name=""):
         bushfire.authorised_by = request.user
         bushfire.authorised_date = datetime.now(tz=pytz.utc)
         bushfire.report_status = Bushfire.STATUS_FINAL_AUTHORISED
-        bushfire.save()
+        save_model(bushfire,update_fields,["report_status","authorised_by","authorised_date"])
         serialize_bushfire('final', action, bushfire)
 
         # send emails
@@ -601,8 +552,6 @@ def update_status(request, bushfire, action,action_name=""):
             "template":"bfrs/email/fssdrs_authorised_email.html"
         })
         notification['FSSDRS-Auth'] = 'Email Sent' if resp else 'Email failed'
-
-        bushfire.save()
 
     elif action == 'mark_reviewed':
         if not bushfire.can_review:
@@ -617,7 +566,7 @@ def update_status(request, bushfire, action,action_name=""):
         bushfire.reviewed_by = request.user
         bushfire.reviewed_date = datetime.now(tz=pytz.utc)
         bushfire.report_status = Bushfire.STATUS_REVIEWED
-        bushfire.save()
+        save_model(bushfire,update_fields,["report_status","reviewed_by","reviewed_date"])
         serialize_bushfire('review', action, bushfire)
 
         # send emails
@@ -630,8 +579,6 @@ def update_status(request, bushfire, action,action_name=""):
             "template":"bfrs/email/fssdrs_reviewed_email.html"
         })
         notification['FSSDRS-Review'] = 'Email Sent' if resp else 'Email failed'
-
-        bushfire.save()
 
     elif action in ('delete_final_authorisation' , 'delete_authorisation_(missing_fields_-_FSSDRS)', 'delete_authorisation(merge_bushfires)'):
         if not bushfire.is_final_authorised:
@@ -651,8 +598,8 @@ def update_status(request, bushfire, action,action_name=""):
         bushfire.authorised_by = None
         bushfire.authorised_date = None
         bushfire.report_status = Bushfire.STATUS_INITIAL_AUTHORISED
-        serialize_bushfire(action, action, bushfire)
-        bushfire.save()
+        save_model(bushfire,update_fields,["authorised_by","authorised_date","report_status"])
+        serialize_bushfire('final', action, bushfire)
 
     elif action == 'delete_review':
         if not bushfire.is_reviewed:
@@ -660,8 +607,8 @@ def update_status(request, bushfire, action,action_name=""):
         bushfire.reviewed_by = None
         bushfire.reviewed_date = None
         bushfire.report_status = Bushfire.STATUS_FINAL_AUTHORISED
-        serialize_bushfire(action, action, bushfire)
-        bushfire.save()
+        save_model(bushfire,update_fields,["reviewed_by","reviewed_date","report_status"])
+        serialize_bushfire('review', action, bushfire)
     elif action == 'archive':
         if bushfire.report_status < Bushfire.STATUS_FINAL_AUTHORISED:
             raise Exception("The report({0}) is not authorised.".format(bushfire.fire_number))
@@ -670,12 +617,12 @@ def update_status(request, bushfire, action,action_name=""):
         elif bushfire.archive:
             raise Exception("The report({0}) is already archived".format(bushfire.fire_number))
         bushfire.archive = True
-        bushfire.save()
+        save_model(bushfire,update_fields,["archive"])
     elif action == 'unarchive':
         if not bushfire.archive:
             raise Exception("The report({0}) is not archived".format(bushfire.fire_number))
         bushfire.archive = False
-        bushfire.save()
+        save_model(bushfire,update_fields,["archive"])
     elif action == "merge_reports":
         #merge bushfires into another bushfire
         #validate the parameters
@@ -705,9 +652,9 @@ def update_status(request, bushfire, action,action_name=""):
 
             if primary_bushfire.report_status >= Bushfire.STATUS_FINAL_AUTHORISED:
                 #if primary bushfire is final authorised, then remove the authorisation 
-                update_status(request,primary_bushfire,'delete_authorisation(merge_bushfires)')
+                update_status(request,primary_bushfire,'delete_authorisation(merge_bushfires)',update_fields=["final_fire_boundary","area","other_area"])
             else:
-                primary_bushfire.save()
+                primary_bushfire.save(update_fields=["final_fire_boundary","area","other_area"])
                 
             #update merged bushfires to merged status and link to the primary bushfire
             for bf in merged_bushfires:
@@ -718,13 +665,13 @@ def update_status(request, bushfire, action,action_name=""):
                     serialize_bushfire("final", "Merge", bf)
                 else:
                     bf.report_status = Bushfire.STATUS_MERGED
-                bf.save()
+                bf.save(update_fields=["invalid_details","valid_bushfire","report_status"])
 
                 #if some bushfires were merged into this bushfire, then relink those merged bushfire to new primary bushfire
                 for mbf in bf.bushfire_invalidated.filter(report_status = Bushfire.STATUS_MERGED):
                     mbf.invalid_details = "Merged to bushfire '{}'".format(primary_bushfire.fire_number)
                     mbf.valid_bushfire = primary_bushfire
-                    mbf.save()
+                    mbf.save(update_fields=["invalid_details","valid_bushfire"])
 
             #send emails
         resp = send_email({
@@ -768,12 +715,12 @@ def update_status(request, bushfire, action,action_name=""):
                     serialize_bushfire("final", "Invalidate_duplicated_reports", bf)
                 else:
                     bf.report_status = Bushfire.STATUS_DUPLICATED
-                bf.save()
+                bf.save(update_fields=["invalid_details","valid_bushfire","report_status"])
                 #if some bushfires were duplicated with this bushfire, then relink those duplicated bushfire to new primary bushfire
                 for dbf in bf.bushfire_invalidated.filter(report_status = Bushfire.STATUS_DUPLICATED):
                     dbf.invalid_details = "Duplicated with bushfire '{}'".format(primary_bushfire.fire_number)
                     dbf.valid_bushfire = primary_bushfire
-                    dbf.save()
+                    dbf.save(update_fields=["invalid_details","valid_bushfire"])
 
         #send emails
         resp = send_email({

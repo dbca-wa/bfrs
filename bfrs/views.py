@@ -38,7 +38,7 @@ from bfrs.utils import (breadcrumbs_li,
         export_final_csv, export_excel, 
         update_status, serialize_bushfire,
         is_external_user, can_maintain_data, refresh_gokart,
-        check_district_changed,get_missing_mandatory_fields
+        get_missing_mandatory_fields
     )
 from bfrs.reports import BushfireReport, MinisterialReport, export_outstanding_fires 
 from django.db import IntegrityError, transaction

@@ -309,6 +309,15 @@ class BaseBushfireEditForm(BushfireViewForm):
     def clean(self):
         cleaned_data = super(BaseBushfireEditForm,self).clean()
 
+        if self.request and self.instance:
+            if self.instance.pk:
+                #update
+                self.instance.modifier = self.request.user
+            else:
+                #create
+                self.instance.creator = self.request.user
+                self.instance.modifier = self.request.user
+
         for name in ('prob_fire_level','max_fire_level','investigation_req','cause_state','media_alert_req','park_trail_impacted','job_code','fire_detected_date','dispatch_pw_date','dispatch_aerial_date','fire_contained_date','fire_controlled_date','fire_safe_date','initial_control','first_attack','final_control'):
             if self.is_editable(name) and not cleaned_data.get(name):
                 cleaned_data[name] = None
@@ -497,7 +506,7 @@ class MergedBushfireForm(BaseBushfireEditForm):
 
     class Meta:
         model = Bushfire
-        extra_update_fields = ('modified',)
+        extra_update_fields = ('modified','modifier')
         field_classes = {
             "__all__":forms.fields.CharField,
             "cause_state":basefields.ChoiceFieldFactory(Bushfire.CAUSE_STATE_CHOICES,choice_class=forms.TypedChoiceField),
@@ -527,7 +536,7 @@ class SubmittedBushfireForm(MergedBushfireForm):
 
     class Meta:
         model = Bushfire
-        extra_update_fields = ('modified',)
+        extra_update_fields = ('modified','modifier')
         field_classes = {
             "__all__":forms.fields.CharField,
             "max_fire_level":basefields.ChoiceFieldFactory(Bushfire.FIRE_LEVEL_CHOICES,choice_class=forms.TypedChoiceField),
@@ -577,6 +586,7 @@ class AuthorisedBushfireForm(SubmittedBushfireForm):
 
     class Meta:
         model = Bushfire
+        extra_update_fields = ('modified','modifier')
 
 class AuthorisedBushfireFSSGForm(AuthorisedBushfireForm):
     class Meta:
@@ -594,6 +604,7 @@ class ReviewedBushfireForm(SubmittedBushfireForm):
 
     class Meta:
         model = Bushfire
+        extra_update_fields = ('modified','modifier')
 
 class ReviewedBushfireFSSGForm(ReviewedBushfireForm):
     class Meta:
@@ -609,7 +620,7 @@ class InitialBushfireForm(SubmittedBushfireForm):
     submit_actions = [('save_draft','Save draft','btn-success'),('submit','Save and Submit','btn-warning')]
     class Meta:
         model = Bushfire
-        extra_update_fields = ('modified',)
+        extra_update_fields = ('modified','modifier')
         field_classes = {
             "__all__":forms.fields.CharField,
         }
