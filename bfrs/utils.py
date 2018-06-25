@@ -598,7 +598,7 @@ def update_status(request, bushfire, action,action_name="",update_fields=None):
         bushfire.authorised_by = None
         bushfire.authorised_date = None
         bushfire.report_status = Bushfire.STATUS_INITIAL_AUTHORISED
-        save_model(bushfire,update_fields,["authorised_by","authorised_date","report_status"])
+        save_model(bushfire,update_fields,["authorised_by","authorised_date","report_status","reviewed_by","reviewed_date","final_fire_boundary","archive"])
         serialize_bushfire('final', action, bushfire)
 
     elif action == 'delete_review':
