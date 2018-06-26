@@ -345,7 +345,7 @@ class BushfireSpatialResource(ModelResource):
             #bushfire has fire boundary
             if (bundle.data.get('area') or {}).get('other_area'):
                 bundle.obj.other_area = round(float(bundle.data['area']['other_area']), 2)
-                if bundle.obj.other_area < 0:
+                if bundle.obj.other_area < -0.1:
                     raise ValidationError("The sum({}) of burning area({}) is larger than the total burning area ({}).\r\nPleace check the three layers ('cddp:legislated_lands_and_waters','cddp:dept_interest_lands_and_waters','cddp:other_tenures')".format(round(bundle.data["area"]["total_area"] - bundle.data["area"]["other_area"],2) ,dict([(name,round(layer["total_area"],2)) for name,layer in bundle.data["area"]["layers"].iteritems()]),round(bundle.data["area"]["total_area"],2)))
             else:
                 bundle.obj.other_area = 0
