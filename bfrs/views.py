@@ -542,14 +542,14 @@ class BushfireUpdateView(ExceptionMixin,FormRequestMixin,MainUrlMixin,LoginRequi
 
     def get_object(self, queryset=None):
         """ Overriding this method to allow UpdateView to both Create new object and Update an existing object"""
-        obj = getattr(self,"_object") if hasattr(self,"_object") else None
+        obj = getattr(self,"object") if hasattr(self,"object") else None
         if not obj:
             if self.kwargs.get(self.pk_url_kwarg):
                 obj = super(BushfireUpdateView, self).get_object(queryset)
             elif self.request.POST.has_key('bushfire_id') and self.request.POST.get('bushfire_id'):
                 obj = Bushfire.objects.get(id=self.request.POST.get('bushfire_id'))
             if obj:
-                setattr(self,"_object",obj)
+                setattr(self,"object",obj)
         return obj
 
     def post(self, request, *args, **kwargs):
@@ -669,6 +669,11 @@ class BushfireUpdateView(ExceptionMixin,FormRequestMixin,MainUrlMixin,LoginRequi
                 #have missing fields,show error pages
                 context['mandatory_fields'] = missing_fields
                 return TemplateResponse(request, self.template_mandatory_fields, context=context)
+            elif action == "submit":
+                #skip confirm step when submit a initial report
+                update_status(self.request, self.object, action)
+                refresh_gokart(self.request, fire_number=self.object.fire_number, region=self.object.region.id, district=self.object.district.id)
+                return HttpResponseRedirect(self.get_main_url())
             elif action in ["submit","authorise"]:
                 context["confirm_action"] = action
                 context["form"] = BushfireViewForm(instance=self.object)

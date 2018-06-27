@@ -331,7 +331,7 @@ class BaseBushfireEditForm(BushfireViewForm):
                 cleaned_data["dispatch_aerial_date"] = None
 
         if self.is_editable('initial_area'):
-            if self.instance.report_status != Bushfire.STATUS_INITIAL or (self.instance.fire_boundary and not self.instance.final_fire_boundary):
+            if self.instance.report_status != Bushfire.STATUS_INITIAL or self.instance.fire_boundary:
                 #submitted report or has fire boundary, can't edit initial area
                 cleaned_data['initial_area'] = self.instance.initial_area
             elif self.boolvalue(cleaned_data,'initial_area_unknown'):
@@ -675,6 +675,9 @@ class BushfireCreateForm(InitialBushfireForm):
 
         if sss.get('origin_point') and isinstance(sss['origin_point'], list):
             self.initial['origin_point'] = Point(sss['origin_point'])
+
+        if sss.get('fire_boundary') and isinstance(sss['fire_boundary'], list):
+            self.initial["fire_boundary"] = MultiPolygon([Polygon(*p) for p in sss['fire_boundary']])
 
         if sss.has_key('origin_point_mga'):
             self.initial['origin_point_mga'] = sss['origin_point_mga']
