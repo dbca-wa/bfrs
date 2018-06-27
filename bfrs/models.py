@@ -569,6 +569,7 @@ class Tenure(models.Model):
 
     def __str__(self):
         return self.name
+Tenure.UNKNOWN = Tenure.objects.get(name="Unknown")
 Tenure.OTHER = Tenure.objects.get(name="Other")
 Tenure.PRIVATE_PROPERTY = Tenure.objects.get(name="Private Property")
 Tenure.OTHER_CROWN = Tenure.objects.get(name="Other Crown")

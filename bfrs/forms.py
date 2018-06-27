@@ -21,7 +21,7 @@ from crispy_forms.bootstrap import TabHolder, Tab
 from django.utils.safestring import mark_safe
 from django.forms.widgets import Widget
 
-from bfrs.utils import (can_maintain_data,)
+from bfrs.utils import (can_maintain_data,tenure_category)
 
 from . import baseforms
 from . import basewidgets
@@ -208,7 +208,7 @@ class BaseBushfireViewForm(baseforms.ModelForm):
             "initial_control":basefields.OtherOptionFieldFactory(Bushfire,"initial_control",("other_initial_control",),other_option=Agency.OTHER),
             "first_attack":basefields.OtherOptionFieldFactory(Bushfire,"first_attack",("other_first_attack",),other_option=Agency.OTHER),
             "final_control":basefields.OtherOptionFieldFactory(Bushfire,"final_control",("other_final_control",),other_option=Agency.OTHER),
-            "tenure":basefields.OtherOptionFieldFactory(Bushfire,"tenure",("other_tenure",),other_option=Tenure.OTHER,policy=basefields.DATA_MAP,other_layout={1:"{0}<br>Private Property",2:"{0}<br>Other Crown"}),
+            #"tenure":basefields.OtherOptionFieldFactory(Bushfire,"tenure",("other_tenure",),other_option=Tenure.OTHER,policy=basefields.DATA_MAP,other_layout={1:"{0}<br>Private Property",2:"{0}<br>Other Crown"}),
             "origin_point":basefields.SwitchFieldFactory(Bushfire,"origin_point",("origin_point_mga",),true_value="",reverse=True,on_layout=u"{}",off_layout=u"{}<br>{}"),
             "field_officer":basefields.OtherOptionFieldFactory(Bushfire,"field_officer",("other_field_officer","other_field_officer_agency","other_field_officer_phone"),other_option=User.OTHER,policy=basefields.ALWAYS,other_layout=u"{}<br> Name: {}<br> Agency: {}<br> Phone: {}"),
             "cause":basefields.CompoundFieldFactory(fields.FireCauseField,Bushfire,"cause"),
@@ -361,7 +361,6 @@ class BaseBushfireEditForm(BushfireViewForm):
                 cleaned_data['tenure'] = self.instance.tenure
 
             if 'tenure' in cleaned_data:
-                #new report, data is sent from sss
                 if cleaned_data['tenure'] !=Tenure.OTHER:
                     cleaned_data["other_tenure"] = None
                 else:
@@ -640,8 +639,8 @@ class InitialBushfireForm(SubmittedBushfireForm):
             "initial_area":forms.widgets.NumberInput(attrs={"step":0.01,"min":0}),
             "initial_control":None,
             "other_initial_control":None,
-            "tenure":None,
-            "other_tenure":forms.RadioSelect(renderer=HorizontalRadioRenderer),
+            #"tenure":None,
+            #"other_tenure":forms.RadioSelect(renderer=HorizontalRadioRenderer),
             "media_alert_req":basewidgets.SwitchWidgetFactory(forms.RadioSelect,true_value=True,html="<span>call PICA on 9219 9999</span>")(renderer=HorizontalRadioRenderer),
             "park_trail_impacted":basewidgets.SwitchWidgetFactory(forms.RadioSelect,true_value=True,html="<span>PVS will be notified by email</span>")(renderer=HorizontalRadioRenderer),
         }
@@ -687,34 +686,41 @@ class BushfireCreateForm(InitialBushfireForm):
 
         if sss.get('tenure_ignition_point') and sss['tenure_ignition_point'].get('category'):
             try:
-                self.initial['tenure'] = Tenure.objects.get(name__istartswith=sss['tenure_ignition_point']['category'])
+                self.initial['tenure'] = Tenure.objects.get(name__istartswith=tenure_category(sss['tenure_ignition_point']['category']))
             except:
-                self.initial['tenure'] = Tenure.objects.get(name='Other')
+                self.initial['tenure'] = Tenure.UNKNOWN
         else:
-            self.initial['tenure'] = Tenure.objects.get(name='Other')
+            self.initial['tenure'] = Tenure.UNKNOWN
 
         if sss.get('region_id') and sss.get('district_id'):
             self.initial['region'] = Region.objects.get(id=sss['region_id'])
             self.initial['district'] = District.objects.get(id=sss['district_id'])
 
-    def _post_clean(self):
-        if not self.cleaned_data.get('sss_data'):
+    def clean(self):
+        if not self.data.get('sss_data'):
             raise Exception('sss_data is missing')
-        sss = json.loads(self.cleaned_data["sss_data"])
+        sss = json.loads(self.data["sss_data"])
 
         if sss.get('tenure_ignition_point') and sss['tenure_ignition_point'].get('category'):
             try:
-                self.cleaned_data['tenure'] = Tenure.objects.get(name__istartswith=sss['tenure_ignition_point']['category'])
+                self.cleaned_data['tenure'] = Tenure.objects.get(name__istartswith=tenure_category(sss['tenure_ignition_point']['category']))
             except:
-                self.cleaned_data['tenure'] = Tenure.objects.get(name='Other')
+                self.cleaned_data['tenure'] = Tenure.UNKNOWN
         else:
-            self.cleaned_data['tenure'] = Tenure.objects.get(name='Other')
+            self.cleaned_data['tenure'] = Tenure.UNKNOWN
 
-        if sss.get('region_id') and sss.get('district_id'):
+        if sss.get('region_id') and sss.get('district_id') and self.instance:
             self.instance.region = Region.objects.get(id=sss['region_id'])
             self.instance.district = District.objects.get(id=sss['district_id'])
 
+        super(BushfireCreateForm,self).clean()
+
+
+    def _post_clean(self):
         super(BushfireCreateForm,self)._post_clean()
+        if not self.data.get('sss_data'):
+            raise Exception('sss_data is missing')
+        sss = json.loads(self.cleaned_data["sss_data"])
 
         if self.instance.initial_area_unknown:
             self.instance.initial_area = None
@@ -731,6 +737,14 @@ class BushfireCreateForm(InitialBushfireForm):
             #if "layers" in sss['area']:
             #    del sss['area']['layers']
             
+        if sss.get('tenure_ignition_point') and sss['tenure_ignition_point'].get('category'):
+            try:
+                self.instance.tenure = Tenure.objects.get(name__istartswith=tenure_category(sss['tenure_ignition_point']['category']))
+            except:
+                self.instance.tenure = Tenure.UNKNOWN
+        else:
+            self.instance.tenure = Tenure.UNKNOWN
+
         if sss.has_key('fire_position'):
             if not self.instance.fire_position_override:
                 self.instance.fire_position = sss['fire_position']

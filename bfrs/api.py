@@ -11,7 +11,7 @@ from tastypie.utils.mime import determine_format
 from tastypie.api import Api
 from tastypie import fields
 from bfrs.models import Profile, Region, District, Bushfire, Tenure, current_finyear,BushfireProperty,CaptureMethod
-from bfrs.utils import update_areas_burnt, invalidate_bushfire, serialize_bushfire, is_external_user, can_maintain_data
+from bfrs.utils import update_areas_burnt, invalidate_bushfire, serialize_bushfire, is_external_user, can_maintain_data,tenure_category
 
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point, GEOSGeometry, Polygon, MultiPolygon, GEOSException
@@ -311,12 +311,12 @@ class BushfireSpatialResource(ModelResource):
         if bundle.data['tenure_ignition_point'] and bundle.data['tenure_ignition_point'].get('category'):
             #origin point is within dpaw_tenure
             try:
-                bundle.obj.tenure = Tenure.objects.get(name__istartswith=bundle.data['tenure_ignition_point']['category'])
+                bundle.obj.tenure = Tenure.objects.get(name__istartswith=tenure_category(bundle.data['tenure_ignition_point']['category']))
             except:
-                bundle.obj.tenure = Tenure.objects.get(name__iendswith='other')
+                bundle.obj.tenure = Tenure.UNKNOWN
         else:
             #origin point is not within dpaw_tenure
-            bundle.obj.tenure = Tenure.objects.get(name__iendswith='other')
+            bundle.obj.tenure = Tenure.UNKNOWN
         #print("processing tenure_ignition_point,set tenure = {}".format(bundle.obj.tenure))
 
 

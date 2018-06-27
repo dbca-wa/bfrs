@@ -222,6 +222,16 @@ def get_missing_mandatory_fields(obj,action):
         return (check_mandatory_fields(obj, SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS, SUBMIT_MANDATORY_FORMSETS) + check_mandatory_fields(obj, fields, dep_fields, AUTH_MANDATORY_FORMSETS)) or None
     return None
 
+def tenure_category(category):
+    """
+    Return the tenure category used in bfrs
+    """
+    if category in ["Freehold"]:
+        #Freehold is blonging to "Private Property"
+        return "Private Property"
+    else:
+        return category
+
 def update_areas_burnt(bushfire, burning_area):
     """
     Updates AreaBurnt model attached to the bushfire record from api.py, via REST API (Operates on data dict from SSS)
@@ -233,11 +243,7 @@ def update_areas_burnt(bushfire, burning_area):
     aggregated_sums = defaultdict(float)
     for layer in burning_area["layers"]:
         for d in burning_area["layers"][layer]['areas']:
-            if d["category"] in ["Freehold"]:
-                #Freehold is blonging to "Private Property"
-                aggregated_sums["Private Property"] += d["area"]
-            else:
-                aggregated_sums[d["category"]] += d["area"]
+            aggregated_sums[tenure_category(d["category"])] += d["area"]
 
     area_unknown = 0.0
     category_unknown = []
