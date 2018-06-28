@@ -575,6 +575,7 @@ class SubmittedBushfireFSSGForm(SubmittedBushfireForm):
             "region":None,
             "district":None,
             "reporting_year":None,
+            "fire_detected_date":basewidgets.DatetimeInput(),
             "dispatch_pw":forms.RadioSelect(renderer=HorizontalRadioRenderer),
             "dispatch_pw_date":basewidgets.DatetimeInput(),
         }
@@ -594,6 +595,7 @@ class AuthorisedBushfireFSSGForm(AuthorisedBushfireForm):
             "region":None,
             "district":None,
             "reporting_year":None,
+            "fire_detected_date":basewidgets.DatetimeInput(),
             "dispatch_pw":forms.RadioSelect(renderer=HorizontalRadioRenderer),
             "dispatch_pw_date":basewidgets.DatetimeInput(),
         }
