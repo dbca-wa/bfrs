@@ -35,7 +35,6 @@ YESNO_CHOICES = (
 )
 
 REPORTING_YEAR_CHOICES = ( reporting_years() )
-print("{}".format(REPORTING_YEAR_CHOICES))
 
 class HorizontalRadioRenderer(forms.RadioSelect.renderer):
     def render(self):

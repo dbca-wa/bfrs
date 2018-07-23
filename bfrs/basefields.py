@@ -65,7 +65,7 @@ def CompoundFieldFactory(compoundfield_class,model,field_name,related_field_name
         class_name = "{}_{}".format(field_class.__name__,class_id)
         kwargs.update({"related_field_names":related_field_names,"hidden_layout":hidden_layout})
         compound_classes[class_key] = type(class_name,(compoundfield_class,field_class),kwargs)
-        print("{}.{}={}".format(field_name,compound_classes[class_key],compound_classes[class_key].get_layout))
+        #print("{}.{}={}".format(field_name,compound_classes[class_key],compound_classes[class_key].get_layout))
     return compound_classes[class_key]
 
 def SwitchFieldFactory(model,field_name,related_field_names,field_class=None,**kwargs):
