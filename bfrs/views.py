@@ -700,7 +700,7 @@ class BushfireUpdateView(ExceptionMixin,FormRequestMixin,MainUrlMixin,LoginRequi
             'initial':'initial' in self.request.get_full_path(),
             'create':False if bushfire else True,
             'can_maintain_data': can_maintain_data(self.request.user),
-            'link_actions':[(self.get_main_url(),'Return','btn-info')],
+            'link_actions':[(self.get_main_url(),'Cancel','btn-danger')],
             'submit_actions':context['form'].submit_actions,
         })
 
