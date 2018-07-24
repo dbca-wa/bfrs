@@ -55,8 +55,6 @@ class ChainDict(dict):
         else:
             self.dicts = [dict(dict_objs)] 
 
-        self.all_key = all_key
-
     def __contains__(self,name):
         for d in self.dicts:
             if name in d:
@@ -206,9 +204,6 @@ class CompoundBoundField(BoundField):
         attributes passed as attrs.  If no widget is specified, then the
         field's default widget will be used.
         """
-        if self.name == "cause":
-            #import ipdb;ipdb.set_trace()
-            pass
         html_layout,field_names = self.field.get_layout(self)
         html = super(CompoundBoundField,self).as_widget(widget,attrs,only_initial)
         if field_names:
@@ -283,9 +278,6 @@ class BaseModelFormMetaclass(forms.models.ModelFormMetaclass):
                         setattr(attrs['Meta'],item,config)
                     else:
                         setattr(attrs['Meta'],item,config.data if isinstance(config,ConfigDict) else config)
-        if name == 'InitialBushfireFSSGForm':
-            #import ipdb;ipdb.set_trace()
-            pass
         #add "__all__" support in configuration
         if 'Meta' in attrs and hasattr(attrs['Meta'],'widgets'):
             #add "__all__" support in widgets configuration
@@ -293,9 +285,6 @@ class BaseModelFormMetaclass(forms.models.ModelFormMetaclass):
     
 
         new_class = super(BaseModelFormMetaclass, mcs).__new__(mcs, name, bases, attrs)
-        if name == "SubmittedBushfireForm":
-            #import ipdb;ipdb.set_trace()
-            pass
         meta = getattr(new_class,"Meta") if hasattr(new_class,"Meta") else None
         opts = getattr(new_class,"_meta") if hasattr(new_class,"_meta") else None
         if not opts or not meta or not meta.model:
@@ -475,6 +464,8 @@ class ModelForm(six.with_metaclass(BaseModelFormMetaclass, forms.models.BaseMode
     def full_clean(self):
         if self._meta.editable_fields is None:
             super(ModelForm,self).full_clean()
+            return
+
         opt_fields = self._meta.fields
         fields = self.fields
         try:

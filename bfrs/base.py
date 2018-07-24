@@ -151,4 +151,13 @@ class Audit(models.Model):
         if errors:
             raise ValidationError(errors)
 
+class DictMixin(object):
+    """
+    simulate a dict object 
+    """
+    def __getitem__(self,name):
+        return getattr(self,name)
+
+    def get(self,name,default = None):
+        return getattr(self,name) if hasattr(self,name) else default
 

@@ -1,19 +1,21 @@
-from django.contrib.gis.db import models
+import sys
+import json
 from datetime import datetime, timedelta
+
+from django.contrib.gis.db import models
 from django.utils import timezone
-from smart_selects.db_fields import ChainedForeignKey
 from django.contrib.auth.models import User
 from django.utils.encoding import python_2_unicode_compatible
 from django.core.validators import MaxValueValidator, MinValueValidator
-from bfrs.base import Audit
 from django.core.exceptions import (ValidationError)
 from django.conf import settings
-import LatLon
 from django.core import serializers
+
+from smart_selects.db_fields import ChainedForeignKey
+import LatLon
 import reversion
 
-import sys
-import json
+from bfrs.base import Audit,DictMixin
 
 SUBMIT_MANDATORY_FIELDS= [
     'region', 'district', 'year', 'fire_number', 'name', 'fire_detected_date', 'prob_fire_level',
@@ -225,7 +227,7 @@ class District(models.Model):
         return self.name
 
 
-class BushfireBase(Audit):
+class BushfireBase(Audit,DictMixin):
     STATUS_INITIAL                = 1
     STATUS_INITIAL_AUTHORISED     = 2
     STATUS_FINAL_AUTHORISED       = 3
@@ -429,18 +431,57 @@ class BushfireBase(Audit):
         return self.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED
 
     @property
+    def fire_cause(self):
+        if not self.cause:
+            return ""
+        
+        cause = ""
+        if self.cause == Cause.OTHER:
+            cause = self.other_cause or ""
+        else:
+            cause = self.cause.name
+
+        if self.cause_state == self.CAUSE_STATE_KNOWN:
+            return "{} (Known)".format(cause)
+        elif self.cause_state == self.CAUSE_STATE_POSSIBLE:
+            return "{} (Possible)".format(cause)
+        else:
+            return cause
+
+    @property
+    def fire_number_slug(self):
+        if not self.fire_number:
+            return ""
+
+        if not hasattr(self,"_fire_number_slug"):
+            self._fire_number_slug = self.fire_number.replace(' ','-')
+        
+        return self._fire_number_slug
+
+    @property
     def origin_coords(self):
         return 'Lon/Lat ({}, {})'.format(round(self.origin_point.get_x(), 2), round(self.origin_point.get_y(), 2)) if self.origin_point else None
+
+    @property
+    def origin_latlon(self):
+        if not self.origin_point:
+            return None
+        
+        if not hasattr(self,"_origin_latlon"):
+            self._origin_latlon = LatLon.LatLon(LatLon.Latitude(self.origin_point.get_y()),LatLon.Longitude(self.origin_point.get_x()))
+        
+        return self._origin_latlon
+
 
     @property
     def origin_geo(self):
         if not self.origin_point:
             return None
 
-        c=LatLon.LatLon(LatLon.Longitude(self.origin_point.get_x()), LatLon.Latitude(self.origin_point.get_y()))
+        c=self.origin_latlon
         latlon = c.to_string('d% %m% %S% %H')
-        lon = latlon[0].split(' ')
-        lat = latlon[1].split(' ')
+        lat = latlon[0].split(' ')
+        lon = latlon[1].split(' ')
 
         # need to format float number (seconds) to 1 dp
         lon[2] = str(round(eval(lon[2]), 1))
@@ -451,13 +492,6 @@ class BushfireBase(Audit):
         lon_str = lon[0] + u'\N{DEGREE SIGN} ' + lon[1].zfill(2) + '\' ' + lon[2].zfill(4) + '\" ' + lon[3]
 
         return 'Lat/Lon ' + lat_str + ', ' + lon_str
-
-
-    #simulate a dict object 
-    def __getitem__(self,name):
-        return getattr(self,name)
-    def get(self,name,default = None):
-        return getattr(self,name) if hasattr(self,name) else default
 
 
 class BushfireSnapshot(BushfireBase):
