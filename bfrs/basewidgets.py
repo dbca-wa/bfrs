@@ -41,15 +41,6 @@ class DatetimeDisplay(DisplayWidget):
         else:
             return ""
 
-class BooleanDisplay(DisplayWidget):
-    def render(self,name,value,attrs=None,renderer=None):
-        if value is None:
-            return ""
-        elif value:
-            return "<img src='/static/img/icon-yes.svg' alt='True'>"
-        else:
-            return "<img src='/static/img/icon-no.svg' alt='True'>"
-
 class HyperlinkTextDisplay(DisplayWidget):
     def __init__(self,**kwargs):
         super(HyperlinkTextDisplay,self).__init__(**kwargs)
