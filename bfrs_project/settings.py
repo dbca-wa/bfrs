@@ -28,6 +28,12 @@ MEDIA_URL = '/media/'
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880 * 4 # 5.0MB * 4
 
+P1CAD_ENDPOINT = env('P1CAD_ENDPOINT') or "https://api.p1cad.dfes.wa.gov.au"
+P1CAD_USER = env('P1CAD_USER') or None
+P1CAD_PASSWORD = env('P1CAD_PASSWORD') or None
+P1CAD_SSL_VERIFY = True if env('P1CAD_SSL_VERIFY',True) else False
+P1CAD_NOTIFY_EMAIL = env('P1CAD_NOTIFY_EMAIL') or None
+
 EMAIL_HOST = env('EMAIL_HOST', 'email.host')
 EMAIL_PORT = env('EMAIL_PORT', 25)
 FROM_EMAIL = env('FROM_EMAIL', 'from_email')

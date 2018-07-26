@@ -81,15 +81,9 @@ def field_value(field_name, bushfire=None, request=None, url_type="auto",is_uppe
                 else:
                     return bushfire.fire_number
             elif field_name == "url_link":
-                if request:
-                    return mark_safe("<a href='{0}'>{0}</a>".format(utils.get_bushfire_url(request,bushfire,url_type)))
-                else:
-                    return ""
+                return mark_safe("<a href='{0}'>{0}</a>".format(utils.get_bushfire_url(request,bushfire,url_type)))
             elif field_name == "url":
-                if request:
-                    return utils.get_bushfire_url(request,bushfire,url_type)
-                else:
-                    return ""
+                return utils.get_bushfire_url(request,bushfire,url_type)
             elif field_name == "report_status":
                 return bushfire.report_status_name
             elif field_name == "latitude_degree":

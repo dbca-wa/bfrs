@@ -36,6 +36,7 @@ from django.db.models import Q
 import requests
 from requests.auth import HTTPBasicAuth
 from dateutil import tz
+from dfes import P1CAD
 import os
 
 import logging
@@ -396,32 +397,36 @@ def update_damage_fs(bushfire, damage_formset):
     return 1
 
 def get_bushfire_url(request, bushfire,url_type):
+    if request:
+        build_absolute_uri = request.build_absolute_uri
+    else:
+        build_absolute_uri = lambda uri:uri
     if bushfire.report_status >= Bushfire.STATUS_INVALIDATED:
-        return request.build_absolute_uri(reverse('bushfire:bushfire_initial', kwargs={'pk':bushfire.id}))
+        return build_absolute_uri(reverse('bushfire:bushfire_initial', kwargs={'pk':bushfire.id}))
 
     if url_type == "initial":
         if bushfire.report_status == Bushfire.STATUS_INITIAL:
-            return request.build_absolute_uri(reverse('bushfire:bushfire_initial', kwargs={'pk':bushfire.id}))
+            return build_absolute_uri(reverse('bushfire:bushfire_initial', kwargs={'pk':bushfire.id}))
     elif url_type == "initial_snapshot":
         if bushfire.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED:
-            return request.build_absolute_uri(reverse('bushfire:initial_snapshot', kwargs={'pk':bushfire.id}))
+            return build_absolute_uri(reverse('bushfire:initial_snapshot', kwargs={'pk':bushfire.id}))
     elif url_type == "final":
         if bushfire.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED:
-            return request.build_absolute_uri(reverse('bushfire:bushfire_final', kwargs={'pk':bushfire.id}))
+            return build_absolute_uri(reverse('bushfire:bushfire_final', kwargs={'pk':bushfire.id}))
     elif url_type == "final_snapshot":
         if bushfire.report_status >= Bushfire.STATUS_FINAL_AUTHORISED:
-            return request.build_absolute_uri(reverse('bushfire:final_snapshot', kwargs={'pk':bushfire.id}))
+            return build_absolute_uri(reverse('bushfire:final_snapshot', kwargs={'pk':bushfire.id}))
     elif url_type == "auto":
         if bushfire.report_status >= Bushfire.STATUS_FINAL_AUTHORISED:
-            return request.build_absolute_uri(reverse('bushfire:final_snapshot', kwargs={'pk':bushfire.id}))
+            return build_absolute_uri(reverse('bushfire:final_snapshot', kwargs={'pk':bushfire.id}))
         elif bushfire.report_status == Bushfire.STATUS_INITIAL_AUTHORISED:
-            return request.build_absolute_uri(reverse('bushfire:bushfire_final', kwargs={'pk':bushfire.id}))
+            return build_absolute_uri(reverse('bushfire:bushfire_final', kwargs={'pk':bushfire.id}))
         else:
-            return request.build_absolute_uri(reverse('bushfire:bushfire_initial', kwargs={'pk':bushfire.id}))
+            return build_absolute_uri(reverse('bushfire:bushfire_initial', kwargs={'pk':bushfire.id}))
 
     return ""
 
-def save_model(instance,update_fields,extra_update_fields):
+def save_model(instance,update_fields=None,extra_update_fields=None):
     if update_fields == "__all__" or extra_update_fields == "__all__":
         #save all
         instance.save()
@@ -454,6 +459,15 @@ def update_status(request, bushfire, action,action_name="",update_fields=None):
         save_model(bushfire,update_fields,["init_authorised_by","init_authorised_date","report_status"])
         serialize_bushfire('initial', action, bushfire)
 
+        if not bushfire.dfes_incident_no:
+            try:
+                incident_no = P1CAD.create_incident(bushfire,request)
+                bushfire.dfes_incident_no = incident_no
+                save_model(bushfire,["dfes_incident_no"])
+                notification['create_incident_no'] = "Create dfes incident no '{}'".format(incident_no)
+            except Exception as e:
+                notification['create_incident_no'] = "Failed to create dfes incident no. {}".format(e.message)
+
         # send emails
         if BushfireProperty.objects.filter(bushfire=bushfire,name="plantations").count() > 0:
             resp = send_email({
@@ -475,7 +489,8 @@ def update_status(request, bushfire, action,action_name="",update_fields=None):
             "template":"bfrs/email/rdo_email.html"
         })
         notification['RDO'] = 'Email Sent' if resp else 'Email failed'
-
+        """
+        use web service to create incident no instead of sending email.
         if not bushfire.dfes_incident_no:
             #no dfes incident no, send email to dfes
             resp = send_email({
@@ -487,7 +502,7 @@ def update_status(request, bushfire, action,action_name="",update_fields=None):
                 "template":"bfrs/email/dfes_email.html"
             })
             notification['DFES'] = 'Email Sent' if resp else 'Email failed'
-
+        """
         resp = send_email({
             "bushfire":bushfire, 
             "user_email":user_email,
@@ -905,6 +920,11 @@ def send_email(context):
     if settings.ENV_TYPE != "PROD":
         subject += ' ({})'.format(settings.ENV_TYPE)
     body = render_to_string(context["template"],context=context)
+    """
+    if context.get("save_email_to_file"):
+        with open(context["save_email_to_file"],'wb') as f:
+            f.write(u'{}'.format(body).encode('utf-8'))
+    """
     message = EmailMessage(
         subject=subject, 
         body=body, 

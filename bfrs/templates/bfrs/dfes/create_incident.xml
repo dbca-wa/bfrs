@@ -1,70 +1,90 @@
 {% load email_tags %}
 <?xml version="1.0" encoding="UTF-8"?>
 <ext-doc:DetailedCFSInformation 
-    xmlns:ext="http://leitsc-lib/2.0" 
-    xmlns:nc="http://niem.gov/niem/niem-core/2.0" 
-    xmlns:intel="http://niem.gov/niem/domains/intelligence/2.0" 
+    xmlns:ext="http://leitsc-lib/2.0"
+    xmlns:nc="http://niem.gov/niem/niem-core/2.0"
+    xmlns:intel="http://niem.gov/niem/domains/intelligence/2.0"
     xmlns:s="http://niem.gov/niem/structures/2.0" 
-    xmlns:j="http://niem.gov/niem/domains/jxdm/4.0" 
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xmlns:j="http://niem.gov/niem/domains/jxdm/4.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xmlns:scr="http://niem.gov/niem/domains/screening/2.0" 
     xmlns:ext-doc="http://leitsc-lib/2.0/doc/DetailedCFSInformation" 
-    xsi:schemaLocation="http://leitsc-lib/2.0/doc/DetailedCFSInformation Schema/DetailedCFSInformationDocument.xsd">
+    xsi:schemaLocation="http://leitsc-lib/2.0/doc/DetailedCFSInformation file:///C:/src/CAD/Contracts/Schema/Motorola/provisioning/DetailedCFSInformationDocument.xsd">
+
     <ext:Payload>
         <ext:DataOwnerMetadata>
             <ext:DataItemID>
-                <nc:IdentificationID>DBCA-{{fire_number}}</nc:IdentificationID>
+                <nc:IdentificationID>{{bushfire.fire_number_slug}}</nc:IdentificationID>
             </ext:DataItemID>
             <nc:OrganizationIdentification>
                 <nc:IdentificationID>FE</nc:IdentificationID>
             </nc:OrganizationIdentification>
+            <nc:OrganizationName>DBCA</nc:OrganizationName>
+            <nc:ContactInformationDescriptionText>Department of Biodiversity Conservation and Attractions</nc:ContactInformationDescriptionText>
         </ext:DataOwnerMetadata>
-        <!-- how to populate property 'id' -->
-        <ext:ServiceCall s:id="incident001">
+
+        <ext:ContactInformation s:id="{{bushfire.fire_number_slug}}-CONTACT">
+            <nc:ContactWebsiteURI>{{initial_snapshot_url}}</nc:ContactWebsiteURI>
+        </ext:ContactInformation>
+
+        <ext:ServiceCall s:id="{{bushfire.fire_number_slug}}">
             <nc:ActivityReasonText>Call for Service Request</nc:ActivityReasonText>
-            <!-- What value should be used here  -->
-            <j:ServiceCallMechanismText>BFRS</j:ServiceCallMechanismText>
+            <j:ServiceCallMechanismText>DPAW</j:ServiceCallMechanismText>
+            <j:ServiceCallDispatchedDate>
+                <nc:DateTime>{{now}}</nc:DateTime>
+            </j:ServiceCallDispatchedDate>
+            <j:ServiceCallMechanismText>DBCA</j:ServiceCallMechanismText>
             <ext:ServiceCallAugmentation>
-                <!-- What value should be used here  -->
-                <ext:CallTypeText>Fire</ext:CallTypeText>
+                <ext:CallTypeText>TGS</ext:CallTypeText>
                 {% comment "uncomment this if require comment" %}
                 <ext:Comment>
                     <nc:CommentText>A SINGLE LINE COMMENT</nc:CommentText>
+                    <ext:CommentDateTime>
+                        <nc:DateTime>2018-05-15T14:30:00Z</nc:DateTime>
+                    </ext:CommentDateTime>
+                    <nc:SourceIDText>120050001</nc:SourceIDText>
                 </ext:Comment>
                 {% endcomment %}
             </ext:ServiceCallAugmentation>
-            <ext:ServiceCallAugmentation>
-                <!-- What value should be used here  -->
-                <ext:CallPriority>?</ext:CallPriority>
-            </ext:ServiceCallAugmentation>
-            <nc:ActivityStatus>Initial</nc:ActivityStatus>
         </ext:ServiceCall>
-        <!-- how to populate property 'id' -->
-        <ext:Location s:id="location001">
-            <nc:LocationDescriptionText>{{fire_position}}</nc:LocationDescriptionText>
-            <nc:LocationTwoDimensionalGeographicCoordinate>
-                <nc:GeographicCoordinateLatitude>
-                    <nc:LatitudeDegreeValue>{{latitude.degree}}</nc:LatitudeDegreeValue>
-                    <nc:LatitudeMinuteValue>{{latitude.minute}}</nc:LatitudeMinuteValue>
-                    <nc:LatitudeSecondValue>{{latitude.second}}</nc:LatitudeSecondValue>
-                </nc:GeographicCoordinateLatitude>
-                <nc:GeographicCoordinateLongitude>
-                    <nc:LongitudeDegreeValue>{{longitude.degree}}</nc:LongitudeDegreeValue>
-                    <nc:LongitudeMinuteValue>{{longitude.minute}}</nc:LongitudeMinuteValue>
-                    <nc:LongitudeSecondValue>{{longitude.second}}</nc:LongitudeSecondValue>
-                </nc:GeographicCoordinateLongitude>
-            </nc:LocationTwoDimensionalGeographicCoordinate>
+
+        <ext:Location s:id="{{bushfire.fire_number_slug}}-LOCATION">
+            <nc:LocationAddress>
+                <nc:AddressFullText>LAT: &lt;{{bushfire.origin_latlon.lat.decimal_degree}}&gt; LONG: &lt;{{bushfire.origin_latlon.lon.decimal_degree}}&gt;</nc:AddressFullText>
+            </nc:LocationAddress>
+            <nc:LocationDescriptionText>{{bushfire.fire_position}}</nc:LocationDescriptionText>
         </ext:Location>
+
+        <ext:Person s:id="{{bushfire.fire_number_slug}}-DUTY-OFFICER">
+            <ext:PersonName>
+                <nc:PersonGivenName>{{bushfire.duty_officer.first_name}}</nc:PersonGivenName>
+                <nc:PersonSurName>{{bushfire.duty_officer.last_name}}</nc:PersonSurName>
+            </ext:PersonName>
+
+        </ext:Person>
+
+        <nc:PersonContactInformationAssociation>
+            <nc:PersonReference s:ref="{{bushfire.fire_number_slug}}-DUTY-OFFICER"/>
+            <nc:ContactInformationReference s:ref="{{bushfire.fire_number_slug}}-CONTACT"/>
+        </nc:PersonContactInformationAssociation>
+
         <j:ActivityLocationAssociation>
-            <nc:ActivityReference s:ref="incident001"/>
-            <nc:LocationReference s:ref="location001"/>
+            <nc:ActivityReference s:ref="{{bushfire.fire_number_slug}}"/>
+            <nc:LocationReference s:ref="{{bushfire.fire_number_slug}}-LOCATION"/>
         </j:ActivityLocationAssociation>
+
+
     </ext:Payload>
+
     <ext:ExchangeMetadata>
         <ext:DataSubmitterMetadata>
             <nc:OrganizationIdentification>
-               <nc:IdentificationID>DBCA</nc:IdentificationID>
+                <nc:IdentificationID>DEH</nc:IdentificationID>
             </nc:OrganizationIdentification>
+            <nc:ContactInformationDescriptionText>Department of Biodiversity Conservation and Attractions</nc:ContactInformationDescriptionText>
+            <nc:OrganizationName>DBCA</nc:OrganizationName>
+            <SystemIdentifier>DBCA</SystemIdentifier>
         </ext:DataSubmitterMetadata>
     </ext:ExchangeMetadata>
+
 </ext-doc:DetailedCFSInformation>
