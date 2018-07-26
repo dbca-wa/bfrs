@@ -460,13 +460,26 @@ def update_status(request, bushfire, action,action_name="",update_fields=None):
         serialize_bushfire('initial', action, bushfire)
 
         if not bushfire.dfes_incident_no:
-            try:
-                incident_no = P1CAD.create_incident(bushfire,request)
-                bushfire.dfes_incident_no = incident_no
-                save_model(bushfire,["dfes_incident_no"])
-                notification['create_incident_no'] = "Create dfes incident no '{}'".format(incident_no)
-            except Exception as e:
-                notification['create_incident_no'] = "Failed to create dfes incident no. {}".format(e.message)
+            if settings.P1CAD_ENDPOINT:
+                #use p1cad web service to create incident no
+                try:
+                    incident_no = P1CAD.create_incident(bushfire,request)
+                    bushfire.dfes_incident_no = incident_no
+                    save_model(bushfire,["dfes_incident_no"])
+                    notification['create_incident_no'] = "Create dfes incident no '{}'".format(incident_no)
+                except Exception as e:
+                    notification['create_incident_no'] = "Failed to create dfes incident no. {}".format(e.message)
+            else:
+                #no dfes incident no, send email to dfes
+                resp = send_email({
+                    "bushfire":bushfire, 
+                    "user_email":user_email,
+                    "to_email":settings.DFES_EMAIL,
+                    "request":request,
+                    "subject":'DFES Email - Initial Bushfire submitted - {}'.format(bushfire.fire_number),
+                    "template":"bfrs/email/dfes_email.html"
+                })
+                notification['DFES'] = 'Email Sent' if resp else 'Email failed'
 
         # send emails
         if BushfireProperty.objects.filter(bushfire=bushfire,name="plantations").count() > 0:
@@ -489,20 +502,7 @@ def update_status(request, bushfire, action,action_name="",update_fields=None):
             "template":"bfrs/email/rdo_email.html"
         })
         notification['RDO'] = 'Email Sent' if resp else 'Email failed'
-        """
-        use web service to create incident no instead of sending email.
-        if not bushfire.dfes_incident_no:
-            #no dfes incident no, send email to dfes
-            resp = send_email({
-                "bushfire":bushfire, 
-                "user_email":user_email,
-                "to_email":settings.DFES_EMAIL,
-                "request":request,
-                "subject":'DFES Email - Initial Bushfire submitted - {}'.format(bushfire.fire_number),
-                "template":"bfrs/email/dfes_email.html"
-            })
-            notification['DFES'] = 'Email Sent' if resp else 'Email failed'
-        """
+
         resp = send_email({
             "bushfire":bushfire, 
             "user_email":user_email,
