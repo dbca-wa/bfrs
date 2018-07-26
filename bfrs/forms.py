@@ -342,8 +342,8 @@ class BaseBushfireEditForm(BushfireViewForm):
                 cleaned_data['dfes_incident_no'] = self.instance.dfes_incident_no
             else:
                 incident_no = cleaned_data.get('dfes_incident_no')
-                if incident_no and (not incident_no.isdigit() or len(incident_no) != 6):
-                    self.add_error('dfes_incident_no', 'Must be six digital numbers')
+                if incident_no and (not incident_no.isdigit() or len(incident_no) not in [6,8]):
+                    self.add_error('dfes_incident_no', 'Must be six or eight digital numbers')
  
         if self.is_editable('fire_position'):
             if not self.boolvalue(cleaned_data,'fire_position_override'):
@@ -541,7 +541,7 @@ class SubmittedBushfireForm(MergedBushfireForm):
             "fire_not_found":basefields.SwitchFieldFactory(Bushfire,"fire_not_found",("invalid_details",),true_value=True),
         }
         widgets = {
-            "dfes_incident_no":forms.TextInput(attrs={"maxlength":6,"pattern":"[0-9]{6}","title":"Must be 6 numeric digits","onblur":"this.value=this.value.trim()"}),
+            "dfes_incident_no":forms.TextInput(attrs={"maxlength":6,"pattern":"[0-9]{6}|[0-9]{8}","title":"Must be 6 or 8 numeric digits","onblur":"this.value=this.value.trim()"}),
             "field_officer":basewidgets.SelectableSelect(),
             "other_field_officer":None,
             "other_field_officer_agency":None,
