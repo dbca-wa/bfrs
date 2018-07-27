@@ -541,7 +541,7 @@ class SubmittedBushfireForm(MergedBushfireForm):
             "fire_not_found":basefields.SwitchFieldFactory(Bushfire,"fire_not_found",("invalid_details",),true_value=True),
         }
         widgets = {
-            "dfes_incident_no":forms.TextInput(attrs={"maxlength":6,"pattern":"[0-9]{6}|[0-9]{8}","title":"Must be 6 or 8 numeric digits","onblur":"this.value=this.value.trim()"}),
+            "dfes_incident_no":forms.TextInput(attrs={"maxlength":8,"pattern":"[0-9]{6}|[0-9]{8}","title":"Must be 6 or 8 numeric digits","onblur":"this.value=this.value.trim()"}),
             "field_officer":basewidgets.SelectableSelect(),
             "other_field_officer":None,
             "other_field_officer_agency":None,
