@@ -33,7 +33,6 @@ logs/
 staticfiles/
 
 # everything with local in it
-*local.*
 *local/
 
 # Virtualenv dir

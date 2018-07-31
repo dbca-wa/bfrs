@@ -1,19 +1,21 @@
-from django.contrib.gis.db import models
+import sys
+import json
 from datetime import datetime, timedelta
+
+from django.contrib.gis.db import models
 from django.utils import timezone
-from smart_selects.db_fields import ChainedForeignKey
 from django.contrib.auth.models import User
 from django.utils.encoding import python_2_unicode_compatible
 from django.core.validators import MaxValueValidator, MinValueValidator
-from bfrs.base import Audit
 from django.core.exceptions import (ValidationError)
 from django.conf import settings
-import LatLon
 from django.core import serializers
+
+from smart_selects.db_fields import ChainedForeignKey
+import LatLon
 import reversion
 
-import sys
-import json
+from bfrs.base import Audit,DictMixin
 
 SUBMIT_MANDATORY_FIELDS= [
     'region', 'district', 'year', 'fire_number', 'name', 'fire_detected_date', 'prob_fire_level',
@@ -72,6 +74,8 @@ SNAPSHOT_TYPE_CHOICES = (
     (SNAPSHOT_FINAL, 'Final'),
 )
 
+User.OTHER = User.objects.get(username='other')
+
 def current_finyear():
     return datetime.now().year if datetime.now().month>6 else datetime.now().year-1
 
@@ -79,10 +83,11 @@ def reporting_years():
     """ Returns: [[2016, '2016/2017'], [2017, '2017/2018']] """
     try:
         yrs = list(Bushfire.objects.values_list('reporting_year', flat=True).distinct())
-        if current_finyear() not in yrs:
-            yrs.append(datetime.now().year)
-        if current_finyear() + 1 not in yrs:
-            yrs.append(datetime.now().year + 1)
+        finyear = current_finyear()
+        for y in (finyear,finyear + 1):
+            if y not in yrs:
+                yrs.append(y)
+        yrs.sort()
         return [[yr, '/'.join([str(yr),str(yr+1)])] for yr in yrs]
     except:
         return [[None, None]]
@@ -171,6 +176,24 @@ class Profile(models.Model):
     def __str__(self):
         return 'username: {}, region: {}, district: {}'.format(self.user.username, self.region, self.district)
 
+@python_2_unicode_compatible
+class CaptureMethod(models.Model):
+    OTHER_CODE = "999"
+    code = models.CharField(max_length=32,unique=True)
+    desc = models.CharField(max_length=128)
+
+    def to_dict(self):
+        """ Returns a dict of regions with their corresponding districts
+        """
+        qs=District.objects.filter(region_id=self.id)
+        return dict(id=self.id, code=self.code, desc=self.desc)
+
+    class Meta:
+        ordering = ['code']
+
+    def __str__(self):
+        return self.code
+
 
 @python_2_unicode_compatible
 class Region(models.Model):
@@ -204,13 +227,15 @@ class District(models.Model):
         return self.name
 
 
-class BushfireBase(Audit):
+class BushfireBase(Audit,DictMixin):
     STATUS_INITIAL                = 1
     STATUS_INITIAL_AUTHORISED     = 2
     STATUS_FINAL_AUTHORISED       = 3
     STATUS_REVIEWED               = 4
     STATUS_INVALIDATED            = 5
     STATUS_MISSING_FINAL          = 6 # This is not really a status, and is never set - used for filtering qs only
+    STATUS_MERGED                 = 100
+    STATUS_DUPLICATED             = 101
     REPORT_STATUS_CHOICES = (
         (STATUS_INITIAL, 'Initial Fire Report'),
         (STATUS_INITIAL_AUTHORISED, 'Notifications Submitted'),
@@ -218,7 +243,10 @@ class BushfireBase(Audit):
         (STATUS_REVIEWED, 'Reviewed'),
         (STATUS_INVALIDATED, 'Invalidated'),
         (STATUS_MISSING_FINAL, 'Outstanding Fires'), # This is not really a status, and is never set - used for filtering qs only
+        (STATUS_MERGED, 'Merged'),
+        (STATUS_DUPLICATED, 'Duplicated')
     )
+    REPORT_STATUS_MAP = dict(REPORT_STATUS_CHOICES)
 
     FIRE_LEVEL_CHOICES = (
         (1, 1),
@@ -351,8 +379,15 @@ class BushfireBase(Audit):
     fireboundary_uploaded_by = models.ForeignKey(User,editable=False,null=True,blank=True)
     fireboundary_uploaded_date = models.DateTimeField(verbose_name='Date fireboundary uploaded', null=True, blank=True,editable=False)
 
+    capturemethod = models.ForeignKey(CaptureMethod,editable=True,null=True,blank=True)
+    other_capturemethod = models.CharField(verbose_name="Other Capture Methdod", max_length=128, editable=True, null=True, blank=True)
+
     class Meta:
         abstract = True
+
+    @property
+    def report_status_name(self):
+        return self.REPORT_STATUS_MAP.get(self.report_status,"Unknown")
 
     @property
     def can_submit(self):
@@ -373,15 +408,19 @@ class BushfireBase(Audit):
 
     @property
     def is_init_authorised(self):
-        return True if self.init_authorised_by and self.init_authorised_date and self.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED else False
+        return True if self.init_authorised_by and self.init_authorised_date and self.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED and self.report_status < Bushfire.STATUS_INVALIDATED else False
 
     @property
     def is_final_authorised(self):
-        return True if self.authorised_by and self.authorised_date and self.report_status >= Bushfire.STATUS_FINAL_AUTHORISED else False
+        return True if self.authorised_by and self.authorised_date and self.report_status >= Bushfire.STATUS_FINAL_AUTHORISED and self.report_status < Bushfire.STATUS_INVALIDATED else False
 
     @property
     def is_reviewed(self):
-        return True if self.reviewed_by and self.reviewed_date and self.report_status >= Bushfire.STATUS_REVIEWED else False
+        return True if self.reviewed_by and self.reviewed_date and self.report_status >= Bushfire.STATUS_REVIEWED and self.report_status < Bushfire.STATUS_INVALIDATED else False
+
+    @property
+    def is_invalidated(self):
+        return self.report_status >= Bushfire.STATUS_INVALIDATED
 
     @property
     def other_contact(self):
@@ -392,18 +431,57 @@ class BushfireBase(Audit):
         return self.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED
 
     @property
+    def fire_cause(self):
+        if not self.cause:
+            return ""
+        
+        cause = ""
+        if self.cause == Cause.OTHER:
+            cause = self.other_cause or ""
+        else:
+            cause = self.cause.name
+
+        if self.cause_state == self.CAUSE_STATE_KNOWN:
+            return "{} (Known)".format(cause)
+        elif self.cause_state == self.CAUSE_STATE_POSSIBLE:
+            return "{} (Possible)".format(cause)
+        else:
+            return cause
+
+    @property
+    def fire_number_slug(self):
+        if not self.fire_number:
+            return ""
+
+        if not hasattr(self,"_fire_number_slug"):
+            self._fire_number_slug = self.fire_number.replace(' ','-')
+        
+        return self._fire_number_slug
+
+    @property
     def origin_coords(self):
         return 'Lon/Lat ({}, {})'.format(round(self.origin_point.get_x(), 2), round(self.origin_point.get_y(), 2)) if self.origin_point else None
+
+    @property
+    def origin_latlon(self):
+        if not self.origin_point:
+            return None
+        
+        if not hasattr(self,"_origin_latlon"):
+            self._origin_latlon = LatLon.LatLon(LatLon.Latitude(self.origin_point.get_y()),LatLon.Longitude(self.origin_point.get_x()))
+        
+        return self._origin_latlon
+
 
     @property
     def origin_geo(self):
         if not self.origin_point:
             return None
 
-        c=LatLon.LatLon(LatLon.Longitude(self.origin_point.get_x()), LatLon.Latitude(self.origin_point.get_y()))
+        c=self.origin_latlon
         latlon = c.to_string('d% %m% %S% %H')
-        lon = latlon[0].split(' ')
-        lat = latlon[1].split(' ')
+        lat = latlon[0].split(' ')
+        lon = latlon[1].split(' ')
 
         # need to format float number (seconds) to 1 dp
         lon[2] = str(round(eval(lon[2]), 1))
@@ -476,7 +554,7 @@ class Bushfire(BushfireBase):
 
     def clean(self):
         # create the bushfire fire number
-        if not self.id or self.district != Bushfire.objects.get(id=self.id).district:
+        if not self.id and not self.fire_number:
             try:
                 self.fire_number = ' '.join(['BF', str(self.year), self.district.code, '{0:03d}'.format(self.next_id(self.district))])
             except:
@@ -525,6 +603,10 @@ class Tenure(models.Model):
 
     def __str__(self):
         return self.name
+Tenure.UNKNOWN = Tenure.objects.get(name="Unknown")
+Tenure.OTHER = Tenure.objects.get(name="Other")
+Tenure.PRIVATE_PROPERTY = Tenure.objects.get(name="Private Property")
+Tenure.OTHER_CROWN = Tenure.objects.get(name="Other Crown")
 
 
 @python_2_unicode_compatible
@@ -547,6 +629,8 @@ class Cause(models.Model):
 
     def __str__(self):
         return self.name
+Cause.OTHER = Cause.objects.get(name="Other (specify)")
+Cause.ESCAPE_DPAW_BURNING = Cause.objects.get(name="Escape P&W burning")
 
 @python_2_unicode_compatible
 class Agency(models.Model):
@@ -560,6 +644,7 @@ class Agency(models.Model):
     def __str__(self):
         return self.name
 
+Agency.OTHER = Agency.objects.get(name="OTHER")
 
 @python_2_unicode_compatible
 class InjuryType(models.Model):

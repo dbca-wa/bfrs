@@ -1,0 +1,79 @@
+{% if object.pk %}
+<div class="panel-group" id="timeline_accordion" role="tablist" aria-multiselectable="true">
+  <div class="panel-default">
+    <div role="tab" id="pn_report_timeline">
+      <h4 class="panel-title">
+        <a role="button" data-toggle="collapse" data-parent="#timeline_accordion" href="#report_timeline" aria-expanded="true" aria-controls="report_timeline">
+          <div colspan="6" style="background: black; color: white; text-align: left; font-size: 16px; padding: 12px;" > REPORT TIMELINE (Click to expand/collapse)</div>
+        </a>
+      </h4>
+    </div>
+    <div id="report_timeline" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pn_report_timeline">
+        <table class="table table-bordered table-striped table-condensed">
+            <tbody>
+                <tr>
+                    <th >Created
+                      {% if object.created %}
+                        at {{object.created|date:'Y-m-d H:i'}} 
+                      {% endif %}
+                      {% if object.creator %}
+                        by {{object.creator.first_name}}  {{object.creator.last_name}}
+                      {% endif %}
+                    </th>
+                </tr>
+        
+                {% if object.is_init_authorised %}
+                <tr>
+                    <th >Submitted 
+                      {% if object.init_authorised_date %}
+                        at {{object.init_authorised_date|date:'Y-m-d H:i'}} 
+                      {% endif %}
+                      {% if object.init_authorised_by %}
+                        by {{object.init_authorised_by.first_name}}  {{object.init_authorised_by.last_name}} 
+                      {% endif %}
+                    </th>
+                </tr>
+                {% endif %}
+        
+                {% if object.is_final_authorised %}
+                <tr>
+                    <th >Authorised 
+                      {% if object.authorised_date %}
+                        at {{object.authorised_date|date:'Y-m-d H:i'}} 
+                      {% endif %}
+                      {% if object.authorised_by %}
+                        by {{object.authorised_by.first_name}}  {{object.authorised_by.last_name}} 
+                      {% endif %}
+                    </th>
+                </tr>
+                {% endif %}
+        
+                {% if object.is_reviewed %}
+                <tr>
+                    <th >Reviewed
+                      {% if object.reviewed_date %}
+                        at {{object.reviewed_date|date:'Y-m-d H:i'}} 
+                      {% endif %}
+                      {% if object.reviewed_by %}
+                        by {{object.reviewed_by.first_name}}  {{object.reviewed_by.last_name}} 
+                      {% endif %}
+                    </th>
+                </tr>
+                {% endif %}
+
+                {% if object.modified %}
+                <tr>
+                    <th >Modified
+                        at {{object.modified|date:'Y-m-d H:i'}} 
+                      {% if object.modifier %}
+                        by {{object.modifier.first_name}}  {{object.modifier.last_name}} 
+                      {% endif %}
+                    </th>
+                </tr>
+                {% endif %}
+          </tbody>
+        </table>
+    </div>
+  </div>
+</div>
+{% endif %}

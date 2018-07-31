@@ -1,0 +1,112 @@
+{% load i18n %}
+{% load static from staticfiles %}
+{% load bfrs_tags %}
+{% load humanize %}
+
+<tr>
+    <th class="cbas" style="width:20%">Date and time fire detected *</th>
+    <td class="cbas" style="width:30%">{{form.fire_detected_date.as_widget}}</td>
+
+    <th class="cbas" style="width:20%">DFES Incident no.</th>
+    <td class="cbas" style="width:30%">{{form.dfes_incident_no.as_widget}}</td>
+</tr>
+
+<tr>
+    <th class="cbas" >Position of fire</th>
+    <td class="cbas">
+        {{form.fire_position.as_widget}}
+    </td>
+
+    <th class="cbas" >Point of origin</th>
+    <td class="cbas">
+        {{form.origin_point.as_widget}} <br>
+    </td>
+</tr>
+
+<tr>
+    <th class="cbas">Tenure of ignition point *{% if form.instance..other_tenure %}<br> Other Tenure{% endif %}</th>
+    <td class="cbas">{{form.tenure.as_widget}}</td>
+
+    <th class="cbas">Duty Officer *</th>
+    <td class="cbas">{{form.duty_officer.as_widget}}</td>
+</tr>
+<tr>
+    <th class="cbas">P&W Resource dispatched *</th>
+    <td class="cbas">{{form.dispatch_pw.as_widget}}</td>
+
+	<th class="cbas">Aerial support requested *</th>
+    <td class="cbas">{{form.dispatch_aerial.as_widget}}</td>
+</tr>
+
+<tr>
+    <th class="cbas" id="id_th_initial_controlling_agency">Initial controlling agency *</th>
+    <td class="cbas">{{form.initial_control.as_widget}}</td>
+
+    <th class="cbas">Area of fire at arrival (ha) *</th>
+    <td class="cbas">{{form.initial_area.as_widget}}</td>
+</tr>
+
+<tr>
+    <th class="cbas">Probable Fire Level *</th>
+    <td class="cbas">{{form.prob_fire_level.as_widget}}</td>
+
+    <th class="cbas">Investigation required *</th>
+    <td class="cbas">{{form.investigation_req.as_widget}}</td>
+</tr>
+
+<tr>
+    <th class="cbas">Media Alert Required *</th>
+    <td class="cbas">{{form.media_alert_req.as_widget}}</td>
+
+    <th class="cbas">Park and/or Trail *<br>potentially impacted</th>
+    <td class="cbas">{{form.park_trail_impacted.as_widget}}</td>
+</tr>
+{% if form.instance.report_status > form.instance.STATUS_INITIAL  and form.instance.report_status < form.instance.STATUS_INVALIDATED %}
+<tr>
+    <th class="cbas">Fire Cause *</th>
+    <td class="cbas">{{form.cause.as_widget}} </td>
+
+    <th class="cbas">Arson squad notified *</th>
+    <td class="cbas">{{form.arson_squad_notified.as_widget}} </td>
+</tr>
+
+{% if object.is_init_authorised_by %} 
+<tr>
+    <th class="cbas" style="font-weight:normal;">Authorised By</th>
+    <td class="cbas">{{form.init_authorised_by.as_widget}}</td>
+
+    <th class="cbas" style="font-weight:normal;">Authorised Date</th>
+    <td class="cbas">{{form.init_authorised_date.as_widget}}</td>
+</tr>
+{% endif %}
+
+
+<tr>
+    <th class="cbas" id="id_th_fire_contained_date" title=" Fire spread has been halted, though the fire may still be burning freely within the perimeter of the fire control lines">Date fire contained <i class="icon-info-sign icon-white"></i> *</th>
+    <td class="cbas">{{form.fire_contained_date.as_widget}}</td>
+
+    <th class="cbas" id="id_th_initial_attack_agency">Initial attack agency *</th>
+    <td class="cbas">{{form.first_attack.as_widget}}</td>
+</tr>
+
+<tr>
+    <th class="cbas" id="id_th_fire_controlled_date" title="Complete perimeter of fire is secured and no breakaway is expected">Date fire controlled <i class="icon-info-sign icon-white"></i> *</th>
+    <td class="cbas">{{form.fire_controlled_date.as_widget}}</td>
+
+    <th class="cbas" id="id_th_final_controlling_agency">Final controlling agency *</th>
+    <td class="cbas">{{form.final_control.as_widget}}</td>
+</tr>
+
+<tr>
+    <th class="cbas" >Date fire inactive <i class="icon-info-sign icon-white"></i> *</th>
+    <td class="cbas">{{form.fire_safe_date.as_widget}}</td>
+
+    <th class="cbas">Final fire size (ha) *</th>
+    <td class="cbas">{{form.area.as_widget}}</td>
+</tr>
+
+<tr>
+    <th class="cbas">Maximum Fire Level *</th>
+    <td colspan="3" class="cbas">{{form.max_fire_level.as_widget}}</td>
+</tr>
+{% endif %}

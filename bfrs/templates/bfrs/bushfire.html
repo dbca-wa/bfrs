@@ -24,19 +24,56 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown_btn">
       <li><a href="javascript: bushfire_filter({action:'export_to_excel'});">Export Excel</a></li>
       <li><a href="javascript: bushfire_filter({action:'export_excel_outstanding_fires'});">Export Outstanding Fires</a></li>
-      {% comment "Not ready for production" %}
+      {% comment "not ready for production." %}
       <li><a href="javascript: bushfire_filter({action:'export_excel_ministerial_report'});" onclick='growl({"message": "Creating Bushfire Report (Excel) ...", "type": "info"});'>Export Bushfire Report</a></li>
-    <li><a href="{% url 'bushfire:bushfire_report' %}">PDF Ministerial Report</a></li>
+      <li><a href="{% url 'bushfire:bushfire_report' %}">PDF Ministerial Report</a></li>
       {% endcomment %}
   </ul>
 </div>
 
-{% include "bfrs/bushfire_filter.html" %}
+{% include "bfrs/inc/bushfire_filter.html" %}
+
+{% if errors %}
+<div style="margin-bottom:10px" class="alert alert-danger fade in">
+    <a href="#" class="close" data-dismiss="alert">&times;</a>
+    <ul>
+    {% for error in errors %}
+        <li>{{error}}</li>
+    {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+{% if actions %}
+<form action="" method="post">
+{% csrf_token %}
+
+{% for field in form %}
+    {{ field.as_hidden }}
+{% endfor %}
+<input type="hidden" name="order_by" value={{ order_by }}>
+<input type="hidden" name="page" value={{ page_obj.number }}>
+
+<div style="margin-bottom:10px">
+    <select id="id_action" name="action">
+        {% for k,v in actions.items %}
+        <option value="{{k}}" {% if action == k %} selected {% endif %}>{{v}}</option>
+        {% endfor %}
+
+    </select>
+    &nbsp;<button type="submit" >Go</button>
+</div>
+{% endif %}
 
 {% if object_list %}
 {% if is_paginated %}
 <table id="table" class="table table-striped table-bordered table-hover table-condensed" style="cursor:pointer;">
   <thead>
+      {% if actions %}
+	  <th style="width:1%">
+        &nbsp;
+      </th>
+      {% endif %}
 	  <th style="width:10%" onclick="document.location='{{filters_without_order}}{{'fire_number'|toggle_sort:form.initial}}'" class="headerSort {{'fire_number'|sort_class:form.initial}}">
         <font color="dodgerblue">Fire Number</font>
       </th>
@@ -56,6 +93,11 @@
 {% else %}
 <table id="table" class="tablesorter table table-striped table-bordered table-hover table-condensed" style="cursor:pointer;">
   <thead>
+      {% if actions %}
+	  <th style="width:1%">
+        &nbsp;
+      </th>
+      {% endif %}
 	  <th style="width:10%" class="{{'fire_number'|sort_class:form.initial}}">
         <font color="dodgerblue">Fire Number </font>
       </th>
@@ -76,6 +118,11 @@
   <tbody>
     {% for bushfire in object_list %}
       <tr class="row-vm" data-toggle="myCollapse" data-target="#{{bushfire.id}}">
+        {% if actions %}
+    	  <td onclick="event.stopPropagation()">
+            <input type="checkbox" name="selected_ids" value="{{bushfire.id}}" {% if selected_ids and bushfire.id in selected_ids %}checked {% endif %}>
+          </td>
+        {% endif %}
         
 		<td><a href="#" onclick='openGokart({"action": "select", "region":{{bushfire.region.id}},"district":{{bushfire.district.id}},"bushfireid":"{{bushfire.fire_number}}" });' title="Open report in SSS">{{ bushfire.fire_number }}</a></td>
 		<td>{% if bushfire.dfes_incident_no %}{{ bushfire.dfes_incident_no }}{% else %}  {% endif %}</td>
@@ -86,6 +133,10 @@
 			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="Edit initial fire report"><font color="red"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-edit icon-white"></i></font></a>
             {% elif bushfire.report_status == bushfire.STATUS_INVALIDATED %}
 			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="View the invalidated initial fire report"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-ban-circle icon-white"></i></a>
+            {% elif bushfire.report_status == bushfire.STATUS_MERGED %}
+			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="View the merged fire report"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-ban-circle icon-white"></i></a>
+            {% elif bushfire.report_status == bushfire.STATUS_DUPLICATED %}
+			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="View the duplicated fire report"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-ban-circle icon-white"></i></a>
 		    {% else %}
 			<a href="{% url 'bushfire:initial_snapshot' bushfire.id %}" title="Notifications fire report submitted on {{bushfire.init_authorised_date|date:'Y-m-d H:i'}} by {{bushfire.init_authorised_by}}"><span style="display:none">{{bushfire.report_status}}</span><font color="green"><i class="icon-ok icon-white"></i></font></a>
 		    {% endif %}
@@ -94,13 +145,14 @@
 		<td align="center">
             {% if bushfire.report_status == bushfire.STATUS_INITIAL_AUTHORISED %}
 			<a href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Edit final fire report"><span style="display:none">{{bushfire.report_status}}</span><font color="red"><i class="icon-edit icon-white"></i></red></a>
-            {% elif bushfire.report_status >= bushfire.STATUS_FINAL_AUTHORISED and bushfire.report_status != bushfire.STATUS_INVALIDATED%}
+            {% elif bushfire.report_status >= bushfire.STATUS_FINAL_AUTHORISED and bushfire.report_status < bushfire.STATUS_INVALIDATED%}
 			<a href="{% url 'bushfire:final_snapshot' bushfire.id %}" title="Final fire report authorised on {{bushfire.authorised_date}} by {{bushfire.authorised_by}}"><span style="display:none">{{bushfire.report_status}}</span><font color="green"><i class="icon-ok icon-white"></i></font></a>
 		    {% endif %}
 		</td>
 
-        {% if can_maintain_data %}
+        {% if can_maintain_data  %}
          <td>
+           {% if bushfire.report_status < bushfire.STATUS_INVALIDATED %}
            {% if bushfire.report_status >= bushfire.STATUS_FINAL_AUTHORISED %}
              {% if bushfire.is_reviewed %}
              <a href="{% url 'main' %}?bushfire_id={{bushfire.id}}&action=delete_review" title="Delete review"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-trash icon-white"></i></a>
@@ -120,6 +172,7 @@
            {% elif bushfire.can_review %}
            <a href="{% url 'main' %}?bushfire_id={{bushfire.id}}&action=mark_reviewed" title="Mark Report as Reviewed"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-thumbs-up"></i></a>
            {% endif %}
+           {% endif %}
 
 		 </td>
          {% endif %}
@@ -127,14 +180,14 @@
       </tr>
 
       <tr class="myCollapse row-details expand-child" id="{{bushfire.id}}">
-        <td colspan="9">
+        <td colspan="{% if can_maintain_data and actions %} 8 {% elif can_maintain_data or actions %} 7 {% else %} 6 {% endif %}">
           <table class="table table-bordered table-striped table-condensed">
             <tbody>
               <tr>
-                <th>Region</th>
-                <td>{{ bushfire.region.name }}</td>
+                <th>Status</th>
+                <td>{{ bushfire.report_status_name }}</td>
                 <th colspan="1">District</th>
-                <td>{{ bushfire.district.name }}</td>
+                <td>{{bushfire.region.name}} - {{ bushfire.district.name }}</td>
               </tr>
               <tr>
                 <th colspan="1">Creator</th>
@@ -202,6 +255,9 @@
   </tbody>
 </table>
 
+{% if actions %}
+</form>
+{% endif %}
 {% else %}
     <p>No Bushfires are available.</p>
 {% endif %}
@@ -236,32 +292,45 @@
 
 {% if not is_paginated %}
     var sortList = undefined;
-{% if 'fire_number'|sort_class:form.initial == "headerSortDown" %}
-    sortList = [[0,0]]
-{% elif 'fire_number'|sort_class:form.initial == "headerSortUp" %}
-    sortList = [[0,1]]
-{% elif 'dfes_incident_no'|sort_class:form.initial == "headerSortDown" %}
-    sortList = [[1,0]]
-{% elif 'dfes_incident_no'|sort_class:form.initial == "headerSortUp" %}
-    sortList = [[1,1]]
-{% elif 'name'|sort_class:form.initial == "headerSortDown" %}
-    sortList = [[2,0]]
-{% elif 'name'|sort_class:form.initial == "headerSortUp" %}
-    sortList = [[2,1]]
-{% elif 'job_code'|sort_class:form.initial == "headerSortDown" %}
-    sortList = [[3,0]]
-{% elif 'job_code'|sort_class:form.initial == "headerSortUp" %}
-    sortList = [[3,1]]
-{% endif %}
-    $("#table").tablesorter({
-        cssHeader:"headerSort",
-        sortList:sortList,
-        headers:{
-            4:{sorter:false},
-            5:{sorter:false},
-            6:{sorter:false},
-        }
-    });
+    {% if 'fire_number'|sort_class:form.initial == "headerSortDown" %}
+        sortList = [[0,0]]
+    {% elif 'fire_number'|sort_class:form.initial == "headerSortUp" %}
+        sortList = [[0,1]]
+    {% elif 'dfes_incident_no'|sort_class:form.initial == "headerSortDown" %}
+        sortList = [[1,0]]
+    {% elif 'dfes_incident_no'|sort_class:form.initial == "headerSortUp" %}
+        sortList = [[1,1]]
+    {% elif 'name'|sort_class:form.initial == "headerSortDown" %}
+        sortList = [[2,0]]
+    {% elif 'name'|sort_class:form.initial == "headerSortUp" %}
+        sortList = [[2,1]]
+    {% elif 'job_code'|sort_class:form.initial == "headerSortDown" %}
+        sortList = [[3,0]]
+    {% elif 'job_code'|sort_class:form.initial == "headerSortUp" %}
+        sortList = [[3,1]]
+    {% endif %}
+    {% if actions %}
+        $("#table").tablesorter({
+            cssHeader:"headerSort",
+            sortList:sortList,
+            headers:{
+                0:{sorter:false},
+                5:{sorter:false},
+                6:{sorter:false},
+                7:{sorter:false},
+            }
+        });
+    {% else %}
+        $("#table").tablesorter({
+            cssHeader:"headerSort",
+            sortList:sortList,
+            headers:{
+                4:{sorter:false},
+                5:{sorter:false},
+                6:{sorter:false},
+            }
+        });
+    {% endif %}
 {% endif %}
 
     $("[data-toggle=myCollapse]").click(function( ev ) {

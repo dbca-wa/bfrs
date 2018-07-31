@@ -1,0 +1,24 @@
+{% extends "./base_email.html" %}
+
+{% block email_head %}
+    <h4>{{subject}} </h4>
+{% endblock %}
+
+{% block other_bushfire_detail %}
+    <br>
+    <hr>
+    <strong>The xml payload send to DFES P1CAD web service</strong>
+    <div style="margin-left:20px;padding-left:5px;border-style:solid;border-width:2px;border-color:blue">
+        <code style="white-space:pre">
+            {{payload}}
+        </code>
+    </div>
+    <br>
+    <strong>The response returned from DFES P1CAD web service</strong>
+    <div style="margin-left:20px;padding-left:5px;border-style:solid;border-width:2px;border-color:blue">
+        <code style="white-space:pre">
+            {{response}}
+        </code>
+    </div>
+{% endblock %}
+

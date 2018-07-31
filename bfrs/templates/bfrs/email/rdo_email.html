@@ -4,7 +4,7 @@
 
 {% block email_head %}
 <div>
-RDO Email - {{ "region"|field_value:bushfire|upper }}, {{bushfire.fire_number}}
+RDO Email - {% field_value "region" bushfire is_upper=True %}, {{bushfire.fire_number}}
 </div><br><br>
 {% endblock %}
 

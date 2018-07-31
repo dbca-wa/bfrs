@@ -11,7 +11,16 @@
     <li>{% trans 'Create' %}</li>
   {% else %}
   <li>{% if initial %}{% trans 'Initial' %}{% else %}{% trans 'Final' %}{% endif %}</li>
-	<li>{% if object.report_status == object.STATUS_INVALIDATED %} <font color="red">{{ object.fire_number}} (Invalid)</font>{% else %}{{ object.fire_number }}{% endif %}</li>
+  <li>{% if object.report_status == object.STATUS_INVALIDATED %} 
+        <font color="red">{{ object.fire_number}} (Invalid)</font>
+      {% elif object.report_status == object.STATUS_MERGED %} 
+        <font color="red">{{ object.fire_number}} (Merged)</font>
+      {% elif object.report_status == object.STATUS_DUPLICATED %} 
+        <font color="red">{{ object.fire_number}} (Duplicated)</font>
+      {% else %}
+        {{ object.fire_number }}
+      {% endif %}
+  </li>
   {% endif %}
 </ul>
 {% endblock %}
@@ -36,16 +45,24 @@
 
 <div>
   <div style='float: left;'>
-    {% if object.report_status and object.report_status == object.STATUS_INVALIDATED %}
+    {% if object.report_status and object.report_status >= object.STATUS_INVALIDATED %}
     <h1>Bushfire Detail
       <h2>
-        <font color="red"> Report invalidated on {{object.modified|date:'Y-m-d H:i'}} by {{object.modifier}}</font>
+        <font color="red"> Report 
+            {% if object.report_status == object.STATUS_DUPLICATED %}
+                duplicated
+            {% elif object.report_status == object.STATUS_MERGED %}
+                merged
+            {% else %}
+                invalidated
+            {% endif %}
+            on {{object.modified|date:'Y-m-d H:i'}} by {{object.modifier}}</font>
         (Linked valid bushfire <a href="{% url 'bushfire:bushfire_initial' object.valid_bushfire.id %}">{{object.valid_bushfire.fire_number}}</a>)
       </h2>
     </h1>
-    {% elif action == 'Submit' %}
+    {% elif action == 'submit' %}
       <h1>Confirm action 'Mark Notification Report Submitted'</h1>
-    {% elif action == 'Authorise' %}
+    {% elif action == 'authorise' %}
       <h1>Confirm action 'Mark Final Report Authorised'</h1>
     {% else %}
       <h1>Bushfire Detail</h1>
@@ -56,14 +73,14 @@
   </div>
 </div>
 
-<form action="" method="post">{% csrf_token %}
-
-{{ form.sss_data.as_hidden }}
-{{ form.sss_id.as_hidden }}
 <table class="table table-bordered table-striped table-condensed">
     <tbody>
         <tr>
-          <th colspan="6" style="background: black; color: white; text-align: left; font-size: 16px; padding: 12px;" > BUSHFIRE NOTIFICATION (submit within 30 mins of detection)</th>
+          <th colspan="6" style="background: black; color: white; text-align: left; font-size: 16px; padding: 12px;" > BUSHFIRE NOTIFICATION 
+            {% if  object.report_status == object.STATUS_INITIAL  %}
+            (submit within 30 mins of detection)
+            {% endif %}
+          </th>
         </tr>
 
         <tr>
@@ -86,7 +103,7 @@
             <th class="cbas">P&W Fire no. *</th>
             <td colspan="2" class="cbas">{{snapshot.fire_number}}</td>
 
-            <th class="cbas" style="font-weight:normal;">DFES Incident no.</th>
+            <th class="cbas">DFES Incident no.</th>
             <td colspan="2" class="cbas">{{snapshot.dfes_incident_no}}</td>
         </tr>
 
@@ -96,7 +113,7 @@
                 {{snapshot.fire_position}}<br>{% if snapshot.fire_position_override %} SSS overide - {{snapshot.fire_position_override|yesno:"Yes,No"}} {% endif %}
             </td>
 
-            <th class="cbas" style="font-weight:normal;">Point of origin</th>
+            <th class="cbas">Point of origin</th>
             <td colspan="5" class="cbas">
                 {{snapshot.origin_geo|is_none}} <br>
                 {{snapshot.origin_point_mga}}
@@ -161,10 +178,12 @@
       </h4>
     </div>
     <div id="fire_behaviour" {% if initial %}class="panel-collapse collapse in" {% else %} class="panel-collapse collapse in" {% endif %} role="tabpanel" aria-labelledby="pn_fire_behaviour">
-        {% include "bfrs/final_notification_summary.html" %}
+        {% include "bfrs/inc/final_notification_summary.html" %}
     </div>
   </div>
 </div>
+
+{% include "bfrs/inc/report_timeline.html" %}
 
 
 {% if not action %}
@@ -176,15 +195,13 @@
       {% if final and can_maintain_data %}
           <a id="id_edit_btn" href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Final fire report authorised on {{bushfire.authorised_date|date:'Y-m-d H:i'}} by {{bushfire.authorised_by}}" class="btn btn-primary btn-info">Edit Authorised</a>
       {% endif %}
-      <a id="id_cancel_btn" href="{% url 'main' %}" class="btn btn-primary btn-info">Return</a>
+      <a id="id_cancel_btn" href="{% main_url %}" class="btn btn-primary btn-info">Return</a>
 
       </p>
     </div>
   </div>
 </div>
 {% endif %}
-
-</form>
 
 {% if action %}
 <!-- This section to allow redirect confirmation -->
@@ -195,9 +212,8 @@
       <p class="pull-left">
 
         <input type="hidden" name="bushfire_id" value="{{snapshot.id}}" />
-        <input type="hidden" name="action" value="{{action}}" />
-        <input type="hidden" name="confirm_action" value="yes" />
-        <input type="submit" class="btn" value="{% trans "Yes, I'm sure" %}" />
+        <input type="hidden" name="confirm_action" value="{{action}}" />
+        <button type="submit" class="btn btn-primary btn-success"  name="action" value="confirm"/>{% trans "Yes, I'm sure" %} </button>
            {% comment %}
            <!-- Below line causes an error in the Django Formset -->
         <a href="javascript: history.go(-1)" class="btn btn-danger">Cancel</a>

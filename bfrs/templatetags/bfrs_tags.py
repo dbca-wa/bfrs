@@ -1,7 +1,10 @@
+import json
 from django import template
+from django.core.urlresolvers import reverse
 from bfrs.models import Bushfire, Region, District, current_finyear
 from django.contrib.gis.geos import Point, GEOSGeometry
 from django.conf import settings
+from django.utils.html import mark_safe
 import LatLon
 
 register = template.Library()
@@ -334,36 +337,30 @@ def toggle_sort(column,filters):
         return "order_by={}".format(column)
 
 @register.simple_tag(takes_context=True)
-def _clear_session(context):
+def refresh_gokart(context):
     """
     Usage::
-        {% clear_session %}
-    """
-    request = context['request']
-    if request.session.has_key('refreshGokart'): request.session.pop('refreshGokart')
-    if request.session.has_key('region'): request.session.pop('region')
-    if request.session.has_key('district'): request.session.pop('district')
-    if request.session.has_key('id'): request.session.pop('id')
-    if request.session.has_key('action'): request.session.pop('action')
-    request.session.modified = True
-    #return request
-
-@register.simple_tag(takes_context=True)
-def clear_session(context):
-    """
-    Usage::
-        {% clear_session %}
+        {% refresh_gokart %}
     """
     request = context['request']
     if request.session.has_key('refreshGokart'):
-        request.session.pop('refreshGokart')
-        #request.session.pop('region')
-        #request.session.pop('district')
-        #request.session.pop('id')
-        #request.session.pop('action')
+        gokart = request.session.pop('refreshGokart')
         request.session.modified = True
-        return 'true'
-    return 'false'
+        return mark_safe('gokart.call("open", {0}, {1});'.format(json.dumps(gokart["data"]),gokart["ignoreIfNotOpen"]));
+    else:
+        return ''
+
+@register.simple_tag(takes_context=True)
+def main_url(context):
+    """
+    Usage::
+        {% main_url %}
+    """
+    request = context['request']
+    if request.session.has_key('lastMainUrl'):
+        return mark_safe(request.session.get("lastMainUrl"));
+    else:
+        return reverse('main')
 
 @register.filter(is_safe=False)
 def enum_name(id, arg=None):
@@ -386,6 +383,25 @@ def settings_value(name):
         {% settings_value "LANGUAGE_CODE" %}
     """
     return getattr(settings, name, "")
+
+@register.simple_tag
+def page_background():
+    """
+    Usage:
+        Set a image as html page's background to indicate the runtime environment (dev or uat)
+    """
+    if settings.ENV_TYPE == "PROD":
+        return ""
+    elif settings.ENV_TYPE == "LOCAL":
+        return "background-image:url('/static/img/local.png')"
+    elif settings.ENV_TYPE == "DEV":
+        return "background-image:url('/static/img/dev.png')"
+    elif settings.ENV_TYPE == "UAT":
+        return "background-image:url('/static/img/uat.png')"
+    elif settings.ENV_TYPE == "TEST":
+        return "background-image:url('/static/img/test.png')"
+    else:
+        return "background-image:url('/static/img/dev.png')"
 
 @register.filter
 def test(name):

@@ -1,0 +1,45 @@
+<div class="div_injury_unknown" id="div_injury_unknown">
+    <div id="id_injury" class="row formset injury-formset">
+        <table class="table_fs" border="0">
+            <tbody>
+                <th>Injury Type</th>
+                <th>Number</th>
+                <th></th>
+                {% for injury_form in form.injury_formset %}
+                <tr>
+                   <td>{{ injury_form.injury_type }}</td>
+                   <td>{{ injury_form.number }}</td>
+
+                   <td>
+                        {% if injury_form.instance.pk %}{{ injury_form.DELETE }}{% endif %}
+                        {{ injury_form.id }}
+
+                        {% for field in injury_form %} 
+                          {% if field.errors %}
+                             <font color="red"><li>{{ field.label }}: {{ field.errors|striptags }}</li></font>
+                          {% endif %}
+                        {% endfor %}
+
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{{ form.injury_formset.management_form }}
+
+<script>
+    $('.injury-formset tbody tr').formset({
+        prefix: '{{ injury_formset.prefix }}',
+        formCssClass: 'injury_fs',
+        addText: '<i class="icon-plus"></i> add another injury',
+        deleteText: '<i class="icon-remove"></i>',
+        deleteCssClass: 'delete-row' + '-' + '{{ injury_formset.prefix  }}',
+    });
+
+</script>
+
+
+
+

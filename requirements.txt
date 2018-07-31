@@ -5,7 +5,7 @@ django==1.10.7
 #south
 dj-database-url==0.4.2
 django-confy==1.0.4
-psycopg2==2.6.2
+psycopg2==2.7.5
 https://static.dpaw.wa.gov.au/static/py/dpaw-utils/dist/dpaw-utils-0.3a9.tar.gz
 django-auth-ldap==1.2.0
 django-model-utils==2.0.3
@@ -37,3 +37,6 @@ Fabric==1.12.0
 # sudo apt-get update
 # pip install psycopg2 (from virtual env) (NOT sudo apt-get install python-psycopg2)
 # sudo apt-get install libpq-dev
+
+pyopenssl
+requests-ntlm

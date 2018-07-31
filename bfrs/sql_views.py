@@ -1,4 +1,4 @@
-from bfrs.models import Bushfire
+from bfrs.models import Bushfire,CaptureMethod
 from django.db import connection
 
 def create_bushfirelist_view():
@@ -91,6 +91,12 @@ def create_bushfirelist_view():
          WHEN b.archive THEN 1
          ELSE 0
     END as archive,
+    CASE WHEN b.valid_bushfire_id is null THEN NULL
+         ELSE (SELECT report_status FROM bfrs_bushfire WHERE id = b.valid_bushfire_id)
+    END as linked_bushfire_status,
+    CASE WHEN b.valid_bushfire_id is null THEN NULL
+         ELSE (SELECT fire_number FROM bfrs_bushfire WHERE id = b.valid_bushfire_id)
+    END as linked_bushfire_number,
     b.authorised_by_id,
     b.cause_id,
     b.creator_id,
@@ -105,8 +111,8 @@ def create_bushfirelist_view():
     b.region_id,
     b.tenure_id
     FROM bfrs_bushfire b
-    WHERE b.archive = false AND b.report_status < {};
-    '''.format(Bushfire.STATUS_INVALIDATED))
+    WHERE b.archive = false AND (b.report_status < {0} OR b.report_status = {1});
+    '''.format(Bushfire.STATUS_INVALIDATED,Bushfire.STATUS_MERGED))
 
 def create_bushfire_view():
     """
@@ -170,6 +176,23 @@ def create_bushfire_view():
          WHEN b.dispatch_aerial THEN 'Yes'
          ELSE 'No'
     END as dispatch_aerial,
+    CASE WHEN b.valid_bushfire_id is null THEN NULL
+         ELSE (SELECT 
+            CASE WHEN lb.report_status = 1 THEN 'Initial Fire Report'
+                 WHEN lb.report_status = 2 THEN 'Notifications Submitted'
+                 WHEN lb.report_status = 3 THEN 'Report Authorised'
+                 WHEN lb.report_status = 4 THEN 'Reviewed'
+                 WHEN lb.report_status = 5 THEN 'Invalidated'
+                 WHEN lb.report_status = 6 THEN 'Outstanding Fires'
+                 WHEN lb.report_status = 100 THEN 'Merged Fires'
+                 WHEN lb.report_status = 101 THEN 'Duplicate Fires'
+                 ELSE lb.report_status::text
+            END as report_status
+         FROM bfrs_bushfire lb WHERE lb.id = b.valid_bushfire_id)
+    END as linked_bushfire_status,
+    CASE WHEN b.valid_bushfire_id is null THEN NULL
+         ELSE (SELECT fire_number FROM bfrs_bushfire WHERE id = b.valid_bushfire_id)
+    END as linked_bushfire_number,
     to_char(b.dispatch_pw_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI:SS') as dispatch_pw_date,
     to_char(b.dispatch_aerial_date at time zone 'Australia/Perth','DD/MM/YYYY HH24:MI:SS') as dispatch_aerial_date,
     to_char(b.fire_detected_date at time zone 'Australia/Perth','DD/MM/YYYY') as fire_detected_date,
@@ -208,6 +231,8 @@ def create_bushfire_view():
          WHEN b.report_status = 4 THEN 'Reviewed'
          WHEN b.report_status = 5 THEN 'Invalidated'
          WHEN b.report_status = 6 THEN 'Outstanding Fires'
+         WHEN b.report_status = 100 THEN 'Merged Fires'
+         WHEN b.report_status = 101 THEN 'Duplicate Fires'
          ELSE b.report_status::text
     END as report_status,
     CASE WHEN b.archive IS NULL THEN ''
@@ -228,8 +253,8 @@ def create_bushfire_view():
     (SELECT name AS region FROM bfrs_region WHERE id = b.region_id),
     (SELECT name AS tenure FROM bfrs_tenure WHERE id = b.tenure_id)
     FROM bfrs_bushfire b
-    WHERE b.archive = false AND b.report_status < {};
-    '''.format(Bushfire.STATUS_INVALIDATED))
+    WHERE b.archive = false AND (b.report_status < {0} OR b.report_status = {1});
+    '''.format(Bushfire.STATUS_INVALIDATED,Bushfire.STATUS_MERGED))
 
 def create_final_fireboundary_view():
     """
@@ -331,12 +356,21 @@ def create_final_fireboundary_view():
          WHEN b.report_status = 4 THEN 'Reviewed'
          WHEN b.report_status = 5 THEN 'Invalidated'
          WHEN b.report_status = 6 THEN 'Outstanding Fires'
+         WHEN b.report_status = 100 THEN 'Merged Fires'
+         WHEN b.report_status = 101 THEN 'Duplicate Fires'
          ELSE b.report_status::text
     END as report_status,
     CASE WHEN b.archive IS NULL THEN ''
          WHEN b.archive THEN 'Yes'
          ELSE 'No'
     END as archive,
+    CASE WHEN m.code IS NULL THEN ''
+         ELSE m.code
+    END as capt_meth,
+    CASE WHEN m.code IS NULL THEN ''
+         WHEN m.code = '{2}' THEN b.other_capturemethod
+         ELSE m.desc
+    END as capt_desc,
     (SELECT username AS authorised_by FROM auth_user WHERE id = b.authorised_by_id),
     (SELECT name AS cause FROM bfrs_cause WHERE id = b.cause_id),
     (SELECT username AS creator FROM auth_user WHERE id = b.creator_id),
@@ -351,9 +385,9 @@ def create_final_fireboundary_view():
     (SELECT name AS region FROM bfrs_region WHERE id = b.region_id),
     (SELECT name AS tenure FROM bfrs_tenure WHERE id = b.tenure_id),
     (SELECT username AS fireboundary_uploaded_by FROM auth_user WHERE id = b.fireboundary_uploaded_by_id)
-    FROM bfrs_bushfire b
-    WHERE b.archive = false AND b.report_status >= {} AND b.report_status < {};
-    '''.format(Bushfire.STATUS_INITIAL_AUTHORISED, Bushfire.STATUS_INVALIDATED))
+    FROM bfrs_bushfire b LEFT JOIN bfrs_capturemethod m on b.capturemethod_id = m.id
+    WHERE b.archive = false AND b.report_status >= {0} AND b.report_status < {1};
+    '''.format(Bushfire.STATUS_INITIAL_AUTHORISED, Bushfire.STATUS_INVALIDATED,CaptureMethod.OTHER_CODE))
 
 def create_fireboundary_view():
     """
@@ -455,12 +489,21 @@ def create_fireboundary_view():
          WHEN b.report_status = 4 THEN 'Reviewed'
          WHEN b.report_status = 5 THEN 'Invalidated'
          WHEN b.report_status = 6 THEN 'Outstanding Fires'
+         WHEN b.report_status = 100 THEN 'Merged Fires'
+         WHEN b.report_status = 101 THEN 'Duplicate Fires'
          ELSE b.report_status::text
     END as report_status,
     CASE WHEN b.archive IS NULL THEN ''
          WHEN b.archive THEN 'Yes'
          ELSE 'No'
     END as archive,
+    CASE WHEN m.code IS NULL THEN ''
+         ELSE m.code
+    END as capt_meth,
+    CASE WHEN m.code IS NULL THEN ''
+         WHEN m.code = '{1}' THEN b.other_capturemethod
+         ELSE m.desc
+    END as capt_desc,
     (SELECT username AS authorised_by FROM auth_user WHERE id = b.authorised_by_id),
     (SELECT name AS cause FROM bfrs_cause WHERE id = b.cause_id),
     (SELECT username AS creator FROM auth_user WHERE id = b.creator_id),
@@ -475,9 +518,9 @@ def create_fireboundary_view():
     (SELECT name AS region FROM bfrs_region WHERE id = b.region_id),
     (SELECT name AS tenure FROM bfrs_tenure WHERE id = b.tenure_id),
     (SELECT username AS fireboundary_uploaded_by FROM auth_user WHERE id = b.fireboundary_uploaded_by_id)
-    FROM bfrs_bushfire b
-    WHERE b.archive = false AND b.report_status < {};
-    '''.format(Bushfire.STATUS_INVALIDATED))
+    FROM bfrs_bushfire b LEFT JOIN bfrs_capturemethod m on b.capturemethod_id = m.id
+    WHERE b.archive = false AND b.report_status < {0};
+    '''.format(Bushfire.STATUS_INVALIDATED,CaptureMethod.OTHER_CODE))
 
 def create_all_views():
     create_bushfirelist_view()

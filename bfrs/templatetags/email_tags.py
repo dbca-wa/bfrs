@@ -1,17 +1,23 @@
 import datetime
+import LatLon
 from dateutil import tz
 
 from django.contrib.auth.models import User
 from django import template
-from bfrs.models import Bushfire
 from django.conf import settings
+from django.utils.safestring import mark_safe
+
+from bfrs.models import Bushfire
+from bfrs import utils
 
 register = template.Library()
 
 
 @register.inclusion_tag('bfrs/email/bushfire_details.html',takes_context=True)
-def bushfire_details(context,*args):
-    context["bushfire_fields"]=args
+def bushfire_details(context,bushfire,*fields):
+    context["bushfire_fields"]=fields
+    context["cur_bushfire"] = bushfire
+
     return context
 
 @register.simple_tag(takes_context=True)
@@ -50,13 +56,50 @@ def field_label(field_name, bushfire=None):
         return value
 
 
-@register.filter(is_safe=False)
-def field_value(field_name, bushfire=None):
+@register.simple_tag()
+def field_value(field_name, bushfire=None, request=None, url_type="auto",is_upper=None):
     """
     Return the value of model field to dispay in the email
     """
     if bushfire:
         try:
+            if field_name == "origin_point_geo":
+                return bushfire.origin_geo
+            elif field_name == "region":
+                if is_upper == True:
+                    return bushfire.region.name.upper()
+                else:
+                    return bushfire.region.name
+            elif field_name == "district":
+                if is_upper == True:
+                    return bushfire.district.name.upper()
+                else:
+                    return bushfire.district.name
+            elif field_name == "fire_number":
+                if request:
+                    return mark_safe("<a href='{}'>{}</a>".format(utils.get_bushfire_url(request,bushfire,url_type),bushfire.fire_number))
+                else:
+                    return bushfire.fire_number
+            elif field_name == "url_link":
+                return mark_safe("<a href='{0}'>{0}</a>".format(utils.get_bushfire_url(request,bushfire,url_type)))
+            elif field_name == "url":
+                return utils.get_bushfire_url(request,bushfire,url_type)
+            elif field_name == "report_status":
+                return bushfire.report_status_name
+            elif field_name == "latitude_degree":
+                return LatLon.Latitude(bushfire.origin_point.get_y()).degree
+            elif field_name == "latitude_minute":
+                return LatLon.Latitude(bushfire.origin_point.get_y()).minute
+            elif field_name == "latitude_second":
+                return LatLon.Latitude(bushfire.origin_point.get_y()).second
+            elif field_name == "longitude_degree":
+                return LatLon.Longitude(bushfire.origin_point.get_x()).degree
+            elif field_name == "longitude_minute":
+                return LatLon.Longitude(bushfire.origin_point.get_x()).minute
+            elif field_name == "longitude_second":
+                return LatLon.Longitude(bushfire.origin_point.get_x()).second
+                
+
             value = getattr(bushfire, FIELD_MAPPING.get(field_name) or field_name)
             if field_name == "dfes_incident_no":
                 return value or "Not available"
@@ -66,12 +109,6 @@ def field_value(field_name, bushfire=None):
                 return "Yes" if value else "No"
             elif field_name == "dispatch_pw":
                 return "Yes" if value == 1 else "No"
-            elif field_name == "origin_point_geo":
-                return bushfire.origin_geo
-            elif field_name == "region":
-                return bushfire.region.name
-            elif field_name == "district":
-                return bushfire.district.name
             elif isinstance(value,datetime.datetime):
                 return value.astimezone(tz.gettz(settings.TIME_ZONE)).strftime('%Y-%m-%d %H:%M')
             else:

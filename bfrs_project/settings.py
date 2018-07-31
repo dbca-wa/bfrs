@@ -28,6 +28,12 @@ MEDIA_URL = '/media/'
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880 * 4 # 5.0MB * 4
 
+P1CAD_ENDPOINT = env('P1CAD_ENDPOINT') or None
+P1CAD_USER = env('P1CAD_USER') or None
+P1CAD_PASSWORD = env('P1CAD_PASSWORD') or None
+P1CAD_SSL_VERIFY = True if env('P1CAD_SSL_VERIFY',True) else False
+P1CAD_NOTIFY_EMAIL = env('P1CAD_NOTIFY_EMAIL') or None
+
 EMAIL_HOST = env('EMAIL_HOST', 'email.host')
 EMAIL_PORT = env('EMAIL_PORT', 25)
 FROM_EMAIL = env('FROM_EMAIL', 'from_email')
@@ -39,12 +45,13 @@ DFES_EMAIL = env('DFES_EMAIL') or None
 FSSDRS_EMAIL = env('FSSDRS_EMAIL') or None
 EMAIL_TO_SMS_FROMADDRESS = env('EMAIL_TO_SMS_FROMADDRESS') or None
 SMS_POSTFIX = env('SMS_POSTFIX', 'sms_postfix')
-MEDIA_ALERT_SMS_TOADDRESS_MAP = env('MEDIA_ALERT_SMS_TOADDRESS_MAP', 'pica_sms_to')
+MEDIA_ALERT_SMS_TOADDRESS_MAP = env('MEDIA_ALERT_SMS_TOADDRESS_MAP') or None
 ALLOW_EMAIL_NOTIFICATION = (os.environ.get('ALLOW_EMAIL_NOTIFICATION') or 'false').lower() in ["true", "on", "1", "debug","yes"]
 EMAIL_EXCLUSIONS = env('EMAIL_EXCLUSIONS', [])
 CC_EMAIL = env('CC_EMAIL') or None
 BCC_EMAIL = env('BCC_EMAIL') or None
 SUPPORT_EMAIL = env('SUPPORT_EMAIL') or None
+MERGE_BUSHFIRE_EMAIL = env('MERGE_BUSHFIRE_EMAIL') or None
 
 INTERNAL_EMAIL = env('INTERNAL_EMAIL',['dbca.wa.gov.au','dpaw.wa.gov.au'])
 SSS_URL = env('SSS_URL', 'sss_redirect_url')

@@ -4,24 +4,55 @@
     <head>
     </head>
     <body>
+
+    {% if send_failed %}
+        <div style="font-weight:bold;color:red">
+            Failed to send the email
+        </div>
+        <br>
+        <br>
+        <p style="white-space:pre;width:100%">
+        ---------- Forwarded message ----------
+        From:{{original_from_email}}
+        To:{{original_to_email}}
+        Cc:{{original_cc_email}}
+        Bcc:{{original_bcc_email}}
+        Date:{{send_date}}
+        Subject:{{original_subject}}
+        </p>
+        <br>
+    {% endif %}
+
     {% block email_head %}
     {% endblock %}
 
     {% block bushfire_head %}
-        <div>Initial Bushfire has been submitted and is located at <a href="{{urls.initial_snapshot}}">{{urls.initial_snapshot}}</a></div><br>
+        <div>Initial Bushfire has been submitted and is located at {% field_value "url_link" bushfire request "initial_snapshot" %} </div><br>
     {% endblock %}
 
     {% block bushfire_detail %}
-        {% bushfire_details 'region' 'district' 'year' 'name' 'fire_detected_date' 'fire_number' 'dfes_incident_no' 'fire_position' 'origin_point_geo' 'origin_point_mga' 'tenure' 'duty_officer' 'dispatch_pw' 'dispatch_pw_date' 'dispatch_aerial' 'dispatch_aerial_date' 'initial_control' 'initial_area' 'prob_fire_level' 'investigation_req' 'media_alert_req' 'park_trail_impacted' 'other_info'  %}
+        {% bushfire_details bushfire 'fire_number' 'report_status' 'region' 'district' 'year' 'name' 'fire_detected_date' 'dfes_incident_no' 'fire_position' 'origin_point_geo' 'origin_point_mga' 'tenure' 'duty_officer' 'dispatch_pw' 'dispatch_pw_date' 'dispatch_aerial' 'dispatch_aerial_date' 'initial_control' 'initial_area' 'prob_fire_level' 'investigation_req' 'media_alert_req' 'park_trail_impacted' 'other_info'  %}
+        {% if related_bushfires %}
+            {% if title_4_related_bushfires %}
+            <br>
+            <br>
+            <div >{{ title_4_related_bushfires }} </div>
+            {% endif %}
+            {% for bf in related_bushfires %}
+                <br>
+                <br>
+                {% bushfire_details bf 'fire_number' 'report_status' 'region' 'district' 'year' 'name' 'fire_detected_date' 'dfes_incident_no' 'fire_position' 'origin_point_geo' 'origin_point_mga' 'tenure' 'duty_officer' 'dispatch_pw' 'dispatch_pw_date' 'dispatch_aerial' 'dispatch_aerial_date' 'initial_control' 'initial_area' 'prob_fire_level' 'investigation_req' 'media_alert_req' 'park_trail_impacted' 'other_info'  %}
+            {% endfor %}
+        {% endif  %}
     {% endblock %}
 
     {% block other_bushfire_detail %}
     {% endblock %}
 
     {% block bushfire_footer %}
-    {% if urls.final and not bushfire.dfes_incident_no %}
+    {% if bushfire.report_status >= bushfire.STATUS_INITIAL_AUTHORISED  and not bushfire.dfes_incident_no %}
         <br>
-        <div>DFES incident number not available, please check the bushfire reporting system for updates to the DFES incident number <a href="{{urls.final}}">{{bushfire.fire_number}}</a></div>   
+        <div>DFES incident number not available, please check the bushfire reporting system for updates to the DFES incident number {% field_value "fire_number" bushfire request "final" %} </div>   
     {% endif %}
     {% endblock %}
 
