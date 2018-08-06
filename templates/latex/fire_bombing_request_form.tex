@@ -1,0 +1,126 @@
+\documentclass[10pt,a4paper,final]{report}
+\usepackage[a4paper,margin=1cm]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{array}
+\usepackage{graphicx}
+\pagenumbering{gobble}
+
+\newlength\mylength
+\setlength\mylength{\dimexpr.5\columnwidth\tabcolsep-0.5\arrayrulewidth\relax}
+\setlength{\tabcolsep}{0.2cm}
+\renewcommand{\arraystretch}{2}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}m{#1}}
+
+\graphicspath{ {./images/} }
+\DeclareGraphicsExtensions{.png,.jpg}
+
+\begin{document}
+
+\vspace*{\fill}
+
+\hfill
+\begin{tabular}[t]{@{}c} 
+  {\huge \textbf{OPERATIONS AIR DESK}}
+\end{tabular}`
+\hfill% move it to the right
+\begin{tabular}[t]{l@{}}
+   \textbf{A D F 0 1}
+\end{tabular}
+
+\begin{table}[ht]
+\begin{tabular}{|m{8cm} m{5cm}|C{5cm}|}
+\hline
+\multicolumn{3}{|c|}{\LARGE \textbf{FIRE BOMBING REQUEST FORM}}              \\
+\hline
+\textbf{1.PHONE:} State Operations Air Desk of Request - & \textit{Primary contact} & \textbf{(08) 9414 7970} \\
+\hline
+\hfill & \textit{Secondary contact} & \textbf{(08) 9395 9651} \\
+\hline
+\multicolumn{2}{|l|}{\textbf{2.FAX:} Fire Bombing Request Form ADF01 to}  & \textbf{(08) 9414 7859} \\
+\hline 
+\end{tabular}
+\end{table}
+
+
+
+\begin{table}[ht]
+\vspace{-0.1em}
+\begin{tabular}{|m{2cm}|m{6.8cm}|m{2cm}|m{6.8cm}|}
+\hline
+DATE & {{date}} & TIME & {{time}} \\
+\hline
+\end{tabular}
+
+\vspace{-0.1em}
+\begin{tabular}{|m{9.2cm}|m{5cm}|C{1.7cm}|C{1.7cm}|}
+REQUESTING OFFICER / AGENCY & {{officer}} & DFES & DPaW \\
+\hline
+CONTROLLING AGENCY & LGA & DFES & DPaW \\
+\hline
+\end{tabular}
+
+\vspace{-0.2em}
+
+\begin{tabular}{|m{9.2cm}|p{9.23cm}|}
+FIRE NAME/INCIDENT NUMBER & {{fire name}} / {{incident number}} \\
+\hline
+GROUND CONTROLLER / CALL SIGN & {{controller}} /{{call sign}} \\
+\hline
+FIRE BOMBING RADIO CHANNEL & {{radio channel}} \\
+\hline
+LOCATION OF FIRE - map reference & {{location}} \\
+\hline
+FLIGHT HAZARDS (IF KNOWN) & {{location}} \\
+\hline
+INDICATE ACTIVATION CRITERIA &  
+\begin{tabular}{@{}l@{}}
+\includegraphics[width=10pt]{checkbox} Public Safety at Risk \\ 
+\includegraphics[width=10pt]{checkbox} Fire Crews in Imminent Danger \\
+\includegraphics[width=10pt]{checkbox} Assets at Imminent Risk \\
+\includegraphics[width=10pt]{checkbox} Known high fuel loads and likelihood of excessive ROS \\
+\hspace{10pt} and/or extreme fire danger \\
+\end{tabular} \\
+\hline
+PREFERRED RESOURCE &  
+\includegraphics[width=10pt]{checkbox} Fixed Wing \hspace{10pt}
+\includegraphics[width=10pt]{checkbox} Helitak   \hspace{10pt}
+\includegraphics[width=10pt]{checkbox} Both \\
+\hline
+SAR ARRANGEMENTS & {{sar arrangements}} \\
+\hline
+\end{tabular}
+
+\end{table}
+
+
+\begin{table}[ht]
+\begin{tabular}{|C{8cm}|C{5cm}|C{5cm}|}
+\hline
+\multicolumn{3}{|l|}{\textbf{SOAD USE ONLY}}              \\
+\hline
+Air Desk Officer & Time Received & Action Taken \\
+\hline
+{{desk officer}} & {{time received}} & {{action taken}} \\
+\hline
+\end{tabular}
+\end{table}
+
+\vspace{1cm}
+
+\begin{center}
+\textbf {Uncontrolled when printed }
+\end{center}
+
+\vspace*{\fill}
+
+\end{document}
+
+
+
+
+
+
+
