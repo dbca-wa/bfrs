@@ -207,9 +207,11 @@ class CompoundBoundField(BoundField):
         html_layout,field_names = self.field.get_layout(self)
         html = super(CompoundBoundField,self).as_widget(widget,attrs,only_initial)
         if field_names:
-            return safestring.SafeText(html_layout.format(html,*[f.as_widget(only_initial=only_initial) for f in self.related_fields if f.name in field_names]))
+            args = [f.as_widget(only_initial=only_initial) for f in self.related_fields if f.name in field_names]
+            args.append(self.auto_id)
+            return safestring.SafeText(html_layout.format(html,*args))
         elif html_layout:
-            return safestring.SafeText(html_layout.format(html))
+            return safestring.SafeText(html_layout.format(html,self.auto_id))
         else:
             return html
 
