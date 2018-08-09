@@ -323,3 +323,29 @@ class SelectableSelect(forms.Select):
         </script>
         """.format(html,html_id))
 
+def ChoiceFieldRendererFactory(outer_html = None,inner_html = None,layout = None):
+    """
+    layout: none, horizontal,vertical
+    outer_html: used if layout is None
+    inner_html:used in layout is None
+    """
+    global widget_class_id
+
+    if layout == "vertical":
+        return forms.widgets.ChoiceFieldRenderer
+
+    if layout == "horizontal":
+        outer_html = '<ul{id_attr} style="padding:0px;margin:0px">{content}</ul>'
+        inner_html = '<li style="list-style-type:none;padding:0px 15px 0px 0px;display:inline;">{choice_value}{sub_widgets}</li>'
+
+    renderer_class = forms.widgets.CheckboxFieldRenderer
+
+    key = hashlib.md5("ChoiceFieldRenderer<{}.{}{}{}>".format(renderer_class.__module__,renderer_class.__name__,outer_html,inner_html)).hexdigest()
+    cls = widget_classes.get(key)
+    if not cls:
+        widget_class_id += 1
+        class_name = "{}_{}".format(renderer_class.__name__,widget_class_id)
+        cls = type(class_name,(renderer_class,),{"outer_html":outer_html,"inner_html":inner_html})
+        widget_classes[key] = cls
+    return cls
+
