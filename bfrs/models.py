@@ -226,7 +226,6 @@ class District(models.Model):
     def __str__(self):
         return self.name
 
-
 class BushfireBase(Audit,DictMixin):
     STATUS_INITIAL                = 1
     STATUS_INITIAL_AUTHORISED     = 2
@@ -286,6 +285,11 @@ class BushfireBase(Audit,DictMixin):
         (IGNITION_POINT_PRIVATE, 'Private'),
         (IGNITION_POINT_CROWN, 'Crown'),
     )
+
+    FIRE_BOMBING_RESOURCES = [
+        (1,"Fixed Wing"),
+        (2,"Helitak"),
+    ]
 
     # Common Fields
     region = models.ForeignKey(Region, verbose_name="Region")
@@ -382,6 +386,7 @@ class BushfireBase(Audit,DictMixin):
     capturemethod = models.ForeignKey(CaptureMethod,editable=True,null=True,blank=True)
     other_capturemethod = models.CharField(verbose_name="Other Capture Methdod", max_length=128, editable=True, null=True, blank=True)
 
+    fire_bombing_req = models.NullBooleanField(verbose_name="Fire Bombing Required", null=True)
     class Meta:
         abstract = True
 
@@ -493,6 +498,35 @@ class BushfireBase(Audit,DictMixin):
 
         return 'Lat/Lon ' + lat_str + ', ' + lon_str
 
+    @property
+    def origin_latex(self):
+        if not self.origin_point:
+            return ""
+
+        c=self.origin_latlon
+        latlon = c.to_string('d% %m% %S% %H')
+        lat = latlon[0].split(' ')
+        lon = latlon[1].split(' ')
+
+        # need to format float number (seconds) to 1 dp
+        lon[2] = str(round(eval(lon[2]), 1))
+        lat[2] = str(round(eval(lat[2]), 1))
+
+        # Degrees Minutes Seconds Hemisphere
+        lat_str = lat[0] + u'$^\circ$ ' + lat[1].zfill(2) + '\' ' + lat[2].zfill(4) + '\" ' + lat[3]
+        lon_str = lon[0] + u'$^\circ$ ' + lon[1].zfill(2) + '\' ' + lon[2].zfill(4) + '\" ' + lon[3]
+
+        return 'Lat/Lon ' + lat_str + ', ' + lon_str
+
+    @property
+    def initial_control_value(self):
+        if not self.initial_control:
+            return ""
+        elif self.initial_control == Agency.OTHER:
+            return self.other_initial_control
+        else:
+            return self.initial_control.name
+
 
 class BushfireSnapshot(BushfireBase):
 
@@ -503,6 +537,22 @@ class BushfireSnapshot(BushfireBase):
     action = models.CharField(verbose_name="Action Type", max_length=50)
     bushfire = models.ForeignKey('Bushfire', related_name='snapshots')
 
+    @property
+    def fire_bombing(self):
+        if not hasattr(self,"_fire_bombing"):
+            try:
+                fire_bombing = BushfirePropertySnapshot.objects.get(snapshot=self,name="fire_bombing").value
+                if fire_bombing is None:
+                    fire_bombing = {}
+                else:
+                    fire_bombing = json.loads(fire_bombing)
+            except BushfirePropertySnapshot.DoesNotExist:
+                fire_bombing = {}
+
+            self._fire_bombing = fire_bombing
+
+        return self._fire_bombing
+
     def __str__(self):
         return ', '.join([self.fire_number, self.get_snapshot_type_display()])
 
@@ -511,6 +561,38 @@ class Bushfire(BushfireBase):
 
     fire_number = models.CharField(max_length=15, verbose_name="Fire Number", unique=True)
     sss_id = models.CharField(verbose_name="Unique SSS ID", max_length=64, null=True, blank=True, unique=True)
+
+    @property
+    def fire_bombing(self):
+        if not hasattr(self,"_fire_bombing"):
+            try:
+                fire_bombing = BushfireProperty.objects.get(bushfire=self,name="fire_bombing").value
+                if fire_bombing is None:
+                    fire_bombing = {}
+                else:
+                    fire_bombing = json.loads(fire_bombing)
+            except BushfireProperty.DoesNotExist:
+                fire_bombing = {}
+
+            self._fire_bombing = fire_bombing
+
+        return self._fire_bombing
+
+    def save_properties(self,update_fields = None):
+        if not update_fields:
+            return
+        if any([field.startswith("fire_bombing.") for field in update_fields]):
+            #save fire_bombing
+            if not self.fire_bombing_req:
+                #fire bombing not required
+                BushfireProperty.objects.filter(bushfire=self,name="fire_bombing").delete()
+                return
+
+            #initialize fire bombing data
+            if not self.fire_bombing.get("sar_arrangements"):
+                self.fire_bombing["sar_arrangements"] = "Default SAR state air desk"
+
+            BushfireProperty.objects.update_or_create(bushfire=self,name="fire_bombing",defaults={"value":json.dumps(self.fire_bombing)})
 
     def user_unicode_patch(self):
         """ overwrite the User model's __unicode__() method """
@@ -697,7 +779,7 @@ class AreaBurntSnapshot(AreaBurntBase, Audit):
     snapshot = models.ForeignKey(BushfireSnapshot, related_name='tenures_burnt_snapshot')
 
     class Meta:
-        unique_together = ('tenure', 'snapshot', 'snapshot_type',)
+        unique_together = ('tenure', 'snapshot')
 
 
 @python_2_unicode_compatible
@@ -724,7 +806,7 @@ class InjurySnapshot(InjuryBase, Audit):
     snapshot = models.ForeignKey(BushfireSnapshot, related_name='injury_snapshot')
 
     class Meta:
-        unique_together = ('injury_type', 'snapshot', 'snapshot_type',)
+        unique_together = ('injury_type', 'snapshot')
 
 
 class DamageBase(models.Model):
@@ -750,7 +832,7 @@ class DamageSnapshot(DamageBase, Audit):
     snapshot = models.ForeignKey(BushfireSnapshot, related_name='damage_snapshot')
 
     class Meta:
-        unique_together = ('damage_type', 'snapshot', 'snapshot_type',)
+        unique_together = ('damage_type', 'snapshot')
 
 
 class BushfirePropertyBase(models.Model):
@@ -785,7 +867,7 @@ class BushfirePropertySnapshot(BushfirePropertyBase):
     snapshot = models.ForeignKey(BushfireSnapshot, related_name='properties_snapshot')
 
     class Meta:
-        unique_together = ('snapshot', 'snapshot_type','name')
+        unique_together = ('snapshot','name')
 
 reversion.register(Bushfire, follow=['tenures_burnt', 'injuries', 'damages'])
 reversion.register(Profile)

@@ -173,6 +173,18 @@ class BushfireFilterForm(forms.ModelForm):
         fields = ('region', 'district')
         model = Bushfire
 
+def coerce_YESNO(value):
+    if value is None:
+        return None
+    if isinstance(value,basestring):
+        return value == "True"
+    return value
+
+def coerce_int(value):
+    if value is None:
+        return None
+    return int(value)
+
 class BaseBushfireViewForm(baseforms.ModelForm):
     submit_actions = None
     injury_formset = None
@@ -195,14 +207,14 @@ class BaseBushfireViewForm(baseforms.ModelForm):
         exclude = ('fb_validation_req','init_authorised_date','authorised_date','reviewed_date',
                     'archive','authorised_by','init_authorised_by','reviewed_by','valid_bushfire','fireboundary_uploaded_by',
                     'fireboundary_uploaded_date','capturemethod','other_capturemethod',"sss_data","sss_id")
-        other_fields = ("report_status",)
+        other_fields = ("report_status","fire_bombing.ground_controller.username","fire_bombing.ground_controller.callsign","fire_bombing.radio_channel","fire_bombing.sar_arrangements","fire_bombing.prefered_resources","fire_bombing.flight_hazards")
         labels = {
         }
         field_classes = {
             "__all__":forms.fields.CharField,
-            "dispatch_pw":basefields.SwitchFieldFactory(Bushfire,"dispatch_pw",("dispatch_pw_date",),field_class=basefields.ChoiceFieldFactory(Bushfire.DISPATCH_PW_CHOICES,choice_class=forms.TypedChoiceField),true_value=1),
-            "dispatch_aerial":basefields.SwitchFieldFactory(Bushfire,"dispatch_aerial",("dispatch_aerial_date",),field_class=basefields.ChoiceFieldFactory(YESNO_CHOICES)),
-            "arson_squad_notified":basefields.SwitchFieldFactory(Bushfire,"arson_squad_notified",("offence_no",),policy=basefields.ALWAYS,on_layout="{0}<br>Police offence no: {1}",field_class=basefields.ChoiceFieldFactory(YESNO_CHOICES)),
+            "dispatch_pw":basefields.SwitchFieldFactory(Bushfire,"dispatch_pw",("dispatch_pw_date",),field_class=basefields.ChoiceFieldFactory(Bushfire.DISPATCH_PW_CHOICES),true_value=1,field_params={"coerce":coerce_int}),
+            "dispatch_aerial":basefields.SwitchFieldFactory(Bushfire,"dispatch_aerial",("dispatch_aerial_date",),field_class=basefields.ChoiceFieldFactory(YESNO_CHOICES),field_params={"coerce":coerce_YESNO}),
+            "arson_squad_notified":basefields.SwitchFieldFactory(Bushfire,"arson_squad_notified",("offence_no",),policy=basefields.ALWAYS,on_layout="{0}<br>Police offence no: {1}",field_class=basefields.ChoiceFieldFactory(YESNO_CHOICES),field_params={"coerce":coerce_YESNO}),
             "initial_area":basefields.CompoundFieldFactory(fields.InitialAreaField,Bushfire,"initial_area"),
             "initial_control":basefields.OtherOptionFieldFactory(Bushfire,"initial_control",("other_initial_control",),other_option=Agency.OTHER),
             "first_attack":basefields.OtherOptionFieldFactory(Bushfire,"first_attack",("other_first_attack",),other_option=Agency.OTHER),
@@ -213,14 +225,40 @@ class BaseBushfireViewForm(baseforms.ModelForm):
             "cause":basefields.CompoundFieldFactory(fields.FireCauseField,Bushfire,"cause"),
             "area":basefields.CompoundFieldFactory(fields.FinalAreaField,Bushfire,"area"),
             "fire_position":basefields.CompoundFieldFactory(fields.FirePositionField,Bushfire,"fire_position"),
-            "investigation_req":basefields.ChoiceFieldFactory(YESNO_CHOICES),
-            "media_alert_req":basefields.ChoiceFieldFactory(YESNO_CHOICES),
-            "park_trail_impacted":basefields.ChoiceFieldFactory(YESNO_CHOICES),
-            "prob_fire_level":basefields.ChoiceFieldFactory(Bushfire.FIRE_LEVEL_CHOICES,choice_class=forms.TypedChoiceField),
-            "report_status":basefields.ChoiceFieldFactory(Bushfire.REPORT_STATUS_CHOICES,choice_class=forms.TypedChoiceField),
-            "other_tenure":basefields.ChoiceFieldFactory(Bushfire.IGNITION_POINT_CHOICES,choice_class=forms.TypedChoiceField),
-            "reporting_year":basefields.ChoiceFieldFactory(REPORTING_YEAR_CHOICES,choice_class=forms.TypedChoiceField),
-        
+            "investigation_req":basefields.ChoiceFieldFactory(YESNO_CHOICES,field_params={"coerce":coerce_YESNO}),
+            "media_alert_req":basefields.ChoiceFieldFactory(YESNO_CHOICES,field_params={"coerce":coerce_YESNO}),
+            "park_trail_impacted":basefields.ChoiceFieldFactory(YESNO_CHOICES,field_params={"coerce":coerce_YESNO}),
+            "prob_fire_level":basefields.ChoiceFieldFactory(Bushfire.FIRE_LEVEL_CHOICES,field_params={"coerce":coerce_int}),
+            "report_status":basefields.ChoiceFieldFactory(Bushfire.REPORT_STATUS_CHOICES,field_params={"coerce":coerce_int}),
+            "other_tenure":basefields.ChoiceFieldFactory(Bushfire.IGNITION_POINT_CHOICES,field_params={"coerce":coerce_int}),
+            "reporting_year":basefields.ChoiceFieldFactory(REPORTING_YEAR_CHOICES,field_params={"coerce":coerce_int}),
+            "fire_bombing_req":basefields.SwitchFieldFactory(Bushfire,"fire_bombing_req",("fire_bombing.ground_controller.username","fire_bombing.ground_controller.callsign","fire_bombing.radio_channel","fire_bombing.sar_arrangements","fire_bombing.prefered_resources","fire_bombing.flight_hazards"),field_class=basefields.ChoiceFieldFactory(YESNO_CHOICES),
+                edit_layout="""{0}<div id='id_{7}_body'>
+                <table style="width:90%">
+                    <tr>
+                        <th style="vertical-align:middle;width:120px;padding:5px">Ground Controller</th>
+                        <td style="text-align:left;padding:5px">{1}</td>
+                        <th style="vertical-align:middle;width:120px;padding:5px">Call Sign</th>
+                        <td style="text-align:left;padding:5px">{2}</td>
+                    </tr>
+                    <tr>
+                        <th style="vertical-align:middle;width:120px;padding:5px">Radio Channel</th>
+                        <td style="text-align:left;padding:5px">{3}</td>
+                        <th style="vertical-align:middle;width:120px;padding:5px">Prefered Resource</th>
+                        <td style="text-align:left;padding:5px">{5}</td>
+                    </tr>
+                    <tr>
+                        <th style="vertical-align:middle;width:120px;padding:5px">Flight Hazards</th>
+                        <td style="text-align:left;padding:5px" colspan="3">{6}</td>
+                    </tr>
+                    <tr>
+                        <th style="vertical-align:middle;width:120px;padding:5px">SAR Arrangements</th>
+                        <td style="text-align:left;padding:5px" colspan="3">{4}</td>
+                    </tr>
+                </table></div>
+                """,
+                field_params={"coerce":coerce_YESNO}),
+            "fire_bombing.prefered_resources":basefields.ChoiceFieldFactory(Bushfire.FIRE_BOMBING_RESOURCES,choice_class=forms.TypedMultipleChoiceField,field_params={"coerce":coerce_int}),
         }
         widgets = {
             "__all__": basewidgets.TextDisplay(),
@@ -318,22 +356,22 @@ class BaseBushfireEditForm(BushfireViewForm):
                 self.instance.modifier = self.request.user
 
         for name in ('prob_fire_level','max_fire_level','investigation_req','cause_state','media_alert_req','park_trail_impacted','job_code','fire_detected_date','dispatch_pw_date','dispatch_aerial_date','fire_contained_date','fire_controlled_date','fire_safe_date','initial_control','first_attack','final_control'):
-            if self.is_editable(name) and not cleaned_data.get(name):
+            if self.is_editable(name) and (cleaned_data.get(name) is None or cleaned_data.get(name) == ""):
                 cleaned_data[name] = None
 
         if self.is_editable('dispatch_pw'):
-            if self.intvalue(cleaned_data,'dispatch_pw',Bushfire.DISPATCH_PW_NO) == Bushfire.DISPATCH_PW_NO:
+            if cleaned_data.get('dispatch_pw') != Bushfire.DISPATCH_PW_YES:
                 cleaned_data["dispatch_pw_date"] = None
 
         if self.is_editable('dispatch_aerial'):
-            if not self.boolvalue(cleaned_data,'dispatch_aerial'):
+            if not cleaned_data.get('dispatch_aerial'):
                 cleaned_data["dispatch_aerial_date"] = None
 
         if self.is_editable('initial_area'):
             if self.instance.report_status != Bushfire.STATUS_INITIAL or self.instance.fire_boundary:
                 #submitted report or has fire boundary, can't edit initial area
                 cleaned_data['initial_area'] = self.instance.initial_area
-            elif self.boolvalue(cleaned_data,'initial_area_unknown'):
+            elif cleaned_data.get('initial_area_unknown'):
                 cleaned_data['initial_area'] = None
 
         if self.is_editable('dfes_incident_no'):
@@ -346,7 +384,7 @@ class BaseBushfireEditForm(BushfireViewForm):
                     self.add_error('dfes_incident_no', 'Must be six or eight digital numbers')
  
         if self.is_editable('fire_position'):
-            if not self.boolvalue(cleaned_data,'fire_position_override'):
+            if not cleaned_data.get('fire_position_override'):
                 cleaned_data["fire_position"] = self.instance.fire_position if self.instance else None
 
         if self.is_editable('job_code'):
@@ -362,14 +400,12 @@ class BaseBushfireEditForm(BushfireViewForm):
             if 'tenure' in cleaned_data:
                 if cleaned_data['tenure'] !=Tenure.OTHER:
                     cleaned_data["other_tenure"] = None
-                else:
-                    self.intvalue(cleaned_data,"other_tenure")
             else:
                 cleaned_data['tenure'] = None
                 cleaned_data["other_tenure"] = None
 
         if self.is_editable('reporting_year'):
-            reporting_year = self.intvalue(cleaned_data,'reporting_year')
+            reporting_year = cleaned_data.get('reporting_year')
             if reporting_year is not None and reporting_year < self.instance.year:
                 self.add_error('reporting_year', 'Cannot be before report financial year, {}/{}.'.format(self.instance.year, self.instance.year + 1))
 
@@ -385,7 +421,7 @@ class BaseBushfireEditForm(BushfireViewForm):
                 cleaned_data['other_field_officer_agency'] = None
                 cleaned_data['other_field_officer_phone'] = None
         
-        if self.is_editable('fire_not_found') and self.boolvalue(cleaned_data,'fire_not_found',False):
+        if self.is_editable('fire_not_found') and cleaned_data.get('fire_not_found',False):
             cleaned_data['max_fire_level'] = None
             cleaned_data['arson_squad_notified'] = None
             cleaned_data['fire_contained_date'] = None
@@ -419,13 +455,11 @@ class BaseBushfireEditForm(BushfireViewForm):
                     #have fire boundary, area and area limit is not editable
                     cleaned_data['area'] = self.instance.area
                     cleaned_data['area_limit'] = False
-                elif self.boolvalue(cleaned_data,'area_limit'):
-                    self.floatvalue(cleaned_data,'area')
-                else:
+                elif not cleaned_data.get('area_limit'):
                     cleaned_data['area'] = None
 
             if self.is_editable('arson_squad_notified'):
-                if not self.boolvalue(cleaned_data,'arson_squad_notified'):
+                if not cleaned_data.get('arson_squad_notified'):
                     cleaned_data["offence_no"] = None
 
             if self.is_editable('fire_monitored_only'):
@@ -507,7 +541,7 @@ class MergedBushfireForm(BaseBushfireEditForm):
         extra_update_fields = ('modified','modifier')
         field_classes = {
             "__all__":forms.fields.CharField,
-            "cause_state":basefields.ChoiceFieldFactory(Bushfire.CAUSE_STATE_CHOICES,choice_class=forms.TypedChoiceField),
+            "cause_state":basefields.ChoiceFieldFactory(Bushfire.CAUSE_STATE_CHOICES),
         }
         widgets = {
             "arson_squad_notified":forms.RadioSelect(renderer=HorizontalRadioRenderer),
@@ -537,7 +571,7 @@ class SubmittedBushfireForm(MergedBushfireForm):
         extra_update_fields = ('modified','modifier')
         field_classes = {
             "__all__":forms.fields.CharField,
-            "max_fire_level":basefields.ChoiceFieldFactory(Bushfire.FIRE_LEVEL_CHOICES,choice_class=forms.TypedChoiceField),
+            "max_fire_level":basefields.ChoiceFieldFactory(Bushfire.FIRE_LEVEL_CHOICES,field_params={"coerce":coerce_int}),
             "fire_not_found":basefields.SwitchFieldFactory(Bushfire,"fire_not_found",("invalid_details",),true_value=True),
         }
         widgets = {
@@ -643,7 +677,14 @@ class InitialBushfireForm(SubmittedBushfireForm):
             #"tenure":None,
             #"other_tenure":forms.RadioSelect(renderer=HorizontalRadioRenderer),
             "media_alert_req":basewidgets.SwitchWidgetFactory(forms.RadioSelect,true_value=True,html="<span>call PICA on 9219 9999</span>")(renderer=HorizontalRadioRenderer),
+            "fire_bombing_req":forms.RadioSelect(renderer=HorizontalRadioRenderer),
             "park_trail_impacted":basewidgets.SwitchWidgetFactory(forms.RadioSelect,true_value=True,html="<span>PVS will be notified by email</span>")(renderer=HorizontalRadioRenderer),
+            "fire_bombing.ground_controller.username":forms.TextInput(attrs={"style":"width:100%;"}),
+            "fire_bombing.ground_controller.callsign":forms.TextInput(attrs={"style":"width:100%;"}),
+            "fire_bombing.radio_channel":forms.TextInput(attrs={"style":"width:100%;"}),
+            "fire_bombing.sar_arrangements":forms.TextInput(attrs={"style":"width:100%;"}),
+            "fire_bombing.prefered_resources":forms.CheckboxSelectMultiple(renderer = basewidgets.ChoiceFieldRendererFactory(layout="horizontal")),
+            "fire_bombing.flight_hazards":forms.TextInput(attrs={"style":"width:100%;"}),
         }
 
 class InitialBushfireFSSGForm(InitialBushfireForm):
@@ -660,7 +701,7 @@ class BushfireCreateForm(InitialBushfireForm):
     def __init__(self,*args,**kwargs):
         super(BushfireCreateForm,self).__init__(*args,**kwargs)
         self.plantations = None
-        if "sss_data" not in self.initial:
+        if not self.initial.get("sss_data") or not isinstance(self.initial.get("sss_data"),basestring):
             return
         self.is_bound = False
         sss = json.loads(self.initial['sss_data'])
