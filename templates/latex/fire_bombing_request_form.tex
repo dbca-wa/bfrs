@@ -65,7 +65,7 @@ FIRE NAME & {{bushfire.name}} \\
 DFES INCIDENT NUMBER & {{bushfire.dfes_incident_no}} \\
 
 \hline
-GROUND CONTROLLER / CALL SIGN & {{bushfire.fire_bombing.ground_controller}} /{{bushfire.fire_bombing.ground_controller_call_sign}} \\
+GROUND CONTROLLER / CALL SIGN & {{bushfire.fire_bombing.ground_controller.username}} /{{bushfire.fire_bombing.ground_controller.callsign}} \\
 
 \hline
 FIRE BOMBING RADIO CHANNEL & {{bushfire.fire_bombing.radio_channel}} \\
@@ -85,10 +85,10 @@ FLIGHT HAZARDS (IF KNOWN) & {{bushfire.fire_bombing.flight_hazards}} \\
 
 \hline
 PREFERRED RESOURCE &  
-    {% for resource in bushfire.fire_bombing.resources %}{% if resource.0 in bushfire.fire_bombing.prefered_resources %}\includegraphics[width=10pt]{{lb}}{{graphic_folder}}/checkbox_checked.png} {{resource.1}} \hspace{10pt} {% else %}\includegraphics[width=10pt]{{lb}}{{graphic_folder}}/checkbox.png} {{resource.1}} \hspace{10pt} {% endif %} {% endfor %} \\
+    {% for resource in bushfire.FIRE_BOMBING_RESOURCES %}{% if resource.0 in bushfire.fire_bombing.prefered_resources %}\includegraphics[width=10pt]{{lb}}{{graphic_folder}}/checkbox_checked.png} {{resource.1}} \hspace{10pt} {% else %}\includegraphics[width=10pt]{{lb}}{{graphic_folder}}/checkbox.png} {{resource.1}} \hspace{10pt} {% endif %} {% endfor %} \\
 
 \hline
-SAR ARRANGEMENTS & {{bushfire.fire_boming.sar_arrangements}} \\
+SAR ARRANGEMENTS & {{bushfire.fire_bombing.sar_arrangements}} \\
 
 \hline
 \end{tabular}
