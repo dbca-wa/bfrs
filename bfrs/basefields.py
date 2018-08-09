@@ -6,6 +6,9 @@ from django.db import models
 
 from . import basewidgets
 
+class_id = 0
+field_classes = {}
+
 def hide_field(field):
     if field.widget.attrs:
         if field.widget.attrs.get("style"): 
@@ -16,8 +19,24 @@ def hide_field(field):
     else:
         field.widget.attrs = {"style":"display:none","disabled":True}
 
+class _JSONEncoder(json.JSONEncoder):
+    def default(self,obj):
+        if isinstance(obj,models.Model):
+            return obj.pk
+        elif callable(obj) or isinstance(obj,staticmethod):
+            return id(obj)
+        return json.JSONEncoder.default(self,obj)
 
-class CompoundField(object):
+class FieldParametersMixin(object):
+    field_params = None
+
+    def __init__(self,*args,**kwargs):
+        if self.field_params:
+            for k,v in self.field_params.iteritems():
+                kwargs[k] = v
+        super(FieldParametersMixin,self).__init__(*args,**kwargs)
+
+class CompoundField(FieldParametersMixin):
     field_name = None
     related_field_names = []
     field_mixin = None
@@ -38,17 +57,6 @@ class CompoundField(object):
     def _edit_layout(self,f):
         raise Exception("Not implemented")
 
-class _JSONEncoder(json.JSONEncoder):
-    def default(self,obj):
-        if isinstance(obj,models.Model):
-            return obj.pk
-        elif callable(obj) or isinstance(obj,staticmethod):
-            return id(obj)
-        return json.JSONEncoder.default(self,obj)
-
-class_id = 0
-class_id = 0
-compound_classes = {}
 def CompoundFieldFactory(compoundfield_class,model,field_name,related_field_names=None,field_class=None,**kwargs):
     global class_id
 
@@ -60,14 +68,14 @@ def CompoundFieldFactory(compoundfield_class,model,field_name,related_field_name
 
     hidden_layout="{}" * (len(related_field_names) + 1)
     field_class = field_class or model._meta.get_field(field_name).formfield().__class__
-    class_key = md5.new("{}.{}.{}{}{}".format(compoundfield_class.__name__,field_class.__module__,field_class.__name__,json.dumps(related_field_names),json.dumps(kwargs,cls=_JSONEncoder))).hexdigest()
-    if class_key not in compound_classes:
+    class_key = md5.new("CompoundField<{}.{}.{}{}{}{}>".format(compoundfield_class.__name__,field_class.__module__,field_class.__name__,field_name,json.dumps(related_field_names),json.dumps(kwargs,cls=_JSONEncoder))).hexdigest()
+    if class_key not in field_classes:
         class_id += 1
         class_name = "{}_{}".format(field_class.__name__,class_id)
         kwargs.update({"field_name":field_name,"related_field_names":related_field_names,"hidden_layout":hidden_layout})
-        compound_classes[class_key] = type(class_name,(compoundfield_class,field_class),kwargs)
-        #print("{}.{}={}".format(field_name,compound_classes[class_key],compound_classes[class_key].get_layout))
-    return compound_classes[class_key]
+        field_classes[class_key] = type(class_name,(compoundfield_class,field_class),kwargs)
+        #print("{}.{}={}".format(field_name,field_classes[class_key],field_classes[class_key].get_layout))
+    return field_classes[class_key]
 
 def SwitchFieldFactory(model,field_name,related_field_names,field_class=None,**kwargs):
     return CompoundFieldFactory(SwitchField,model,field_name,related_field_names,field_class,**kwargs)
@@ -75,7 +83,6 @@ def SwitchFieldFactory(model,field_name,related_field_names,field_class=None,**k
 def OtherOptionFieldFactory(model,field_name,related_field_names,field_class=None,**kwargs):
     return CompoundFieldFactory(OtherOptionField,model,field_name,related_field_names,field_class,**kwargs)
 
-choices_classes = {}
 class ChoiceFieldMixin(object):
     def __init__(self,*args,**kwargs):
         kwargs["choices"] = self.CHOICES
@@ -83,14 +90,14 @@ class ChoiceFieldMixin(object):
             del kwargs["min_value"]
         super(ChoiceFieldMixin,self).__init__(*args,**kwargs)
 
-def ChoiceFieldFactory(choices,choice_class=forms.ChoiceField):
+def ChoiceFieldFactory(choices,choice_class=forms.TypedChoiceField,field_params=None):
     global class_id
-    class_key = md5.new("{}".format(json.dumps(choices))).hexdigest()
-    if class_key not in choices_classes:
+    class_key = md5.new("ChoiceField<{}.{}{}{}>".format(choice_class.__module__,choice_class.__name__,json.dumps(choices),json.dumps(field_params,cls=_JSONEncoder))).hexdigest()
+    if class_key not in field_classes:
         class_id += 1
         class_name = "{}_{}".format(choice_class.__name__,class_id)
-        choices_classes[class_key] = type(class_name,(ChoiceFieldMixin,choice_class),{"CHOICES":choices})
-    return choices_classes[class_key]
+        field_classes[class_key] = type(class_name,(FieldParametersMixin,ChoiceFieldMixin,choice_class),{"CHOICES":choices,"field_params":field_params})
+    return field_classes[class_key]
 
 
 NOT_NONE=1
