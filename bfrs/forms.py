@@ -232,7 +232,32 @@ class BaseBushfireViewForm(baseforms.ModelForm):
             "report_status":basefields.ChoiceFieldFactory(Bushfire.REPORT_STATUS_CHOICES,field_params={"coerce":coerce_int}),
             "other_tenure":basefields.ChoiceFieldFactory(Bushfire.IGNITION_POINT_CHOICES,field_params={"coerce":coerce_int}),
             "reporting_year":basefields.ChoiceFieldFactory(REPORTING_YEAR_CHOICES,field_params={"coerce":coerce_int}),
-            "fire_bombing_req":basefields.SwitchFieldFactory(Bushfire,"fire_bombing_req",("fire_bombing.ground_controller.username","fire_bombing.ground_controller.callsign","fire_bombing.radio_channel","fire_bombing.sar_arrangements","fire_bombing.prefered_resources","fire_bombing.flight_hazards"),field_class=basefields.ChoiceFieldFactory(YESNO_CHOICES),
+            "fire_bombing_req":basefields.SwitchFieldFactory(Bushfire,"fire_bombing_req",("fire_bombing.ground_controller.username","fire_bombing.ground_controller.callsign","fire_bombing.radio_channel","fire_bombing.sar_arrangements","fire_bombing.prefered_resources","fire_bombing.flight_hazards"),field_class=basefields.ChoiceFieldFactory(YESNO_CHOICES),policy=basefields.ALWAYS,
+                off_layout="""No""",
+                on_layout="""Yes<div id='id_{7}_body'>
+                <table style="width:90%">
+                    <tr>
+                        <th style="vertical-align:middle;width:120px;padding:5px">Ground Controller</th>
+                        <td style="text-align:left;padding:5px;width:30%">{1}</td>
+                        <th style="vertical-align:middle;width:120px;padding:5px">Call Sign</th>
+                        <td style="text-align:left;padding:5px">{2}</td>
+                    </tr>
+                    <tr>
+                        <th style="vertical-align:middle;padding:5px">Radio Channel</th>
+                        <td style="text-align:left;padding:5px">{3}</td>
+                        <th style="vertical-align:middle;width:120px;padding:5px">Prefered Resource</th>
+                        <td style="text-align:left;padding:5px">{5}</td>
+                    </tr>
+                    <tr>
+                        <th style="vertical-align:middle;padding:5px">Flight Hazards</th>
+                        <td style="text-align:left;padding:5px" colspan="3">{6}</td>
+                    </tr>
+                    <tr>
+                        <th style="vertical-align:middle;padding:5px">SAR Arrangements</th>
+                        <td style="text-align:left;padding:5px" colspan="3">{4}</td>
+                    </tr>
+                </table></div>
+                """,
                 edit_layout="""{0}<div id='id_{7}_body'>
                 <table style="width:90%">
                     <tr>
@@ -242,17 +267,17 @@ class BaseBushfireViewForm(baseforms.ModelForm):
                         <td style="text-align:left;padding:5px">{2}</td>
                     </tr>
                     <tr>
-                        <th style="vertical-align:middle;width:120px;padding:5px">Radio Channel</th>
+                        <th style="vertical-align:middle;padding:5px">Radio Channel</th>
                         <td style="text-align:left;padding:5px">{3}</td>
-                        <th style="vertical-align:middle;width:120px;padding:5px">Prefered Resource</th>
+                        <th style="vertical-align:middle;padding:5px">Prefered Resource</th>
                         <td style="text-align:left;padding:5px">{5}</td>
                     </tr>
                     <tr>
-                        <th style="vertical-align:middle;width:120px;padding:5px">Flight Hazards</th>
+                        <th style="vertical-align:middle;padding:5px">Flight Hazards</th>
                         <td style="text-align:left;padding:5px" colspan="3">{6}</td>
                     </tr>
                     <tr>
-                        <th style="vertical-align:middle;width:120px;padding:5px">SAR Arrangements</th>
+                        <th style="vertical-align:middle;padding:5px">SAR Arrangements</th>
                         <td style="text-align:left;padding:5px" colspan="3">{4}</td>
                     </tr>
                 </table></div>
@@ -286,6 +311,7 @@ class BaseBushfireViewForm(baseforms.ModelForm):
             "dispatch_pw":basewidgets.BooleanDisplay(),
             "dispatch_aerial":basewidgets.BooleanDisplay(),
             "report_status":basewidgets.ChoiceWidgetFactory("reportstatus",Bushfire.REPORT_STATUS_CHOICES)(),
+            "fire_bombing.prefered_resources":forms.CheckboxSelectMultiple(renderer = basewidgets.ChoiceFieldRendererFactory(layout="horizontal"),attrs={"disabled":True}),
         }
 
 
