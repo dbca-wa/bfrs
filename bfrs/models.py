@@ -17,55 +17,6 @@ import reversion
 
 from bfrs.base import Audit,DictMixin
 
-SUBMIT_MANDATORY_FIELDS= [
-    'region', 'district', 'year', 'fire_number', 'name', 'fire_detected_date', 'prob_fire_level',
-    'dispatch_pw', 'dispatch_aerial', 'investigation_req', 'park_trail_impacted', 'media_alert_req',
-    'duty_officer', 'initial_control',
-]
-SUBMIT_MANDATORY_DEP_FIELDS= {
-    'dispatch_pw': [[1, 'dispatch_pw_date']], # if 'dispatch_pw' == 1 then 'dispatch_pw_date' is required
-    'dispatch_aerial': [['True', 'dispatch_aerial_date']],
-    'initial_control': [['OTHER', 'other_initial_control']],
-    'tenure': [['Other', 'other_tenure']],
-}
-SUBMIT_MANDATORY_FORMSETS= [
-]
-
-AUTH_MANDATORY_FIELDS= [
-    'area',
-    'cause_state', 'cause',
-    'fire_contained_date', 'fire_controlled_date',
-    'fire_safe_date',
-    'final_control',
-    'max_fire_level', 'arson_squad_notified', 'job_code',
-    'dfes_incident_no',
-]
-
-AUTH_MANDATORY_FIELDS_FIRE_NOT_FOUND= [
-    'duty_officer',
-]
-AUTH_MANDATORY_DEP_FIELDS_FIRE_NOT_FOUND= {
-    'dispatch_pw': [[1, 'field_officer'], [1, 'dispatch_pw_date']], # if 'dispatch_pw' == '1' then 'field_officer' is required
-    'dispatch_aerial': [['True', 'dispatch_aerial_date']],
-    'field_officer': [['other', 'other_field_officer'], ['other', 'other_field_officer_agency']], # username='other'
-}
-
-AUTH_MANDATORY_DEP_FIELDS= {
-    'dispatch_pw': [[1, 'field_officer'], [1, 'dispatch_pw_date']], # if 'dispatch_pw' == '1' then 'field_officer' is required
-    'dispatch_aerial': [['True', 'dispatch_aerial_date']],
-    'fire_monitored_only': [[False, 'first_attack']],
-
-    'cause': [['Other (specify)', 'other_cause'], ['Escape P&W burning', 'prescribed_burn_id']],
-    'first_attack': [['OTHER', 'other_first_attack']],
-    'final_control': [['OTHER', 'other_final_control']],
-    'area_limit': [[True, 'area']],
-    'field_officer': [['other', 'other_field_officer'], ['other', 'other_field_officer_agency']], # username='other'
-}
-AUTH_MANDATORY_FORMSETS= [
-    #'fire_behaviour',
-    'damages',
-    'injuries',
-]
 
 SNAPSHOT_INITIAL = 1
 SNAPSHOT_FINAL = 2
@@ -93,6 +44,25 @@ def reporting_years():
         return [[None, None]]
         #return [[2016, '2016/2017'], [2017, '2017/2018']]
 
+def get_field(obj,field):
+    if "." in field:
+        field = field.split(".")
+        result = getattr(obj,field[0]) if hasattr(obj,field[0]) else None
+        if not result:
+            return None
+        for f in field[1:]:
+            if not result:
+                return None
+            elif isinstance(result,dict):
+                result = result.get(f)
+            elif isinstance(result,(list,tuple)):
+                result = result[int(f)] if int(f) < len(result) else None
+            else:
+                result = getattr(result,f) if hasattr(result,f) else None
+        return result
+    else:
+        return getattr(obj,field) if hasattr(obj,field) else None
+
 def check_mandatory_fields(obj, fields, dep_fields, formsets):
     """
     Method to check all required fields have been fileds before allowing Submit/Authorise of report.
@@ -106,7 +76,26 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
     dep_field - dependent fields (if one field has a value, check that the other has been filled)
     formsets  - fields in formsets
     """
-    missing = [Bushfire._meta.get_field(field).verbose_name for field in fields if getattr(obj, field) is None or getattr(obj, field)=='']
+    missing = []
+    for field in fields:
+        if isinstance(field,tuple):
+            #field label is provided
+            field_label = field[1]
+            field = field[0]
+        else:
+            field_label = None
+
+        value = get_field(obj,field)
+        if value is None or value=='':
+            if field_label:
+                missing.append(field_label)
+            else:
+                try:
+                    missing.append(Bushfire._meta.get_field(field).verbose_name)
+                except:
+                    missing.append(field)
+            
+
 
     if obj.fire_not_found and obj.is_init_authorised:
         # no need to check these
@@ -117,15 +106,25 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
         for dep_set in dep_sets:
             # next line checks for normal Field or Enumerated list field (i.e. '.name')
             try:
-                if hasattr(obj, field) and (
-                   getattr(obj, field)==dep_set[0] or \
-                   (hasattr(getattr(obj, field), 'name') and getattr(obj, field).name==dep_set[0]) or \
-                   (hasattr(getattr(obj, field), 'username') and getattr(obj, field).username==dep_set[0]) \
-                ):
-                    if getattr(obj, dep_set[1]) is None or (isinstance(getattr(obj, dep_set[1]), (str, unicode)) and not getattr(obj, dep_set[1]).strip()):
-                        # field is unset or empty string
-                        verbose_name = Bushfire._meta.get_field(dep_set[1]).verbose_name
-                        missing.append(verbose_name)
+                if hasattr(obj, field) and getattr(obj, field)==dep_set[0]:
+                    for dep in dep_set[1:]:
+                        if isinstance(dep,tuple):
+                            #field label is provided
+                            dep_label = dep[1]
+                            dep = dep[0]
+                        else:
+                            dep_label = None
+
+                        value = get_field(obj,dep)
+                        if value is None or (isinstance(value, (str, unicode)) and not value.strip()) or (isinstance(value,(list,tuple)) and not value):
+                            # field is unset or empty string
+                            if dep_label:
+                                missing.append(dep_label)
+                            else:
+                                try:
+                                    missing.append(Bushfire._meta.get_field(dep).verbose_name)
+                                except:
+                                    missing.append(dep)
             except:
                 pass
 
@@ -868,6 +867,61 @@ class BushfirePropertySnapshot(BushfirePropertyBase):
 
     class Meta:
         unique_together = ('snapshot','name')
+
+
+
+SUBMIT_MANDATORY_FIELDS= [
+    'region', 'district', 'year', 'fire_number', 'name', 'fire_detected_date', 'prob_fire_level',
+    'dispatch_pw', 'dispatch_aerial', 'investigation_req', 'park_trail_impacted', 'media_alert_req',
+    'duty_officer', 'initial_control','fire_bombing_req'
+]
+SUBMIT_MANDATORY_DEP_FIELDS= {
+    'dispatch_pw': [[1, 'dispatch_pw_date']], # if 'dispatch_pw' == 1 then 'dispatch_pw_date' is required
+    'dispatch_aerial': [[True, 'dispatch_aerial_date']],
+    'initial_control': [[Agency.OTHER, 'other_initial_control']],
+    'tenure': [[Tenure.OTHER, 'other_tenure']],
+    'fire_bombing_req':[[True,("fire_bombing.ground_controller.username","Ground Controller"),("fire_bombing.ground_controller.callsign","Ground Controller Call Sign"),("fire_bombing.radio_channel","Radio Channel"),("fire_bombing.prefered_resources","Prefered Resource")]]
+}
+SUBMIT_MANDATORY_FORMSETS= [
+]
+
+AUTH_MANDATORY_FIELDS= [
+    'area',
+    'cause_state', 'cause',
+    'fire_contained_date', 'fire_controlled_date',
+    'fire_safe_date',
+    'final_control',
+    'max_fire_level', 'arson_squad_notified', 'job_code',
+    'dfes_incident_no',"fire_bombing_req"
+]
+
+AUTH_MANDATORY_FIELDS_FIRE_NOT_FOUND= [
+    'duty_officer',
+]
+AUTH_MANDATORY_DEP_FIELDS_FIRE_NOT_FOUND= {
+    'dispatch_pw': [[1, 'field_officer', 'dispatch_pw_date']], # if 'dispatch_pw' == '1' then 'field_officer' is required
+    'dispatch_aerial': [[True, 'dispatch_aerial_date']],
+    'field_officer': [[User.OTHER, 'other_field_officer','other_field_officer_agency']], # username='other'
+    'fire_bombing_req':[[True,("fire_bombing.ground_controller.username","Ground Controller"),("fire_bombing.ground_controller.callsign","Ground Controller Call Sign"),("fire_bombing.radio_channel","Radio Channel"),("fire_bombing.prefered_resources","Prefered Resource")]]
+}
+
+AUTH_MANDATORY_DEP_FIELDS= {
+    'dispatch_pw': [[1, 'field_officer', 'dispatch_pw_date']], # if 'dispatch_pw' == '1' then 'field_officer' is required
+    'dispatch_aerial': [[True, 'dispatch_aerial_date']],
+    'fire_monitored_only': [[False, 'first_attack']],
+
+    'cause': [[Cause.OTHER, 'other_cause'], [Cause.ESCAPE_DPAW_BURNING, 'prescribed_burn_id']],
+    'first_attack': [[Agency.OTHER, 'other_first_attack']],
+    'final_control': [[Agency.OTHER, 'other_final_control']],
+    'area_limit': [[True, 'area']],
+    'field_officer': [[User.OTHER, 'other_field_officer', 'other_field_officer_agency']], # username='other'
+    'fire_bombing_req':[[True,("fire_bombing.ground_controller.username","Ground Controller"),("fire_bombing.ground_controller.callsign","Ground Controller Call Sign"),("fire_bombing.radio_channel","Radio Channel"),("fire_bombing.prefered_resources","Prefered Resource")]]
+}
+AUTH_MANDATORY_FORMSETS= [
+    #'fire_behaviour',
+    'damages',
+    'injuries',
+]
 
 reversion.register(Bushfire, follow=['tenures_burnt', 'injuries', 'damages'])
 reversion.register(Profile)
