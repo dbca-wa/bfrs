@@ -1,4 +1,6 @@
 import LatLon
+import tempfile
+import subprocess
 
 from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
@@ -1430,5 +1432,19 @@ def dms_coordinate(point):
     return 'Lat/Lon ' + lat_str + ', ' + lon_str
 
     
+
+
+def generate_pdf(tex_template_file,context):
+    tex_doc = render_to_string(tex_template_file,context=context)
+    tex_doc = tex_doc.encode('utf-8')
+
+    foldername = tempfile.mkdtemp()
+    tex_filename = os.path.join(foldername,"{}.tex".format(os.path.splitext(os.path.basename(tex_template_file))[0]))
+    pdf_filename = os.path.join(foldername,"{}.pdf".format(os.path.splitext(os.path.basename(tex_template_file))[0]))
+    with open(tex_filename,"wb") as tex_file:
+        tex_file.write(tex_doc)
+    cmd = ['latexmk', '-cd', '-f', '-silent','-auxdir={}'.format(foldername),'-outdir={}'.format(foldername), '-pdf', tex_filename]
+    subprocess.call(cmd)
+    return (foldername,pdf_filename)
 
 
