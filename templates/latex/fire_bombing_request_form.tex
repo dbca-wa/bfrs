@@ -42,7 +42,7 @@
 \hline
 \multicolumn{4}{|c|}{\LARGE \textbf{FIRE BOMBING REQUEST FORM}}              \\
 \hline
-DATE & {{bushfire.init_authorised_date|date:"Y-m-d"}} & TIME & {{bushfire.init_authorised_date|date:"H:i:s"}} \\
+\textbf{DATE} & {{bushfire.init_authorised_date|date:"Y-m-d"}} & \textbf{TIME} & {{bushfire.init_authorised_date|date:"H:i:s"}} \\
 \hline
 \end{tabular} 
 
@@ -50,45 +50,45 @@ DATE & {{bushfire.init_authorised_date|date:"Y-m-d"}} & TIME & {{bushfire.init_a
 
 \begin{tabular}{|m{9.2cm}|p{9.2cm}|}
 
-REQUESTING OFFICER / AGENCY & {{bushfire.duty_officer}} / DBCA \\
+\textbf{REQUESTING OFFICER / AGENCY} & {{bushfire.duty_officer}} / DBCA \\
 
 \hline
-CONTROLLING AGENCY & {{bushfire.initial_control_value | latex:'&'}} \\
+\textbf{CONTROLLING AGENCY} & {{bushfire.initial_control_value | latex:'&'}} \\
 
 \hline
-FIRE NUMBER & {{bushfire.fire_number}}  \\
+\textbf{FIRE NUMBER} & {{bushfire.fire_number}}  \\
 
 \hline
-FIRE NAME & {{bushfire.name}} \\
+\textbf{FIRE NAME} & {{bushfire.name}} \\
 
 \hline
-DFES INCIDENT NUMBER & {{bushfire.dfes_incident_no}} \\
+\textbf{DFES INCIDENT NUMBER} & {{bushfire.dfes_incident_no}} \\
 
 \hline
-GROUND CONTROLLER / CALL SIGN & {{bushfire.fire_bombing.ground_controller.username}} /{{bushfire.fire_bombing.ground_controller.callsign}} \\
+\textbf{GROUND CONTROLLER / CALL SIGN} & {{bushfire.fire_bombing.ground_controller.username}} /{{bushfire.fire_bombing.ground_controller.callsign}} \\
 
 \hline
-FIRE BOMBING RADIO CHANNEL & {{bushfire.fire_bombing.radio_channel}} \\
+\textbf{FIRE BOMBING RADIO CHANNEL} & {{bushfire.fire_bombing.radio_channel}} \\
 
 \hline
-LOCATION OF FIRE  & {{bushfire.fire_position}} \\
+\textbf{LOCATION OF FIRE}  & {{bushfire.fire_position}} \\
 
 \hline
-POINT OF ORIGIN  & 
+\textbf{POINT OF ORIGIN}  & 
 \begin{tabular}{@{}l@{}}
 {{bushfire.origin_geo|latex:'°'}} \\
 {{bushfire.origin_point_mga}} \\
 \end{tabular} \\
 
 \hline
-FLIGHT HAZARDS (IF KNOWN) & {{bushfire.fire_bombing.flight_hazards}} \\
+\textbf{FLIGHT HAZARDS (IF KNOWN)} & {{bushfire.fire_bombing.flight_hazards}} \\
 
 \hline
-PREFERRED RESOURCE &  
+\textbf{PREFERRED RESOURCE} &  
     {% for resource in bushfire.FIRE_BOMBING_RESOURCES %}{% if resource.0 in bushfire.fire_bombing.prefered_resources %}\includegraphics[width=10pt]{{lb}}{{graphic_folder}}/checkbox_checked.png} {{resource.1}} \hspace{10pt} {% else %}\includegraphics[width=10pt]{{lb}}{{graphic_folder}}/checkbox.png} {{resource.1}} \hspace{10pt} {% endif %} {% endfor %} \\
 
 \hline
-SAR ARRANGEMENTS & {{bushfire.fire_bombing.sar_arrangements}} \\
+\textbf{SAR ARRANGEMENTS} & {{bushfire.fire_bombing.sar_arrangements}} \\
 
 \hline
 \end{tabular}
@@ -99,7 +99,7 @@ SAR ARRANGEMENTS & {{bushfire.fire_bombing.sar_arrangements}} \\
 \hline
 \multicolumn{3}{|l|}{\textbf{SOAD USE ONLY}}              \\
 \hline
-Air Desk Officer & Time Received & Action Taken \\
+\textbf{Air Desk Officer} & \textbf{Time Received} & \textbf{Action Taken} \\
 \hline
  & &  \\
 \hline
@@ -109,7 +109,7 @@ Air Desk Officer & Time Received & Action Taken \\
 \vspace{0.5cm}
 
 \begin{center}
-\textbf {\large Uncontrolled when printed }
+\textbf {\large \textbf{Uncontrolled when printed} }
 \end{center}
 
 \vspace*{\fill}
