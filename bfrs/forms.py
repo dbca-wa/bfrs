@@ -237,15 +237,15 @@ class BaseBushfireViewForm(baseforms.ModelForm):
                 on_layout="""Yes<div id='id_{7}_body'>
                 <table style="width:90%">
                     <tr>
-                        <th style="vertical-align:middle;width:120px;padding:5px">Ground controller</th>
+                        <th style="vertical-align:middle;width:120px;padding:5px">Ground controller *</th>
                         <td style="text-align:left;padding:5px;width:30%">{1}</td>
-                        <th style="vertical-align:middle;width:120px;padding:5px">Call sign</th>
+                        <th style="vertical-align:middle;width:120px;padding:5px">Call sign *</th>
                         <td style="text-align:left;padding:5px">{2}</td>
                     </tr>
                     <tr>
-                        <th style="vertical-align:middle;padding:5px">Radio channel</th>
+                        <th style="vertical-align:middle;padding:5px">Radio channel *</th>
                         <td style="text-align:left;padding:5px">{3}</td>
-                        <th style="vertical-align:middle;width:120px;padding:5px">Prefered resource</th>
+                        <th style="vertical-align:middle;width:120px;padding:5px">Prefered resource *</th>
                         <td style="text-align:left;padding:5px">{5}</td>
                     </tr>
                     <tr>
@@ -261,15 +261,15 @@ class BaseBushfireViewForm(baseforms.ModelForm):
                 edit_layout="""{0}<div id='id_{7}_body'>
                 <table style="width:90%">
                     <tr>
-                        <th style="vertical-align:middle;width:120px;padding:5px">Ground controller</th>
+                        <th style="vertical-align:middle;width:120px;padding:5px">Ground controller *</th>
                         <td style="text-align:left;padding:5px">{1}</td>
-                        <th style="vertical-align:middle;width:120px;padding:5px">Call sign</th>
+                        <th style="vertical-align:middle;width:120px;padding:5px">Call sign *</th>
                         <td style="text-align:left;padding:5px">{2}</td>
                     </tr>
                     <tr>
-                        <th style="vertical-align:middle;padding:5px">Radio channel</th>
+                        <th style="vertical-align:middle;padding:5px">Radio channel *</th>
                         <td style="text-align:left;padding:5px">{3}</td>
-                        <th style="vertical-align:middle;padding:5px">Prefered resource</th>
+                        <th style="vertical-align:middle;padding:5px">Prefered resource *</th>
                         <td style="text-align:left;padding:5px">{5}</td>
                     </tr>
                     <tr>
