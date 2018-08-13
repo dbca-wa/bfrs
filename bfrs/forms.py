@@ -174,14 +174,14 @@ class BushfireFilterForm(forms.ModelForm):
         model = Bushfire
 
 def coerce_YESNO(value):
-    if value is None:
+    if value is None or value == '':
         return None
     if isinstance(value,basestring):
         return value == "True"
     return value
 
 def coerce_int(value):
-    if value is None:
+    if value is None or value == '':
         return None
     return int(value)
 
@@ -212,9 +212,9 @@ class BaseBushfireViewForm(baseforms.ModelForm):
         }
         field_classes = {
             "__all__":forms.fields.CharField,
-            "dispatch_pw":basefields.SwitchFieldFactory(Bushfire,"dispatch_pw",("dispatch_pw_date",),field_class=basefields.ChoiceFieldFactory(Bushfire.DISPATCH_PW_CHOICES),true_value=1,field_params={"coerce":coerce_int}),
-            "dispatch_aerial":basefields.SwitchFieldFactory(Bushfire,"dispatch_aerial",("dispatch_aerial_date",),field_class=basefields.ChoiceFieldFactory(YESNO_CHOICES),field_params={"coerce":coerce_YESNO}),
-            "arson_squad_notified":basefields.SwitchFieldFactory(Bushfire,"arson_squad_notified",("offence_no",),policy=basefields.ALWAYS,on_layout="{0}<br>Police offence no: {1}",field_class=basefields.ChoiceFieldFactory(YESNO_CHOICES),field_params={"coerce":coerce_YESNO}),
+            "dispatch_pw":basefields.SwitchFieldFactory(Bushfire,"dispatch_pw",("dispatch_pw_date",),field_class=basefields.ChoiceFieldFactory(Bushfire.DISPATCH_PW_CHOICES),true_value=1,field_params={"coerce":coerce_int,'empty_value':None}),
+            "dispatch_aerial":basefields.SwitchFieldFactory(Bushfire,"dispatch_aerial",("dispatch_aerial_date",),field_class=basefields.ChoiceFieldFactory(YESNO_CHOICES),field_params={"coerce":coerce_YESNO,"empty_value":None}),
+            "arson_squad_notified":basefields.SwitchFieldFactory(Bushfire,"arson_squad_notified",("offence_no",),policy=basefields.ALWAYS,on_layout="{0}<br>Police offence no: {1}",field_class=basefields.ChoiceFieldFactory(YESNO_CHOICES),field_params={"coerce":coerce_YESNO,"empty_value":None}),
             "initial_area":basefields.CompoundFieldFactory(fields.InitialAreaField,Bushfire,"initial_area"),
             "initial_control":basefields.OtherOptionFieldFactory(Bushfire,"initial_control",("other_initial_control",),other_option=Agency.OTHER),
             "first_attack":basefields.OtherOptionFieldFactory(Bushfire,"first_attack",("other_first_attack",),other_option=Agency.OTHER),
@@ -225,13 +225,13 @@ class BaseBushfireViewForm(baseforms.ModelForm):
             "cause":basefields.CompoundFieldFactory(fields.FireCauseField,Bushfire,"cause"),
             "area":basefields.CompoundFieldFactory(fields.FinalAreaField,Bushfire,"area"),
             "fire_position":basefields.CompoundFieldFactory(fields.FirePositionField,Bushfire,"fire_position"),
-            "investigation_req":basefields.ChoiceFieldFactory(YESNO_CHOICES,field_params={"coerce":coerce_YESNO}),
-            "media_alert_req":basefields.ChoiceFieldFactory(YESNO_CHOICES,field_params={"coerce":coerce_YESNO}),
-            "park_trail_impacted":basefields.ChoiceFieldFactory(YESNO_CHOICES,field_params={"coerce":coerce_YESNO}),
-            "prob_fire_level":basefields.ChoiceFieldFactory(Bushfire.FIRE_LEVEL_CHOICES,field_params={"coerce":coerce_int}),
-            "report_status":basefields.ChoiceFieldFactory(Bushfire.REPORT_STATUS_CHOICES,field_params={"coerce":coerce_int}),
-            "other_tenure":basefields.ChoiceFieldFactory(Bushfire.IGNITION_POINT_CHOICES,field_params={"coerce":coerce_int}),
-            "reporting_year":basefields.ChoiceFieldFactory(REPORTING_YEAR_CHOICES,field_params={"coerce":coerce_int}),
+            "investigation_req":basefields.ChoiceFieldFactory(YESNO_CHOICES,field_params={"coerce":coerce_YESNO,"empty_value":None}),
+            "media_alert_req":basefields.ChoiceFieldFactory(YESNO_CHOICES,field_params={"coerce":coerce_YESNO,"empty_value":None}),
+            "park_trail_impacted":basefields.ChoiceFieldFactory(YESNO_CHOICES,field_params={"coerce":coerce_YESNO,"empty_value":None}),
+            "prob_fire_level":basefields.ChoiceFieldFactory(Bushfire.FIRE_LEVEL_CHOICES,field_params={"coerce":coerce_int,"empty_value":None}),
+            "report_status":basefields.ChoiceFieldFactory(Bushfire.REPORT_STATUS_CHOICES,field_params={"coerce":coerce_int,"empty_value":None}),
+            "other_tenure":basefields.ChoiceFieldFactory(Bushfire.IGNITION_POINT_CHOICES,field_params={"coerce":coerce_int,"empty_value":None}),
+            "reporting_year":basefields.ChoiceFieldFactory(REPORTING_YEAR_CHOICES,field_params={"coerce":coerce_int,"empty_value":None}),
             "fire_bombing_req":basefields.SwitchFieldFactory(Bushfire,"fire_bombing_req",("fire_bombing.ground_controller.username","fire_bombing.ground_controller.callsign","fire_bombing.radio_channel","fire_bombing.sar_arrangements","fire_bombing.prefered_resources","fire_bombing.flight_hazards"),field_class=basefields.ChoiceFieldFactory(YESNO_CHOICES),policy=basefields.ALWAYS,
                 off_layout="""No""",
                 on_layout="""Yes<div id='id_{7}_body'>
@@ -282,8 +282,8 @@ class BaseBushfireViewForm(baseforms.ModelForm):
                     </tr>
                 </table></div>
                 """,
-                field_params={"coerce":coerce_YESNO}),
-            "fire_bombing.prefered_resources":basefields.ChoiceFieldFactory(Bushfire.FIRE_BOMBING_RESOURCES,choice_class=forms.TypedMultipleChoiceField,field_params={"coerce":coerce_int}),
+                field_params={"coerce":coerce_YESNO,"empty_value":None}),
+            "fire_bombing.prefered_resources":basefields.ChoiceFieldFactory(Bushfire.FIRE_BOMBING_RESOURCES,choice_class=forms.TypedMultipleChoiceField,field_params={"coerce":coerce_int,"empty_value":None}),
         }
         widgets = {
             "__all__": basewidgets.TextDisplay(),
@@ -597,7 +597,7 @@ class SubmittedBushfireForm(MergedBushfireForm):
         extra_update_fields = ('modified','modifier')
         field_classes = {
             "__all__":forms.fields.CharField,
-            "max_fire_level":basefields.ChoiceFieldFactory(Bushfire.FIRE_LEVEL_CHOICES,field_params={"coerce":coerce_int}),
+            "max_fire_level":basefields.ChoiceFieldFactory(Bushfire.FIRE_LEVEL_CHOICES,field_params={"coerce":coerce_int,"empty_value":None}),
             "fire_not_found":basefields.SwitchFieldFactory(Bushfire,"fire_not_found",("invalid_details",),true_value=True),
         }
         widgets = {
