@@ -1,6 +1,7 @@
 import LatLon
 import tempfile
 import subprocess
+import shutil
 
 from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
@@ -484,6 +485,13 @@ def update_status(request, bushfire, action,action_name="",update_fields=None):
                 notification['DFES'] = 'Email Sent' if resp else 'Email failed'
 
         # send emails
+        if bushfire.fire_bombing_req:
+            send_fire_bomging_req_email({
+                "bushfire":bushfire, 
+                "user_email":user_email,
+                "request":request,
+            })
+
         if BushfireProperty.objects.filter(bushfire=bushfire,name="plantations").count() > 0:
             resp = send_email({
                 "bushfire":bushfire, 
@@ -762,6 +770,26 @@ def update_status(request, bushfire, action,action_name="",update_fields=None):
         
     return notification
 
+def send_fire_bomging_req_email(context):
+    bushfire = context["bushfire"]
+    context["to_email"] = settings.FIRE_BOMBING_REQUEST_EMAIL
+    if "user_email" in context:
+        context["cc_email"] = concat_email_addresses(settings.FIRE_BOMBING_REQUEST_CC_EMAIL,settings.CC_EMAIL,context.pop("user_email"))
+    else:
+        context["cc_email"] = concat_email_addresses(settings.FIRE_BOMBING_REQUEST_CC_EMAIL,settings.CC_EMAIL)
+    context["subject"] = 'Fire Bombing Request Email - Initial Bushfire submitted - {}'.format(bushfire.fire_number)
+    context["template"] = "bfrs/email/fire_bombing_request_email.html"
+    folder = None
+    try:
+        folder,pdf_file = generate_pdf("latex/fire_bombing_request_form.tex",context={"bushfire":bushfire,"graphic_folder":settings.LATEX_GRAPHIC_FOLDER})
+        context["attachments"] = [(pdf_file,"fire_bombing_request.pdf","application/pdf")]
+        send_email(context)
+    finally:
+        if folder:
+            shutil.rmtree(folder)
+        
+
+
 NOTIFICATION_FIELDS = [
     'region', 'district', 'year',
     'name', 'fire_detected_date',
@@ -934,6 +962,9 @@ def send_email(context):
         to=context.get("to_email") or None, 
         cc=concat_email_addresses(context.get("cc_email",settings.CC_EMAIL),context.get("user_email")), 
         bcc=context.get("bcc_email",settings.BCC_EMAIL))
+    for attachment in context.get("attachments") or []:
+        with open(attachment[0]) as f:
+            message.attach(attachment[1],f.read(),attachment[2])
     message.content_subtype = 'html'
     ret = message.send()
 
