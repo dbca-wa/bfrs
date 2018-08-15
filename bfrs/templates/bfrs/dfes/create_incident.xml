@@ -38,7 +38,7 @@
                 <ext:Comment xmlns:ext="http://leitsc-lib/2.0" xmlns:nc="http://niem.gov/niem/niem-core/2.0">
                     <nc:CommentText>{{bushfire.fire_position}}</nc:CommentText>
                     <nc:CommentText>DUTY OFFICER: {{bushfire.duty_officer.first_name}} {{bushfire.duty_officer.last_name}}</nc:CommentText>
-                    <nc:CommentText>DBCA REGION: {{bushfire.district.name}}</nc:CommentText>
+                    <nc:CommentText>DBCA REGION: {{bushfire.region.name}}</nc:CommentText>
                     <nc:CommentText>DBCA DISTRICT: {{bushfire.district.name}}</nc:CommentText>
                 </ext:Comment>
             </ext:ServiceCallAugmentation>
