@@ -233,7 +233,7 @@ class BaseBushfireViewForm(baseforms.ModelForm):
             "other_tenure":basefields.ChoiceFieldFactory(Bushfire.IGNITION_POINT_CHOICES,field_params={"coerce":coerce_int,"empty_value":None}),
             "reporting_year":basefields.ChoiceFieldFactory(REPORTING_YEAR_CHOICES,field_params={"coerce":coerce_int,"empty_value":None}),
             "fire_bombing_req":basefields.SwitchFieldFactory(Bushfire,"fire_bombing_req",("fire_bombing.ground_controller.username","fire_bombing.ground_controller.callsign","fire_bombing.radio_channel","fire_bombing.sar_arrangements","fire_bombing.prefered_resources","fire_bombing.flight_hazards"),field_class=basefields.ChoiceFieldFactory(YESNO_CHOICES),policy=basefields.ALWAYS,
-                off_layout="""No""",
+                off_layout="""{}""",
                 on_layout="""Yes<div id='id_{7}_body'>
                 <table style="width:90%">
                     <tr>
