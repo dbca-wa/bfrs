@@ -475,7 +475,7 @@ class BaseModelFormMetaclass(forms.models.ModelFormMetaclass):
         update_model_properties = []
 
         for name,field in new_class.base_fields.iteritems():
-            if isinstance(field.widget,basewidgets.DisplayWidget):
+            if isinstance(field.widget,basewidgets.DisplayMixin):
                 continue
             if "." in name:
                 #not a model field

@@ -10,7 +10,10 @@ import utils
 
 to_str = lambda o: "" if o is None else str(o)
 
-class DisplayWidget(forms.Widget):
+class DisplayMixin(forms.Widget):
+    pass
+
+class DisplayWidget(DisplayMixin,forms.Widget):
     def __deepcopy__(self, memo):
         return self
 
@@ -348,4 +351,21 @@ def ChoiceFieldRendererFactory(outer_html = None,inner_html = None,layout = None
         cls = type(class_name,(renderer_class,),{"outer_html":outer_html,"inner_html":inner_html})
         widget_classes[key] = cls
     return cls
+
+
+def DisplayWidgetFactory(widget_class):
+    """
+    Use other widget as display widget.
+    """
+    global widget_class_id
+
+    key = hashlib.md5("DisplayWidget<{}>".format(widget_class.__module__,widget_class.__name__)).hexdigest()
+    cls = widget_classes.get(key)
+    if not cls:
+        widget_class_id += 1
+        class_name = "{}_{}".format(widget_class.__name__,widget_class_id)
+        cls = type(class_name,(DisplayMixin,widget_class),{})
+        widget_classes[key] = cls
+    return cls
+
 
