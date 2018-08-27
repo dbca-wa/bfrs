@@ -31,7 +31,7 @@
     {% endblock %}
 
     {% block bushfire_detail %}
-        {% bushfire_details bushfire 'fire_number' 'report_status' 'region' 'district' 'year' 'name' 'fire_detected_date' 'dfes_incident_no' 'fire_position' 'origin_point_geo' 'origin_point_mga' 'tenure' 'duty_officer' 'dispatch_pw' 'dispatch_pw_date' 'dispatch_aerial' 'dispatch_aerial_date' 'initial_control' 'initial_area' 'prob_fire_level' 'investigation_req' 'media_alert_req' 'fire_bombing_req' 'park_trail_impacted' 'other_info'  %}
+        {% bushfire_details bushfire 'fire_number' 'report_status' 'region' 'district' 'year' 'name' 'fire_detected_date' 'dfes_incident_no' 'fire_position' 'origin_point_geo' 'origin_point_mga' 'tenure' 'duty_officer' 'dispatch_pw' 'dispatch_pw_date' 'dispatch_aerial' 'dispatch_aerial_date' 'initial_control' 'initial_area' 'prob_fire_level' 'investigation_req' 'media_alert_req' 'park_trail_impacted' 'other_info'  %}
         {% if related_bushfires %}
             {% if title_4_related_bushfires %}
             <br>
@@ -41,7 +41,7 @@
             {% for bf in related_bushfires %}
                 <br>
                 <br>
-                {% bushfire_details bf 'fire_number' 'report_status' 'region' 'district' 'year' 'name' 'fire_detected_date' 'dfes_incident_no' 'fire_position' 'origin_point_geo' 'origin_point_mga' 'tenure' 'duty_officer' 'dispatch_pw' 'dispatch_pw_date' 'dispatch_aerial' 'dispatch_aerial_date' 'initial_control' 'initial_area' 'prob_fire_level' 'investigation_req' 'media_alert_req' 'fire_bombing_req' 'park_trail_impacted' 'other_info'  %}
+                {% bushfire_details bf 'fire_number' 'report_status' 'region' 'district' 'year' 'name' 'fire_detected_date' 'dfes_incident_no' 'fire_position' 'origin_point_geo' 'origin_point_mga' 'tenure' 'duty_officer' 'dispatch_pw' 'dispatch_pw_date' 'dispatch_aerial' 'dispatch_aerial_date' 'initial_control' 'initial_area' 'prob_fire_level' 'investigation_req' 'media_alert_req' 'park_trail_impacted' 'other_info'  %}
             {% endfor %}
         {% endif  %}
     {% endblock %}

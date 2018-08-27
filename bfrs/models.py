@@ -385,7 +385,6 @@ class BushfireBase(Audit,DictMixin):
     capturemethod = models.ForeignKey(CaptureMethod,editable=True,null=True,blank=True)
     other_capturemethod = models.CharField(verbose_name="Other Capture Methdod", max_length=128, editable=True, null=True, blank=True)
 
-    fire_bombing_req = models.NullBooleanField(verbose_name="Fire Bombing Required", null=True)
     class Meta:
         abstract = True
 
@@ -582,7 +581,7 @@ class Bushfire(BushfireBase):
             return
         if any([field.startswith("fire_bombing.") for field in update_fields]):
             #save fire_bombing
-            if not self.fire_bombing_req:
+            if not self.dispatch_aerial:
                 #fire bombing not required
                 BushfireProperty.objects.filter(bushfire=self,name="fire_bombing").delete()
                 return
@@ -873,14 +872,14 @@ class BushfirePropertySnapshot(BushfirePropertyBase):
 SUBMIT_MANDATORY_FIELDS= [
     'region', 'district', 'year', 'fire_number', 'name', 'fire_detected_date', 'prob_fire_level',
     'dispatch_pw', 'dispatch_aerial', 'investigation_req', 'park_trail_impacted', 'media_alert_req',
-    'duty_officer', 'initial_control','fire_bombing_req'
+    'duty_officer', 'initial_control'
 ]
 SUBMIT_MANDATORY_DEP_FIELDS= {
     'dispatch_pw': [[1, 'dispatch_pw_date']], # if 'dispatch_pw' == 1 then 'dispatch_pw_date' is required
     'dispatch_aerial': [[True, 'dispatch_aerial_date']],
     'initial_control': [[Agency.OTHER, 'other_initial_control']],
     'tenure': [[Tenure.OTHER, 'other_tenure']],
-    'fire_bombing_req':[[True,("fire_bombing.ground_controller.username","Ground Controller"),("fire_bombing.ground_controller.callsign","Ground Controller Call Sign"),("fire_bombing.radio_channel","Radio Channel"),("fire_bombing.prefered_resources","Prefered Resource")]]
+    'dispatch_aerial':[[True,("dispatch_aerial_date","Dispatch Aerial Date"),("fire_bombing.ground_controller.username","Ground Controller"),("fire_bombing.ground_controller.callsign","Ground Controller Call Sign"),("fire_bombing.radio_channel","Radio Channel"),("fire_bombing.prefered_resources","Prefered Resource")]]
 }
 SUBMIT_MANDATORY_FORMSETS= [
 ]
@@ -902,7 +901,6 @@ AUTH_MANDATORY_DEP_FIELDS_FIRE_NOT_FOUND= {
     'dispatch_pw': [[1, 'field_officer', 'dispatch_pw_date']], # if 'dispatch_pw' == '1' then 'field_officer' is required
     'dispatch_aerial': [[True, 'dispatch_aerial_date']],
     'field_officer': [[User.OTHER, 'other_field_officer','other_field_officer_agency']], # username='other'
-    'fire_bombing_req':[[True,("fire_bombing.ground_controller.username","Ground Controller"),("fire_bombing.ground_controller.callsign","Ground Controller Call Sign"),("fire_bombing.radio_channel","Radio Channel"),("fire_bombing.prefered_resources","Prefered Resource")]]
 }
 
 AUTH_MANDATORY_DEP_FIELDS= {
@@ -915,7 +913,6 @@ AUTH_MANDATORY_DEP_FIELDS= {
     'final_control': [[Agency.OTHER, 'other_final_control']],
     'area_limit': [[True, 'area']],
     'field_officer': [[User.OTHER, 'other_field_officer', 'other_field_officer_agency']], # username='other'
-    'fire_bombing_req':[[True,("fire_bombing.ground_controller.username","Ground Controller"),("fire_bombing.ground_controller.callsign","Ground Controller Call Sign"),("fire_bombing.radio_channel","Radio Channel"),("fire_bombing.prefered_resources","Prefered Resource")]]
 }
 AUTH_MANDATORY_FORMSETS= [
     #'fire_behaviour',

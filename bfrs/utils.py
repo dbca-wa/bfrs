@@ -485,7 +485,7 @@ def update_status(request, bushfire, action,action_name="",update_fields=None):
                 notification['DFES'] = 'Email Sent' if resp else 'Email failed'
 
         # send emails
-        if bushfire.fire_bombing_req:
+        if bushfire.dispatch_aerial:
             send_fire_bomging_req_email({
                 "bushfire":bushfire, 
                 "user_email":user_email,
