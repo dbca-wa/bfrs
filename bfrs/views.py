@@ -668,6 +668,7 @@ class BushfireUpdateView(ExceptionMixin,FormRequestMixin,MainUrlMixin,LoginRequi
                     update_status(request, self.object, 'delete_authorisation_(missing_fields_-_FSSDRS)')
                 #have missing fields,show error pages
                 context['mandatory_fields'] = missing_fields
+                context['action'] = action
                 return TemplateResponse(request, self.template_mandatory_fields, context=context)
             elif action == "submit":
                 #skip confirm step when submit a initial report
