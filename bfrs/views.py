@@ -118,6 +118,9 @@ class BushfireFilter(django_filters.FilterSet):
         status = int(value)
         if status == Bushfire.STATUS_MISSING_FINAL:
             queryset = queryset.filter(report_status__in=[Bushfire.STATUS_INITIAL_AUTHORISED])
+        elif status == 900:
+            #pending to review
+            queryset = queryset.filter(report_status=Bushfire.STATUS_FINAL_AUTHORISED,final_fire_boundary=True,fire_not_found=False,area__gt=0)
         elif status == -1:
             queryset = queryset.exclude(report_status=Bushfire.STATUS_INVALIDATED)
         else:
