@@ -59,6 +59,7 @@ FIRE_BOMBING_REQUEST_CC_EMAIL = env("FIRE_BOMBING_REQUEST_CC_EMAIL") or None
 
 INTERNAL_EMAIL = env('INTERNAL_EMAIL',['dbca.wa.gov.au','dpaw.wa.gov.au'])
 SSS_URL = env('SSS_URL', 'sss_redirect_url')
+KMI_URL = env('KMI_URL', 'https://kmi.dbca.wa.gov.au/geoserver')
 AREA_THRESHOLD = env('AREA_THRESHOLD', 2)
 
 PBS_URL = env('PBS_URL', 'https://pbs.dpaw.wa.gov.au/')
@@ -163,6 +164,10 @@ MIDDLEWARE_CLASSES = [
     'dpaw_utils.middleware.SSOLoginMiddleware',
 
 ]
+
+SERIALIZATION_MODULES = {
+    "geojson": "django.contrib.gis.serializers.geojson", 
+}
 
 ROOT_URLCONF = 'bfrs_project.urls'
 

@@ -219,7 +219,7 @@ class BaseBushfireViewForm(baseforms.ModelForm):
             "first_attack":basefields.OtherOptionFieldFactory(Bushfire,"first_attack",("other_first_attack",),other_option=Agency.OTHER),
             "final_control":basefields.OtherOptionFieldFactory(Bushfire,"final_control",("other_final_control",),other_option=Agency.OTHER),
             #"tenure":basefields.OtherOptionFieldFactory(Bushfire,"tenure",("other_tenure",),other_option=Tenure.OTHER,policy=basefields.DATA_MAP,other_layout={1:"{0}<br>Private Property",2:"{0}<br>Other Crown"}),
-            "origin_point":basefields.SwitchFieldFactory(Bushfire,"origin_point",("origin_point_mga",),true_value="",reverse=True,on_layout=u"{}",off_layout=u"{}<br>{}"),
+            "origin_point":basefields.SwitchFieldFactory(Bushfire,"origin_point",("origin_point_mga","origin_point_grid"),true_value="",reverse=True,on_layout=u"{}",off_layout=u"{}<br>{}<br>{}"),
             "field_officer":basefields.OtherOptionFieldFactory(Bushfire,"field_officer",("other_field_officer","other_field_officer_agency","other_field_officer_phone"),other_option=User.OTHER,policy=basefields.ALWAYS,other_layout=u"{}<br> Name: {}<br> Agency: {}<br> Phone: {}"),
             "cause":basefields.CompoundFieldFactory(fields.FireCauseField,Bushfire,"cause"),
             "area":basefields.CompoundFieldFactory(fields.FinalAreaField,Bushfire,"area"),
@@ -754,6 +754,9 @@ class BushfireCreateForm(InitialBushfireForm):
         if sss.has_key('origin_point_mga'):
             self.initial['origin_point_mga'] = sss['origin_point_mga']
 
+        if sss.has_key('origin_point_grid'):
+            self.initial['origin_point_grid'] = sss['origin_point_grid']
+
         if sss.has_key('fire_position'):
             self.initial['fire_position'] = sss['fire_position']
 
@@ -827,6 +830,9 @@ class BushfireCreateForm(InitialBushfireForm):
 
         if sss.has_key('origin_point_mga'):
             self.instance.origin_point_mga = sss['origin_point_mga']
+
+        if sss.has_key('origin_point_grid'):
+            self.instance.origin_point_grid = sss['origin_point_grid']
 
         if sss.get('sss_id') :
             self.instance.sss_id = sss['sss_id']

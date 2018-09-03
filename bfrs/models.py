@@ -319,6 +319,7 @@ class BushfireBase(Audit,DictMixin):
     # Point of Origin
     origin_point = models.PointField(verbose_name="Point of Origin", editable=True)
     origin_point_mga = models.CharField(verbose_name='Point of Origin (MGA)', max_length=64, null=True, blank=True)
+    origin_point_grid = models.CharField(verbose_name='Point of Origin (GRID)', max_length=16, null=True, blank=True)
     fire_boundary = models.MultiPolygonField(srid=4326, null=True, blank=True, editable=True, help_text='Optional.')
     fire_not_found = models.BooleanField(default=False)
     fire_monitored_only = models.BooleanField(default=False)

@@ -250,7 +250,7 @@ class BushfireSpatialResource(ModelResource):
         resource_name = 'bushfirespatial'
         authorization = Authorization()
         #fields = ['origin_point', 'fire_boundary', 'area', 'fire_position']
-        fields = ['origin_point', 'fire_boundary','origin_point_mga','fb_validation_req']
+        fields = ['origin_point', 'fire_boundary','origin_point_mga','origin_point_grid','fb_validation_req']
         #using extra fields to process some complex or related fields
         extra_fields = ['district','area','tenure_ignition_point','fire_position','plantations','sss_data','capturemethod']
         allowed_methods=['patch']

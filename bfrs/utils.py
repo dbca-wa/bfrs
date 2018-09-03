@@ -1479,3 +1479,72 @@ def generate_pdf(tex_template_file,context):
     return (foldername,pdf_filename)
 
 
+def refresh_spatial_data(bushfire,grid_data=False):
+    if isinstance(bushfire,int):
+        bushfire = Bushfire.objects.get(id = bushfire)
+    elif isinstance(bushfire,basestring):
+        bushfire = Bushfire.objects.get(fire_number=bushfire)
+    elif not isinstance(bushfire,Bushfire):
+        raise Exception("Bushfire should be bushfire id or fire number or Bushfire instance")
+
+    req_data = {"features":serializers.serialize('geojson',[bushfire],geometry_field='origin_point',fields=('id','fire_number'))}
+    req_options = {}
+    update_fields = []
+    if  grid_data:
+        update_fields.append("origin_point_grid")
+        req_options["grid"] = {
+            "name":"grid",
+            "layers":[
+                {
+                    "id":"fd_grid_points",
+                    "layerid":"cddp:fd_grid_points",
+                    "kmiservice":settings.KMI_URL,
+                    "buffer":120,
+                    "properties":{
+                        "grid":"fdgrid",
+                    },
+                },
+                {
+                    "id":"pilbara_grid_1km",
+                    "layerid":"cddp:pilbara_grid_1km",
+                    "buffer":800,
+                    "kmiservice":settings.KMI_URL,
+                    "properties":{
+                        "grid":"id",
+                    },
+                },
+            ],
+        }
+
+    if not update_fields:
+        return
+
+    req_data["options"] = json.dumps(req_options)
+    resp=requests.post(url="{}/spatial".format(settings.SSS_URL), data=req_data,auth=HTTPBasicAuth(settings.USER_SSO, settings.PASS_SSO))
+    resp.raise_for_status()
+    result = resp.json()
+    if grid_data:
+        if result["features"][0]["grid"].get("failed"):
+            raise Exception(result["features"][0]["grid"]["failed"])
+        elif result["features"][0]["grid"].get("id") == "fd_grid_points":
+            bushfire.origin_point_grid = "FD:{}".format(result["features"][0]["grid"]["properties"]["grid"])
+            print("The bushfire report({})'s grid data is {}".format(bushfire.fire_number,bushfire.origin_point_grid))
+        elif result["features"][0]["grid"].get("id") == "pilbara_grid_1km":
+            bushfire.origin_point_grid = "PIL:{}".format(result["features"][0]["grid"]["properties"]["grid"])
+            print("The bushfire report({})'s grid data is {}".format(bushfire.fire_number,bushfire.origin_point_grid))
+        else:
+            bushfire.origin_point_grid = None
+            print("The bushfire report({})'s grid data is null".format(bushfire.fire_number))
+
+    if update_fields:
+        bushfire.save(update_fields=update_fields)
+
+def refresh_all_spatial_data(grid_data=False):
+    for bushfire in Bushfire.objects.all().order_by("id"):
+        try:
+            refresh_spatial_data(bushfire,grid_data)
+        except Exception as ex:
+            print("Failed to refresh the spatial data for bushfire report({}),{}".format(bushfire.fire_number,ex.message))
+            
+
+    
