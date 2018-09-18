@@ -469,7 +469,7 @@ class BaseModelFormMetaclass(forms.models.ModelFormMetaclass):
                 if field in new_class.all_base_fields:
                     new_class.base_fields[field] = new_class.all_base_fields[field]
 
-        editable_fields = [name for name,field in new_class.base_fields.iteritems() if not isinstance(field.widget,basewidgets.DisplayWidget)]
+        editable_fields = [name for name,field in new_class.base_fields.iteritems() if not isinstance(field.widget,basewidgets.DisplayMixin)]
         setattr(opts,'editable_fields',editable_fields)
         update_db_fields = list(getattr(opts,"extra_update_fields") or [])
         update_model_properties = []
