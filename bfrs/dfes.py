@@ -40,6 +40,7 @@ class P1CAD(object):
         subject = None
         response = None
         incident_no = None
+        url = None
         try:
             initial_snapshot_url = build_absolute_uri(reverse('bushfire:initial_snapshot', kwargs={'pk':bushfire.id}))
             payload = render_to_string(cls.create_incident_template,context={"bushfire":bushfire,"now":timezone.now().strftime("%Y-%m-%dT%H:%M:%SZ"),"initial_snapshot_url":initial_snapshot_url})
@@ -84,6 +85,7 @@ class P1CAD(object):
                     "to_email":settings.P1CAD_NOTIFY_EMAIL,
                     "request":request,
                     "subject":subject,
+                    "p1cad_endpoint":url,
                     "payload":escape(payload),
                     "response":response,
                     "template":"bfrs/email/create_incident_no_notify_email.html"
