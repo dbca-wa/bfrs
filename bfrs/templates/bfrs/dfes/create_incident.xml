@@ -28,11 +28,10 @@
 
         <ext:ServiceCall s:id="{{bushfire.fire_number_slug}}">
             <nc:ActivityReasonText>Call for Service Request</nc:ActivityReasonText>
-            <j:ServiceCallMechanismText>DPAW</j:ServiceCallMechanismText>
+            <j:ServiceCallMechanismText>PAW</j:ServiceCallMechanismText>
             <j:ServiceCallDispatchedDate>
                 <nc:DateTime>{{now}}</nc:DateTime>
             </j:ServiceCallDispatchedDate>
-            <j:ServiceCallMechanismText>DBCA</j:ServiceCallMechanismText>
             <ext:ServiceCallAugmentation>
                 <ext:CallTypeText>TGS</ext:CallTypeText>
                 <ext:Comment xmlns:ext="http://leitsc-lib/2.0" xmlns:nc="http://niem.gov/niem/niem-core/2.0">
