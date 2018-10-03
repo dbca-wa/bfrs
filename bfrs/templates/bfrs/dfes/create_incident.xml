@@ -39,6 +39,7 @@
                     <nc:CommentText>DUTY OFFICER: {{bushfire.duty_officer.first_name}} {{bushfire.duty_officer.last_name}}</nc:CommentText>
                     <nc:CommentText>DBCA REGION: {{bushfire.region.name}}</nc:CommentText>
                     <nc:CommentText>DBCA DISTRICT: {{bushfire.district.name}}</nc:CommentText>
+                    {% if bushfire.other_info  %}<nc:CommentText>OTHER INFORMATION: {{bushfire.other_info}}</nc:CommentText>{% endif  %}
                 </ext:Comment>
             </ext:ServiceCallAugmentation>
         </ext:ServiceCall>
