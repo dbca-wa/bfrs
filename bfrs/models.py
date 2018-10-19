@@ -561,6 +561,11 @@ class Bushfire(BushfireBase):
     fire_number = models.CharField(max_length=15, verbose_name="Fire Number", unique=True)
     sss_id = models.CharField(verbose_name="Unique SSS ID", max_length=64, null=True, blank=True, unique=True)
 
+    class Meta:
+        permissions = (
+            ("final_authorise_bushfire","Can final authorise bushfire"),
+        )
+
     @property
     def fire_bombing(self):
         if not hasattr(self,"_fire_bombing"):

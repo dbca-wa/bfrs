@@ -599,12 +599,18 @@ class BushfireUpdateView(ExceptionMixin,FormRequestMixin,MainUrlMixin,LoginRequi
                 else:
                     raise Exception("Bushfire has already been invalidated.")
             else:
+                form_class = self.get_form_class()
+                if not any(a[0] == confirm_action for a in form_class.get_submit_actions(self.request)):
+                    return TemplateResponse(request, self.template_error, context={'is_external_user': False, 'status':401}, status=401)
                 update_status(self.request, self.object, confirm_action)
                 refresh_gokart(self.request, fire_number=self.object.fire_number, region=self.object.region.id, district=self.object.district.id)
                 return HttpResponseRedirect(self.get_main_url())
 
         form_class = self.get_form_class()
         form = self.get_form(form_class)
+
+        if not any(a[0] == action for a in form.submit_actions):
+            return TemplateResponse(request, self.template_error, context={'is_external_user': False, 'status':401}, status=401)
 
         expected_status = None
         if action == "create" or (action == "submit" and self.object is None):

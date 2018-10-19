@@ -585,7 +585,6 @@ class MergedBushfireForm(BaseBushfireEditForm):
         }
 
 class SubmittedBushfireForm(MergedBushfireForm):
-    submit_actions = [('save_submitted','Save submitted report','btn-success'),('authorise','Save and Authorise','btn-warning')]
     def __init__(self,*args,**kwargs):
         super(SubmittedBushfireForm,self).__init__(*args,**kwargs)
         if self.request and self.request.POST and "sss_create" not in self.request.POST and self.is_editable("damage_unknown"):
@@ -597,6 +596,23 @@ class SubmittedBushfireForm(MergedBushfireForm):
             self.injury_formset          = InjuryFormSet(self.request.POST, prefix='injury_fs')
         else:
             self.injury_formset = InjuryFormSet(instance=self.instance, prefix='injury_fs')
+
+    @property
+    def submit_actions(self):
+        return self.get_submit_actions(self.request)
+
+    @classmethod
+    def get_submit_actions(cls,request):
+        if request:
+            if request.user.has_perm("bfrs.final_authorise_bushfire"):
+                return [('save_submitted','Save submitted report','btn-success'),('authorise','Save and Authorise','btn-warning')]
+            else:
+                return [('save_submitted','Save submitted report','btn-success')]
+
+        else:
+            return [('save_submitted','Save submitted report','btn-success')]
+
+
 
     class Meta:
         model = Bushfire

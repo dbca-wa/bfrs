@@ -1064,15 +1064,28 @@ def create_admin_user():
     )
 
 def _add_users_to_fssdrs_group():
-
-    fssdrs_group, g_created = Group.objects.get_or_create(name=settings.FSSDRS_GROUP)
+    group, g_created = Group.objects.get_or_create(name=settings.FSSDRS_GROUP)
     if g_created:
-        fssdrs_group.permissions = Permission.objects.filter(name__in=['Can add group', 'Can change group', 'Can add permission', 'Can change permission', 'Can add user', 'Can change user'])
+        group.permissions = Permission.objects.filter(codename__in=['add_group', 'change_group', 'add_permission', 'change_permission', 'add_user', 'change_user', 'final_authorise_bushfire'])
 
     for user in User.objects.filter(email__in=settings.FSSDRS_USERS):
-        if fssdrs_group not in user.groups.all():
-            user.groups.add(fssdrs_group)
-            logger.info('Adding user {} to group {}'.format(user.get_full_name(), fssdrs_group.name))
+        if not user.groups.filter(id=group.id).exists():
+            user.groups.add(group)
+            logger.info('Adding user {} to group {}'.format(user.get_full_name(), group.name))
+
+        if not user.is_staff:
+            user.is_staff = True
+            user.save()
+
+def _add_users_to_final_authorise_group():
+    group, g_created = Group.objects.get_or_create(name=settings.FINAL_AUTHORISE_GROUP)
+    if g_created:
+        group.permissions = Permission.objects.filter(codename__in=['final_authorise_bushfire'])
+
+    for user in User.objects.filter(email__in=settings.FINAL_AUTHORISE_GROUP_USERS):
+        if not user.groups.filter(id=group.id).exists():
+            user.groups.add(group)
+            logger.info('Adding user {} to group {}'.format(user.get_full_name(), group.name))
 
         if not user.is_staff:
             user.is_staff = True
@@ -1152,6 +1165,7 @@ def update_users():
 
     _update_users_from_active_directory(resp)
     _add_users_to_fssdrs_group()
+    _add_users_to_final_authorise_group()
     _add_users_to_users_group(resp)
     _delete_duplicate_users()
     create_other_user()
@@ -1479,7 +1493,7 @@ def generate_pdf(tex_template_file,context):
     return (foldername,pdf_filename)
 
 
-def refresh_spatial_data(bushfire,grid_data=False):
+def refresh_spatial_data(bushfire,grid=False):
     if isinstance(bushfire,int):
         bushfire = Bushfire.objects.get(id = bushfire)
     elif isinstance(bushfire,basestring):
@@ -1490,10 +1504,10 @@ def refresh_spatial_data(bushfire,grid_data=False):
     req_data = {"features":serializers.serialize('geojson',[bushfire],geometry_field='origin_point',fields=('id','fire_number'))}
     req_options = {}
     update_fields = []
-    if  grid_data:
+    if  grid:
         update_fields.append("origin_point_grid")
         req_options["grid"] = {
-            "name":"grid",
+            "action":"getClosestFeature",
             "layers":[
                 {
                     "id":"fd_grid_points",
@@ -1520,17 +1534,18 @@ def refresh_spatial_data(bushfire,grid_data=False):
         return
 
     req_data["options"] = json.dumps(req_options)
-    resp=requests.post(url="{}/spatial".format(settings.SSS_URL), data=req_data,auth=HTTPBasicAuth(settings.USER_SSO, settings.PASS_SSO))
+    resp=requests.post(url="{}/spatial".format(settings.SSS_URL), data=req_data,auth=HTTPBasicAuth(settings.USER_SSO, settings.PASS_SSO),verify=settings.SSS_CERTIFICATE_VERIFY)
     resp.raise_for_status()
     result = resp.json()
-    if grid_data:
-        if result["features"][0]["grid"].get("failed"):
-            raise Exception(result["features"][0]["grid"]["failed"])
-        elif result["features"][0]["grid"].get("id") == "fd_grid_points":
-            bushfire.origin_point_grid = "FD:{}".format(result["features"][0]["grid"]["properties"]["grid"])
+    if grid:
+        grid_data = result["features"][0]["grid"]
+        if grid_data.get("failed"):
+            raise Exception(grid_data["failed"])
+        elif grid_data.get("id") == "fd_grid_points":
+            bushfire.origin_point_grid = "FD:{}".format(grid_data["feature"]["grid"])
             print("The bushfire report({})'s grid data is {}".format(bushfire.fire_number,bushfire.origin_point_grid))
-        elif result["features"][0]["grid"].get("id") == "pilbara_grid_1km":
-            bushfire.origin_point_grid = "PIL:{}".format(result["features"][0]["grid"]["properties"]["grid"])
+        elif grid_data.get("id") == "pilbara_grid_1km":
+            bushfire.origin_point_grid = "PIL:{}".format(grid_data["feature"]["grid"])
             print("The bushfire report({})'s grid data is {}".format(bushfire.fire_number,bushfire.origin_point_grid))
         else:
             bushfire.origin_point_grid = None
@@ -1539,10 +1554,10 @@ def refresh_spatial_data(bushfire,grid_data=False):
     if update_fields:
         bushfire.save(update_fields=update_fields)
 
-def refresh_all_spatial_data(grid_data=False):
+def refresh_all_spatial_data(grid=False):
     for bushfire in Bushfire.objects.all().order_by("id"):
         try:
-            refresh_spatial_data(bushfire,grid_data)
+            refresh_spatial_data(bushfire,grid)
         except Exception as ex:
             print("Failed to refresh the spatial data for bushfire report({}),{}".format(bushfire.fire_number,ex.message))
             

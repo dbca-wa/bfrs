@@ -58,7 +58,8 @@ FIRE_BOMBING_REQUEST_EMAIL = env("FIRE_BOMBING_REQUEST_EMAIL") or None
 FIRE_BOMBING_REQUEST_CC_EMAIL = env("FIRE_BOMBING_REQUEST_CC_EMAIL") or None
 
 INTERNAL_EMAIL = env('INTERNAL_EMAIL',['dbca.wa.gov.au','dpaw.wa.gov.au'])
-SSS_URL = env('SSS_URL', 'sss_redirect_url')
+SSS_URL = env('SSS_URL', 'https://sss.dpaw.wa.gov.au')
+SSS_CERTIFICATE_VERIFY = env('SSS_CERTIFICATE_VERIFY', True)
 KMI_URL = env('KMI_URL', 'https://kmi.dbca.wa.gov.au/geoserver')
 AREA_THRESHOLD = env('AREA_THRESHOLD', 2)
 
@@ -66,8 +67,11 @@ PBS_URL = env('PBS_URL', 'https://pbs.dpaw.wa.gov.au/')
 URL_SSO = env('URL_SSO', 'https://oim.dpaw.wa.gov.au/api/users/')
 USER_SSO = env('USER_SSO')
 PASS_SSO = env('PASS_SSO')
-FSSDRS_USERS = env('FSSDRS_USERS')
-FSSDRS_GROUP = env('FSSDRS_GROUP', 'FSS Datasets and Reporting Services')
+FSSDRS_USERS = env('FSSDRS_USERS') or []
+FSSDRS_GROUP = env('FSSDRS_GROUP') or 'FSS Datasets and Reporting Services'
+
+FINAL_AUTHORISE_GROUP_USERS = env('FINAL_AUTHORISE_GROUP_USERS') or []
+FINAL_AUTHORISE_GROUP = env('FINAL_AUTHORISE_GROUP') or 'Bushfire Final Authorise Group'
 
 HARVEST_EMAIL_HOST = env('HARVEST_EMAIL_HOST')
 HARVEST_EMAIL_USER = env('HARVEST_EMAIL_USER')

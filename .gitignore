@@ -46,3 +46,5 @@ staticfiles/
 
 #uwsgi config file
 uwsgi.ini
+
+localtest.*
