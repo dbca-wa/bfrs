@@ -398,7 +398,7 @@ class BushfireSpatialResource(ModelResource):
 
         if bundle.obj.report_status != Bushfire.STATUS_INITIAL:
             #normal user can't move a submitted bushfire from one district to another district. 
-            #only the user in the group "FSS Datasets and Reporting Services" can do it from bfrs web application
+            #only the user in the group "Fire Information Management" can do it from bfrs web application
             return
 
         bundle.obj.district = District.objects.get(id=bundle.data['district_id'])

@@ -68,10 +68,10 @@ URL_SSO = env('URL_SSO', 'https://oim.dpaw.wa.gov.au/api/users/')
 USER_SSO = env('USER_SSO')
 PASS_SSO = env('PASS_SSO')
 FSSDRS_USERS = env('FSSDRS_USERS') or []
-FSSDRS_GROUP = env('FSSDRS_GROUP') or 'FSS Datasets and Reporting Services'
+FSSDRS_GROUP = env('FSSDRS_GROUP') or 'Fire Information Management'
 
 FINAL_AUTHORISE_GROUP_USERS = env('FINAL_AUTHORISE_GROUP_USERS') or []
-FINAL_AUTHORISE_GROUP = env('FINAL_AUTHORISE_GROUP') or 'Fire Information Management'
+FINAL_AUTHORISE_GROUP = env('FINAL_AUTHORISE_GROUP') or 'Fire Final Authorise Group'
 
 HARVEST_EMAIL_HOST = env('HARVEST_EMAIL_HOST')
 HARVEST_EMAIL_USER = env('HARVEST_EMAIL_USER')

@@ -70,10 +70,10 @@ def users_group():
 
 _fssdrs_group = None
 def fssdrs_group():
-    return Group.objects.get(name='FSS Datasets and Reporting Services')
+    return Group.objects.get(name=settings.FSSDRS_GROUP)
     #global _fssdrs_group
     #if not _fssdrs_group:
-    #    _fssdrs_group = Group.objects.get(name='FSS Datasets and Reporting Services')
+    #    _fssdrs_group = Group.objects.get(name=settings.FSSDRS_GROUP)
     #return _fssdrs_group
 
 def can_maintain_data(user):
@@ -82,7 +82,7 @@ def can_maintain_data(user):
 def is_external_user(user):
     """ User group check added to prevent role-based internal users from having write access """
     try:
-        return user.email.split('@')[1].lower() not in settings.INTERNAL_EMAIL or not user.groups.filter(name__in=['Users', 'FSS Datasets and Reporting Services']).exists()
+        return user.email.split('@')[1].lower() not in settings.INTERNAL_EMAIL or not user.groups.filter(name__in=['Users', settings.FSSDRS_GROUP,settings.FINAL_AUTHORISE_GROUP]).exists()
         #return user.email.split('@')[1].lower() not in settings.INTERNAL_EMAIL
     except:
         return True

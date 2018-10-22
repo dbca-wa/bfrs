@@ -9,7 +9,7 @@
         "is_staff": true,
         "last_login": "2016-06-01T08:59:44.216Z",
         "groups": [
-            ["FSS Datasets and Reporting Services"]
+            ["Fire Information Management"]
         ],
         "user_permissions": [],
         "password": "pbkdf2_sha256$15000$gUMrMaAB0RQa$WDnO/9OEiXa3A2CuynvB5SLuPGlKkC4CYVZemCKqmjQ=",
@@ -29,7 +29,7 @@
         "is_staff": true,
         "last_login": "2016-06-01T08:59:44.216Z",
         "groups": [
-            ["FSS Datasets and Reporting Services"]
+            ["Fire Information Management"]
         ],
         "user_permissions": [],
         "password": "",
@@ -49,7 +49,7 @@
         "is_staff": true,
         "last_login": "2016-06-01T08:59:44.216Z",
         "groups": [
-            ["FSS Datasets and Reporting Services"]
+            ["Fire Information Management"]
         ],
         "user_permissions": [],
         "email": "eleanor.cervigni@dpaw.wa.gov.au",
@@ -68,7 +68,7 @@
         "is_staff": true,
         "last_login": "2016-06-01T08:59:44.216Z",
         "groups": [
-            ["FSS Datasets and Reporting Services"]
+            ["Fire Information Management"]
         ],
         "user_permissions": [],
         "email": "amanda.fairs@dpaw.wa.gov.au",
@@ -87,7 +87,7 @@
         "is_staff": true,
         "last_login": "2016-06-01T08:59:44.216Z",
         "groups": [
-            ["FSS Datasets and Reporting Services"]
+            ["Fire Information Management"]
         ],
         "user_permissions": [],
         "email": "vicky.reynen@dpaw.wa.gov.au",
@@ -106,7 +106,7 @@
         "is_staff": true,
         "last_login": "2016-06-01T08:59:44.216Z",
         "groups": [
-            ["FSS Datasets and Reporting Services"]
+            ["Fire Information Management"]
         ],
         "user_permissions": [],
         "email": "glen.daniel@dpaw.wa.gov.au",
