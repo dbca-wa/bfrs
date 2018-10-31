@@ -131,7 +131,7 @@ class SwitchField(CompoundField):
             kwargs["off_layout"] = None
 
         if not kwargs.get("edit_layout"):
-            kwargs["edit_layout"] = u"{{0}}<div id='id_{}_body'>{{1}}{}</div>".format("{{{}}}".format(len(related_field_names) + 1),"".join(["<br>{}".format(i) for i in range(2,len(related_field_names) + 1)]))
+            kwargs["edit_layout"] = u"{{0}}<div id='id_{}_body'>{{1}}{}</div>".format("{{{}}}".format(len(related_field_names) + 1),"".join(["<br>{{{}}}".format(i) for i in range(2,len(related_field_names) + 1)]))
 
         kwargs["true_value"] = (str(kwargs['true_value']) if kwargs['true_value'] is not None else "" ) if "true_value" in kwargs else 'True'
 
@@ -225,7 +225,7 @@ class OtherOptionField(CompoundField):
             kwargs["layout"] = None
 
         if not kwargs.get("edit_layout"):
-            kwargs["edit_layout"] = u"{{0}}<div id='id_{}_body'>{{1}}{}</div>".format("{{{}}}".format(len(related_field_names) + 1),"".join(["<br>{}".format(i) for i in range(2,len(related_field_names) + 1)]))
+            kwargs["edit_layout"] = u"{{0}}<div id='id_{}_body'>{{1}}{}</div>".format("{{{}}}".format(len(related_field_names) + 1),"".join(["<br>{{{}}}".format(i) for i in range(2,len(related_field_names) + 1)]))
 
         return kwargs
 
