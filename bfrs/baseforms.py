@@ -409,7 +409,7 @@ class BaseModelFormMetaclass(forms.models.ModelFormMetaclass):
             kwargs.clear()
             if hasattr(opts,"field_classes")  and opts.field_classes and field_name in opts.field_classes and isinstance(opts.field_classes[field_name],forms.Field):
                 #already configure a form field instance, use it directly
-                form_field = opts.field_classes(field_name)
+                form_field = opts.field_classes[field_name]
                 field_list.append((field_name, formfield))
                 continue
 
