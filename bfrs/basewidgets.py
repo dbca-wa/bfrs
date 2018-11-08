@@ -100,7 +100,7 @@ def HyperlinkDisplayFactory(url_name,field_name,widget_class,ids=[("id","pk")],b
 
 
 class BooleanDisplay(DisplayWidget):
-    def __init__(self,html_true="Yes",html_false="No",include_html_tag=False):
+    def __init__(self,html_true="Yes",html_false="No",include_html_tag=False,true_value=True):
         super(BooleanDisplay,self).__init__()
         if include_html_tag:
             self.html_true = safestring.SafeText(html_true)
@@ -108,11 +108,12 @@ class BooleanDisplay(DisplayWidget):
         else:
             self.html_true = html_true
             self.html_false = html_false
+        self.true_value = true_value
 
     def render(self,name,value,attrs=None,renderer=None):
         if value is None:
             return ""
-        elif value:
+        elif value == self.true_value:
             return self.html_true
         else:
             return self.html_false
@@ -326,7 +327,7 @@ class SelectableSelect(forms.Select):
         </script>
         """.format(html,html_id))
 
-def ChoiceFieldRendererFactory(outer_html = None,inner_html = None,layout = None):
+def ChoiceFieldRendererFactory(outer_html = None,inner_html = None,layout = None,renderer_class=forms.widgets.CheckboxFieldRenderer):
     """
     layout: none, horizontal,vertical
     outer_html: used if layout is None
@@ -335,13 +336,11 @@ def ChoiceFieldRendererFactory(outer_html = None,inner_html = None,layout = None
     global widget_class_id
 
     if layout == "vertical":
-        return forms.widgets.ChoiceFieldRenderer
-
-    if layout == "horizontal":
+        outer_html = '<ul{id_attr} style="padding:0px;margin:0px">{content}</ul>'
+        inner_html = '<li style="list-style-type:none;padding:0px 15px 0px 0px;">{choice_value}{sub_widgets}</li>'
+    else :
         outer_html = '<ul{id_attr} style="padding:0px;margin:0px">{content}</ul>'
         inner_html = '<li style="list-style-type:none;padding:0px 15px 0px 0px;display:inline;">{choice_value}{sub_widgets}</li>'
-
-    renderer_class = forms.widgets.CheckboxFieldRenderer
 
     key = hashlib.md5("ChoiceFieldRenderer<{}.{}{}{}>".format(renderer_class.__module__,renderer_class.__name__,outer_html,inner_html)).hexdigest()
     cls = widget_classes.get(key)
