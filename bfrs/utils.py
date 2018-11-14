@@ -1489,7 +1489,7 @@ def generate_pdf(tex_template_file,context):
     with open(tex_filename,"wb") as tex_file:
         tex_file.write(tex_doc)
     cmd = ['latexmk', '-cd', '-f', '-silent','-auxdir={}'.format(foldername),'-outdir={}'.format(foldername), '-pdf', tex_filename]
-    subprocess.call(cmd)
+    subprocess.check_output(cmd)
     return (foldername,pdf_filename)
 
 

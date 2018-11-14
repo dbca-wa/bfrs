@@ -10,6 +10,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.core.exceptions import (ValidationError)
 from django.conf import settings
 from django.core import serializers
+from django.utils.safestring import mark_safe
 
 from smart_selects.db_fields import ChainedForeignKey
 import LatLon
@@ -288,6 +289,31 @@ class BushfireBase(Audit,DictMixin):
     FIRE_BOMBING_RESOURCES = [
         (1,"Fixed Wing"),
         (2,"Helitak"),
+        (3,"Aerial Intelligence"),
+    ]
+    FIRE_BOMBING_ACTIVATION_CRITERIAS = [
+        (1,"Public Safety at Risk"),
+        (2,"Fire Crews in Imminent Danger"),
+        (3,"Assets at Imminent Risk"),
+        (4,"Known high fuel loads and likelihood of excessive ROS and/or extreme fire danger"),
+    ]
+    FIRE_BOMBING_ACTIVATION_CRITERIAS_LATEX = [
+        (1,"Public Safety at Risk"),
+        (2,"Fire Crews in Imminent Danger"),
+        (3,"Assets at Imminent Risk"),
+        (4,"Known high fuel loads and likelihood of excessive ROS \\\\and/or extreme fire danger"),
+    ]
+    FIRE_BOMBING_RESPONSES = [
+        (1,mark_safe("Zone 2/2A<br>(Perth Hills Response)")),
+        (2,mark_safe("Enhanced<br> (Metropolitan)")),
+        (3,mark_safe("I/O Zone<br>(Capes Response)")),
+        (4,mark_safe("SWZR<br>(Bunbury Response)")),
+    ]
+    FIRE_BOMBING_RESPONSES_LATEX = [
+        (1,mark_safe("Zone 2/2A\\\\{\\small( Perth Hills Response)}")),
+        (2,mark_safe("Enhanced\\\\{\\small (Metropolitan)}")),
+        (3,mark_safe("I/O Zone\\\\{\\small (Capes Response)}")),
+        (4,mark_safe("SWZR\\\\{\\small (Bunbury Response)}")),
     ]
 
     # Common Fields
@@ -885,7 +911,7 @@ SUBMIT_MANDATORY_DEP_FIELDS= {
     'dispatch_aerial': [[True, 'dispatch_aerial_date']],
     'initial_control': [[Agency.OTHER, 'other_initial_control']],
     'tenure': [[Tenure.OTHER, 'other_tenure']],
-    'dispatch_aerial':[[True,("dispatch_aerial_date","Dispatch Aerial Date"),("fire_bombing.ground_controller.username","Ground Controller"),("fire_bombing.ground_controller.callsign","Ground Controller Call Sign"),("fire_bombing.radio_channel","Radio Channel"),("fire_bombing.prefered_resources","Prefered Resource")]]
+    'dispatch_aerial':[[True,("dispatch_aerial_date","Dispatch Aerial Date"),("fire_bombing.ground_controller.username","Ground Controller"),("fire_bombing.ground_controller.callsign","Ground Controller Call Sign"),("fire_bombing.radio_channel","Radio Channel"),("fire_bombing.prefered_resources","Prefered Resource"),("fire_bombing.activation_criterias","Indicate Requesting Activation Criteria")]]
 }
 SUBMIT_MANDATORY_FORMSETS= [
 ]
