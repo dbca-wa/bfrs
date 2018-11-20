@@ -250,18 +250,18 @@ class BaseBushfireViewForm(baseforms.ModelForm):
                 <table style="width:90%">
                     <tr>
                         <th style="vertical-align:middle;width:120px;padding:5px">Dispatch date *</th>
-                        <td colspan="3" style="text-align:left;padding:5px;width:30%">{1}</td>
+                        <td colspan="3" style="text-align:left;padding:5px;">{1}</td>
                     </tr>
                     <tr>
                         <th style="vertical-align:middle;width:120px;padding:5px">Ground controller *</th>
-                        <td style="text-align:left;padding:5px;width:30%">{2}</td>
+                        <td style="text-align:left;padding:5px;">{2}</td>
                         <th style="vertical-align:middle;width:120px;padding:5px">Call sign *</th>
                         <td style="text-align:left;padding:5px">{3}</td>
                     </tr>
                     <tr>
                         <th style="vertical-align:middle;padding:5px">Radio channel *</th>
                         <td style="text-align:left;padding:5px">{4}</td>
-                        <th style="vertical-align:middle;width:120px;padding:5px">Prefered resource *</th>
+                        <th style="vertical-align:middle;padding:5px">Prefered resource *</th>
                         <td style="text-align:left;padding:5px">{6}</td>
                     </tr>
                     <tr>
@@ -685,17 +685,17 @@ class SubmittedBushfireForm(MergedBushfireForm):
             "invalid_details":None,
             "damage_unknown":basewidgets.SwitchWidgetFactory(widget_class=basewidgets.TemplateWidgetFactory(widget_class=forms.CheckboxInput,template="{} No damage to report"),html_id="div_damage_unknown",reverse=True)(),
             "injury_unknown":basewidgets.SwitchWidgetFactory(widget_class=basewidgets.TemplateWidgetFactory(widget_class=forms.CheckboxInput,template="{} No injuries/fatalities to report"),html_id="div_injury_unknown",reverse=True)(),
-            "dispatch_aerial":forms.RadioSelect(renderer=HorizontalRadioRenderer),
-            "dispatch_aerial_date":basewidgets.DatetimeInput(),
-            "fire_bombing.ground_controller.username":forms.TextInput(attrs={"style":"width:100%;"}),
-            "fire_bombing.ground_controller.callsign":forms.TextInput(attrs={"style":"width:100%;"}),
-            "fire_bombing.radio_channel":forms.TextInput(attrs={"style":"width:100%;"}),
-            "fire_bombing.sar_arrangements":forms.TextInput(attrs={"style":"width:100%;"}),
-            "fire_bombing.prefered_resources":forms.CheckboxSelectMultiple(renderer = basewidgets.ChoiceFieldRendererFactory(layout="horizontal")),
-            "fire_bombing.activation_criterias":forms.CheckboxSelectMultiple(renderer = basewidgets.ChoiceFieldRendererFactory(layout="vertical")),
-            "fire_bombing.flight_hazards":forms.TextInput(attrs={"style":"width:100%;"}),
-            "fire_bombing.operational_base_established":forms.TextInput(attrs={"style":"width:100%;"}),
-            "fire_bombing.response":forms.RadioSelect(renderer=HorizontalRadioRenderer),
+            #"dispatch_aerial":forms.RadioSelect(renderer=HorizontalRadioRenderer),
+            #"dispatch_aerial_date":basewidgets.DatetimeInput(),
+            #"fire_bombing.ground_controller.username":forms.TextInput(attrs={"style":"width:100%;"}),
+            #"fire_bombing.ground_controller.callsign":forms.TextInput(attrs={"style":"width:100%;"}),
+            #"fire_bombing.radio_channel":forms.TextInput(attrs={"style":"width:100%;"}),
+            #"fire_bombing.sar_arrangements":forms.TextInput(attrs={"style":"width:100%;"}),
+            #"fire_bombing.prefered_resources":forms.CheckboxSelectMultiple(renderer = basewidgets.ChoiceFieldRendererFactory(layout="horizontal")),
+            #"fire_bombing.activation_criterias":forms.CheckboxSelectMultiple(renderer = basewidgets.ChoiceFieldRendererFactory(layout="vertical")),
+            #"fire_bombing.flight_hazards":forms.TextInput(attrs={"style":"width:100%;"}),
+            #"fire_bombing.operational_base_established":forms.TextInput(attrs={"style":"width:100%;"}),
+            #"fire_bombing.response":forms.RadioSelect(renderer=HorizontalRadioRenderer),
             
         }
 
@@ -776,6 +776,17 @@ class InitialBushfireForm(SubmittedBushfireForm):
             #"other_tenure":forms.RadioSelect(renderer=HorizontalRadioRenderer),
             "media_alert_req":basewidgets.SwitchWidgetFactory(forms.RadioSelect,true_value=True,html="<span>call PICA on 9219 9999</span>")(renderer=HorizontalRadioRenderer),
             "park_trail_impacted":basewidgets.SwitchWidgetFactory(forms.RadioSelect,true_value=True,html="<span>PVS will be notified by email</span>")(renderer=HorizontalRadioRenderer),
+            "dispatch_aerial":forms.RadioSelect(renderer=HorizontalRadioRenderer),
+            "dispatch_aerial_date":basewidgets.DatetimeInput(),
+            "fire_bombing.ground_controller.username":forms.TextInput(attrs={"style":"width:100%;"}),
+            "fire_bombing.ground_controller.callsign":forms.TextInput(attrs={"style":"width:100%;"}),
+            "fire_bombing.radio_channel":forms.TextInput(attrs={"style":"width:100%;"}),
+            "fire_bombing.sar_arrangements":forms.TextInput(attrs={"style":"width:100%;"}),
+            "fire_bombing.prefered_resources":forms.CheckboxSelectMultiple(renderer = basewidgets.ChoiceFieldRendererFactory(layout="horizontal")),
+            "fire_bombing.activation_criterias":forms.CheckboxSelectMultiple(renderer = basewidgets.ChoiceFieldRendererFactory(layout="vertical")),
+            "fire_bombing.flight_hazards":forms.TextInput(attrs={"style":"width:100%;"}),
+            "fire_bombing.operational_base_established":forms.TextInput(attrs={"style":"width:100%;"}),
+            "fire_bombing.response":forms.RadioSelect(renderer=HorizontalRadioRenderer),
         }
 
 class InitialBushfireFSSGForm(InitialBushfireForm):
