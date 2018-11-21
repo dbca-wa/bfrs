@@ -118,6 +118,9 @@ class BushfireFilter(django_filters.FilterSet):
         status = int(value)
         if status == Bushfire.STATUS_MISSING_FINAL:
             queryset = queryset.filter(report_status__in=[Bushfire.STATUS_INITIAL_AUTHORISED])
+        elif status == 900:
+            #pending to review
+            queryset = queryset.filter(report_status=Bushfire.STATUS_FINAL_AUTHORISED,final_fire_boundary=True,fire_not_found=False,area__gt=0)
         elif status == -1:
             queryset = queryset.exclude(report_status=Bushfire.STATUS_INVALIDATED)
         else:
@@ -596,12 +599,18 @@ class BushfireUpdateView(ExceptionMixin,FormRequestMixin,MainUrlMixin,LoginRequi
                 else:
                     raise Exception("Bushfire has already been invalidated.")
             else:
+                form_class = self.get_form_class()
+                if not any(a[0] == confirm_action for a in form_class.get_submit_actions(self.request)):
+                    return TemplateResponse(request, self.template_error, context={'is_external_user': False, 'status':401}, status=401)
                 update_status(self.request, self.object, confirm_action)
                 refresh_gokart(self.request, fire_number=self.object.fire_number, region=self.object.region.id, district=self.object.district.id)
                 return HttpResponseRedirect(self.get_main_url())
 
         form_class = self.get_form_class()
         form = self.get_form(form_class)
+
+        if not any(a[0] == action for a in form.submit_actions):
+            return TemplateResponse(request, self.template_error, context={'is_external_user': False, 'status':401}, status=401)
 
         expected_status = None
         if action == "create" or (action == "submit" and self.object is None):
@@ -668,6 +677,7 @@ class BushfireUpdateView(ExceptionMixin,FormRequestMixin,MainUrlMixin,LoginRequi
                     update_status(request, self.object, 'delete_authorisation_(missing_fields_-_FSSDRS)')
                 #have missing fields,show error pages
                 context['mandatory_fields'] = missing_fields
+                context['action'] = action
                 return TemplateResponse(request, self.template_mandatory_fields, context=context)
             elif action == "submit":
                 #skip confirm step when submit a initial report

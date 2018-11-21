@@ -209,7 +209,7 @@ def save_bushfire_emails(queueitem):
             bf.save()
             #dimap.flag(msgid)
             dimap.success_flag(msgid)
-            if not (len(incident_num) == 6 and incident_num.isdigit()):
+            if not (len(incident_num) in [6,8] and incident_num.isdigit()):
                 subject = 'DFES HARVEST Update Warning: Incident No. is not 6 digits - {}'.format(incident_num)
                 body = "WARNING: DFES Incident number updated successfully, but it is not 6 numeric digits. {} - DFES Incident No. {}".format(fire_num, incident_num)
                 logger.warning(body)

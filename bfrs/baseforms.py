@@ -2,6 +2,7 @@ from collections import OrderedDict
 
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.html import html_safe
+from django.db import transaction
 from django.utils import six
 from django import forms
 from django.db import models
@@ -43,9 +44,75 @@ class ConfigDict(dict):
     def get(self,name,default=None):
         return self.data.get(name,self.data.get(self.all_key,default) if self.all_key else default)
 
+class SubpropertyEnabledDict(dict):
+    def __init__(self,dict_obj):
+        super(SubpropertyEnabledDict,self).__init__()
+        self.data = dict_obj
+
+    def __contains__(self,name):
+        if not self.data: return False
+
+        pos = name.find(".")
+        if pos >= 0:
+            name = name[0:pos]
+
+        return name in self.data
+
+    def __getitem__(self,name):
+        if self.data is None: raise TypeError("dict is None")
+
+        pos = name.find(".")
+        if pos >= 0:
+            names = name.split(".")
+            result = self.data
+            for key in names:
+                if not result: raise KeyError(name)
+                try:
+                    result = result[key]
+                except KeyError as ex:
+                    raise KeyError(name)
+
+            return result
+        else:
+            return self.data[name]
+
+    def __setitem__(self,name,value):
+        if self.data is None: raise TypeError("dict is None")
+
+        pos = name.find(".")
+        if pos >= 0:
+            names = name.split(".")
+            result = self.data
+            for key in names[0:-1]:
+                try:
+                    result = result[key]
+                except KeyError as ex:
+                    #key does not exist, create one
+                    result[key] = {}
+                    result = result[key]
+
+            result[names[-1]] = value
+        else:
+            self.data[name] = value
+
+    def __len__(self):
+        return len(self.data) if self.data else 0
+
+    def __str__(self):
+        return str(self.data)
+
+    def __repr__(self):
+        return repr(self.data)
+
+    def get(self,name,default=None):
+        try:
+            return self.__getitem__(name)
+        except KeyError as ex:
+            return default
+
 class ChainDict(dict):
     def __init__(self,dict_objs):
-        super(ConfigDict,self).__init__()
+        super(ChainDict,self).__init__()
         if isinstance(self.dicts,list):
             self.dicts = dict_objs
         elif isinstance(self.dicts,tuple):
@@ -98,7 +165,6 @@ class ChainDict(dict):
     def update(self,dict_obj):
         self.dicts.insert(0,dict_obj)
 
-
 class BoundField(forms.boundfield.BoundField):
     """ 
     Extend django's BoundField to support the following features
@@ -143,7 +209,11 @@ class BoundField(forms.boundfield.BoundField):
         if self.is_display:
             return ""
         else:
-            return super(BoundField,self).auto_id
+            html_id = super(BoundField,self).auto_id
+            if "." in html_id:
+                return html_id.replace(".","_")
+            else:
+                return html_id
 
     def value(self):
         """
@@ -207,9 +277,11 @@ class CompoundBoundField(BoundField):
         html_layout,field_names = self.field.get_layout(self)
         html = super(CompoundBoundField,self).as_widget(widget,attrs,only_initial)
         if field_names:
-            return safestring.SafeText(html_layout.format(html,*[f.as_widget(only_initial=only_initial) for f in self.related_fields if f.name in field_names]))
+            args = [f.as_widget(only_initial=only_initial) for f in self.related_fields if f.name in field_names]
+            args.append(self.auto_id)
+            return safestring.SafeText(html_layout.format(html,*args))
         elif html_layout:
-            return safestring.SafeText(html_layout.format(html))
+            return safestring.SafeText(html_layout.format(html,self.auto_id))
         else:
             return html
 
@@ -307,20 +379,40 @@ class BaseModelFormMetaclass(forms.models.ModelFormMetaclass):
         field_list = []
         kwargs = {}
         db_field = True
+        property_name = None
+        subproperty_enabled = False
+        
         for field_name in opts.other_fields or []:
+            if "." in field_name:
+                property_name = field_name.split(".",1)[0]
+                subproperty_enabled = True
+            else:
+                property_name = field_name
             try:
+                if field_name != property_name:
+                    raise Exception("Not a model field")
                 model_field = model._meta.get_field(field_name)
                 db_field = True
             except:
                 #not a model field, check whether it is a property 
-                if hasattr(model,field_name) and isinstance(getattr(model,field_name),property):
+                if hasattr(model,property_name) and isinstance(getattr(model,property_name),property):
                     #field is a property
-                    model_field = getattr(model,field_name)
+                    if field_name == property_name:
+                        model_field = getattr(model,property_name)
+                    else:
+                        #a sub property of a model property
+                        model_field = None
                     db_field = False
                 else:
                     raise Exception("Unknown field {} ".format(field_name))
 
             kwargs.clear()
+            if hasattr(opts,"field_classes")  and opts.field_classes and field_name in opts.field_classes and isinstance(opts.field_classes[field_name],forms.Field):
+                #already configure a form field instance, use it directly
+                form_field = opts.field_classes[field_name]
+                field_list.append((field_name, formfield))
+                continue
+
             if opts.widgets and field_name in opts.widgets:
                 kwargs['widget'] = opts.widgets[field_name]
             elif not db_field:
@@ -332,13 +424,16 @@ class BaseModelFormMetaclass(forms.models.ModelFormMetaclass):
             if opts.labels and field_name in opts.labels:
                 kwargs['label'] = safe(opts.labels[field_name])
             elif not db_field:
-                raise Exception("Please cofigure label for property '{}' in 'labels' option".format(field_name))
+                kwargs['label'] = safe(field_name)
 
             if opts.help_texts and field_name in opts.help_texts:
                 kwargs['help_text'] = opts.help_texts[field_name]
 
             if opts.error_messages and field_name in opts.error_messages:
                 kwargs['error_messages'] = opts.error_messages[field_name]
+
+            if not db_field:
+                kwargs['required'] = False
 
             if hasattr(opts,"field_classes")  and opts.field_classes and field_name in opts.field_classes:
                 kwargs['form_class'] = opts.field_classes[field_name]
@@ -357,6 +452,8 @@ class BaseModelFormMetaclass(forms.models.ModelFormMetaclass):
 
             field_list.append((field_name, formfield))
 
+        setattr(opts,'subproperty_enabled',subproperty_enabled)
+
         if field_list:
             field_list = OrderedDict(field_list)
             new_class.base_fields.update(field_list)
@@ -372,10 +469,28 @@ class BaseModelFormMetaclass(forms.models.ModelFormMetaclass):
                 if field in new_class.all_base_fields:
                     new_class.base_fields[field] = new_class.all_base_fields[field]
 
-        editable_fields = [name for name,field in new_class.base_fields.iteritems() if not isinstance(field.widget,basewidgets.DisplayWidget)]
+        editable_fields = [name for name,field in new_class.base_fields.iteritems() if not isinstance(field.widget,basewidgets.DisplayMixin)]
         setattr(opts,'editable_fields',editable_fields)
-        setattr(opts,'db_update_fields',editable_fields + list((getattr(opts,"extra_update_fields") or [])))
+        update_db_fields = list(getattr(opts,"extra_update_fields") or [])
+        update_model_properties = []
 
+        for name,field in new_class.base_fields.iteritems():
+            if isinstance(field.widget,basewidgets.DisplayMixin):
+                continue
+            if "." in name:
+                #not a model field
+                update_model_properties.append(name)
+                continue
+            try:
+                model._meta.get_field(name)
+                update_db_fields.append(name)
+            except:
+                #not a model field
+                update_model_properties.append(name)
+                continue
+
+        setattr(opts,'update_db_fields',update_db_fields)
+        setattr(opts,'update_model_properties',update_model_properties)
         
         return new_class
 
@@ -394,46 +509,29 @@ class ModelForm(six.with_metaclass(BaseModelFormMetaclass, forms.models.BaseMode
             else:
                 self.initial = self.instance
 
+            if self._meta.subproperty_enabled:
+                self.initial = SubpropertyEnabledDict(self.initial)
+
     def is_editable(self,name):
         return self._meta.editable_fields is None or name in self._meta.editable_fields
 
-    def boolvalue(self,cleaned_data,name,default=None):
-        if name in cleaned_data:
-            cleaned_data[name] = cleaned_data[name] == True or cleaned_data[name] in ('True','true','1')
-            return cleaned_data[name]
-        else:
-            cleaned_data[name] = default
-            return default
-
-    def intvalue(self,cleaned_data,name,default=None):
-        if name in cleaned_data and cleaned_data[name] is not None:
-            if isinstance(cleaned_data[name],basestring):
-                cleaned_data[name] = cleaned_data[name].strip()
-                if cleaned_data[name]:
-                    cleaned_data[name] = int(cleaned_data[name])
+    def _post_clean(self):
+        #save the value of model properties
+        if self._meta.update_model_properties:
+            for name in self._meta.update_model_properties:
+                if "." in name:
+                    props = name.split(".")
+                    result = getattr(self.instance,props[0])
+                    for prop in props[1:-1]:
+                        try:
+                            result = result[prop]
+                        except KeyError as ex:
+                            result[prop] = {}
+                            result = result[prop]
+                    result[props[-1]] = self.cleaned_data[name]
                 else:
-                    cleaned_data[name] = default
-            else:
-                cleaned_data[name] = int(cleaned_data[name])
-            return cleaned_data[name]
-        else:
-            cleaned_data[name] = default
-            return default
-
-    def floatvalue(self,cleaned_data,name,default=None):
-        if name in cleaned_data and cleaned_data[name] is not None:
-            if isinstance(cleaned_data[name],basestring):
-                cleaned_data[name] = cleaned_data[name].strip()
-                if cleaned_data[name]:
-                    cleaned_data[name] = float(cleaned_data[name])
-                else:
-                    cleaned_data[name] = default
-            else:
-                cleaned_data[name] = float(cleaned_data[name])
-            return cleaned_data[name]
-        else:
-            cleaned_data[name] = default
-            return default
+                    setattr(self.instance,name,self.cleaned_data[name])
+        super(ModelForm,self)._post_clean()
 
     def save(self, commit=True):
         """
@@ -441,7 +539,9 @@ class ModelForm(six.with_metaclass(BaseModelFormMetaclass, forms.models.BaseMode
         a save_m2m() method to the form which can be called after the instance
         is saved manually at a later time. Return the model instance.
         """
-        if self.instance.pk and hasattr(self._meta,"db_update_fields") and self._meta.editable_fields:
+        update_properties = self._meta.update_model_properties and hasattr(self.instance,"save_properties") and callable(getattr(self.instance, "save_properties"))
+
+        if self.instance.pk and hasattr(self._meta,"update_db_fields") and self._meta.editable_fields:
             if self.errors:
                 raise ValueError(
                     "The %s could not be %s because the data didn't validate." % (
@@ -451,14 +551,25 @@ class ModelForm(six.with_metaclass(BaseModelFormMetaclass, forms.models.BaseMode
                 )
             if commit:
                 # If committing, save the instance and the m2m data immediately.
-                self.instance.save(update_fields=self._meta.db_update_fields)
+                with transaction.atomic():
+                    self.instance.save(update_fields=self._meta.update_db_fields)
+                    if update_properties:
+                        self.instance.save_properties(update_fields=self._meta.update_model_properties)
                 self._save_m2m()
             else:
                 # If not committing, add a method to the form to allow deferred
                 # saving of m2m data.
                 self.save_m2m = self._save_m2m
+        elif commit:
+            with transaction.atomic():
+                super(ModelForm,self).save(commit)
+                if update_properties:
+                    self.instance.save_properties(update_fields=self._meta.update_model_properties)
+
         else:
             super(ModelForm,self).save(commit)
+
+
         return self.instance
 
     def full_clean(self):

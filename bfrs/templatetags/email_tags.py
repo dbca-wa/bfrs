@@ -51,9 +51,9 @@ def field_label(field_name, bushfire=None):
         try:
             return bushfire._meta.get_field(field_name).verbose_name
         except:
-            return value
+            return field_name
     else:
-        return value
+        return field_name
 
 
 @register.simple_tag()

@@ -304,3 +304,7 @@ div.navbar-fixed-bottom {
     background-color: #eeeeee;
     color: #000000;
 }
+
+label {
+    font-weight:normal
+}

@@ -22,6 +22,7 @@ MESSAGE_LEVEL = message_constants.DEBUG
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+LATEX_GRAPHIC_FOLDER = os.path.join(BASE_DIR,"templates","latex","images")
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
@@ -53,16 +54,24 @@ BCC_EMAIL = env('BCC_EMAIL') or None
 SUPPORT_EMAIL = env('SUPPORT_EMAIL') or None
 MERGE_BUSHFIRE_EMAIL = env('MERGE_BUSHFIRE_EMAIL') or None
 
+FIRE_BOMBING_REQUEST_EMAIL = env("FIRE_BOMBING_REQUEST_EMAIL") or None
+FIRE_BOMBING_REQUEST_CC_EMAIL = env("FIRE_BOMBING_REQUEST_CC_EMAIL") or None
+
 INTERNAL_EMAIL = env('INTERNAL_EMAIL',['dbca.wa.gov.au','dpaw.wa.gov.au'])
-SSS_URL = env('SSS_URL', 'sss_redirect_url')
+SSS_URL = env('SSS_URL', 'https://sss.dpaw.wa.gov.au')
+SSS_CERTIFICATE_VERIFY = env('SSS_CERTIFICATE_VERIFY', True)
+KMI_URL = env('KMI_URL', 'https://kmi.dbca.wa.gov.au/geoserver')
 AREA_THRESHOLD = env('AREA_THRESHOLD', 2)
 
 PBS_URL = env('PBS_URL', 'https://pbs.dpaw.wa.gov.au/')
 URL_SSO = env('URL_SSO', 'https://oim.dpaw.wa.gov.au/api/users/')
 USER_SSO = env('USER_SSO')
 PASS_SSO = env('PASS_SSO')
-FSSDRS_USERS = env('FSSDRS_USERS')
-FSSDRS_GROUP = env('FSSDRS_GROUP', 'FSS Datasets and Reporting Services')
+FSSDRS_USERS = env('FSSDRS_USERS') or []
+FSSDRS_GROUP = env('FSSDRS_GROUP') or 'Fire Information Management'
+
+FINAL_AUTHORISE_GROUP_USERS = env('FINAL_AUTHORISE_GROUP_USERS') or []
+FINAL_AUTHORISE_GROUP = env('FINAL_AUTHORISE_GROUP') or 'Fire Final Authorise Group'
 
 HARVEST_EMAIL_HOST = env('HARVEST_EMAIL_HOST')
 HARVEST_EMAIL_USER = env('HARVEST_EMAIL_USER')
@@ -159,6 +168,10 @@ MIDDLEWARE_CLASSES = [
     'dpaw_utils.middleware.SSOLoginMiddleware',
 
 ]
+
+SERIALIZATION_MODULES = {
+    "geojson": "django.contrib.gis.serializers.geojson", 
+}
 
 ROOT_URLCONF = 'bfrs_project.urls'
 

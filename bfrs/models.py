@@ -10,6 +10,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.core.exceptions import (ValidationError)
 from django.conf import settings
 from django.core import serializers
+from django.utils.safestring import mark_safe
 
 from smart_selects.db_fields import ChainedForeignKey
 import LatLon
@@ -17,55 +18,6 @@ import reversion
 
 from bfrs.base import Audit,DictMixin
 
-SUBMIT_MANDATORY_FIELDS= [
-    'region', 'district', 'year', 'fire_number', 'name', 'fire_detected_date', 'prob_fire_level',
-    'dispatch_pw', 'dispatch_aerial', 'investigation_req', 'park_trail_impacted', 'media_alert_req',
-    'duty_officer', 'initial_control',
-]
-SUBMIT_MANDATORY_DEP_FIELDS= {
-    'dispatch_pw': [[1, 'dispatch_pw_date']], # if 'dispatch_pw' == 1 then 'dispatch_pw_date' is required
-    'dispatch_aerial': [['True', 'dispatch_aerial_date']],
-    'initial_control': [['OTHER', 'other_initial_control']],
-    'tenure': [['Other', 'other_tenure']],
-}
-SUBMIT_MANDATORY_FORMSETS= [
-]
-
-AUTH_MANDATORY_FIELDS= [
-    'area',
-    'cause_state', 'cause',
-    'fire_contained_date', 'fire_controlled_date',
-    'fire_safe_date',
-    'final_control',
-    'max_fire_level', 'arson_squad_notified', 'job_code',
-    'dfes_incident_no',
-]
-
-AUTH_MANDATORY_FIELDS_FIRE_NOT_FOUND= [
-    'duty_officer',
-]
-AUTH_MANDATORY_DEP_FIELDS_FIRE_NOT_FOUND= {
-    'dispatch_pw': [[1, 'field_officer'], [1, 'dispatch_pw_date']], # if 'dispatch_pw' == '1' then 'field_officer' is required
-    'dispatch_aerial': [['True', 'dispatch_aerial_date']],
-    'field_officer': [['other', 'other_field_officer'], ['other', 'other_field_officer_agency']], # username='other'
-}
-
-AUTH_MANDATORY_DEP_FIELDS= {
-    'dispatch_pw': [[1, 'field_officer'], [1, 'dispatch_pw_date']], # if 'dispatch_pw' == '1' then 'field_officer' is required
-    'dispatch_aerial': [['True', 'dispatch_aerial_date']],
-    'fire_monitored_only': [[False, 'first_attack']],
-
-    'cause': [['Other (specify)', 'other_cause'], ['Escape P&W burning', 'prescribed_burn_id']],
-    'first_attack': [['OTHER', 'other_first_attack']],
-    'final_control': [['OTHER', 'other_final_control']],
-    'area_limit': [[True, 'area']],
-    'field_officer': [['other', 'other_field_officer'], ['other', 'other_field_officer_agency']], # username='other'
-}
-AUTH_MANDATORY_FORMSETS= [
-    #'fire_behaviour',
-    'damages',
-    'injuries',
-]
 
 SNAPSHOT_INITIAL = 1
 SNAPSHOT_FINAL = 2
@@ -93,6 +45,25 @@ def reporting_years():
         return [[None, None]]
         #return [[2016, '2016/2017'], [2017, '2017/2018']]
 
+def get_field(obj,field):
+    if "." in field:
+        field = field.split(".")
+        result = getattr(obj,field[0]) if hasattr(obj,field[0]) else None
+        if not result:
+            return None
+        for f in field[1:]:
+            if not result:
+                return None
+            elif isinstance(result,dict):
+                result = result.get(f)
+            elif isinstance(result,(list,tuple)):
+                result = result[int(f)] if int(f) < len(result) else None
+            else:
+                result = getattr(result,f) if hasattr(result,f) else None
+        return result
+    else:
+        return getattr(obj,field) if hasattr(obj,field) else None
+
 def check_mandatory_fields(obj, fields, dep_fields, formsets):
     """
     Method to check all required fields have been fileds before allowing Submit/Authorise of report.
@@ -106,7 +77,26 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
     dep_field - dependent fields (if one field has a value, check that the other has been filled)
     formsets  - fields in formsets
     """
-    missing = [Bushfire._meta.get_field(field).verbose_name for field in fields if getattr(obj, field) is None or getattr(obj, field)=='']
+    missing = []
+    for field in fields:
+        if isinstance(field,tuple):
+            #field label is provided
+            field_label = field[1]
+            field = field[0]
+        else:
+            field_label = None
+
+        value = get_field(obj,field)
+        if value is None or value=='':
+            if field_label:
+                missing.append(field_label)
+            else:
+                try:
+                    missing.append(Bushfire._meta.get_field(field).verbose_name)
+                except:
+                    missing.append(field)
+            
+
 
     if obj.fire_not_found and obj.is_init_authorised:
         # no need to check these
@@ -117,15 +107,25 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
         for dep_set in dep_sets:
             # next line checks for normal Field or Enumerated list field (i.e. '.name')
             try:
-                if hasattr(obj, field) and (
-                   getattr(obj, field)==dep_set[0] or \
-                   (hasattr(getattr(obj, field), 'name') and getattr(obj, field).name==dep_set[0]) or \
-                   (hasattr(getattr(obj, field), 'username') and getattr(obj, field).username==dep_set[0]) \
-                ):
-                    if getattr(obj, dep_set[1]) is None or (isinstance(getattr(obj, dep_set[1]), (str, unicode)) and not getattr(obj, dep_set[1]).strip()):
-                        # field is unset or empty string
-                        verbose_name = Bushfire._meta.get_field(dep_set[1]).verbose_name
-                        missing.append(verbose_name)
+                if hasattr(obj, field) and getattr(obj, field)==dep_set[0]:
+                    for dep in dep_set[1:]:
+                        if isinstance(dep,tuple):
+                            #field label is provided
+                            dep_label = dep[1]
+                            dep = dep[0]
+                        else:
+                            dep_label = None
+
+                        value = get_field(obj,dep)
+                        if value is None or (isinstance(value, (str, unicode)) and not value.strip()) or (isinstance(value,(list,tuple)) and not value):
+                            # field is unset or empty string
+                            if dep_label:
+                                missing.append(dep_label)
+                            else:
+                                try:
+                                    missing.append(Bushfire._meta.get_field(dep).verbose_name)
+                                except:
+                                    missing.append(dep)
             except:
                 pass
 
@@ -226,7 +226,6 @@ class District(models.Model):
     def __str__(self):
         return self.name
 
-
 class BushfireBase(Audit,DictMixin):
     STATUS_INITIAL                = 1
     STATUS_INITIAL_AUTHORISED     = 2
@@ -287,6 +286,36 @@ class BushfireBase(Audit,DictMixin):
         (IGNITION_POINT_CROWN, 'Crown'),
     )
 
+    FIRE_BOMBING_RESOURCES = [
+        (1,"Fixed Wing"),
+        (2,"Helitak"),
+        (3,"Aerial Intelligence"),
+    ]
+    FIRE_BOMBING_ACTIVATION_CRITERIAS = [
+        (1,"Public Safety at Risk"),
+        (2,"Fire Crews in Imminent Danger"),
+        (3,"Assets at Imminent Risk"),
+        (4,"Known high fuel loads and likelihood of excessive ROS and/or extreme fire danger"),
+    ]
+    FIRE_BOMBING_ACTIVATION_CRITERIAS_LATEX = [
+        (1,"Public Safety at Risk"),
+        (2,"Fire Crews in Imminent Danger"),
+        (3,"Assets at Imminent Risk"),
+        (4,"Known high fuel loads and likelihood of excessive ROS \\\\and/or extreme fire danger"),
+    ]
+    FIRE_BOMBING_RESPONSES = [
+        (1,mark_safe("Zone 2/2A<br>(Perth Hills Response)")),
+        (2,mark_safe("Enhanced<br> (Metropolitan)")),
+        (3,mark_safe("I/O Zone<br>(Capes Response)")),
+        (4,mark_safe("SWZR<br>(Bunbury Response)")),
+    ]
+    FIRE_BOMBING_RESPONSES_LATEX = [
+        (1,mark_safe("Zone 2/2A\\\\{\\small( Perth Hills Response)}")),
+        (2,mark_safe("Enhanced\\\\{\\small (Metropolitan)}")),
+        (3,mark_safe("I/O Zone\\\\{\\small (Capes Response)}")),
+        (4,mark_safe("SWZR\\\\{\\small (Bunbury Response)}")),
+    ]
+
     # Common Fields
     region = models.ForeignKey(Region, verbose_name="Region")
     district = ChainedForeignKey(
@@ -316,6 +345,7 @@ class BushfireBase(Audit,DictMixin):
     # Point of Origin
     origin_point = models.PointField(verbose_name="Point of Origin", editable=True)
     origin_point_mga = models.CharField(verbose_name='Point of Origin (MGA)', max_length=64, null=True, blank=True)
+    origin_point_grid = models.CharField(verbose_name='Point of Origin (GRID)', max_length=16, null=True, blank=True)
     fire_boundary = models.MultiPolygonField(srid=4326, null=True, blank=True, editable=True, help_text='Optional.')
     fire_not_found = models.BooleanField(default=False)
     fire_monitored_only = models.BooleanField(default=False)
@@ -493,6 +523,35 @@ class BushfireBase(Audit,DictMixin):
 
         return 'Lat/Lon ' + lat_str + ', ' + lon_str
 
+    @property
+    def origin_latex(self):
+        if not self.origin_point:
+            return ""
+
+        c=self.origin_latlon
+        latlon = c.to_string('d% %m% %S% %H')
+        lat = latlon[0].split(' ')
+        lon = latlon[1].split(' ')
+
+        # need to format float number (seconds) to 1 dp
+        lon[2] = str(round(eval(lon[2]), 1))
+        lat[2] = str(round(eval(lat[2]), 1))
+
+        # Degrees Minutes Seconds Hemisphere
+        lat_str = lat[0] + u'$^\circ$ ' + lat[1].zfill(2) + '\' ' + lat[2].zfill(4) + '\" ' + lat[3]
+        lon_str = lon[0] + u'$^\circ$ ' + lon[1].zfill(2) + '\' ' + lon[2].zfill(4) + '\" ' + lon[3]
+
+        return 'Lat/Lon ' + lat_str + ', ' + lon_str
+
+    @property
+    def initial_control_value(self):
+        if not self.initial_control:
+            return ""
+        elif self.initial_control == Agency.OTHER:
+            return self.other_initial_control
+        else:
+            return self.initial_control.name
+
 
 class BushfireSnapshot(BushfireBase):
 
@@ -503,6 +562,22 @@ class BushfireSnapshot(BushfireBase):
     action = models.CharField(verbose_name="Action Type", max_length=50)
     bushfire = models.ForeignKey('Bushfire', related_name='snapshots')
 
+    @property
+    def fire_bombing(self):
+        if not hasattr(self,"_fire_bombing"):
+            try:
+                fire_bombing = BushfirePropertySnapshot.objects.get(snapshot=self,name="fire_bombing").value
+                if fire_bombing is None:
+                    fire_bombing = {}
+                else:
+                    fire_bombing = json.loads(fire_bombing)
+            except BushfirePropertySnapshot.DoesNotExist:
+                fire_bombing = {}
+
+            self._fire_bombing = fire_bombing
+
+        return self._fire_bombing
+
     def __str__(self):
         return ', '.join([self.fire_number, self.get_snapshot_type_display()])
 
@@ -511,6 +586,43 @@ class Bushfire(BushfireBase):
 
     fire_number = models.CharField(max_length=15, verbose_name="Fire Number", unique=True)
     sss_id = models.CharField(verbose_name="Unique SSS ID", max_length=64, null=True, blank=True, unique=True)
+
+    class Meta:
+        permissions = (
+            ("final_authorise_bushfire","Can final authorise bushfire"),
+        )
+
+    @property
+    def fire_bombing(self):
+        if not hasattr(self,"_fire_bombing"):
+            try:
+                fire_bombing = BushfireProperty.objects.get(bushfire=self,name="fire_bombing").value
+                if fire_bombing is None:
+                    fire_bombing = {}
+                else:
+                    fire_bombing = json.loads(fire_bombing)
+            except BushfireProperty.DoesNotExist:
+                fire_bombing = {}
+
+            self._fire_bombing = fire_bombing
+
+        return self._fire_bombing
+
+    def save_properties(self,update_fields = None):
+        if not update_fields:
+            return
+        if any([field.startswith("fire_bombing.") for field in update_fields]):
+            #save fire_bombing
+            if not self.dispatch_aerial:
+                #fire bombing not required
+                BushfireProperty.objects.filter(bushfire=self,name="fire_bombing").delete()
+                return
+
+            #initialize fire bombing data
+            if not self.fire_bombing.get("sar_arrangements"):
+                self.fire_bombing["sar_arrangements"] = "Default SAR state air desk"
+
+            BushfireProperty.objects.update_or_create(bushfire=self,name="fire_bombing",defaults={"value":json.dumps(self.fire_bombing)})
 
     def user_unicode_patch(self):
         """ overwrite the User model's __unicode__() method """
@@ -697,7 +809,7 @@ class AreaBurntSnapshot(AreaBurntBase, Audit):
     snapshot = models.ForeignKey(BushfireSnapshot, related_name='tenures_burnt_snapshot')
 
     class Meta:
-        unique_together = ('tenure', 'snapshot', 'snapshot_type',)
+        unique_together = ('tenure', 'snapshot')
 
 
 @python_2_unicode_compatible
@@ -724,7 +836,7 @@ class InjurySnapshot(InjuryBase, Audit):
     snapshot = models.ForeignKey(BushfireSnapshot, related_name='injury_snapshot')
 
     class Meta:
-        unique_together = ('injury_type', 'snapshot', 'snapshot_type',)
+        unique_together = ('injury_type', 'snapshot')
 
 
 class DamageBase(models.Model):
@@ -750,7 +862,7 @@ class DamageSnapshot(DamageBase, Audit):
     snapshot = models.ForeignKey(BushfireSnapshot, related_name='damage_snapshot')
 
     class Meta:
-        unique_together = ('damage_type', 'snapshot', 'snapshot_type',)
+        unique_together = ('damage_type', 'snapshot')
 
 
 class BushfirePropertyBase(models.Model):
@@ -785,7 +897,60 @@ class BushfirePropertySnapshot(BushfirePropertyBase):
     snapshot = models.ForeignKey(BushfireSnapshot, related_name='properties_snapshot')
 
     class Meta:
-        unique_together = ('snapshot', 'snapshot_type','name')
+        unique_together = ('snapshot','name')
+
+
+
+SUBMIT_MANDATORY_FIELDS= [
+    'region', 'district', 'year', 'fire_number', 'name', 'fire_detected_date', 'prob_fire_level',
+    'dispatch_pw', 'dispatch_aerial', 'investigation_req', 'park_trail_impacted', 'media_alert_req',
+    'duty_officer', 'initial_control'
+]
+SUBMIT_MANDATORY_DEP_FIELDS= {
+    'dispatch_pw': [[1, 'dispatch_pw_date']], # if 'dispatch_pw' == 1 then 'dispatch_pw_date' is required
+    'dispatch_aerial': [[True, 'dispatch_aerial_date']],
+    'initial_control': [[Agency.OTHER, 'other_initial_control']],
+    'tenure': [[Tenure.OTHER, 'other_tenure']],
+    'dispatch_aerial':[[True,("dispatch_aerial_date","Dispatch Aerial Date"),("fire_bombing.ground_controller.username","Ground Controller"),("fire_bombing.ground_controller.callsign","Ground Controller Call Sign"),("fire_bombing.radio_channel","Radio Channel"),("fire_bombing.prefered_resources","Prefered Resource"),("fire_bombing.activation_criterias","Indicate Requesting Activation Criteria")]]
+}
+SUBMIT_MANDATORY_FORMSETS= [
+]
+
+AUTH_MANDATORY_FIELDS= [
+    'area',
+    'cause_state', 'cause',
+    'fire_contained_date', 'fire_controlled_date',
+    'fire_safe_date',
+    'final_control',
+    'max_fire_level', 'arson_squad_notified', 'job_code',
+    'dfes_incident_no'
+]
+
+AUTH_MANDATORY_FIELDS_FIRE_NOT_FOUND= [
+    'duty_officer',
+]
+AUTH_MANDATORY_DEP_FIELDS_FIRE_NOT_FOUND= {
+    'dispatch_pw': [[1, 'field_officer', 'dispatch_pw_date']], # if 'dispatch_pw' == '1' then 'field_officer' is required
+    'dispatch_aerial': [[True, 'dispatch_aerial_date']],
+    'field_officer': [[User.OTHER, 'other_field_officer','other_field_officer_agency']], # username='other'
+}
+
+AUTH_MANDATORY_DEP_FIELDS= {
+    'dispatch_pw': [[1, 'field_officer', 'dispatch_pw_date']], # if 'dispatch_pw' == '1' then 'field_officer' is required
+    'dispatch_aerial': [[True, 'dispatch_aerial_date']],
+    'fire_monitored_only': [[False, 'first_attack']],
+
+    'cause': [[Cause.OTHER, 'other_cause'], [Cause.ESCAPE_DPAW_BURNING, 'prescribed_burn_id']],
+    'first_attack': [[Agency.OTHER, 'other_first_attack']],
+    'final_control': [[Agency.OTHER, 'other_final_control']],
+    'area_limit': [[True, 'area']],
+    'field_officer': [[User.OTHER, 'other_field_officer', 'other_field_officer_agency']], # username='other'
+}
+AUTH_MANDATORY_FORMSETS= [
+    #'fire_behaviour',
+    'damages',
+    'injuries',
+]
 
 reversion.register(Bushfire, follow=['tenures_burnt', 'injuries', 'damages'])
 reversion.register(Profile)

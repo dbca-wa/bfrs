@@ -17,6 +17,7 @@ from django.utils import timezone
 import os
 import subprocess
 import csv
+import traceback
 
 from django.template.loader import render_to_string
 
@@ -2411,21 +2412,34 @@ def email_outstanding_fires(region_id=None):
     for row in settings.OUTSTANDING_FIRES_EMAIL:
         for region_name,email_to in row.iteritems():
 
-            region = Region.objects.get(name=region_name)
+            try:
+                region = Region.objects.get(name=region_name)
+            except:
+                region = None
+                traceback.print_exc()
+
             if region:
                 f = StringIO()
                 book = Workbook()
-                outstanding_fires(book, region, qs, rpt_date)
+                total_reports = outstanding_fires(book, region, qs, rpt_date)
                 book.add_sheet('Sheet 2')
                 book.save(f)
 
-                subject = 'Outstanding Fires Report - {} - {}'.format(region_name, rpt_date.strftime('%d-%b-%Y')) 
-                body = 'Outstanding Fires Report - {} - {}'.format(region_name, rpt_date.strftime('%d-%b-%Y')) 
-
-                filename = 'outstanding_fires_{}_{}.xls'.format(region_name.replace(' ', '').lower(), rpt_date.strftime('%d-%b-%Y'))
+                if total_reports == 0:
+                    subject = 'Outstanding Fires Report - {} - {} - No Outstanding Fire'.format(region_name, rpt_date.strftime('%d-%b-%Y')) 
+                    body = 'Outstanding Fires Report - {} - {} - No Outstanding Fire'.format(region_name, rpt_date.strftime('%d-%b-%Y')) 
+                elif total_reports == 1:
+                    subject = 'Outstanding Fires Report - {} - {} - 1 Outstanding Fire'.format(region_name, rpt_date.strftime('%d-%b-%Y')) 
+                    body = 'Outstanding Fires Report - {} - {} - 1 Outstanding Fire'.format(region_name, rpt_date.strftime('%d-%b-%Y')) 
+                else:
+                    subject = 'Outstanding Fires Report - {} - {} - {} Outstanding Fires'.format(region_name, rpt_date.strftime('%d-%b-%Y'),total_reports) 
+                    body = 'Outstanding Fires Report - {} - {} - {} Outstanding Fires'.format(region_name, rpt_date.strftime('%d-%b-%Y'),total_reports) 
 
                 message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=email_to, cc=settings.CC_EMAIL, bcc=settings.BCC_EMAIL)
-                message.attach(filename, f.getvalue(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") #get the stream and set the correct mimetype
+                if total_reports > 0:
+                    filename = 'outstanding_fires_{}_{}.xls'.format(region_name.replace(' ', '').lower(), rpt_date.strftime('%d-%b-%Y'))
+                    message.attach(filename, f.getvalue(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") #get the stream and set the correct mimetype
+
                 message.send()
 
 
@@ -2457,7 +2471,9 @@ def outstanding_fires(book, region, queryset, rpt_date):
     hdr.write(col_no(), "Date Inactive")
 
     #row_no = lambda c=count(5): next(c)
+    total_reports = 0
     for obj in qs:
+        total_reports += 1
         row = sheet1.row(row_no())
         col_no = lambda c=count(): next(c)
 
@@ -2468,6 +2484,9 @@ def outstanding_fires(book, region, queryset, rpt_date):
         row.write(col_no(), obj.fire_contained_date.strftime('%Y-%m-%d %H:%M:%S') if obj.fire_contained_date else '' )
         row.write(col_no(), obj.fire_controlled_date.strftime('%Y-%m-%d %H:%M:%S') if obj.fire_controlled_date else '' )
         row.write(col_no(), obj.fire_safe_date.strftime('%Y-%m-%d %H:%M:%S') if obj.fire_safe_date else '' )
+
+    return total_reports
+
 export_outstanding_fires.short_description = u"Outstanding Fires"
 
 

@@ -250,7 +250,7 @@ class BushfireSpatialResource(ModelResource):
         resource_name = 'bushfirespatial'
         authorization = Authorization()
         #fields = ['origin_point', 'fire_boundary', 'area', 'fire_position']
-        fields = ['origin_point', 'fire_boundary','origin_point_mga','fb_validation_req']
+        fields = ['origin_point', 'fire_boundary','origin_point_mga','origin_point_grid','fb_validation_req']
         #using extra fields to process some complex or related fields
         extra_fields = ['district','area','tenure_ignition_point','fire_position','plantations','sss_data','capturemethod']
         allowed_methods=['patch']
@@ -398,7 +398,7 @@ class BushfireSpatialResource(ModelResource):
 
         if bundle.obj.report_status != Bushfire.STATUS_INITIAL:
             #normal user can't move a submitted bushfire from one district to another district. 
-            #only the user in the group "FSS Datasets and Reporting Services" can do it from bfrs web application
+            #only the user in the group "Fire Information Management" can do it from bfrs web application
             return
 
         bundle.obj.district = District.objects.get(id=bundle.data['district_id'])

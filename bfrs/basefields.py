@@ -6,6 +6,9 @@ from django.db import models
 
 from . import basewidgets
 
+class_id = 0
+field_classes = {}
+
 def hide_field(field):
     if field.widget.attrs:
         if field.widget.attrs.get("style"): 
@@ -16,8 +19,25 @@ def hide_field(field):
     else:
         field.widget.attrs = {"style":"display:none","disabled":True}
 
+class _JSONEncoder(json.JSONEncoder):
+    def default(self,obj):
+        if isinstance(obj,models.Model):
+            return obj.pk
+        elif callable(obj) or isinstance(obj,staticmethod):
+            return id(obj)
+        return json.JSONEncoder.default(self,obj)
 
-class CompoundField(object):
+class FieldParametersMixin(object):
+    field_params = None
+
+    def __init__(self,*args,**kwargs):
+        if self.field_params:
+            for k,v in self.field_params.iteritems():
+                kwargs[k] = v
+        super(FieldParametersMixin,self).__init__(*args,**kwargs)
+
+class CompoundField(FieldParametersMixin):
+    field_name = None
     related_field_names = []
     field_mixin = None
     hidden_layout = None
@@ -37,17 +57,6 @@ class CompoundField(object):
     def _edit_layout(self,f):
         raise Exception("Not implemented")
 
-class _JSONEncoder(json.JSONEncoder):
-    def default(self,obj):
-        if isinstance(obj,models.Model):
-            return obj.pk
-        elif callable(obj) or isinstance(obj,staticmethod):
-            return id(obj)
-        return json.JSONEncoder.default(self,obj)
-
-class_id = 0
-class_id = 0
-compound_classes = {}
 def CompoundFieldFactory(compoundfield_class,model,field_name,related_field_names=None,field_class=None,**kwargs):
     global class_id
 
@@ -59,14 +68,14 @@ def CompoundFieldFactory(compoundfield_class,model,field_name,related_field_name
 
     hidden_layout="{}" * (len(related_field_names) + 1)
     field_class = field_class or model._meta.get_field(field_name).formfield().__class__
-    class_key = md5.new("{}.{}.{}{}{}".format(compoundfield_class.__name__,field_class.__module__,field_class.__name__,json.dumps(related_field_names),json.dumps(kwargs,cls=_JSONEncoder))).hexdigest()
-    if class_key not in compound_classes:
+    class_key = md5.new("CompoundField<{}.{}.{}{}{}{}>".format(compoundfield_class.__name__,field_class.__module__,field_class.__name__,field_name,json.dumps(related_field_names),json.dumps(kwargs,cls=_JSONEncoder))).hexdigest()
+    if class_key not in field_classes:
         class_id += 1
         class_name = "{}_{}".format(field_class.__name__,class_id)
-        kwargs.update({"related_field_names":related_field_names,"hidden_layout":hidden_layout})
-        compound_classes[class_key] = type(class_name,(compoundfield_class,field_class),kwargs)
-        #print("{}.{}={}".format(field_name,compound_classes[class_key],compound_classes[class_key].get_layout))
-    return compound_classes[class_key]
+        kwargs.update({"field_name":field_name,"related_field_names":related_field_names,"hidden_layout":hidden_layout})
+        field_classes[class_key] = type(class_name,(compoundfield_class,field_class),kwargs)
+        #print("{}.{}={}".format(field_name,field_classes[class_key],field_classes[class_key].get_layout))
+    return field_classes[class_key]
 
 def SwitchFieldFactory(model,field_name,related_field_names,field_class=None,**kwargs):
     return CompoundFieldFactory(SwitchField,model,field_name,related_field_names,field_class,**kwargs)
@@ -74,7 +83,6 @@ def SwitchFieldFactory(model,field_name,related_field_names,field_class=None,**k
 def OtherOptionFieldFactory(model,field_name,related_field_names,field_class=None,**kwargs):
     return CompoundFieldFactory(OtherOptionField,model,field_name,related_field_names,field_class,**kwargs)
 
-choices_classes = {}
 class ChoiceFieldMixin(object):
     def __init__(self,*args,**kwargs):
         kwargs["choices"] = self.CHOICES
@@ -82,14 +90,14 @@ class ChoiceFieldMixin(object):
             del kwargs["min_value"]
         super(ChoiceFieldMixin,self).__init__(*args,**kwargs)
 
-def ChoiceFieldFactory(choices,choice_class=forms.ChoiceField):
+def ChoiceFieldFactory(choices,choice_class=forms.TypedChoiceField,field_params=None):
     global class_id
-    class_key = md5.new("{}".format(json.dumps(choices))).hexdigest()
-    if class_key not in choices_classes:
+    class_key = md5.new("ChoiceField<{}.{}{}{}>".format(choice_class.__module__,choice_class.__name__,json.dumps(choices),json.dumps(field_params,cls=_JSONEncoder))).hexdigest()
+    if class_key not in field_classes:
         class_id += 1
         class_name = "{}_{}".format(choice_class.__name__,class_id)
-        choices_classes[class_key] = type(class_name,(ChoiceFieldMixin,choice_class),{"CHOICES":choices})
-    return choices_classes[class_key]
+        field_classes[class_key] = type(class_name,(FieldParametersMixin,ChoiceFieldMixin,choice_class),{"CHOICES":choices,"field_params":field_params})
+    return field_classes[class_key]
 
 
 NOT_NONE=1
@@ -117,13 +125,13 @@ class SwitchField(CompoundField):
     @classmethod
     def init_kwargs(cls,model,field_name,related_field_names,kwargs):
         if not kwargs.get("on_layout"):
-            kwargs["on_layout"] = u"{{}}<br>{}".format("{}" * len(related_field_names))
+            kwargs["on_layout"] = u"{{}}{}".format("<br>{}" * len(related_field_names))
 
         if not kwargs.get("off_layout"):
-            kwargs["off_layout"] = u"{}"
+            kwargs["off_layout"] = None
 
         if not kwargs.get("edit_layout"):
-            kwargs["edit_layout"] = u"{{}}<br>{}".format("{}" * len(related_field_names))
+            kwargs["edit_layout"] = u"{{0}}<div id='id_{}_body'>{{1}}{}</div>".format("{{{}}}".format(len(related_field_names) + 1),"".join(["<br>{{{}}}".format(i) for i in range(2,len(related_field_names) + 1)]))
 
         kwargs["true_value"] = (str(kwargs['true_value']) if kwargs['true_value'] is not None else "" ) if "true_value" in kwargs else 'True'
 
@@ -154,14 +162,10 @@ class SwitchField(CompoundField):
         """
         val1 = f.value()
         val1_str = str(val1) if val1 is not None else ""
-        if (not self.reverse and val1_str != self.true_value) or (self.reverse and val1_str == self.true_value):
-            #print("{}={} true_value={}   reverse={}".format(f.name,val1,self.true_value,self.reverse))
-            for rf in f.related_fields:
-                hide_field(rf.field)
             
         f.field.widget.attrs = f.field.widget.attrs or {}
-        show_fields = ";".join(["$('#{0}').show();$('#{0}').prop('disabled',false)".format(field.auto_id) for field in f.related_fields])
-        hide_fields = ";".join(["$('#{0}').hide();$('#{0}').prop('disabled',true)".format(field.auto_id) for field in f.related_fields])
+        show_fields = "$('#id_{}_body').show();{}".format(f.auto_id,";".join(["$('#{0}').prop('disabled',false)".format(field.auto_id) for field in f.related_fields]))
+        hide_fields = "$('#id_{}_body').hide();{}".format(f.auto_id,";".join(["$('#{0}').prop('disabled',true)".format(field.auto_id) for field in f.related_fields]))
 
         if isinstance(f.field.widget,forms.widgets.RadioSelect):
             f.field.widget.attrs["onclick"]="""
@@ -189,9 +193,11 @@ class SwitchField(CompoundField):
             """.format(str(self.true_value),hide_fields if self.reverse else show_fields,show_fields if self.reverse else hide_fields)
         else:
             raise Exception("Not implemented")
-        return (self.edit_layout,f.field.related_field_names)
-        
-    
+
+        if (not self.reverse and val1_str != self.true_value) or (self.reverse and val1_str == self.true_value):
+            return (u"{}<script type='text/javascript'>{}</script>".format(self.edit_layout,hide_fields),f.field.related_field_names)
+        else:
+            return (self.edit_layout,f.field.related_field_names)
     
 class OtherOptionField(CompoundField):
     """
@@ -213,17 +219,13 @@ class OtherOptionField(CompoundField):
             raise Exception("Missing 'other_option' keyword parameter")
 
         if not kwargs.get("other_layout"):
-            kwargs["other_layout"] = u"{{}}<br>{}".format("{}" * len(related_field_names))
+            kwargs["other_layout"] = u"{{}}{}".format("<br>{}" * len(related_field_names))
 
         if not kwargs.get("layout"):
             kwargs["layout"] = None
 
         if not kwargs.get("edit_layout"):
-            kwargs["edit_layout"] = u"{{}}<br>{}".format("{}" * len(related_field_names))
-
-        #wraper the related field in a containaer
-        kwargs["edit_layout_hide"] = kwargs["edit_layout"].format("{{0}}",*[ "<span id='{{}}_container' style='display:none'>{{{{{}}}}}</span>".format(i) for i in range(1,len(related_field_names) + 1)])
-        kwargs["edit_layout"] = kwargs["edit_layout"].format("{{0}}",*[ "<span id='{{}}_container'>{{{{{}}}}}</span>".format(i) for i in range(1,len(related_field_names) + 1)])
+            kwargs["edit_layout"] = u"{{0}}<div id='id_{}_body'>{{1}}{}</div>".format("{{{}}}".format(len(related_field_names) + 1),"".join(["<br>{{{}}}".format(i) for i in range(2,len(related_field_names) + 1)]))
 
         return kwargs
 
@@ -252,16 +254,10 @@ class OtherOptionField(CompoundField):
         #if f.name == "field_officer":
         #    import ipdb;ipdb.set_trace()
         other_value = self.other_option.id if hasattr(self.other_option,"id") else self.other_option
-        if val1 != other_value:
-            for rf in f.related_fields:
-                rf.field.widget.attrs["disabled"]  = True
-            edit_layout = self.edit_layout_hide.format(*[field.auto_id for field in f.related_fields])
-        else:
-            edit_layout = self.edit_layout.format(*[field.auto_id for field in f.related_fields])
 
         f.field.widget.attrs = f.field.widget.attrs or {}
-        show_fields = ";".join(["$('#{0}').show();$('#{1}').prop('disabled',false)".format("{}_container".format(field.auto_id),field.auto_id) for field in f.related_fields])
-        hide_fields = ";".join(["$('#{0}').hide();$('#{1}').prop('disabled',true)".format("{}_container".format(field.auto_id),field.auto_id) for field in f.related_fields])
+        show_fields = "$('#id_{}_body').show();{}".format(f.auto_id,";".join(["$('#{0}').prop('disabled',false)".format(field.auto_id) for field in f.related_fields]))
+        hide_fields = "$('#id_{}_body').hide();{}".format(f.auto_id,";".join(["$('#{0}').prop('disabled',true)".format(field.auto_id) for field in f.related_fields]))
 
         if isinstance(f.field.widget,forms.widgets.RadioSelect):
             f.field.widget.attrs["onclick"]="""
@@ -281,6 +277,10 @@ class OtherOptionField(CompoundField):
             """.format(str(other_value),show_fields,hide_fields)
         else:
             raise Exception("Not  implemented")
-        return (edit_layout,f.field.related_field_names)
+
+        if val1 != other_value:
+            return (u"{}<script type='text/javascript'>{}</script>".format(self.edit_layout,hide_fields),f.field.related_field_names)
+        else:
+            return (self.edit_layout,f.field.related_field_names)
         
     

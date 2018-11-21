@@ -1,4 +1,7 @@
 import LatLon
+import tempfile
+import subprocess
+import shutil
 
 from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
@@ -67,10 +70,10 @@ def users_group():
 
 _fssdrs_group = None
 def fssdrs_group():
-    return Group.objects.get(name='FSS Datasets and Reporting Services')
+    return Group.objects.get(name=settings.FSSDRS_GROUP)
     #global _fssdrs_group
     #if not _fssdrs_group:
-    #    _fssdrs_group = Group.objects.get(name='FSS Datasets and Reporting Services')
+    #    _fssdrs_group = Group.objects.get(name=settings.FSSDRS_GROUP)
     #return _fssdrs_group
 
 def can_maintain_data(user):
@@ -79,7 +82,7 @@ def can_maintain_data(user):
 def is_external_user(user):
     """ User group check added to prevent role-based internal users from having write access """
     try:
-        return user.email.split('@')[1].lower() not in settings.INTERNAL_EMAIL or not user.groups.filter(name__in=['Users', 'FSS Datasets and Reporting Services']).exists()
+        return user.email.split('@')[1].lower() not in settings.INTERNAL_EMAIL or not user.groups.filter(name__in=['Users', settings.FSSDRS_GROUP,settings.FINAL_AUTHORISE_GROUP]).exists()
         #return user.email.split('@')[1].lower() not in settings.INTERNAL_EMAIL
     except:
         return True
@@ -482,6 +485,13 @@ def update_status(request, bushfire, action,action_name="",update_fields=None):
                 notification['DFES'] = 'Email Sent' if resp else 'Email failed'
 
         # send emails
+        if bushfire.dispatch_aerial:
+            send_fire_bomging_req_email({
+                "bushfire":bushfire, 
+                "user_email":user_email,
+                "request":request,
+            })
+
         if BushfireProperty.objects.filter(bushfire=bushfire,name="plantations").count() > 0:
             resp = send_email({
                 "bushfire":bushfire, 
@@ -760,6 +770,26 @@ def update_status(request, bushfire, action,action_name="",update_fields=None):
         
     return notification
 
+def send_fire_bomging_req_email(context):
+    bushfire = context["bushfire"]
+    context["to_email"] = settings.FIRE_BOMBING_REQUEST_EMAIL
+    if "user_email" in context:
+        context["cc_email"] = concat_email_addresses(settings.FIRE_BOMBING_REQUEST_CC_EMAIL,settings.CC_EMAIL,context.pop("user_email"))
+    else:
+        context["cc_email"] = concat_email_addresses(settings.FIRE_BOMBING_REQUEST_CC_EMAIL,settings.CC_EMAIL)
+    context["subject"] = 'Fire Bombing Request Email - Initial Bushfire submitted - {}'.format(bushfire.fire_number)
+    context["template"] = "bfrs/email/fire_bombing_request_email.html"
+    folder = None
+    try:
+        folder,pdf_file = generate_pdf("latex/fire_bombing_request_form.tex",context={"bushfire":bushfire,"graphic_folder":settings.LATEX_GRAPHIC_FOLDER})
+        context["attachments"] = [(pdf_file,"fire_bombing_request.pdf","application/pdf")]
+        send_email(context)
+    finally:
+        if folder:
+            shutil.rmtree(folder)
+        
+
+
 NOTIFICATION_FIELDS = [
     'region', 'district', 'year',
     'name', 'fire_detected_date',
@@ -932,6 +962,9 @@ def send_email(context):
         to=context.get("to_email") or None, 
         cc=concat_email_addresses(context.get("cc_email",settings.CC_EMAIL),context.get("user_email")), 
         bcc=context.get("bcc_email",settings.BCC_EMAIL))
+    for attachment in context.get("attachments") or []:
+        with open(attachment[0]) as f:
+            message.attach(attachment[1],f.read(),attachment[2])
     message.content_subtype = 'html'
     ret = message.send()
 
@@ -1031,15 +1064,28 @@ def create_admin_user():
     )
 
 def _add_users_to_fssdrs_group():
-
-    fssdrs_group, g_created = Group.objects.get_or_create(name=settings.FSSDRS_GROUP)
+    group, g_created = Group.objects.get_or_create(name=settings.FSSDRS_GROUP)
     if g_created:
-        fssdrs_group.permissions = Permission.objects.filter(name__in=['Can add group', 'Can change group', 'Can add permission', 'Can change permission', 'Can add user', 'Can change user'])
+        group.permissions = Permission.objects.filter(codename__in=['add_group', 'change_group', 'add_permission', 'change_permission', 'add_user', 'change_user', 'final_authorise_bushfire'])
 
     for user in User.objects.filter(email__in=settings.FSSDRS_USERS):
-        if fssdrs_group not in user.groups.all():
-            user.groups.add(fssdrs_group)
-            logger.info('Adding user {} to group {}'.format(user.get_full_name(), fssdrs_group.name))
+        if not user.groups.filter(id=group.id).exists():
+            user.groups.add(group)
+            logger.info('Adding user {} to group {}'.format(user.get_full_name(), group.name))
+
+        if not user.is_staff:
+            user.is_staff = True
+            user.save()
+
+def _add_users_to_final_authorise_group():
+    group, g_created = Group.objects.get_or_create(name=settings.FINAL_AUTHORISE_GROUP)
+    if g_created:
+        group.permissions = Permission.objects.filter(codename__in=['final_authorise_bushfire'])
+
+    for user in User.objects.filter(email__in=settings.FINAL_AUTHORISE_GROUP_USERS):
+        if not user.groups.filter(id=group.id).exists():
+            user.groups.add(group)
+            logger.info('Adding user {} to group {}'.format(user.get_full_name(), group.name))
 
         if not user.is_staff:
             user.is_staff = True
@@ -1119,6 +1165,7 @@ def update_users():
 
     _update_users_from_active_directory(resp)
     _add_users_to_fssdrs_group()
+    _add_users_to_final_authorise_group()
     _add_users_to_users_group(resp)
     _delete_duplicate_users()
     create_other_user()
@@ -1432,3 +1479,87 @@ def dms_coordinate(point):
     
 
 
+def generate_pdf(tex_template_file,context):
+    tex_doc = render_to_string(tex_template_file,context=context)
+    tex_doc = tex_doc.encode('utf-8')
+
+    foldername = tempfile.mkdtemp()
+    tex_filename = os.path.join(foldername,"{}.tex".format(os.path.splitext(os.path.basename(tex_template_file))[0]))
+    pdf_filename = os.path.join(foldername,"{}.pdf".format(os.path.splitext(os.path.basename(tex_template_file))[0]))
+    with open(tex_filename,"wb") as tex_file:
+        tex_file.write(tex_doc)
+    cmd = ['latexmk', '-cd', '-f', '-silent','-auxdir={}'.format(foldername),'-outdir={}'.format(foldername), '-pdf', tex_filename]
+    subprocess.check_output(cmd)
+    return (foldername,pdf_filename)
+
+
+def refresh_spatial_data(bushfire,grid=False):
+    if isinstance(bushfire,int):
+        bushfire = Bushfire.objects.get(id = bushfire)
+    elif isinstance(bushfire,basestring):
+        bushfire = Bushfire.objects.get(fire_number=bushfire)
+    elif not isinstance(bushfire,Bushfire):
+        raise Exception("Bushfire should be bushfire id or fire number or Bushfire instance")
+
+    req_data = {"features":serializers.serialize('geojson',[bushfire],geometry_field='origin_point',fields=('id','fire_number'))}
+    req_options = {}
+    update_fields = []
+    if  grid:
+        update_fields.append("origin_point_grid")
+        req_options["grid"] = {
+            "action":"getClosestFeature",
+            "layers":[
+                {
+                    "id":"fd_grid_points",
+                    "layerid":"cddp:fd_grid_points",
+                    "kmiservice":settings.KMI_URL,
+                    "buffer":120,
+                    "properties":{
+                        "grid":"fdgrid",
+                    },
+                },
+                {
+                    "id":"pilbara_grid_1km",
+                    "layerid":"cddp:pilbara_grid_1km",
+                    "buffer":800,
+                    "kmiservice":settings.KMI_URL,
+                    "properties":{
+                        "grid":"id",
+                    },
+                },
+            ],
+        }
+
+    if not update_fields:
+        return
+
+    req_data["options"] = json.dumps(req_options)
+    resp=requests.post(url="{}/spatial".format(settings.SSS_URL), data=req_data,auth=HTTPBasicAuth(settings.USER_SSO, settings.PASS_SSO),verify=settings.SSS_CERTIFICATE_VERIFY)
+    resp.raise_for_status()
+    result = resp.json()
+    if grid:
+        grid_data = result["features"][0]["grid"]
+        if grid_data.get("failed"):
+            raise Exception(grid_data["failed"])
+        elif grid_data.get("id") == "fd_grid_points":
+            bushfire.origin_point_grid = "FD:{}".format(grid_data["feature"]["grid"])
+            print("The bushfire report({})'s grid data is {}".format(bushfire.fire_number,bushfire.origin_point_grid))
+        elif grid_data.get("id") == "pilbara_grid_1km":
+            bushfire.origin_point_grid = "PIL:{}".format(grid_data["feature"]["grid"])
+            print("The bushfire report({})'s grid data is {}".format(bushfire.fire_number,bushfire.origin_point_grid))
+        else:
+            bushfire.origin_point_grid = None
+            print("The bushfire report({})'s grid data is null".format(bushfire.fire_number))
+
+    if update_fields:
+        bushfire.save(update_fields=update_fields)
+
+def refresh_all_spatial_data(grid=False):
+    for bushfire in Bushfire.objects.all().order_by("id"):
+        try:
+            refresh_spatial_data(bushfire,grid)
+        except Exception as ex:
+            print("Failed to refresh the spatial data for bushfire report({}),{}".format(bushfire.fire_number,ex.message))
+            
+
+    

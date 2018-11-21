@@ -3,7 +3,16 @@
     "model": "auth.group",
     "pk": 1,
     "fields": {
-        "name": "FSS Datasets and Reporting Services",
+        "name": "Fire Information Management",
+        "permissions": [
+        ]
+    }
+},
+{
+    "model": "auth.group",
+    "pk": 2,
+    "fields": {
+        "name": "Fire Final Authorise Group",
         "permissions": [
         ]
     }

@@ -1,5 +1,4 @@
-{% load email_tags %}
-<?xml version="1.0" encoding="UTF-8"?>
+{% load email_tags %}<?xml version="1.0" encoding="UTF-8"?>
 <ext-doc:DetailedCFSInformation 
     xmlns:ext="http://leitsc-lib/2.0"
     xmlns:nc="http://niem.gov/niem/niem-core/2.0"
@@ -29,30 +28,35 @@
 
         <ext:ServiceCall s:id="{{bushfire.fire_number_slug}}">
             <nc:ActivityReasonText>Call for Service Request</nc:ActivityReasonText>
-            <j:ServiceCallMechanismText>DPAW</j:ServiceCallMechanismText>
+            <j:ServiceCallMechanismText>PAW</j:ServiceCallMechanismText>
             <j:ServiceCallDispatchedDate>
                 <nc:DateTime>{{now}}</nc:DateTime>
             </j:ServiceCallDispatchedDate>
-            <j:ServiceCallMechanismText>DBCA</j:ServiceCallMechanismText>
             <ext:ServiceCallAugmentation>
                 <ext:CallTypeText>TGS</ext:CallTypeText>
-                {% comment "uncomment this if require comment" %}
-                <ext:Comment>
-                    <nc:CommentText>A SINGLE LINE COMMENT</nc:CommentText>
-                    <ext:CommentDateTime>
-                        <nc:DateTime>2018-05-15T14:30:00Z</nc:DateTime>
-                    </ext:CommentDateTime>
-                    <nc:SourceIDText>120050001</nc:SourceIDText>
+                <ext:Comment xmlns:ext="http://leitsc-lib/2.0" xmlns:nc="http://niem.gov/niem/niem-core/2.0">
+                    <nc:CommentText>{{bushfire.fire_position}}</nc:CommentText>
+                    <nc:CommentText>DUTY OFFICER: {{bushfire.duty_officer.first_name}} {{bushfire.duty_officer.last_name}}</nc:CommentText>
+                    <nc:CommentText>DBCA REGION: {{bushfire.region.name}}</nc:CommentText>
+                    <nc:CommentText>DBCA DISTRICT: {{bushfire.district.name}}</nc:CommentText>
+                    {% if bushfire.other_info  %}<nc:CommentText>OTHER INFORMATION: {{bushfire.other_info}}</nc:CommentText>{% endif  %}
                 </ext:Comment>
-                {% endcomment %}
             </ext:ServiceCallAugmentation>
         </ext:ServiceCall>
 
         <ext:Location s:id="{{bushfire.fire_number_slug}}-LOCATION">
             <nc:LocationAddress>
-                <nc:AddressFullText>LAT: &lt;{{bushfire.origin_latlon.lat.decimal_degree}}&gt; LONG: &lt;{{bushfire.origin_latlon.lon.decimal_degree}}&gt;</nc:AddressFullText>
+                <nc:AddressFullText>DBCA:{{bushfire.fire_position}}</nc:AddressFullText>
             </nc:LocationAddress>
             <nc:LocationDescriptionText>{{bushfire.fire_position}}</nc:LocationDescriptionText>
+            <nc:LocationTwoDimensionalGeographicCoordinate>
+                <nc:GeographicCoordinateLatitude>
+                    <nc:LatitudeDegreeValue>{{bushfire.origin_latlon.lat.decimal_degree}}</nc:LatitudeDegreeValue>
+                </nc:GeographicCoordinateLatitude>
+                <nc:GeographicCoordinateLongitude>
+                    <nc:LongitudeDegreeValue>{{bushfire.origin_latlon.lon.decimal_degree}}</nc:LongitudeDegreeValue>
+                </nc:GeographicCoordinateLongitude>
+            </nc:LocationTwoDimensionalGeographicCoordinate>
         </ext:Location>
 
         <ext:Person s:id="{{bushfire.fire_number_slug}}-DUTY-OFFICER">

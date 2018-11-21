@@ -199,15 +199,17 @@
             <th class="cbas">Tenure of ignition point *</th>
             <td class="cbas">{{form.tenure.as_widget}}</td>
 
-            <th class="cbas">Duty Officer *</th>
-            <td class="cbas">{{form.duty_officer.as_widget}}</td>
+            <th class="cbas" rowspan="2">P&W Resource dispatched *</th>
+            <td class="cbas" rowspan="2">{{form.dispatch_pw.as_widget}}</td>
         </tr>
         <tr>
-            <th class="cbas">P&W Resource dispatched *</th>
-            <td class="cbas">{{form.dispatch_pw.as_widget}}</td>
+            <th class="cbas">Duty Officer *</th>
+            <td class="cbas">{{form.duty_officer.as_widget}}</td>
 
-	        <th class="cbas">Aerial support requested *</th>
-            <td class="cbas">{{form.dispatch_aerial.as_widget}}</td>
+        </tr>
+        <tr>
+            <th class="cbas">Aerial support requested *</th>
+            <td class="cbas" colspan="3">{{form.dispatch_aerial.as_widget}}</td>
         </tr>
 
         <tr>
