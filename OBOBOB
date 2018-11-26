@@ -1,0 +1,142 @@
+                                                                  Table "public.bfrs_bushfire"
+           Column            |            Type             |                         Modifiers                          | Storage  | Stats target | Description 
+-----------------------------+-----------------------------+------------------------------------------------------------+----------+--------------+-------------
+ id                          | integer                     | not null default nextval('bfrs_bushfire_id_seq'::regclass) | plain    |              | 
+ created                     | timestamp with time zone    | not null                                                   | plain    |              | 
+ modified                    | timestamp with time zone    | not null                                                   | plain    |              | 
+ name                        | character varying(100)      | not null                                                   | extended |              | 
+ year                        | smallint                    | not null                                                   | plain    |              | 
+ reporting_year              | smallint                    | not null                                                   | plain    |              | 
+ prob_fire_level             | smallint                    |                                                            | plain    |              | 
+ max_fire_level              | smallint                    |                                                            | plain    |              | 
+ media_alert_req             | boolean                     |                                                            | plain    |              | 
+ park_trail_impacted         | boolean                     |                                                            | plain    |              | 
+ cause_state                 | smallint                    |                                                            | plain    |              | 
+ other_cause                 | character varying(64)       |                                                            | extended |              | 
+ prescribed_burn_id          | character varying(7)        |                                                            | extended |              | 
+ other_tenure                | smallint                    |                                                            | plain    |              | 
+ dfes_incident_no            | character varying(32)       |                                                            | extended |              | 
+ job_code                    | character varying(12)       |                                                            | extended |              | 
+ fire_position               | character varying(100)      |                                                            | extended |              | 
+ fire_position_override      | boolean                     | not null                                                   | plain    |              | 
+ origin_point                | geometry(Point,4326)        | not null                                                   | main     |              | 
+ origin_point_mga            | character varying(64)       |                                                            | extended |              | 
+ fire_boundary               | geometry(MultiPolygon,4326) |                                                            | main     |              | 
+ fire_not_found              | boolean                     | not null                                                   | plain    |              | 
+ fire_monitored_only         | boolean                     | not null                                                   | plain    |              | 
+ final_fire_boundary         | boolean                     | not null                                                   | plain    |              | 
+ fb_validation_req           | boolean                     |                                                            | plain    |              | 
+ other_info                  | character varying(250)      |                                                            | extended |              | 
+ other_field_officer         | character varying(75)       |                                                            | extended |              | 
+ other_field_officer_agency  | character varying(36)       |                                                            | extended |              | 
+ other_field_officer_phone   | character varying(24)       |                                                            | extended |              | 
+ init_authorised_date        | timestamp with time zone    |                                                            | plain    |              | 
+ dispatch_pw                 | smallint                    |                                                            | plain    |              | 
+ dispatch_aerial             | boolean                     |                                                            | plain    |              | 
+ dispatch_pw_date            | timestamp with time zone    |                                                            | plain    |              | 
+ dispatch_aerial_date        | timestamp with time zone    |                                                            | plain    |              | 
+ fire_detected_date          | timestamp with time zone    |                                                            | plain    |              | 
+ fire_contained_date         | timestamp with time zone    |                                                            | plain    |              | 
+ fire_controlled_date        | timestamp with time zone    |                                                            | plain    |              | 
+ fire_safe_date              | timestamp with time zone    |                                                            | plain    |              | 
+ other_first_attack          | character varying(50)       |                                                            | extended |              | 
+ other_initial_control       | character varying(50)       |                                                            | extended |              | 
+ other_final_control         | character varying(50)       |                                                            | extended |              | 
+ arson_squad_notified        | boolean                     |                                                            | plain    |              | 
+ investigation_req           | boolean                     |                                                            | plain    |              | 
+ offence_no                  | character varying(15)       |                                                            | extended |              | 
+ initial_area                | double precision            |                                                            | plain    |              | 
+ initial_area_unknown        | boolean                     | not null                                                   | plain    |              | 
+ area                        | double precision            |                                                            | plain    |              | 
+ area_limit                  | boolean                     | not null                                                   | plain    |              | 
+ other_area                  | double precision            |                                                            | plain    |              | 
+ damage_unknown              | boolean                     | not null                                                   | plain    |              | 
+ injury_unknown              | boolean                     | not null                                                   | plain    |              | 
+ authorised_date             | timestamp with time zone    |                                                            | plain    |              | 
+ reviewed_date               | timestamp with time zone    |                                                            | plain    |              | 
+ report_status               | smallint                    | not null                                                   | plain    |              | 
+ sss_data                    | text                        |                                                            | extended |              | 
+ archive                     | boolean                     | not null                                                   | plain    |              | 
+ invalid_details             | character varying(64)       |                                                            | extended |              | 
+ fire_number                 | character varying(15)       | not null                                                   | extended |              | 
+ sss_id                      | character varying(64)       |                                                            | extended |              | 
+ authorised_by_id            | integer                     |                                                            | plain    |              | 
+ cause_id                    | integer                     |                                                            | plain    |              | 
+ creator_id                  | integer                     | not null                                                   | plain    |              | 
+ district_id                 | integer                     | not null                                                   | plain    |              | 
+ duty_officer_id             | integer                     |                                                            | plain    |              | 
+ field_officer_id            | integer                     |                                                            | plain    |              | 
+ final_control_id            | integer                     |                                                            | plain    |              | 
+ first_attack_id             | integer                     |                                                            | plain    |              | 
+ init_authorised_by_id       | integer                     |                                                            | plain    |              | 
+ initial_control_id          | integer                     |                                                            | plain    |              | 
+ modifier_id                 | integer                     | not null                                                   | plain    |              | 
+ region_id                   | integer                     | not null                                                   | plain    |              | 
+ reviewed_by_id              | integer                     |                                                            | plain    |              | 
+ tenure_id                   | integer                     |                                                            | plain    |              | 
+ valid_bushfire_id           | integer                     |                                                            | plain    |              | 
+ fireboundary_uploaded_by_id | integer                     |                                                            | plain    |              | 
+ fireboundary_uploaded_date  | timestamp with time zone    |                                                            | plain    |              | 
+ capturemethod_id            | integer                     |                                                            | plain    |              | 
+ other_capturemethod         | character varying(128)      |                                                            | extended |              | 
+ origin_point_grid           | character varying(16)       |                                                            | extended |              | 
+Indexes:
+    "bfrs_bushfire_pkey" PRIMARY KEY, btree (id)
+    "bfrs_bushfire_fire_number_key" UNIQUE CONSTRAINT, btree (fire_number)
+    "bfrs_bushfire_sss_id_key" UNIQUE CONSTRAINT, btree (sss_id)
+    "bfrs_bushfire_02b3299e" btree (first_attack_id)
+    "bfrs_bushfire_03c508fc" btree (cause_id)
+    "bfrs_bushfire_0907a10a" btree (duty_officer_id)
+    "bfrs_bushfire_0f442f96" btree (region_id)
+    "bfrs_bushfire_20074004" btree (capturemethod_id)
+    "bfrs_bushfire_3700153c" btree (creator_id)
+    "bfrs_bushfire_580e81bd" btree (initial_control_id)
+    "bfrs_bushfire_5f500d3b" btree (authorised_by_id)
+    "bfrs_bushfire_8d67c4c3" btree (final_control_id)
+    "bfrs_bushfire_8d826923" btree (fireboundary_uploaded_by_id)
+    "bfrs_bushfire_983f5a3c" btree (init_authorised_by_id)
+    "bfrs_bushfire_a34a99d3" btree (district_id)
+    "bfrs_bushfire_a8ccfa16" btree (field_officer_id)
+    "bfrs_bushfire_c346c42c" btree (tenure_id)
+    "bfrs_bushfire_e56c302c" btree (valid_bushfire_id)
+    "bfrs_bushfire_ec903c61" btree (modifier_id)
+    "bfrs_bushfire_efa412ac" btree (reviewed_by_id)
+    "bfrs_bushfire_fire_boundary_id" gist (fire_boundary)
+    "bfrs_bushfire_fire_number_2eb8b1f8_like" btree (fire_number varchar_pattern_ops)
+    "bfrs_bushfire_origin_point_id" gist (origin_point)
+    "bfrs_bushfire_sss_id_65133536_like" btree (sss_id varchar_pattern_ops)
+Check constraints:
+    "bfrs_bushfire_cause_state_check" CHECK (cause_state >= 0)
+    "bfrs_bushfire_dispatch_pw_check" CHECK (dispatch_pw >= 0)
+    "bfrs_bushfire_max_fire_level_check" CHECK (max_fire_level >= 0)
+    "bfrs_bushfire_other_tenure_check" CHECK (other_tenure >= 0)
+    "bfrs_bushfire_prob_fire_level_check" CHECK (prob_fire_level >= 0)
+    "bfrs_bushfire_report_status_check" CHECK (report_status >= 0)
+    "bfrs_bushfire_reporting_year_check" CHECK (reporting_year >= 0)
+    "bfrs_bushfire_year_check" CHECK (year >= 0)
+Foreign-key constraints:
+    "bfrs_bushf_fireboundary_uploaded_by_id_ac3f888b_fk_auth_user_id" FOREIGN KEY (fireboundary_uploaded_by_id) REFERENCES auth_user(id) DEFERRABLE INITIALLY DEFERRED
+    "bfrs_bushfir_capturemethod_id_b4ebab97_fk_bfrs_capturemethod_id" FOREIGN KEY (capturemethod_id) REFERENCES bfrs_capturemethod(id) DEFERRABLE INITIALLY DEFERRED
+    "bfrs_bushfire_authorised_by_id_71fd8611_fk_auth_user_id" FOREIGN KEY (authorised_by_id) REFERENCES auth_user(id) DEFERRABLE INITIALLY DEFERRED
+    "bfrs_bushfire_cause_id_a708f968_fk_bfrs_cause_id" FOREIGN KEY (cause_id) REFERENCES bfrs_cause(id) DEFERRABLE INITIALLY DEFERRED
+    "bfrs_bushfire_creator_id_ab981031_fk_auth_user_id" FOREIGN KEY (creator_id) REFERENCES auth_user(id) DEFERRABLE INITIALLY DEFERRED
+    "bfrs_bushfire_district_id_9d3f2a13_fk_bfrs_district_id" FOREIGN KEY (district_id) REFERENCES bfrs_district(id) DEFERRABLE INITIALLY DEFERRED
+    "bfrs_bushfire_duty_officer_id_b986baab_fk_auth_user_id" FOREIGN KEY (duty_officer_id) REFERENCES auth_user(id) DEFERRABLE INITIALLY DEFERRED
+    "bfrs_bushfire_field_officer_id_0ea6d5f8_fk_auth_user_id" FOREIGN KEY (field_officer_id) REFERENCES auth_user(id) DEFERRABLE INITIALLY DEFERRED
+    "bfrs_bushfire_final_control_id_6ef14529_fk_bfrs_agency_id" FOREIGN KEY (final_control_id) REFERENCES bfrs_agency(id) DEFERRABLE INITIALLY DEFERRED
+    "bfrs_bushfire_first_attack_id_d915fae0_fk_bfrs_agency_id" FOREIGN KEY (first_attack_id) REFERENCES bfrs_agency(id) DEFERRABLE INITIALLY DEFERRED
+    "bfrs_bushfire_init_authorised_by_id_5c6caf52_fk_auth_user_id" FOREIGN KEY (init_authorised_by_id) REFERENCES auth_user(id) DEFERRABLE INITIALLY DEFERRED
+    "bfrs_bushfire_initial_control_id_8bce39a1_fk_bfrs_agency_id" FOREIGN KEY (initial_control_id) REFERENCES bfrs_agency(id) DEFERRABLE INITIALLY DEFERRED
+    "bfrs_bushfire_modifier_id_c84331a4_fk_auth_user_id" FOREIGN KEY (modifier_id) REFERENCES auth_user(id) DEFERRABLE INITIALLY DEFERRED
+    "bfrs_bushfire_region_id_095720da_fk_bfrs_region_id" FOREIGN KEY (region_id) REFERENCES bfrs_region(id) DEFERRABLE INITIALLY DEFERRED
+    "bfrs_bushfire_reviewed_by_id_7b7949d8_fk_auth_user_id" FOREIGN KEY (reviewed_by_id) REFERENCES auth_user(id) DEFERRABLE INITIALLY DEFERRED
+    "bfrs_bushfire_tenure_id_eb9f0e0a_fk_bfrs_tenure_id" FOREIGN KEY (tenure_id) REFERENCES bfrs_tenure(id) DEFERRABLE INITIALLY DEFERRED
+    "bfrs_bushfire_valid_bushfire_id_98a3d046_fk_bfrs_bushfire_id" FOREIGN KEY (valid_bushfire_id) REFERENCES bfrs_bushfire(id) DEFERRABLE INITIALLY DEFERRED
+Referenced by:
+    TABLE "bfrs_areaburnt" CONSTRAINT "bfrs_areaburnt_bushfire_id_7d211b3a_fk_bfrs_bushfire_id" FOREIGN KEY (bushfire_id) REFERENCES bfrs_bushfire(id) DEFERRABLE INITIALLY DEFERRED
+    TABLE "bfrs_bushfire" CONSTRAINT "bfrs_bushfire_valid_bushfire_id_98a3d046_fk_bfrs_bushfire_id" FOREIGN KEY (valid_bushfire_id) REFERENCES bfrs_bushfire(id) DEFERRABLE INITIALLY DEFERRED
+    TABLE "bfrs_bushfireproperty" CONSTRAINT "bfrs_bushfireproperty_bushfire_id_47733860_fk_bfrs_bushfire_id" FOREIGN KEY (bushfire_id) REFERENCES bfrs_bushfire(id) DEFERRABLE INITIALLY DEFERRED
+    TABLE "bfrs_bushfiresnapshot" CONSTRAINT "bfrs_bushfiresnapshot_bushfire_id_4836c332_fk_bfrs_bushfire_id" FOREIGN KEY (bushfire_id) REFERENCES bfrs_bushfire(id) DEFERRABLE INITIALLY DEFERRED
+    TABLE "bfrs_damage" CONSTRAINT "bfrs_damage_bushfire_id_ef16c3c7_fk_bfrs_bushfire_id" FOREIGN KEY (bushfire_id) REFERENCES bfrs_bushfire(id) DEFERRABLE INITIALLY DEFERRED
+    TABLE "bfrs_injury" CONSTRAINT "bfrs_injury_bushfire_id_232d5268_fk_bfrs_bushfire_id" FOREIGN KEY (bushfire_id) REFERENCES bfrs_bushfire(id) DEFERRABLE INITIALLY DEFERRED
+

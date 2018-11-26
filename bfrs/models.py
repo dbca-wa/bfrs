@@ -1,6 +1,7 @@
 import sys
 import json
 from datetime import datetime, timedelta
+import pytz
 
 from django.contrib.gis.db import models
 from django.utils import timezone
@@ -79,12 +80,24 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
     """
     missing = []
     for field in fields:
+        is_active_f = None
+        field_label = None
         if isinstance(field,tuple):
             #field label is provided
-            field_label = field[1]
-            field = field[0]
-        else:
-            field_label = None
+            if len(field) == 1:
+                field = field[0]
+            elif len(field) == 2:
+                field_label = field[1]
+                field = field[0]
+            elif len(field) >= 3:
+                field_label = field[1]
+                is_active_f = field[2]
+                field = field[0]
+            else:
+                continue
+
+        if is_active_f and not is_active_f(obj):
+            continue
 
         value = get_field(obj,field)
         if value is None or value=='':
@@ -106,7 +119,20 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
     for field, dep_sets in dep_fields.iteritems():
         for dep_set in dep_sets:
             # next line checks for normal Field or Enumerated list field (i.e. '.name')
+            is_active_f = None
+            if isinstance(field,tuple):
+                if len(field) == 1:
+                    field = field[0]
+                elif len(field) >= 2:
+                    is_active_f = field[1]
+                    field = field[0]
+                else:
+                    continue
+
             try:
+                if is_active_f and not is_active_f(obj):
+                    continue
+
                 if hasattr(obj, field) and getattr(obj, field)==dep_set[0]:
                     for dep in dep_set[1:]:
                         if isinstance(dep,tuple):
@@ -906,12 +932,13 @@ SUBMIT_MANDATORY_FIELDS= [
     'dispatch_pw', 'dispatch_aerial', 'investigation_req', 'park_trail_impacted', 'media_alert_req',
     'duty_officer', 'initial_control'
 ]
+FIRE_BOMBING_GOLIVE_DATE = datetime(2018,11,23,tzinfo=pytz.timezone("Australia/Perth"))
 SUBMIT_MANDATORY_DEP_FIELDS= {
     'dispatch_pw': [[1, 'dispatch_pw_date']], # if 'dispatch_pw' == 1 then 'dispatch_pw_date' is required
-    'dispatch_aerial': [[True, 'dispatch_aerial_date']],
     'initial_control': [[Agency.OTHER, 'other_initial_control']],
     'tenure': [[Tenure.OTHER, 'other_tenure']],
-    'dispatch_aerial':[[True,("dispatch_aerial_date","Dispatch Aerial Date"),("fire_bombing.ground_controller.username","Ground Controller"),("fire_bombing.ground_controller.callsign","Ground Controller Call Sign"),("fire_bombing.radio_channel","Radio Channel"),("fire_bombing.prefered_resources","Prefered Resource"),("fire_bombing.activation_criterias","Indicate Requesting Activation Criteria")]]
+    'dispatch_aerial': [[True, 'dispatch_aerial_date']],
+    ('dispatch_aerial',lambda bf:bf.report_status == Bushfire.STATUS_INITIAL or (bf.init_authorised_date and bf.init_authorised_date > FIRE_BOMBING_GOLIVE_DATE)):[[True,("fire_bombing.ground_controller.username","Ground Controller"),("fire_bombing.ground_controller.callsign","Ground Controller Call Sign"),("fire_bombing.radio_channel","Radio Channel"),("fire_bombing.prefered_resources","Prefered Resource"),("fire_bombing.activation_criterias","Indicate Requesting Activation Criteria")]]
 }
 SUBMIT_MANDATORY_FORMSETS= [
 ]
@@ -931,13 +958,11 @@ AUTH_MANDATORY_FIELDS_FIRE_NOT_FOUND= [
 ]
 AUTH_MANDATORY_DEP_FIELDS_FIRE_NOT_FOUND= {
     'dispatch_pw': [[1, 'field_officer', 'dispatch_pw_date']], # if 'dispatch_pw' == '1' then 'field_officer' is required
-    'dispatch_aerial': [[True, 'dispatch_aerial_date']],
     'field_officer': [[User.OTHER, 'other_field_officer','other_field_officer_agency']], # username='other'
 }
 
 AUTH_MANDATORY_DEP_FIELDS= {
     'dispatch_pw': [[1, 'field_officer', 'dispatch_pw_date']], # if 'dispatch_pw' == '1' then 'field_officer' is required
-    'dispatch_aerial': [[True, 'dispatch_aerial_date']],
     'fire_monitored_only': [[False, 'first_attack']],
 
     'cause': [[Cause.OTHER, 'other_cause'], [Cause.ESCAPE_DPAW_BURNING, 'prescribed_burn_id']],
