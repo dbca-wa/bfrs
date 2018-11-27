@@ -806,6 +806,7 @@ class BushfireCreateForm(InitialBushfireForm):
         if not self.initial.get("sss_data") or not isinstance(self.initial.get("sss_data"),basestring):
             return
         self.is_bound = False
+        self.initial['fire_number'] = "Generated on Create/Submit"
         sss = json.loads(self.initial['sss_data'])
         if sss.get('area') and sss['area'].get('total_area'):
             initial_area = round(float(sss['area']['total_area']), 2)
