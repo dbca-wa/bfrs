@@ -217,7 +217,10 @@ class BushfireResource(APIResource):
             return self.create_response(request, data=year_list)
         elif kwargs['field_name'] == 'fire_number':
         # Get a list of fire_numbers and names for the field passed in kwargs and request.GET params.
-            qs = Bushfire.objects.filter(report_status=Bushfire.STATUS_INITIAL_AUTHORISED)
+            if request.GET.get('include_final_report') == 'true':
+                qs = Bushfire.objects.filter(report_status__in=(Bushfire.STATUS_INITIAL_AUTHORISED,Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED))
+            else:
+                qs = Bushfire.objects.filter(report_status=Bushfire.STATUS_INITIAL_AUTHORISED)
             if request.GET.get('region_id'):
                 qs = qs.filter(region_id=request.GET.get('region_id'))
             if request.GET.get('district_id'):
