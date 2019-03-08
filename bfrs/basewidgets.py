@@ -17,6 +17,14 @@ class DisplayWidget(DisplayMixin,forms.Widget):
     def __deepcopy__(self, memo):
         return self
 
+class FloatDisplay(DisplayWidget):
+    def __init__(self,precision=2):
+        super(FloatDisplay,self).__init__()
+        self.precision = precision
+
+    def render(self,name,value,attrs=None,renderer=None):
+        return round(value,2)
+
 class TextDisplay(DisplayWidget):
     def render(self,name,value,attrs=None,renderer=None):
         return to_str(value)
@@ -131,6 +139,13 @@ class TemplateDisplay(DisplayWidget):
             return self.widget.render(name,value,attrs,renderer)
         return safestring.SafeText(self.template.format(self.widget.render(name,value,attrs,renderer)))
 
+class FloatInput(forms.NumberInput):
+    def __init__(self,precision=2,*args,**kwargs):
+        super(FloatInput,self).__init__(*args,**kwargs)
+        self.precision = precision
+
+    def render(self,name,value,attrs=None,renderer=None):
+        return super(FloatInput,self).render(name,round(value,self.precision),attrs=attrs)
 
 class DatetimeInput(forms.TextInput):
     def render(self,name,value,attrs=None,renderer=None):
