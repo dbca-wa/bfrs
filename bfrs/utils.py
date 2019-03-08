@@ -233,6 +233,8 @@ def tenure_category(category):
     if category in ["Freehold"]:
         #Freehold is blonging to "Private Property"
         return "Private Property"
+    elif category.lower().startswith('other crown'):
+        return "Other Crown"
     else:
         return category
 
@@ -245,7 +247,7 @@ def update_areas_burnt(bushfire, burning_area):
 
     # aggregate the area's in like tenure types
     aggregated_sums = defaultdict(float)
-    for layer in burning_area["layers"]:
+    for layer in burning_area.get("layers",{}).keys():
         for d in burning_area["layers"][layer]['areas']:
             aggregated_sums[tenure_category(d["category"])] += d["area"]
 
@@ -268,7 +270,7 @@ def update_areas_burnt(bushfire, burning_area):
         area_unknown += burning_area["other_area"]
 
     if area_unknown > 0:
-        new_area_burnt_object.append(AreaBurnt(bushfire=bushfire, tenure=Tenure.objects.get(name='Unknown'), area=round(area_unknown, 2)))
+        new_area_burnt_object.append(AreaBurnt(bushfire=bushfire, tenure=Tenure.OTHER, area=round(area_unknown, 2)))
 
     try:
         with transaction.atomic():
@@ -1493,73 +1495,3 @@ def generate_pdf(tex_template_file,context):
     return (foldername,pdf_filename)
 
 
-def refresh_spatial_data(bushfire,grid=False):
-    if isinstance(bushfire,int):
-        bushfire = Bushfire.objects.get(id = bushfire)
-    elif isinstance(bushfire,basestring):
-        bushfire = Bushfire.objects.get(fire_number=bushfire)
-    elif not isinstance(bushfire,Bushfire):
-        raise Exception("Bushfire should be bushfire id or fire number or Bushfire instance")
-
-    req_data = {"features":serializers.serialize('geojson',[bushfire],geometry_field='origin_point',fields=('id','fire_number'))}
-    req_options = {}
-    update_fields = []
-    if  grid:
-        update_fields.append("origin_point_grid")
-        req_options["grid"] = {
-            "action":"getClosestFeature",
-            "layers":[
-                {
-                    "id":"fd_grid_points",
-                    "layerid":"cddp:fd_grid_points",
-                    "kmiservice":settings.KMI_URL,
-                    "buffer":120,
-                    "properties":{
-                        "grid":"fdgrid",
-                    },
-                },
-                {
-                    "id":"pilbara_grid_1km",
-                    "layerid":"cddp:pilbara_grid_1km",
-                    "buffer":800,
-                    "kmiservice":settings.KMI_URL,
-                    "properties":{
-                        "grid":"id",
-                    },
-                },
-            ],
-        }
-
-    if not update_fields:
-        return
-
-    req_data["options"] = json.dumps(req_options)
-    resp=requests.post(url="{}/spatial".format(settings.SSS_URL), data=req_data,auth=HTTPBasicAuth(settings.USER_SSO, settings.PASS_SSO),verify=settings.SSS_CERTIFICATE_VERIFY)
-    resp.raise_for_status()
-    result = resp.json()
-    if grid:
-        grid_data = result["features"][0]["grid"]
-        if grid_data.get("failed"):
-            raise Exception(grid_data["failed"])
-        elif grid_data.get("id") == "fd_grid_points":
-            bushfire.origin_point_grid = "FD:{}".format(grid_data["feature"]["grid"])
-            print("The bushfire report({})'s grid data is {}".format(bushfire.fire_number,bushfire.origin_point_grid))
-        elif grid_data.get("id") == "pilbara_grid_1km":
-            bushfire.origin_point_grid = "PIL:{}".format(grid_data["feature"]["grid"])
-            print("The bushfire report({})'s grid data is {}".format(bushfire.fire_number,bushfire.origin_point_grid))
-        else:
-            bushfire.origin_point_grid = None
-            print("The bushfire report({})'s grid data is null".format(bushfire.fire_number))
-
-    if update_fields:
-        bushfire.save(update_fields=update_fields)
-
-def refresh_all_spatial_data(grid=False):
-    for bushfire in Bushfire.objects.all().order_by("id"):
-        try:
-            refresh_spatial_data(bushfire,grid)
-        except Exception as ex:
-            print("Failed to refresh the spatial data for bushfire report({}),{}".format(bushfire.fire_number,ex.message))
-            
-
-    
