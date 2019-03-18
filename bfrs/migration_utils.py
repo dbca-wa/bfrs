@@ -511,16 +511,19 @@ def refresh_burnt_area(bushfire,is_snapshot):
             for category, area in aggregated_sums.iteritems():
                 tenure_qs = Tenure.objects.filter(name=category)
                 if tenure_qs:
-                    if is_snapshot:
-                        area_burnt_objects.append([{"snapshot":bushfire, "tenure":tenure_qs[0]},{"snapshot_type":bushfire.snapshot_type, "area":area},None,None])
-                    else:
-                        area_burnt_objects.append([{"bushfire":bushfire, "tenure":tenure_qs[0]},{"area":area},None,None])
+                    area = round(area,2)
+                    if area > 0:
+                        if is_snapshot:
+                            area_burnt_objects.append([{"snapshot":bushfire, "tenure":tenure_qs[0]},{"snapshot_type":bushfire.snapshot_type, "area":area},None,None])
+                        else:
+                            area_burnt_objects.append([{"bushfire":bushfire, "tenure":tenure_qs[0]},{"area":area},None,None])
                 else:
                     raise Exception("Unknown tenure category({})".format(category))
         
             if "other_area" in area_data:
                 area_unknown += area_data["other_area"]
         
+            area_unknown = round(area_unknown,2)
             if area_unknown > 0 :
                 if is_snapshot:
                     area_burnt_objects.append([{"snapshot":bushfire, "tenure":Tenure.OTHER},{"snapshot_type":bushfire.snapshot_type, "area":area_unknown},None,None])
@@ -544,7 +547,7 @@ def refresh_burnt_area(bushfire,is_snapshot):
         with transaction.atomic():
             #update bushfire
             if area_data.get('other_area'):
-                bushfire.other_area = float(area_data['other_area']) 
+                bushfire.other_area = round(float(area_data['other_area']),2)
             else:
                 bushfire.other_area = 0
     
@@ -552,12 +555,12 @@ def refresh_burnt_area(bushfire,is_snapshot):
                 update_fields.append("initial_area_unknown")
                 update_fields.append("initial_area")
                 bushfire.initial_area_unknown = False
-                bushfire.initial_area = float(area_data['total_area'])
+                bushfire.initial_area = round(float(area_data['total_area']),2)
             else:
                 update_fields.append("area_limit")
                 update_fields.append("area")
                 bushfire.area_limit = False
-                bushfire.area = float(area_data['total_area'])
+                bushfire.area = round(float(area_data['total_area']),2)
     
             bushfire.fb_validation_req = fb_validation_req
             bushfire.save(update_fields=update_fields)

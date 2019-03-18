@@ -257,7 +257,9 @@ def update_areas_burnt(bushfire, burning_area):
     for category, area in aggregated_sums.iteritems():
         tenure_qs = Tenure.objects.filter(name=category)
         if tenure_qs:
-            new_area_burnt_object.append(AreaBurnt(bushfire=bushfire, tenure=tenure_qs[0], area=round(area, 2)))
+            area = round(area,2)
+            if area > 0:
+                new_area_burnt_object.append(AreaBurnt(bushfire=bushfire, tenure=tenure_qs[0], area=area))
         elif area:
             area_unknown += area
             if category not in category_unknown:
@@ -269,8 +271,9 @@ def update_areas_burnt(bushfire, burning_area):
     if "other_area" in burning_area:
         area_unknown += burning_area["other_area"]
 
+    area_unknown = round(area_unknown,2)
     if area_unknown > 0:
-        new_area_burnt_object.append(AreaBurnt(bushfire=bushfire, tenure=Tenure.OTHER, area=round(area_unknown, 2)))
+        new_area_burnt_object.append(AreaBurnt(bushfire=bushfire, tenure=Tenure.OTHER, area=area_unknown))
 
     try:
         with transaction.atomic():
