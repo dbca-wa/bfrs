@@ -23,7 +23,7 @@ class FloatDisplay(DisplayWidget):
         self.precision = precision
 
     def render(self,name,value,attrs=None,renderer=None):
-        return round(value,2)
+        return "" if value is None else round(value,2)
 
 class TextDisplay(DisplayWidget):
     def render(self,name,value,attrs=None,renderer=None):
@@ -145,7 +145,7 @@ class FloatInput(forms.NumberInput):
         self.precision = precision
 
     def render(self,name,value,attrs=None,renderer=None):
-        return super(FloatInput,self).render(name,round(value,self.precision),attrs=attrs)
+        return super(FloatInput,self).render(name,"" if value is None else round(value,self.precision),attrs=attrs)
 
 class DatetimeInput(forms.TextInput):
     def render(self,name,value,attrs=None,renderer=None):
