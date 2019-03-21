@@ -2,12 +2,13 @@ import LatLon
 import tempfile
 import subprocess
 import shutil
+import re
 
 from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.template.loader import render_to_string
 from bfrs.models import (Bushfire, BushfireSnapshot, District, Region,BushfireProperty,
-    AreaBurnt, Damage, Injury, Tenure,
+    AreaBurnt, Damage, Injury, Tenure,TenureMapping,
     SNAPSHOT_INITIAL, SNAPSHOT_FINAL,
     DamageSnapshot, InjurySnapshot, AreaBurntSnapshot,BushfirePropertySnapshot,
     SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS, SUBMIT_MANDATORY_FORMSETS,
@@ -20,6 +21,7 @@ from django.http import HttpResponse
 from django.core.mail import send_mail
 from cStringIO import StringIO
 from django.core.mail import EmailMessage
+from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 from django.contrib.auth.models import User, Group, Permission
 import json
@@ -226,17 +228,32 @@ def get_missing_mandatory_fields(obj,action):
         return (check_mandatory_fields(obj, SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS, SUBMIT_MANDATORY_FORMSETS) + check_mandatory_fields(obj, fields, dep_fields, AUTH_MANDATORY_FORMSETS)) or None
     return None
 
-def tenure_category(category):
+
+ws_re = re.compile("\s{2,}")
+def get_tenure(category,createIfMissing=True):
     """
     Return the tenure category used in bfrs
     """
-    if category in ["Freehold"]:
-        #Freehold is blonging to "Private Property"
-        return "Private Property"
-    elif category.lower().startswith('other crown'):
-        return "Other Crown"
-    else:
-        return category
+    normalized_category = ws_re.sub(" ",category.lower().strip())
+    try:
+        #try find the tenure through mapping
+        return TenureMapping.objects.get(name=normalized_category).tenure
+    except ObjectDoesNotExist as ex:
+        try:
+            #TenureMapping are added later, and at the very first, TenureMapping is empty, and all tenure has a default tenure mapping "name equals category"
+            #if found, add the default mapping to TenureMapping
+            tenure = Tenure.objects.get(name__iexact = category)
+            TenureMapping(tenure=tenure,name=normalized_category).save()
+            return tenure
+        except ObjectDoesNotExist as ex1:
+            if not createIfMissing:
+                raise
+            #can't find tenure through mapping and default mapping. create it as new tenure
+            tenure = Tenure(name=category)
+            tenure.save()
+            TenureMapping(tenure=tenure,name=normalized_category).save()
+            logger.info('The Tenure({}) is automatically created'.format(category))
+            return tenure
 
 def update_areas_burnt(bushfire, burning_area):
     """
@@ -244,36 +261,25 @@ def update_areas_burnt(bushfire, burning_area):
     Uses sss_dict
     This method just simply delete the existing datas and add the current datas
     """
-
     # aggregate the area's in like tenure types
     aggregated_sums = defaultdict(float)
     for layer in burning_area.get("layers",{}).keys():
         for d in burning_area["layers"][layer]['areas']:
-            aggregated_sums[tenure_category(d["category"])] += d["area"]
+            aggregated_sums[get_tenure(d["category"])] += d["area"]
 
-    area_unknown = 0.0
-    category_unknown = []
+    other_area = 0
     new_area_burnt_object = []
-    for category, area in aggregated_sums.iteritems():
-        tenure_qs = Tenure.objects.filter(name=category)
-        if tenure_qs:
-            area = round(area,2)
-            if area > 0:
-                new_area_burnt_object.append(AreaBurnt(bushfire=bushfire, tenure=tenure_qs[0], area=area))
-        elif area:
-            area_unknown += area
-            if category not in category_unknown:
-                category_unknown.append(category)
-
-    if area_unknown > 0:
-        logger.info('Unknown Tenure categories: ({}). May need to add these categories to the Tenure Table'.format(category_unknown))
+    for tenure, area in aggregated_sums.iteritems():
+        area = round(area,2)
+        if area > 0:
+            new_area_burnt_object.append(AreaBurnt(bushfire=bushfire, tenure=tenure, area=area))
 
     if "other_area" in burning_area:
-        area_unknown += burning_area["other_area"]
+        other_area = burning_area["other_area"]
 
-    area_unknown = round(area_unknown,2)
-    if area_unknown > 0:
-        new_area_burnt_object.append(AreaBurnt(bushfire=bushfire, tenure=Tenure.OTHER, area=area_unknown))
+    other_area = round(other_area,2)
+    if other_area > 0:
+        new_area_burnt_object.append(AreaBurnt(bushfire=bushfire, tenure=Tenure.OTHER, area=other_area))
 
     try:
         with transaction.atomic():

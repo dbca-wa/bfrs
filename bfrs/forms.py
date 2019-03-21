@@ -21,7 +21,7 @@ from crispy_forms.bootstrap import TabHolder, Tab
 from django.utils.safestring import mark_safe
 from django.forms.widgets import Widget
 
-from bfrs.utils import (can_maintain_data,tenure_category)
+from bfrs.utils import (can_maintain_data,get_tenure)
 
 from . import baseforms
 from . import basewidgets
@@ -837,7 +837,7 @@ class BushfireCreateForm(InitialBushfireForm):
 
         if sss.get('tenure_ignition_point') and sss['tenure_ignition_point'].get('category'):
             try:
-                self.initial['tenure'] = Tenure.objects.get(name__istartswith=tenure_category(sss['tenure_ignition_point']['category']))
+                self.initial['tenure'] = get_tenure(sss['tenure_ignition_point']['category'])
             except:
                 self.initial['tenure'] = Tenure.UNKNOWN
         else:
@@ -854,7 +854,7 @@ class BushfireCreateForm(InitialBushfireForm):
 
         if sss.get('tenure_ignition_point') and sss['tenure_ignition_point'].get('category'):
             try:
-                self.cleaned_data['tenure'] = Tenure.objects.get(name__istartswith=tenure_category(sss['tenure_ignition_point']['category']))
+                self.cleaned_data['tenure'] = get_tenure(sss['tenure_ignition_point']['category'])
             except:
                 self.cleaned_data['tenure'] = Tenure.UNKNOWN
         else:
@@ -890,7 +890,7 @@ class BushfireCreateForm(InitialBushfireForm):
             
         if sss.get('tenure_ignition_point') and sss['tenure_ignition_point'].get('category'):
             try:
-                self.instance.tenure = Tenure.objects.get(name__istartswith=tenure_category(sss['tenure_ignition_point']['category']))
+                self.instance.tenure = get_tenure(sss['tenure_ignition_point']['category'])
             except:
                 self.instance.tenure = Tenure.UNKNOWN
         else:
