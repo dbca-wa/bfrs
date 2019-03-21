@@ -748,6 +748,17 @@ Tenure.OTHER_CROWN = Tenure.objects.get(name="Other Crown")
 
 
 @python_2_unicode_compatible
+class TenureMapping(models.Model):
+    tenure = models.ForeignKey(Tenure)
+    name = models.CharField(verbose_name='Tenure sub category', max_length=200)
+
+    class Meta:
+        ordering = ['id']
+
+    def __str__(self):
+        return "{}.{}".format(self.tenure.name,self.name)
+
+@python_2_unicode_compatible
 class FuelType(models.Model):
     name = models.CharField(max_length=200)
 
