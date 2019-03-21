@@ -13,6 +13,12 @@ from django.db import IntegrityError, transaction
 from bfrs.models import (Bushfire, Tenure,AreaBurntSnapshot,AreaBurnt)
 from bfrs import utils
 
+RERUN = 1
+RESUME = 2
+REPROCESS_ERRORS = 4
+REPROCESS_WARNINGS = 8
+
+
 BUSHFIRE=1
 SNAPSHOT=2
 
@@ -41,23 +47,64 @@ def get_refresh_status_file():
     return status_file
 
 
-def get_refresh_status(resume=True):
+def get_refresh_status(scope,data_type,runtype):
     status_file = get_refresh_status_file()
 
-    if resume:
-        if os.path.exists(status_file):
-            try:
-                with open(status_file) as f:
-                    status = json.loads(f.read())
-            except:
-                status = {}
-                os.remove(status_file)
-        else:
+ 
+    save = False
+    if os.path.exists(status_file):
+        try:
+            with open(status_file) as f:
+                status = json.loads(f.read())
+        except:
             status = {}
-    else:
-        if os.path.exists(status_file):
             os.remove(status_file)
+    else:
         status = {}
+
+    if "progress" not in status:
+        status["progress"] = {}
+        save = True
+
+    if runtype & RERUN == RERUN:
+        #clean the refresh progress
+        for s in (BUSHFIRE,SNAPSHOT):
+            if scope & s == 0:
+                continue
+            if SCOPES_DESC[s] not in status["progress"]:
+                continue
+            for t in (GRID_DATA,ORIGIN_POINT_TENURE,BURNT_AREA):
+                if data_type & t == 0:
+                    continue
+                if DATATYPES_DESC[t] not in status["progress"][SCOPES_DESC[s]]:
+                    continue
+                del status["progress"][SCOPES_DESC[s]][DATATYPES_DESC[t]]
+                save = True
+        #clean the refresh warnings
+        if "warnings" in status:
+            removed_keys = []
+            for key,warnings in status["warnings"].item():
+                index = len(warnings) - 1
+                while index >= 0:
+                    warning = warnings[index]
+                    try:
+                        if warning[0][1] & scope == 0:
+                            continue
+                        if warning[0][2] & data_type == 0:
+                            continue
+                        del warnings[index]
+                    finally:
+                        index -= 1
+                if len(warnings) == 0:
+                    removed_keys.append(key)
+                    save = True
+            for key in removed_keys:
+                del status["warnings"][key]
+                save = True
+
+    if save:
+        save_refresh_status(status)
+
 
     return status
 
@@ -85,7 +132,7 @@ def get_last_refreshed_bushfireid(status,scope,data_types):
         sname = SCOPES_DESC[s]
         if sname not in progress_status:
             progress_status[sname] = {
-                "id":s,
+                "scope":s,
             }
         for t in [GRID_DATA,ORIGIN_POINT_TENURE,BURNT_AREA]:
             if data_types & t  == 0:
@@ -93,7 +140,7 @@ def get_last_refreshed_bushfireid(status,scope,data_types):
             tname = DATATYPES_DESC[t]
             if tname not in progress_status[sname]:
                 progress_status[sname][tname] = {
-                    "id":t,
+                    "data_type":t,
                 }
     #get min bfid
     for s in [BUSHFIRE,SNAPSHOT]:
@@ -186,12 +233,15 @@ def add_warnings(status,bushfire,scope,data_types,warnings):
     for warning in warnings:
         all_warnings[warning_key].append(warning)
 
-def refresh_all_spatial_data(scope=BUSHFIRE,data_types = 0,resume=True,size=0):
+def refresh_all_spatial_data(scope=BUSHFIRE,data_types = 0,runtype=RESUME,size=0):
     if data_types == 0 or scope == 0:
         return
 
+    if runtype & RERUN == RERUN:
+        runtype = RERUN
+
     all_warnings = OrderedDict()
-    status = get_refresh_status(resume)
+    status = get_refresh_status(scope,data_types,runtype)
     last_refreshed_id = get_last_refreshed_bushfireid(status,scope,data_types)
     try:
         refresh_status_file = os.path.join(settings.BASE_DIR,"logs","")
@@ -199,27 +249,77 @@ def refresh_all_spatial_data(scope=BUSHFIRE,data_types = 0,resume=True,size=0):
         counter = 0
         start_time = datetime.now()
         save_interval = timedelta(minutes=2)
-        for bushfire in Bushfire.objects.all().order_by("id") if last_refreshed_id is None else Bushfire.objects.filter(id__gt=last_refreshed_id).order_by("id"):
-            scope_types = get_scope_and_datatypes(status,bushfire,scope,data_types)
-            warning_key = (bushfire.id,bushfire.fire_number)
-            for s,t in scope_types:
-                warnings = _refresh_spatial_data(bushfire,scope=s,data_types=t)
-                set_last_refreshed_bushfireid(status,s,t,bushfire.id)
-                if warnings:
-                    add_warnings(status,bushfire,s,t,warnings)
-                    if warning_key in all_warnings:
-                        for w in warnings:
-                            all_warnings[warning_key].append(w)
-                    else:
-                        all_warnings[warning_key] = warnings
-            counter += 1
-            if size and counter >= size:
-                break
-            if datetime.now() - start_time >= save_interval:
-                save_refresh_status(status)
-                start_time = datetime.now()
+
+        #reprocess failed bushfires
+        if "warnings" in status and runtype & (REPROCESS_ERRORS | REPROCESS_WARNINGS) > 0:
+            removed_keys = []
+            for key,previous_warnings in status["warnings"].items():
+                index = len(previous_warnings) - 1
+                while index >= 0:
+                    try:
+                        previous_warning = previous_warnings[index]
+                        if previous_warning[0][3] == "WARNING" and runtype & REPROCESS_WARNINGS == 0:
+                            continue
+                        if previous_warning[0][3] == "ERROR" and runtype & REPROCESS_ERRORS == 0:
+                            continue
+                        if previous_warning[0][1] & scope == 0:
+                            continue
+                        if previous_warning[0][2] & data_types == 0:
+                            continue
+                        bushfire = Bushfire.objects.get(id = int(key.split(':')[0]))
+                        print("Reprocess bushfire({}) {}:{} ".format(bushfire.fire_number,previous_warning[0][3],previous_warning[1]))
+                        warnings = _refresh_spatial_data(bushfire,scope=previous_warning[0][1],data_types=previous_warning[0][2])
+                        warning_key = (bushfire.id,bushfire.fire_number)
+                        if warnings:
+                            add_warnings(status,bushfire,previous_warning[0][1],previous_warning[0][2],warnings)
+                            if warning_key in all_warnings:
+                                for w in warnings:
+                                    all_warnings[warning_key].append(w)
+                            else:
+                                all_warnings[warning_key] = warnings
+                        else:
+                            del previous_warnings[index]
+                    finally:
+                        index -= 1
+                if len(previous_warnings) == 0:
+                    removed_keys.append(key)
+                        
+                counter += 1
+                if size and counter >= size:
+                    break
+                if datetime.now() - start_time >= save_interval:
+                    save_refresh_status(status)
+                    start_time = datetime.now()
+            if removed_keys:
+                for key in removed_keys:
+                    del status["warnings"][key]
+
+            save_refresh_status(status)
+            
+                
+        #refresh bushfires
+        if runtype & (RERUN | RESUME) > 0:
+            for bushfire in Bushfire.objects.all().order_by("id") if last_refreshed_id is None else Bushfire.objects.filter(id__gt=last_refreshed_id).order_by("id"):
+                scope_types = get_scope_and_datatypes(status,bushfire,scope,data_types)
+                warning_key = (bushfire.id,bushfire.fire_number)
+                for s,t in scope_types:
+                    warnings = _refresh_spatial_data(bushfire,scope=s,data_types=t)
+                    set_last_refreshed_bushfireid(status,s,t,bushfire.id)
+                    if warnings:
+                        add_warnings(status,bushfire,s,t,warnings)
+                        if warning_key in all_warnings:
+                            for w in warnings:
+                                all_warnings[warning_key].append(w)
+                        else:
+                            all_warnings[warning_key] = warnings
+                counter += 1
+                if size and counter >= size:
+                    break
+                if datetime.now() - start_time >= save_interval:
+                    save_refresh_status(status)
+                    start_time = datetime.now()
     except Exception as ex:
-        print("Failed to refresh the spatial data for bushfire report({}),{}".format(bushfire.fire_number,str(ex)))
+        print("Failed to refresh the spatial data,{}".format(str(ex)))
         traceback.print_exc()
 
 
@@ -227,16 +327,16 @@ def refresh_all_spatial_data(scope=BUSHFIRE,data_types = 0,resume=True,size=0):
     
     if all_warnings:
         for bushfire,warnings in all_warnings.items():
-            print("================All warnings for bushfire({})==========================".format(bushfire))
+            print("================All warnings or errors for bushfire({})==========================".format(bushfire))
             for key,msgs in warnings:
                 if key[1] == BUSHFIRE:
-                    print("    All {}  warnings for bushfire({})".format(key[2],key[0]))
+                    print("    All {}  warnings or errors for bushfire({})".format(DATATYPES_DESC[key[2]],key[0]))
                 else:
-                    print("    All {}  warnings for bushfire({})'s snapshot({})".format(key[2],bushfire.id,key[0]))
+                    print("    All {}  warnings or errors for bushfire({})'s snapshot({})".format(DATATYPES_DESC[key[2]],bushfire.id,key[0]))
                 index = 0
                 for msg in msgs:
                     index += 1
-                    print("        {}:{}".format(index,msg))
+                    print("    {}. {}:{}".format(index,key[3],msg))
 
 def _refresh_spatial_data(bushfire,scope=BUSHFIRE,data_types=0):
     warnings = [] 
@@ -268,19 +368,29 @@ def _refresh_spatial_data(bushfire,scope=BUSHFIRE,data_types=0):
     for bf in bushfires:
         is_snapshot =  hasattr(bf,"snapshot_type")
         if data_types & GRID_DATA == GRID_DATA:
-            warning = refresh_grid_data(bf,is_snapshot)
-            if warning :
-                warnings.append(((bf.id,SNAPSHOT if is_snapshot else BUSHFIRE,GRID_DATA),warning if isinstance(warning,(list,tuple)) else [warning]))
+            try:
+                warning = refresh_grid_data(bf,is_snapshot)
+                if warning :
+                    warnings.append(((bf.id,SNAPSHOT if is_snapshot else BUSHFIRE,GRID_DATA,'WARNING'),warning if isinstance(warning,(list,tuple)) else [warning]))
+            except Exception as ex:
+                warnings.append(((bf.id,SNAPSHOT if is_snapshot else BUSHFIRE,GRID_DATA,'ERROR'),[str(ex)]))
+
 
         if data_types & ORIGIN_POINT_TENURE == ORIGIN_POINT_TENURE:
-            warning = refresh_originpoint_tenure(bf,is_snapshot)
-            if warning :
-                warnings.append(((bf.id,SNAPSHOT if is_snapshot else BUSHFIRE,ORIGIN_POINT_TENURE),warning if isinstance(warning,(list,tuple)) else [warning]))
+            try:
+                warning = refresh_originpoint_tenure(bf,is_snapshot)
+                if warning :
+                    warnings.append(((bf.id,SNAPSHOT if is_snapshot else BUSHFIRE,ORIGIN_POINT_TENURE,'WARNING'),warning if isinstance(warning,(list,tuple)) else [warning]))
+            except Exception as ex:
+                warnings.append(((bf.id,SNAPSHOT if is_snapshot else BUSHFIRE,ORIGIN_POINT_TENURE,'ERROR'),[str(ex)]))
 
         if data_types & BURNT_AREA == BURNT_AREA:
-            warning = refresh_burnt_area(bf,is_snapshot)
-            if warning :
-                warnings.append(((bf.id,SNAPSHOT if is_snapshot else BUSHFIRE,BURNT_AREA),warning if isinstance(warning,(list,tuple)) else [warning]))
+            try:
+                warning = refresh_burnt_area(bf,is_snapshot)
+                if warning :
+                    warnings.append(((bf.id,SNAPSHOT if is_snapshot else BUSHFIRE,BURNT_AREA,'WARNING'),warning if isinstance(warning,(list,tuple)) else [warning]))
+            except Exception as ex:
+                warnings.append(((bf.id,SNAPSHOT if is_snapshot else BUSHFIRE,BURNT_AREA,'ERROR'),[str(ex)]))
 
     return warnings
 
@@ -289,13 +399,13 @@ def refresh_spatial_data(bushfire,scope=BUSHFIRE,data_types=0):
     if warnings:
         for key,msgs in warnings:
             if key[1] == BUSHFIRE:
-                print("================All {}  warnings for bushfire({})==========================".format(key[2],key[0]))
+                print("================All {}  warnings or errors for bushfire({})==========================".format(DATATYPES_DESC[key[2]],key[0]))
             else:
-                print("================All {}  warnings for bushfire({})'s snapshot({})==========================".format(key[2],bushfire.id,key[0]))
+                print("================All {}  warnings or errors for bushfire({})'s snapshot({})==========================".format(DATATYPES_DESC[key[2]],bushfire.id,key[0]))
             index = 0
             for msg in msgs:
                 index += 1
-                print("    {}:{}".format(index,msg))
+                print("    {}. {}:{}".format(index,key[3],msg))
 
 
 def refresh_grid_data(bushfire,is_snapshot):
@@ -396,9 +506,8 @@ def refresh_originpoint_tenure(bushfire,is_snapshot):
     if tenure_data.get("failed"):
         raise Exception(tenure_data["failed"])
     elif tenure_data and tenure_data.get('id'):
-        category  = utils.tenure_category(tenure_data['feature']['category'])
         try:
-            bushfire.tenure = Tenure.objects.get(name=category)
+            bushfire.tenure = utils.get_tenure(tenure_data['feature']['category'],createIfMissing=False)
         except:
             raise Exception("Unknown tenure category({})".format(category))
     else:
@@ -486,7 +595,7 @@ def refresh_burnt_area(bushfire,is_snapshot):
         if result["features"]:
             area_data_status = result["features"][0]["area"]["status"]
             if area_data_status.get("failed") :
-                raise area_data_status["failed"]
+                raise Exception(area_data_status["failed"])
             else:
                 if area_data_status.get("invalid"):
                     fb_validation_req = True
@@ -504,21 +613,17 @@ def refresh_burnt_area(bushfire,is_snapshot):
             aggregated_sums = defaultdict(float)
             for layerid in area_data.get("layers",{}):
                 for data in area_data["layers"][layerid]['areas']:
-                    aggregated_sums[utils.tenure_category(data["category"])] += data["area"]
+                    aggregated_sums[utils.get_tenure(data["category"],createIfMissing=False)] += data["area"]
                     total_area += data["area"]
         
             area_unknown = 0.0
-            for category, area in aggregated_sums.iteritems():
-                tenure_qs = Tenure.objects.filter(name=category)
-                if tenure_qs:
-                    area = round(area,2)
-                    if area > 0:
-                        if is_snapshot:
-                            area_burnt_objects.append([{"snapshot":bushfire, "tenure":tenure_qs[0]},{"snapshot_type":bushfire.snapshot_type, "area":area},None,None])
-                        else:
-                            area_burnt_objects.append([{"bushfire":bushfire, "tenure":tenure_qs[0]},{"area":area},None,None])
-                else:
-                    raise Exception("Unknown tenure category({})".format(category))
+            for tenure, area in aggregated_sums.iteritems():
+                area = round(area,2)
+                if area > 0:
+                    if is_snapshot:
+                        area_burnt_objects.append([{"snapshot":bushfire, "tenure":tenure},{"snapshot_type":bushfire.snapshot_type, "area":area},None,None])
+                    else:
+                        area_burnt_objects.append([{"bushfire":bushfire, "tenure":tenure},{"area":area},None,None])
         
             if "other_area" in area_data:
                 area_unknown += area_data["other_area"]
