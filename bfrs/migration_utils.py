@@ -9,6 +9,7 @@ from collections import defaultdict, OrderedDict
 from django.core import serializers
 from django.conf import settings
 from django.db import IntegrityError, transaction
+from django.utils import timezone
 
 from bfrs.models import (Bushfire, Tenure,AreaBurntSnapshot,AreaBurnt)
 from bfrs import utils
@@ -332,7 +333,7 @@ def refresh_all_spatial_data(scope=BUSHFIRE,data_types = 0,runtype=RESUME,size=0
                 if key[1] == BUSHFIRE:
                     print("    All {}  warnings or errors for bushfire({})".format(DATATYPES_DESC[key[2]],key[0]))
                 else:
-                    print("    All {}  warnings or errors for bushfire({})'s snapshot({})".format(DATATYPES_DESC[key[2]],bushfire.id,key[0]))
+                    print("    All {}  warnings or errors for bushfire({})'s snapshot({})".format(DATATYPES_DESC[key[2]],bushfire[0],key[0]))
                 index = 0
                 for msg in msgs:
                     index += 1
@@ -621,7 +622,7 @@ def refresh_burnt_area(bushfire,is_snapshot):
                 area = round(area,2)
                 if area > 0:
                     if is_snapshot:
-                        area_burnt_objects.append([{"snapshot":bushfire, "tenure":tenure},{"snapshot_type":bushfire.snapshot_type, "area":area},None,None])
+                        area_burnt_objects.append([{"snapshot":bushfire, "tenure":tenure},{"snapshot_type":bushfire.snapshot_type, "area":area,"created":timezone.now(),"modified":timezone.now()},None,None])
                     else:
                         area_burnt_objects.append([{"bushfire":bushfire, "tenure":tenure},{"area":area},None,None])
         
@@ -631,7 +632,7 @@ def refresh_burnt_area(bushfire,is_snapshot):
             area_unknown = round(area_unknown,2)
             if area_unknown > 0 :
                 if is_snapshot:
-                    area_burnt_objects.append([{"snapshot":bushfire, "tenure":Tenure.OTHER},{"snapshot_type":bushfire.snapshot_type, "area":area_unknown},None,None])
+                    area_burnt_objects.append([{"snapshot":bushfire, "tenure":Tenure.OTHER},{"snapshot_type":bushfire.snapshot_type, "area":area_unknown,"created":timezone.now(),"modified":timezone.now()},None,None])
                 else:
                     area_burnt_objects.append([{"bushfire":bushfire, "tenure":Tenure.OTHER},{"area":area_unknown},None,None])
                 total_area += area_unknown
@@ -672,8 +673,26 @@ def refresh_burnt_area(bushfire,is_snapshot):
     
             #update burnt area
             area_ids = []
+            default_data = None
             for o in area_burnt_objects:
-                obj,created = (AreaBurntSnapshot if is_snapshot else AreaBurnt).objects.update_or_create(defaults=o[1],**o[0])
+                if is_snapshot:
+                    if default_data is None:
+                        existing_area_burnt = AreaBurntSnapshot.objects.filter(snapshot=bushfire).first()
+                        if existing_area_burnt is None:
+                            default_data = {
+                                "creator":bushfire.bushfire.modifier,
+                                "modifier":bushfire.bushfire.modifier
+                            }
+                        else:
+                            default_data = {
+                                "creator":existing_area_burnt.creator,
+                                "modifier":existing_area_burnt.modifier
+                            }
+
+                    default_data.update(o[1])
+                    obj,created = AreaBurntSnapshot.objects.update_or_create(defaults=default_data,**o[0])
+                else:
+                    obj,created = AreaBurnt.objects.update_or_create(defaults=o[1],**o[0])
                 o[2] = obj
                 o[3] = created
                 area_ids.append(obj.id)
