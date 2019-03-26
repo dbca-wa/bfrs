@@ -556,7 +556,6 @@ def refresh_burnt_area(bushfire,is_snapshot):
             "layerid":"cddp:legislated_lands_and_waters",
             "kmiservice":settings.KMI_URL,
             "properties":{
-                "name":"name",
                 "category":"category"
             },
         },{
@@ -564,7 +563,6 @@ def refresh_burnt_area(bushfire,is_snapshot):
             "layerid":"cddp:dept_interest_lands_and_waters",
             "kmiservice":settings.KMI_URL,
             "properties":{
-                "name":"name",
                 "category":"category"
             },
         },{
@@ -572,8 +570,14 @@ def refresh_burnt_area(bushfire,is_snapshot):
             "layerid":"cddp:other_tenures_new",
             "kmiservice":settings.KMI_URL,
             "properties":{
-                "name":"brc_fms_le",
                 "category":"brc_fms_le"
+            },
+        },{
+            "id":"sa_nt_burntarea",
+            "layerid":"cddp:sa_nt_state_polygons_burntarea",
+            "kmiservice":settings.KMI_URL,
+            "properties":{
+                "category":"name"
             },
         }]
 
