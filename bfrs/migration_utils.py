@@ -84,7 +84,7 @@ def get_refresh_status(scope,data_type,runtype):
         #clean the refresh warnings
         if "warnings" in status:
             removed_keys = []
-            for key,warnings in status["warnings"].item():
+            for key,warnings in status["warnings"].items():
                 index = len(warnings) - 1
                 while index >= 0:
                     warning = warnings[index]
