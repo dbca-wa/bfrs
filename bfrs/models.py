@@ -793,7 +793,8 @@ class Agency(models.Model):
     def __str__(self):
         return self.name
 
-Agency.OTHER = Agency.objects.get(name="OTHER")
+Agency.OTHER = Agency.objects.get(code="OTHER")
+Agency.DBCA = Agency.objects.get(code="DBCA")
 
 @python_2_unicode_compatible
 class InjuryType(models.Model):
