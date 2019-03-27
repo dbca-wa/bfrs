@@ -350,13 +350,6 @@ def _refresh_spatial_data(bushfire,scope=BUSHFIRE,data_types=0):
     else:
         print_warnings = False
 
-    if isinstance(bushfire,int):
-        bushfire = Bushfire.objects.get(id = bushfire)
-    elif isinstance(bushfire,basestring):
-        bushfire = Bushfire.objects.get(fire_number=bushfire)
-    elif not isinstance(bushfire,Bushfire):
-        raise Exception("Bushfire should be bushfire id or fire number or Bushfire instance")
-
     if scope & (BUSHFIRE | SNAPSHOT) == (BUSHFIRE | SNAPSHOT) :
         bushfires = itertools.chain([bushfire],bushfire.snapshots.all())
     elif scope == BUSHFIRE :
@@ -396,6 +389,13 @@ def _refresh_spatial_data(bushfire,scope=BUSHFIRE,data_types=0):
     return warnings
 
 def refresh_spatial_data(bushfire,scope=BUSHFIRE,data_types=0):
+    if isinstance(bushfire,int):
+        bushfire = Bushfire.objects.get(id = bushfire)
+    elif isinstance(bushfire,basestring):
+        bushfire = Bushfire.objects.get(fire_number=bushfire)
+    elif not isinstance(bushfire,Bushfire):
+        raise Exception("Bushfire should be bushfire id or fire number or Bushfire instance")
+
     warnings = _refresh_spatial_data(bushfire,scope=scope,data_types=data_types)
     if warnings:
         for key,msgs in warnings:
