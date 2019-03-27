@@ -1,5 +1,5 @@
 from django.db import connection
-from bfrs.models import Bushfire, Region, District, Tenure, Cause, current_finyear
+from bfrs.models import Bushfire, Region, District, Tenure, Cause, current_finyear,Agency
 from bfrs.utils import get_pbs_bushfires
 from django.db.models import Count, Sum
 from django.db.models.query import QuerySet
@@ -59,9 +59,14 @@ def style(bold=False, num_fmt='#,##0', horz_align=Alignment.HORZ_GENERAL, colour
 style_normal_int   = style()
 style_normal       = style(num_fmt='#,##0')
 style_normal_float = style(num_fmt='#,##0.00')
+style_normal_area = style(num_fmt='#,##0.00')
+style_normal_percentage = style(num_fmt='#,##0.00\\%')
+
 style_bold_int     = style(bold=True, horz_align=Alignment.HORZ_CENTER)
 style_bold         = style(bold=True, num_fmt='#,##0', horz_align=Alignment.HORZ_CENTER)
 style_bold_float   = style(bold=True, num_fmt='#,##0.00')
+style_bold_area   = style(bold=True, num_fmt='#,##0.00')
+style_bold_percentage   = style(bold=True, num_fmt='#,##0.00\\%')
 style_bold_gen     = style(bold=True, num_fmt='#,##0')
 style_bold_red     = style(bold=True, num_fmt='#,##0', colour='red')
 style_bold_yellow  = style(bold=True, num_fmt='#,##0', colour='yellow')
@@ -332,15 +337,15 @@ class MinisterialReport():
                     #row = sheet1.row(row_no())
                     row.write(col_no(), region, style=style_bold_gen)
                     row.write(col_no(), data['pw_tenure'], style=style_bold_gen)
-                    row.write(col_no(), data['area_pw_tenure'], style=style_bold_gen)
+                    row.write(col_no(), data['area_pw_tenure'], style=style_bold_area)
                     row.write(col_no(), data['total_all_tenure'], style=style_bold_gen)
-                    row.write(col_no(), data['total_area'], style=style_bold_gen)
+                    row.write(col_no(), data['total_area'], style=style_bold_area)
                 else:
                     row.write(col_no(), region )
                     row.write(col_no(), data['pw_tenure'], style=style_normal_int)
-                    row.write(col_no(), data['area_pw_tenure'], style=style_normal)
+                    row.write(col_no(), data['area_pw_tenure'], style=style_normal_area)
                     row.write(col_no(), data['total_all_tenure'], style=style_normal_int)
-                    row.write(col_no(), data['total_area'], style=style_normal)
+                    row.write(col_no(), data['total_area'], style=style_normal_area)
 
         # DISCLAIMER
         col_no = lambda c=count(): next(c)
@@ -487,7 +492,7 @@ class MinisterialReport268():
 
         if dbca_initial_control:
             # get the fires managed by DBCA
-            outstanding_fires = list(Bushfire.objects.filter(report_status__in=[Bushfire.STATUS_INITIAL_AUTHORISED], initial_control__name__icontains='DBCA').values_list('fire_number', flat=True))
+            outstanding_fires = list(Bushfire.objects.filter(report_status__in=[Bushfire.STATUS_INITIAL_AUTHORISED], initial_control=Agency.DBCA).values_list('fire_number', flat=True))
         else:
             outstanding_fires = list(Bushfire.objects.filter(report_status__in=[Bushfire.STATUS_INITIAL_AUTHORISED]).values_list('fire_number', flat=True))
 
@@ -505,18 +510,17 @@ class MinisterialReport268():
             exists = [i for r in qs_regions if r.id==region_id]
             if exists:
                 if rpt_map.has_key(region_id):
-                    area = rpt_map.get(region_id)['area'] + float(i['area'])
-                    number = rpt_map.get(region_id)['number'] + 1
+                    rpt_map[region_id]['area'] = rpt_map[region_id]['area'] + float(i['area'])
+                    rpt_map[region_id]['number'] = rpt_map[region_id]['number'] + 1
                             
                 else:
-                    area = float(i['area'])
-                    number = 1
+                    rpt_map[region_id] = {
+                        'area' : float(i['area']),
+                        'number' : 1
+                    }
 
             else:
-                area = 0.0
-                number = 0
-
-            rpt_map.update({region_id: dict(area=area, number=number)})
+                raise Exception("PBS Region id({}) Not Found in BFRS".format(region_id))
 
         return rpt_map
 
@@ -663,15 +667,15 @@ class MinisterialReport268():
                     #row = sheet1.row(row_no())
                     row.write(col_no(), region, style=style_bold_gen)
                     row.write(col_no(), data['pw_tenure'], style=style_bold_gen)
-                    row.write(col_no(), data['area_pw_tenure'], style=style_bold_gen)
+                    row.write(col_no(), data['area_pw_tenure'], style=style_bold_area)
                     row.write(col_no(), data['total_all_tenure'], style=style_bold_gen)
-                    row.write(col_no(), data['total_area'], style=style_bold_gen)
+                    row.write(col_no(), data['total_area'], style=style_bold_area)
                 else:
                     row.write(col_no(), region )
                     row.write(col_no(), data['pw_tenure'], style=style_normal_int)
-                    row.write(col_no(), data['area_pw_tenure'], style=style_normal)
+                    row.write(col_no(), data['area_pw_tenure'], style=style_normal_area)
                     row.write(col_no(), data['total_all_tenure'], style=style_normal_int)
-                    row.write(col_no(), data['total_area'], style=style_normal)
+                    row.write(col_no(), data['total_area'], style=style_normal_area)
 
         # DISCLAIMER
         col_no = lambda c=count(): next(c)
@@ -683,12 +687,12 @@ class MinisterialReport268():
         hdr = sheet1.row(row_no())
         hdr = sheet1.row(row_no())
         hdr.write(col_no(), "Outstanding Fires (Contributing)", style=style_bold_gen)
-        hdr.write(col_no(), "Area (ha)", style=style_bold_gen)
+        hdr.write(col_no(), "Area (ha)", style=style_bold_area)
         for data in self.pbs_fires_dict:
             row = sheet1.row(row_no())
             col_no = lambda c=count(): next(c)
             row.write(col_no(), data['fire_id'], style=style_normal)
-            row.write(col_no(), float(data['area']), style=style_normal)
+            row.write(col_no(), float(data['area']), style=style_normal_area)
 
         col_no = lambda c=count(): next(c)
         hdr = sheet1.row(row_no())
@@ -737,8 +741,9 @@ class MinisterialReportAuth():
     def create(self):
         # Group By Region
         #qs=Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, year=current_finyear()).values('region_id')
-        qs=Bushfire.objects.filter(authorised_by__isnull=False, year=current_finyear()).exclude(report_status=Bushfire.STATUS_INVALIDATED).values('region_id')
-        qs1=qs.filter(initial_control__name='DBCA P&W').annotate(dbca_count=Count('region_id'), dbca_sum=Sum('area') )
+        #qs=Bushfire.objects.filter(authorised_by__isnull=False, year=current_finyear()).exclude(report_status=Bushfire.STATUS_INVALIDATED).values('region_id')
+        qs=Bushfire.objects.filter(report_status__in=[Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED], year=current_finyear()).values('region_id')
+        qs1=qs.filter(initial_control=Agency.DBCA).annotate(dbca_count=Count('region_id'), dbca_sum=Sum('area') )
         qs2=qs.exclude(initial_control__isnull=True).annotate(total_count=Count('region_id'), total_sum=Sum('area') )
 
         rpt_map = []
@@ -888,15 +893,15 @@ class MinisterialReportAuth():
                     #row = sheet1.row(row_no())
                     row.write(col_no(), region, style=style_bold_gen)
                     row.write(col_no(), data['pw_tenure'], style=style_bold_gen)
-                    row.write(col_no(), data['area_pw_tenure'], style=style_bold_gen)
+                    row.write(col_no(), data['area_pw_tenure'], style=style_bold_area)
                     row.write(col_no(), data['total_all_tenure'], style=style_bold_gen)
-                    row.write(col_no(), data['total_area'], style=style_bold_gen)
+                    row.write(col_no(), data['total_area'], style=style_bold_area)
                 else:
                     row.write(col_no(), region )
                     row.write(col_no(), data['pw_tenure'], style=style_normal_int)
-                    row.write(col_no(), data['area_pw_tenure'], style=style_normal)
+                    row.write(col_no(), data['area_pw_tenure'], style=style_normal_area)
                     row.write(col_no(), data['total_all_tenure'], style=style_normal_int)
-                    row.write(col_no(), data['total_area'], style=style_normal)
+                    row.write(col_no(), data['total_area'], style=style_normal_area)
 
         # DISCLAIMER
         col_no = lambda c=count(): next(c)
@@ -1087,10 +1092,12 @@ class QuarterlyReport():
         rpt_map = []
         item_map = {}
         #qs=Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, year=current_finyear()).values('region_id')
-        qs=Bushfire.objects.filter(authorised_by__isnull=False, year=current_finyear()).exclude(report_status=Bushfire.STATUS_INVALIDATED).values('region_id')
+        #qs=Bushfire.objects.filter(authorised_by__isnull=False, year=current_finyear()).exclude(report_status=Bushfire.STATUS_INVALIDATED).values('region_id')
+        qs=Bushfire.objects.filter(report_status__in=[Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED], year=current_finyear()).values('region_id')
 
-        qs_forest_pw = qs.filter(region__in=Region.objects.filter(forest_region=True)).filter(initial_control__name='DBCA P&W').aggregate(count=Count('region_id'), area=Sum('area') )
-        qs_forest_non_pw = qs.filter(region__in=Region.objects.filter(forest_region=True)).exclude(initial_control__name='DBCA P&W').aggregate(count=Count('region_id'), area=Sum('area') )
+
+        qs_forest_pw = qs.filter(region__in=Region.objects.filter(forest_region=True)).filter(initial_control=Agency.DBCA).aggregate(count=Count('region_id'), area=Sum('area') )
+        qs_forest_non_pw = qs.filter(region__in=Region.objects.filter(forest_region=True)).exclude(initial_control=Agency.DBCA).aggregate(count=Count('region_id'), area=Sum('area') )
         forest_pw_tenure = qs_forest_pw.get('count') if qs_forest_pw.get('count') else 0.0
         forest_area_pw_tenure = qs_forest_pw.get('area') if qs_forest_pw.get('area') else 0.0
         forest_non_pw_tenure = qs_forest_non_pw.get('count') if qs_forest_non_pw.get('count') else 0.0
@@ -1105,8 +1112,8 @@ class QuarterlyReport():
             )}
         )
 
-        qs_nonforest_pw = qs.filter(region__in=Region.objects.filter(forest_region=False)).filter(initial_control__name='DBCA P&W').aggregate(count=Count('region_id'), area=Sum('area') )
-        qs_nonforest_non_pw = qs.filter(region__in=Region.objects.filter(forest_region=False)).exclude(initial_control__name='DBCA P&W').aggregate(count=Count('region_id'), area=Sum('area') )
+        qs_nonforest_pw = qs.filter(region__in=Region.objects.filter(forest_region=False)).filter(initial_control=Agency.DBCA).aggregate(count=Count('region_id'), area=Sum('area') )
+        qs_nonforest_non_pw = qs.filter(region__in=Region.objects.filter(forest_region=False)).exclude(initial_control=Agency.DBCA).aggregate(count=Count('region_id'), area=Sum('area') )
         nonforest_pw_tenure = qs_nonforest_pw.get('count') if qs_nonforest_pw.get('count') else 0.0
         nonforest_area_pw_tenure = qs_nonforest_pw.get('area') if qs_nonforest_pw.get('area') else 0.0
         nonforest_non_pw_tenure = qs_nonforest_non_pw.get('count') if qs_nonforest_non_pw.get('count') else 0.0
@@ -1133,7 +1140,8 @@ class QuarterlyReport():
 
     def escape_burns(self):
         #return Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, year=current_finyear(), cause__name__icontains='escape')
-        return Bushfire.objects.filter(authorised_by__isnull=False, year=current_finyear(), cause__name__icontains='escape').exclude(report_status=Bushfire.STATUS_INVALIDATED)
+        #return Bushfire.objects.filter(authorised_by__isnull=False, year=current_finyear(), cause__name__icontains='escape').exclude(report_status=Bushfire.STATUS_INVALIDATED)
+        return Bushfire.objects.filter(report_status__in=[Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED], year=current_finyear(), cause__name__icontains='escape')
 
     def get_excel_sheet(self, rpt_date, book=Workbook()):
 
@@ -1182,19 +1190,19 @@ class QuarterlyReport():
                     #row = sheet1.row(row_no())
                     row.write(col_no(), region, style=style_bold_gen)
                     row.write(col_no(), data['pw_tenure'], style=style_bold_gen)
-                    row.write(col_no(), data['area_pw_tenure'], style=style_bold_gen)
+                    row.write(col_no(), data['area_pw_tenure'], style=style_bold_area)
                     row.write(col_no(), data['non_pw_tenure'], style=style_bold_gen)
-                    row.write(col_no(), data['area_non_pw_tenure'], style=style_bold_gen)
+                    row.write(col_no(), data['area_non_pw_tenure'], style=style_bold_area)
                     row.write(col_no(), data['total_all_tenure'], style=style_bold_gen)
-                    row.write(col_no(), data['total_area'], style=style_bold_gen)
+                    row.write(col_no(), data['total_area'], style=style_bold_area)
                 else:
                     row.write(col_no(), region )
                     row.write(col_no(), data['pw_tenure'], style=style_normal)
-                    row.write(col_no(), data['area_pw_tenure'], style=style_normal)
+                    row.write(col_no(), data['area_pw_tenure'], style=style_normal_area)
                     row.write(col_no(), data['non_pw_tenure'], style=style_normal)
-                    row.write(col_no(), data['area_non_pw_tenure'], style=style_normal)
+                    row.write(col_no(), data['area_non_pw_tenure'], style=style_normal_area)
                     row.write(col_no(), data['total_all_tenure'], style=style_normal)
-                    row.write(col_no(), data['total_area'], style=style_normal)
+                    row.write(col_no(), data['total_area'], style=style_normal_area)
 
         # DISCLAIMER
         col_no = lambda c=count(): next(c)
@@ -1266,11 +1274,7 @@ class BushfireByTenureReport():
         SELECT a.tenure_id,count(*) 
         FROM (
             SELECT 
-                CASE WHEN tenure_id = {other_tenure} AND other_tenure = 1 THEN {private_property_tenure}
-                     WHEN tenure_id = {other_tenure} AND other_tenure = 2 THEN {other_crown_tenure}
-                     WHEN tenure_id = {other_tenure} THEN {other_tenure}
-                     ELSE tenure_id
-                END AS tenure_id,
+                tenure_id,
                 fire_number
             FROM bfrs_bushfire
             WHERE report_status in {report_status} AND year={year} 
@@ -1288,19 +1292,17 @@ class BushfireByTenureReport():
         item_map = {}
         counts = []
         areas = []
-        other_tenure = Tenure.objects.get(name="Other")
-        private_property_tenure = Tenure.objects.get(name="Private Property")
-        other_crown_tenure = Tenure.objects.get(name="Other Crown")
         with connection.cursor() as cursor:
             for y in (year - 2,year - 1,year):
                 year_counts = {"total":0}
-                year_areas = {"total":0}
                 counts.append(year_counts)
-                areas.append(year_areas)
-                cursor.execute(count_sql.format(report_status="(3,4)",year=y,other_tenure=other_tenure.id,private_property_tenure=private_property_tenure.id,other_crown_tenure=other_crown_tenure.id))
+                cursor.execute(count_sql.format(report_status="(3,4)",year=y))
                 for result in cursor.fetchall():
                     year_counts[result[0]] = result[1]
                     year_counts["total"] += result[1]
+
+                year_areas = {"total":0}
+                areas.append(year_areas)
                 cursor.execute(area_sql.format(report_status="(3,4)",year=y))
                 for result in cursor.fetchall():
                     year_areas[result[0]] = result[1]
@@ -1407,17 +1409,17 @@ class BushfireByTenureReport():
                     row.write(col_no(), data['count2'] if data['count2'] > 0 else '', style=style_bold_gen)
                     row.write(col_no(), data['count1'] if data['count1'] > 0 else '', style=style_bold_gen)
                     row.write(col_no(), data['count0'], style=style_bold_gen)
-                    row.write(col_no(), data['area2'] if data['area2'] > 0 else '', style=style_bold_gen)
-                    row.write(col_no(), data['area1'] if data['area1'] > 0 else '', style=style_bold_gen)
-                    row.write(col_no(), data['area0'], style=style_bold_gen)
+                    row.write(col_no(), data['area2'] if data['area2'] > 0 else '', style=style_bold_area)
+                    row.write(col_no(), data['area1'] if data['area1'] > 0 else '', style=style_bold_area)
+                    row.write(col_no(), data['area0'], style=style_bold_area)
                 else:
                     row.write(col_no(), tenure, style=style_normal )
                     row.write(col_no(), data['count2'] if data['count2'] > 0 else '', style=style_normal_int)
                     row.write(col_no(), data['count1'] if data['count1'] > 0 else '', style=style_normal_int)
                     row.write(col_no(), data['count0'], style=style_normal_int)
-                    row.write(col_no(), data['area2'] if data['area2'] > 0 else '', style=style_normal)
-                    row.write(col_no(), data['area1'] if data['area1'] > 0 else '', style=style_normal)
-                    row.write(col_no(), data['area0'], style=style_normal)
+                    row.write(col_no(), data['area2'] if data['area2'] > 0 else '', style=style_normal_area)
+                    row.write(col_no(), data['area1'] if data['area1'] > 0 else '', style=style_normal_area)
+                    row.write(col_no(), data['area0'], style=style_normal_area)
 
         # DISCLAIMER
         col_no = lambda c=count(): next(c)
@@ -1618,17 +1620,17 @@ class BushfireByCauseReport():
                     row.write(col_no(), data['count2'], style=style_bold_gen)
                     row.write(col_no(), data['count1'], style=style_bold_gen)
                     row.write(col_no(), data['count0'], style=style_bold_gen)
-                    row.write(col_no(), data['perc2'], style=style_bold_gen)
-                    row.write(col_no(), data['perc1'], style=style_bold_gen)
-                    row.write(col_no(), data['perc0'], style=style_bold_gen)
+                    row.write(col_no(), data['perc2'], style=style_bold_percentage)
+                    row.write(col_no(), data['perc1'], style=style_bold_percentage)
+                    row.write(col_no(), data['perc0'], style=style_bold_percentage)
                 else:
                     row.write(col_no(), tenure, style=style_bold_gen )
                     row.write(col_no(), data['count2'], style=style_normal)
                     row.write(col_no(), data['count1'], style=style_normal)
                     row.write(col_no(), data['count0'], style=style_normal)
-                    row.write(col_no(), data['perc2'], style=style_normal)
-                    row.write(col_no(), data['perc1'], style=style_normal)
-                    row.write(col_no(), data['perc0'], style=style_normal)
+                    row.write(col_no(), data['perc2'], style=style_normal_percentage)
+                    row.write(col_no(), data['perc1'], style=style_normal_percentage)
+                    row.write(col_no(), data['perc0'], style=style_normal_percentage)
 
         # DISCLAIMER
         col_no = lambda c=count(): next(c)
@@ -1821,7 +1823,7 @@ class RegionByTenureReport():
             row.write(col_no(), 'Area', style=style_bold_gen)
             tenure_id = 1
             for tenure in region: # loops through all tenures for given region
-                row.write(col_no(), tenure['area'], style=style_normal )
+                row.write(col_no(), tenure['area'], style=style_normal_area )
 
             
             # Right-most 'Total Column' - Area
@@ -1846,9 +1848,9 @@ class RegionByTenureReport():
         row.write(col_no(), 'Grand Total (All Regions)', style=style)
         row.write(col_no(), 'Area (ha)', style=style)
         for tenure_id in tenure_map:
-            row.write(col_no(), tenure_map[tenure_id]['area'], style=style_bold_gen)
+            row.write(col_no(), tenure_map[tenure_id]['area'], style=style_bold_area)
         # Bottom-Right Two Cells - Total for entire matrix - Area
-        row.write(col_no(), all_map.get('area'), style=style_bold_gen)
+        row.write(col_no(), all_map.get('area'), style=style_bold_area)
 
         # Last Two Rows - 'Grand Total' rows - Number
         col_no = lambda c=count(): next(c)
@@ -1906,7 +1908,8 @@ class Bushfire10YrAverageReport():
         # Group By Region
         year = current_finyear()
         #qs = Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED)
-        qs = Bushfire.objects.filter(authorised_by__isnull=False).exclude(report_status=Bushfire.STATUS_INVALIDATED)
+        #qs = Bushfire.objects.filter(authorised_by__isnull=False).exclude(report_status=Bushfire.STATUS_INVALIDATED)
+        qs = Bushfire.objects.filter(report_status__in=[Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED])
 
         qs0 = qs.filter(year=year).values('cause_id').annotate(count=Count('cause_id') )
         qs1 = qs.filter(year=year-1).values('cause_id').annotate(count=Count('cause_id') ) if year-1 >= 2017 else read_col(year-1, 'count')[0]
@@ -2140,16 +2143,16 @@ class Bushfire10YrAverageReport():
                     row.write(col_no(), data['count2'], style=style_bold_gen)
                     row.write(col_no(), data['count1'], style=style_bold_gen)
                     row.write(col_no(), data['count0'], style=style_bold_gen)
-                    row.write(col_no(), data['perc9'], style=style_bold_gen)
-                    row.write(col_no(), data['perc8'], style=style_bold_gen)
-                    row.write(col_no(), data['perc7'], style=style_bold_gen)
-                    row.write(col_no(), data['perc6'], style=style_bold_gen)
-                    row.write(col_no(), data['perc5'], style=style_bold_gen)
-                    row.write(col_no(), data['perc4'], style=style_bold_gen)
-                    row.write(col_no(), data['perc3'], style=style_bold_gen)
-                    row.write(col_no(), data['perc2'], style=style_bold_gen)
-                    row.write(col_no(), data['perc1'], style=style_bold_gen)
-                    row.write(col_no(), data['perc0'], style=style_bold_gen)
+                    row.write(col_no(), data['perc9'], style=style_bold_percentage)
+                    row.write(col_no(), data['perc8'], style=style_bold_percentage)
+                    row.write(col_no(), data['perc7'], style=style_bold_percentage)
+                    row.write(col_no(), data['perc6'], style=style_bold_percentage)
+                    row.write(col_no(), data['perc5'], style=style_bold_percentage)
+                    row.write(col_no(), data['perc4'], style=style_bold_percentage)
+                    row.write(col_no(), data['perc3'], style=style_bold_percentage)
+                    row.write(col_no(), data['perc2'], style=style_bold_percentage)
+                    row.write(col_no(), data['perc1'], style=style_bold_percentage)
+                    row.write(col_no(), data['perc0'], style=style_bold_percentage)
 
                 else:
                     row.write(col_no(), cause )
@@ -2163,16 +2166,16 @@ class Bushfire10YrAverageReport():
                     row.write(col_no(), data['count2'], style=style_normal)
                     row.write(col_no(), data['count1'], style=style_normal)
                     row.write(col_no(), data['count0'], style=style_normal)
-                    row.write(col_no(), data['perc9'], style=style_normal)
-                    row.write(col_no(), data['perc8'], style=style_normal)
-                    row.write(col_no(), data['perc7'], style=style_normal)
-                    row.write(col_no(), data['perc6'], style=style_normal)
-                    row.write(col_no(), data['perc5'], style=style_normal)
-                    row.write(col_no(), data['perc4'], style=style_normal)
-                    row.write(col_no(), data['perc3'], style=style_normal)
-                    row.write(col_no(), data['perc2'], style=style_normal)
-                    row.write(col_no(), data['perc1'], style=style_normal)
-                    row.write(col_no(), data['perc0'], style=style_normal)
+                    row.write(col_no(), data['perc9'], style=style_normal_percentage)
+                    row.write(col_no(), data['perc8'], style=style_normal_percentage)
+                    row.write(col_no(), data['perc7'], style=style_normal_percentage)
+                    row.write(col_no(), data['perc6'], style=style_normal_percentage)
+                    row.write(col_no(), data['perc5'], style=style_normal_percentage)
+                    row.write(col_no(), data['perc4'], style=style_normal_percentage)
+                    row.write(col_no(), data['perc3'], style=style_normal_percentage)
+                    row.write(col_no(), data['perc2'], style=style_normal_percentage)
+                    row.write(col_no(), data['perc1'], style=style_normal_percentage)
+                    row.write(col_no(), data['perc0'], style=style_normal_percentage)
 
         if MISSING_MAP:
             col_no = lambda c=count(): next(c)
@@ -2207,11 +2210,11 @@ class Bushfire10YrAverageReport():
                     #row = sheet1.row(row_no())
                     row.write(col_no(), cause, style=style_bold_gen)
                     row.write(col_no(), data['count_avg'], style=style_bold_gen)
-                    row.write(col_no(), data['perc_avg'], style=style_bold_gen)
+                    row.write(col_no(), data['perc_avg'], style=style_bold_percentage)
                 else:
                     row.write(col_no(), cause, style=style_normal)
                     row.write(col_no(), data['count_avg'], style=style_normal)
-                    row.write(col_no(), data['perc_avg'], style=style_normal)
+                    row.write(col_no(), data['perc_avg'], style=style_normal_percentage)
 
         # DISCLAIMER
         col_no = lambda c=count(): next(c)
@@ -2264,7 +2267,8 @@ class BushfireIndicator():
         # Group By Region
         year = current_finyear()
         #qs = Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, year=current_finyear(), region__in=Region.objects.filter(forest_region=False), initial_control__name='DBCA P&W')
-        qs = Bushfire.objects.filter(authorised_by__isnull=False, year=current_finyear(), region__in=Region.objects.filter(forest_region=False), initial_control__name='DBCA P&W').exclude(report_status=Bushfire.STATUS_INVALIDATED)
+        #qs = Bushfire.objects.filter(authorised_by__isnull=False, year=current_finyear(), region__in=Region.objects.filter(forest_region=False), initial_control__name='DBCA P&W').exclude(report_status=Bushfire.STATUS_INVALIDATED)
+        qs = Bushfire.objects.filter(report_status__in=[Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED], year=current_finyear(), region__in=Region.objects.filter(forest_region=True), initial_control=Agency.DBCA)
         qs1 = qs.aggregate(count=Count('id'), area=Sum('area') ) 
         qs2 = qs.filter(area__lte=2.0).aggregate(count=Count('id'), area=Sum('area') ) 
         count1 = qs1.get('count') if qs1.get('count') else 0
@@ -2327,18 +2331,22 @@ class BushfireIndicator():
         for row in self.rpt_map:
             for key, data in row.iteritems():
 
-                row = sheet1.row(row_no())
+                sheet_row = sheet1.row(row_no())
                 col_no = lambda c=count(): next(c)
                 if key == '':
-                    #row = sheet1.row(row_no())
+                    #sheet_row = sheet1.row(row_no())
                     continue
-                elif 'total' in key.lower() or 'percentage' in key.lower():
-                    #row = sheet1.row(row_no())
-                    row.write(col_no(), key, style=style_bold_gen)
-                    row.write(col_no(), data['count'], style=style_bold_gen)
+                elif 'total' in key.lower():
+                    #sheet_row = sheet1.row(row_no())
+                    sheet_row.write(col_no(), key, style=style_bold_gen)
+                    sheet_row.write(col_no(), data['count'], style=style_bold_gen)
+                elif 'percentage' in key.lower():
+                    #sheet_row = sheet1.row(row_no())
+                    sheet_row.write(col_no(), key, style=style_bold_gen)
+                    sheet_row.write(col_no(), data['count'], style=style_bold_percentage)
                 else:
-                    row.write(col_no(), key, style=style_normal)
-                    row.write(col_no(), data['count'], style=style_normal)
+                    sheet_row.write(col_no(), key, style=style_normal)
+                    sheet_row.write(col_no(), data['count'], style=style_normal)
 
         # DISCLAIMER
         col_no = lambda c=count(): next(c)

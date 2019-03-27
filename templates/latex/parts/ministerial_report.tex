@@ -30,9 +30,9 @@
 \subsection{MINISTER FOR ENVIRONMENT}
 \subsubsection{% templatetag openbrace %}{{form.title}} }
 
-Records at {{report_date}} show Department of Biodiversity, Conservation and Attractions (DBCA) staff have attended {{ item_map.forest_total_all_tenure|floatformat:0|intcomma }} bushfires covering an area of {{ item_map.forest_total_area|floatformat:0|intcomma }} hectares in its three south-west forest regions for the period since 1 July {{ current_finyear }}. Of these, {{ item_map.forest_pw_tenure|floatformat:0|intcomma }} fires covering {{ item_map.forest_area_pw_tenure|floatformat:0|intcomma }} hectares occurred on lands where DBCA has a management interest.
+Records at {{report_date}} show Department of Biodiversity, Conservation and Attractions (DBCA) staff have attended {{ item_map.forest_total_all_tenure|floatformat:0|intcomma }} bushfires covering an area of {{ item_map.forest_total_area|floatformat:2|intcomma }} hectares in its three south-west forest regions for the period since 1 July {{ current_finyear }}. Of these, {{ item_map.forest_pw_tenure|floatformat:0|intcomma }} fires covering {{ item_map.forest_area_pw_tenure|floatformat:2|intcomma }} hectares occurred on lands where DBCA has a management interest.
 \\~\\
-Outside the south-west forest regions, records show {{ item_map.nonforest_total_all_tenure|floatformat:0|intcomma }} bushfires attended by DBCA staff have burnt through an area of {{ item_map.nonforest_total_area|floatformat:0|intcomma }} hectares.
+Outside the south-west forest regions, records show {{ item_map.nonforest_total_all_tenure|floatformat:0|intcomma }} bushfires attended by DBCA staff have burnt through an area of {{ item_map.nonforest_total_area|floatformat:2|intcomma }} hectares.
 \\~\\
 A breakdown of the records to date by DBCA regions for bushfires since 1 July {{ current_finyear}} is shown below.
 
@@ -54,9 +54,9 @@ A breakdown of the records to date by DBCA regions for bushfires since 1 July {{
 {% for row in rpt_map %}
   {% for region, data in row.iteritems %}
     {% if 'Total' in region or 'TOTAL' in region %}
-      \textbf{ {{ region }} } & \textbf{ {{ data.pw_tenure|floatformat:0|intcomma }} } & \textbf{ {{ data.area_pw_tenure|floatformat:0|intcomma }} } & \textbf{ {{ data.total_all_tenure|floatformat:0|intcomma }} } & \textbf{ {{ data.total_area|floatformat:0|intcomma }} } \\
+      \textbf{ {{ region }} } & \textbf{ {{ data.pw_tenure|floatformat:0|intcomma }} } & \textbf{ {{ data.area_pw_tenure|floatformat:2|intcomma }} } & \textbf{ {{ data.total_all_tenure|floatformat:0|intcomma }} } & \textbf{ {{ data.total_area|floatformat:2|intcomma }} } \\
     {% else %}
-      {{ region }} & {{ data.pw_tenure|floatformat:0|intcomma }} & {{ data.area_pw_tenure|floatformat:0|intcomma }} & {{ data.total_all_tenure|floatformat:0|intcomma }} & {{ data.total_area|floatformat:0|intcomma }} \\
+      {{ region }} & {{ data.pw_tenure|floatformat:0|intcomma }} & {{ data.area_pw_tenure|floatformat:2|intcomma }} & {{ data.total_all_tenure|floatformat:0|intcomma }} & {{ data.total_area|floatformat:2|intcomma }} \\
     {% endif %}
     \hline
   {% empty %}
