@@ -247,7 +247,7 @@ def get_tenure(category,createIfMissing=True):
             return tenure
         except ObjectDoesNotExist as ex1:
             if not createIfMissing:
-                raise
+                raise ObjectDoesNotExist("Tenure({}) Not Found".format(category))
             #can't find tenure through mapping and default mapping. create it as new tenure
             tenure = Tenure(name=category)
             tenure.save()
