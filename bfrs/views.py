@@ -28,6 +28,7 @@ from bfrs.models import (Profile, Bushfire, BushfireSnapshot,BushfireProperty,
         Region, District,
         Tenure, AreaBurnt,
         SNAPSHOT_INITIAL, SNAPSHOT_FINAL,
+        current_finyear
     )
 from bfrs.forms import (ProfileForm, BushfireFilterForm,MergedBushfireForm,SubmittedBushfireForm,InitialBushfireForm,BushfireSnapshotViewForm,BushfireCreateForm,
         BushfireViewForm,InitialBushfireFSSGForm,AuthorisedBushfireFSSGForm,ReviewedBushfireFSSGForm,SubmittedBushfireFSSGForm,
@@ -285,7 +286,12 @@ class BushfireView(ExceptionMixin,MainUrlMixin,LoginRequiredMixin, filter_views.
             return export_outstanding_fires(self.request, self.get_filterset(self.filterset_class).data['region'], qs)
         elif action == 'export_excel_ministerial_report':
             #return MinisterialReport().export()
-            return BushfireReport().export()
+            try:
+                reporting_year = int(self.request.GET.get('reporting_year')) if self.request.GET.has_key('reporting_year') else None
+            except:
+                reporting_year = None
+
+            return BushfireReport(reporting_year).export()
         elif action == 'snapshot_history':
             bushfire = Bushfire.objects.get(id=self.request.GET.get('bushfire_id'))
             context = {
@@ -426,6 +432,8 @@ class BushfireView(ExceptionMixin,MainUrlMixin,LoginRequiredMixin, filter_views.
         context['can_maintain_data'] = can_maintain_data(self.request.user)
         context['is_external_user'] = is_external_user(self.request.user)
         context['selected_ids'] = self.selected_ids if hasattr(self,"selected_ids") else None
+        finyear = current_finyear()
+        context['bushfire_reports'] = [(y,"{}/{}".format(y,y+1)) for y in range(finyear,finyear - 2,-1) if y >= 2017]
         context['actions'] = self.actions
         if hasattr(self,"action"):
             context['action'] = self.action

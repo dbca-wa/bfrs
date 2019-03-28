@@ -128,16 +128,17 @@ def read_col(fin_year, col_type):
 
 
 class BushfireReport():
-    def __init__(self):
-        self.ministerial_auth = MinisterialReportAuth()
-        self.ministerial_268 = MinisterialReport268()
-        self.ministerial = MinisterialReport(self.ministerial_auth, self.ministerial_268)
-        self.quarterly = QuarterlyReport()
-        self.by_tenure = BushfireByTenureReport()
-        self.by_cause = BushfireByCauseReport()
-        self.region_by_tenure = RegionByTenureReport()
-        self.indicator = BushfireIndicator()
-        self.by_cause_10YrAverage = Bushfire10YrAverageReport()
+    def __init__(self,reporting_year=None):
+        self.reporting_year = current_finyear() if (reporting_year is None or reporting_year >= current_finyear()) else reporting_year
+        self.ministerial_auth = MinisterialReportAuth(self.reporting_year)
+        self.ministerial_268 = MinisterialReport268(self.reporting_year)
+        self.ministerial = MinisterialReport(self.ministerial_auth, self.ministerial_268,self.reporting_year)
+        self.quarterly = QuarterlyReport(self.reporting_year)
+        self.by_tenure = BushfireByTenureReport(self.reporting_year)
+        self.by_cause = BushfireByCauseReport(self.reporting_year)
+        self.region_by_tenure = RegionByTenureReport(self.reporting_year)
+        self.indicator = BushfireIndicator(self.reporting_year)
+        self.by_cause_10YrAverage = Bushfire10YrAverageReport(self.reporting_year)
 
     def write_excel(self):
         rpt_date = datetime.now()
@@ -183,9 +184,10 @@ class MinisterialReport():
     """
     Report for Combined (Authorised and active 268b) fires. This is the sum of MinisterialAuth and Ministerial268b.
     """
-    def __init__(self, ministerial_auth=None, ministerial_268=None):
-        self.ministerial_auth = ministerial_auth if ministerial_auth else MinisterialReportAuth()
-        self.ministerial_268 = ministerial_268 if ministerial_268 else MinisterialReport268()
+    def __init__(self, ministerial_auth=None, ministerial_268=None,reporting_year=None):
+        self.reporting_year = current_finyear() if (reporting_year is None or reporting_year >= current_finyear()) else reporting_year
+        self.ministerial_auth = ministerial_auth if ministerial_auth else MinisterialReportAuth(self.reporting_year)
+        self.ministerial_268 = ministerial_268 if ministerial_268 else MinisterialReport268(self.reporting_year)
         self.rpt_map, self.item_map = self.create()
 
     def create(self):
@@ -311,11 +313,11 @@ class MinisterialReport():
 
         hdr = sheet1.row(row_no())
         hdr.write(0, 'Fin Year', style=style_bold_gen)
-        hdr.write(1, current_finyear())
+        hdr.write(1, self.reporting_year)
 
         hdr = sheet1.row(row_no())
         hdr.write(0, 'Missing Final', style=style_bold_gen)
-        hdr.write(1, Bushfire.objects.filter(report_status=Bushfire.STATUS_INITIAL_AUTHORISED, year=current_finyear()).count() )
+        hdr.write(1, Bushfire.objects.filter(report_status=Bushfire.STATUS_INITIAL_AUTHORISED, reporting_year=self.reporting_year).count() )
 
         hdr = sheet1.row(row_no())
         hdr = sheet1.row(row_no())
@@ -420,7 +422,7 @@ class MinisterialReport():
             'user': request.user.get_full_name(),
             'report_date': report_date.strftime('%e %B %Y').strip(),
             'time': report_date.strftime('%H:%M'),
-            'current_finyear': current_finyear(),
+            'current_finyear': self.reporting_year,
             'rpt_map': self.rpt_map,
             'item_map': self.item_map,
             'form': form_data,
@@ -483,7 +485,8 @@ class MinisterialReport268():
     """
     Report for active 268b bushfires only
     """
-    def __init__(self):
+    def __init__(self,reporting_year=None):
+        self.reporting_year = current_finyear() if (reporting_year is None or reporting_year >= current_finyear()) else reporting_year
         self.rpt_map, self.item_map = self.create()
 
     def get_268_data(self, dbca_initial_control=None):
@@ -492,11 +495,11 @@ class MinisterialReport268():
 
         if dbca_initial_control:
             # get the fires managed by DBCA
-            outstanding_fires = list(Bushfire.objects.filter(report_status__in=[Bushfire.STATUS_INITIAL_AUTHORISED], initial_control=Agency.DBCA).values_list('fire_number', flat=True))
+            outstanding_fires = list(Bushfire.objects.filter(report_status__in=[Bushfire.STATUS_INITIAL_AUTHORISED], initial_control=Agency.DBCA,reporting_year__lte=self.reporting_year).values_list('fire_number', flat=True))
         else:
-            outstanding_fires = list(Bushfire.objects.filter(report_status__in=[Bushfire.STATUS_INITIAL_AUTHORISED]).values_list('fire_number', flat=True))
+            outstanding_fires = list(Bushfire.objects.filter(report_status__in=[Bushfire.STATUS_INITIAL_AUTHORISED],reporting_year__lte=self.reporting_year).values_list('fire_number', flat=True))
 
-        pbs_fires_dict = get_pbs_bushfires(outstanding_fires)
+        pbs_fires_dict = get_pbs_bushfires(outstanding_fires) or []
 
         if not dbca_initial_control:
             self.pbs_fires_dict = pbs_fires_dict
@@ -641,11 +644,11 @@ class MinisterialReport268():
 
         hdr = sheet1.row(row_no())
         hdr.write(0, 'Fin Year', style=style_bold_gen)
-        hdr.write(1, current_finyear())
+        hdr.write(1, self.reporting_year)
 
         hdr = sheet1.row(row_no())
         hdr.write(0, 'Missing Final', style=style_bold_gen)
-        hdr.write(1, Bushfire.objects.filter(report_status=Bushfire.STATUS_INITIAL_AUTHORISED, year=current_finyear()).count() )
+        hdr.write(1, Bushfire.objects.filter(report_status=Bushfire.STATUS_INITIAL_AUTHORISED, reporting_year=self.reporting_year).count() )
 
         hdr = sheet1.row(row_no())
         hdr = sheet1.row(row_no())
@@ -735,14 +738,15 @@ class MinisterialReportAuth():
     """
     Report for Authorised fires Only
     """
-    def __init__(self):
+    def __init__(self,reporting_year=None):
+        self.reporting_year = current_finyear() if (reporting_year is None or reporting_year >= current_finyear()) else reporting_year
         self.rpt_map, self.item_map = self.create()
 
     def create(self):
         # Group By Region
-        #qs=Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, year=current_finyear()).values('region_id')
-        #qs=Bushfire.objects.filter(authorised_by__isnull=False, year=current_finyear()).exclude(report_status=Bushfire.STATUS_INVALIDATED).values('region_id')
-        qs=Bushfire.objects.filter(report_status__in=[Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED], year=current_finyear()).values('region_id')
+        #qs=Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, reporting_year=self.reporting_year).values('region_id')
+        #qs=Bushfire.objects.filter(authorised_by__isnull=False, reporting_year=self.reporting_year).exclude(report_status=Bushfire.STATUS_INVALIDATED).values('region_id')
+        qs=Bushfire.objects.filter(report_status__in=[Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED], reporting_year=self.reporting_year).values('region_id')
         qs1=qs.filter(initial_control=Agency.DBCA).annotate(dbca_count=Count('region_id'), dbca_sum=Sum('area') )
         qs2=qs.exclude(initial_control__isnull=True).annotate(total_count=Count('region_id'), total_sum=Sum('area') )
 
@@ -867,11 +871,11 @@ class MinisterialReportAuth():
 
         hdr = sheet1.row(row_no())
         hdr.write(0, 'Fin Year', style=style_bold_gen)
-        hdr.write(1, current_finyear())
+        hdr.write(1, self.reporting_year)
 
         hdr = sheet1.row(row_no())
         hdr.write(0, 'Missing Final', style=style_bold_gen)
-        hdr.write(1, Bushfire.objects.filter(report_status=Bushfire.STATUS_INITIAL_AUTHORISED, year=current_finyear()).count() )
+        hdr.write(1, Bushfire.objects.filter(report_status=Bushfire.STATUS_INITIAL_AUTHORISED, reporting_year=self.reporting_year).count() )
 
         hdr = sheet1.row(row_no())
         hdr = sheet1.row(row_no())
@@ -976,7 +980,7 @@ class MinisterialReportAuth():
             'user': request.user.get_full_name(),
             'report_date': report_date.strftime('%e %B %Y').strip(),
             'time': report_date.strftime('%H:%M'),
-            'current_finyear': current_finyear(),
+            'current_finyear': self.reporting_year,
             'rpt_map': self.rpt_map,
             'item_map': self.item_map,
             'form': form_data,
@@ -1079,7 +1083,8 @@ def _ministerial_report():
 #    return result_list
 
 class QuarterlyReport():
-    def __init__(self):
+    def __init__(self,reporting_year=None):
+        self.reporting_year = current_finyear() if (reporting_year is None or reporting_year >= current_finyear()) else reporting_year
         self.rpt_map, self.item_map = self.create()
 
     def create(self):
@@ -1091,9 +1096,9 @@ class QuarterlyReport():
         """
         rpt_map = []
         item_map = {}
-        #qs=Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, year=current_finyear()).values('region_id')
-        #qs=Bushfire.objects.filter(authorised_by__isnull=False, year=current_finyear()).exclude(report_status=Bushfire.STATUS_INVALIDATED).values('region_id')
-        qs=Bushfire.objects.filter(report_status__in=[Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED], year=current_finyear()).values('region_id')
+        #qs=Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, reporting_year=self.reporting_year).values('region_id')
+        #qs=Bushfire.objects.filter(authorised_by__isnull=False, reporting_year=self.reporting_year).exclude(report_status=Bushfire.STATUS_INVALIDATED).values('region_id')
+        qs=Bushfire.objects.filter(report_status__in=[Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED], reporting_year=self.reporting_year).values('region_id')
 
 
         qs_forest_pw = qs.filter(region__in=Region.objects.filter(forest_region=True)).filter(initial_control=Agency.DBCA).aggregate(count=Count('region_id'), area=Sum('area') )
@@ -1139,9 +1144,9 @@ class QuarterlyReport():
         return rpt_map, item_map
 
     def escape_burns(self):
-        #return Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, year=current_finyear(), cause__name__icontains='escape')
-        #return Bushfire.objects.filter(authorised_by__isnull=False, year=current_finyear(), cause__name__icontains='escape').exclude(report_status=Bushfire.STATUS_INVALIDATED)
-        return Bushfire.objects.filter(report_status__in=[Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED], year=current_finyear(), cause__name__icontains='escape')
+        #return Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, reporting_year=self.reporting_year, cause__name__icontains='escape')
+        #return Bushfire.objects.filter(authorised_by__isnull=False, reporting_year=self.reporting_year, cause__name__icontains='escape').exclude(report_status=Bushfire.STATUS_INVALIDATED)
+        return Bushfire.objects.filter(report_status__in=[Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED], reporting_year=self.reporting_year, cause__name__icontains='escape')
 
     def get_excel_sheet(self, rpt_date, book=Workbook()):
 
@@ -1162,11 +1167,11 @@ class QuarterlyReport():
 
         hdr = sheet1.row(row_no())
         hdr.write(0, 'Fin Year', style=style_bold_gen)
-        hdr.write(1, current_finyear())
+        hdr.write(1, self.reporting_year)
 
         hdr = sheet1.row(row_no())
         hdr.write(0, 'Missing Final', style=style_bold_gen)
-        hdr.write(1, Bushfire.objects.filter(report_status=Bushfire.STATUS_INITIAL_AUTHORISED, year=current_finyear()).count() )
+        hdr.write(1, Bushfire.objects.filter(report_status=Bushfire.STATUS_INITIAL_AUTHORISED, reporting_year=self.reporting_year).count() )
 
         hdr = sheet1.row(row_no())
         hdr = sheet1.row(row_no())
@@ -1263,12 +1268,12 @@ class QuarterlyReport():
                     print
 
 class BushfireByTenureReport():
-    def __init__(self):
+    def __init__(self,reporting_year=None):
+        self.reporting_year = current_finyear() if (reporting_year is None or reporting_year >= current_finyear()) else reporting_year
         self.rpt_map, self.item_map = self.create()
 
     def create(self):
         # Group By Region
-        year = current_finyear()
         #qs = Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED)
         count_sql = """
         SELECT a.tenure_id,count(*) 
@@ -1277,14 +1282,14 @@ class BushfireByTenureReport():
                 tenure_id,
                 fire_number
             FROM bfrs_bushfire
-            WHERE report_status in {report_status} AND year={year} 
+            WHERE report_status in {report_status} AND reporting_year={year} 
             ) a
         GROUP BY a.tenure_id
 """
         area_sql = """
         SELECT a.tenure_id, sum(a.area) AS area 
         FROM bfrs_areaburnt a JOIN bfrs_bushfire b ON a.bushfire_id = b.id 
-        WHERE b.report_status in {report_status} AND b.year={year} 
+        WHERE b.report_status in {report_status} AND b.reporting_year={year} 
         GROUP BY a.tenure_id 
 """
 
@@ -1293,7 +1298,7 @@ class BushfireByTenureReport():
         counts = []
         areas = []
         with connection.cursor() as cursor:
-            for y in (year - 2,year - 1,year):
+            for y in (self.reporting_year - 2,self.reporting_year - 1,self.reporting_year):
                 year_counts = {"total":0}
                 counts.append(year_counts)
                 cursor.execute(count_sql.format(report_status="(3,4)",year=y))
@@ -1339,10 +1344,9 @@ class BushfireByTenureReport():
 
     def get_excel_sheet(self, rpt_date, book=Workbook()):
 
-        year = current_finyear()
-        year0 = str(year) + '/' + str(year+1)
-        year1 = str(year-1) + '/' + str(year)
-        year2 = str(year-2) + '/' + str(year-1)
+        year0 = str(self.reporting_year) + '/' + str(self.reporting_year+1)
+        year1 = str(self.reporting_year-1) + '/' + str(self.reporting_year)
+        year2 = str(self.reporting_year-2) + '/' + str(self.reporting_year-1)
         # book = Workbook()
         sheet1 = book.add_sheet('Bushfire By Tenure Report')
         sheet1 = book.get_sheet('Bushfire By Tenure Report')
@@ -1374,11 +1378,11 @@ class BushfireByTenureReport():
 
         hdr = sheet1.row(row_no())
         hdr.write(0, 'Fin Year', style=style_bold_gen)
-        hdr.write(1, year)
+        hdr.write(1, self.reporting_year)
 
         hdr = sheet1.row(row_no())
         hdr.write(0, 'Missing Final', style=style_bold_gen)
-        hdr.write(1, Bushfire.objects.filter(report_status=Bushfire.STATUS_INITIAL_AUTHORISED, year=current_finyear()).count() )
+        hdr.write(1, Bushfire.objects.filter(report_status=Bushfire.STATUS_INITIAL_AUTHORISED, reporting_year=self.reporting_year).count() )
 
         hdr = sheet1.row(row_no())
         hdr = sheet1.row(row_no())
@@ -1451,10 +1455,9 @@ class BushfireByTenureReport():
         return response
 
     def display(self):
-        year = current_finyear()
-        year0 = str(year-1) + '/' + str(year)
-        year1 = str(year-2) + '/' + str(year-1)
-        year2 = str(year-3) + '/' + str(year-2)
+        year0 = str(self.reporting_year-1) + '/' + str(self.reporting_year)
+        year1 = str(self.reporting_year-2) + '/' + str(self.reporting_year-1)
+        year2 = str(self.reporting_year-3) + '/' + str(self.reporting_year-2)
         print '{}\t{}\t{}\t{}\t{}\t{}\t{}'.format('Tenure', year2, year1, year0,  year2, year1, year0).expandtabs(20)
         for row in self.rpt_map:
             for tenure, data in row.iteritems():
@@ -1464,21 +1467,21 @@ class BushfireByTenureReport():
                     print
 
 class BushfireByCauseReport():
-    def __init__(self):
+    def __init__(self,reporting_year=None):
+        self.reporting_year = current_finyear() if (reporting_year is None or reporting_year >= current_finyear()) else reporting_year
         self.rpt_map, self.item_map = self.create()
 
     def create(self):
         # Group By Region
-        year = current_finyear()
         #qs = Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED)
         qs = Bushfire.objects.filter(authorised_by__isnull=False).exclude(report_status=Bushfire.STATUS_INVALIDATED)
-        qs0 = qs.filter(year=year).values('cause_id').annotate(count=Count('cause_id'), area=Sum('area') ) # NOTE area not actually used anywhere in this report - can discard if we want!
-        qs1 = qs.filter(year=year-1).values('cause_id').annotate(count=Count('cause_id'), area=Sum('area') ) if year-1 >= 2017 else read_col(year-1, 'count')[0]
-        qs2 = qs.filter(year=year-2).values('cause_id').annotate(count=Count('cause_id'), area=Sum('area') ) if year-2 >= 2017 else read_col(year-2, 'count')[0]
+        qs0 = qs.filter(reporting_year=self.reporting_year).values('cause_id').annotate(count=Count('cause_id'), area=Sum('area') ) # NOTE area not actually used anywhere in this report - can discard if we want!
+        qs1 = qs.filter(reporting_year=self.reporting_year-1).values('cause_id').annotate(count=Count('cause_id'), area=Sum('area') ) if self.reporting_year-1 >= 2017 else read_col(self.reporting_year-1, 'count')[0]
+        qs2 = qs.filter(reporting_year=self.reporting_year-2).values('cause_id').annotate(count=Count('cause_id'), area=Sum('area') ) if self.reporting_year-2 >= 2017 else read_col(self.reporting_year-2, 'count')[0]
 
-        qs0_total = qs.filter(year=year).aggregate(count_total=Count('cause_id'), area_total=Sum('area') )
-        qs1_total = qs.filter(year=year-1).aggregate(count_total=Count('cause_id'), area_total=Sum('area') ) if year-1 >= 2017 else read_col(year-1, 'total_count')[0]
-        qs2_total = qs.filter(year=year-2).aggregate(count_total=Count('cause_id'), area_total=Sum('area') ) if year-2 >= 2017 else read_col(year-2, 'total_count')[0]
+        qs0_total = qs.filter(reporting_year=self.reporting_year).aggregate(count_total=Count('cause_id'), area_total=Sum('area') )
+        qs1_total = qs.filter(reporting_year=self.reporting_year-1).aggregate(count_total=Count('cause_id'), area_total=Sum('area') ) if self.reporting_year-1 >= 2017 else read_col(self.reporting_year-1, 'total_count')[0]
+        qs2_total = qs.filter(reporting_year=self.reporting_year-2).aggregate(count_total=Count('cause_id'), area_total=Sum('area') ) if self.reporting_year-2 >= 2017 else read_col(self.reporting_year-2, 'total_count')[0]
 
         count_total0 = qs0_total.get('count_total') if qs0_total.get('count_total') else 0
         count_total1 = qs1_total.get('count_total') if qs1_total.get('count_total') else 0
@@ -1550,10 +1553,9 @@ class BushfireByCauseReport():
 
     def get_excel_sheet(self, rpt_date, book=Workbook()):
 
-        year = current_finyear()
-        year0 = str(year) + '/' + str(year+1)
-        year1 = str(year-1) + '/' + str(year)
-        year2 = str(year-2) + '/' + str(year-1)
+        year0 = str(self.reporting_year) + '/' + str(self.reporting_year+1)
+        year1 = str(self.reporting_year-1) + '/' + str(self.reporting_year)
+        year2 = str(self.reporting_year-2) + '/' + str(self.reporting_year-1)
         # book = Workbook()
         sheet1 = book.add_sheet('Bushfire By Cause Report')
         sheet1 = book.get_sheet('Bushfire By Cause Report')
@@ -1585,11 +1587,11 @@ class BushfireByCauseReport():
 
         hdr = sheet1.row(row_no())
         hdr.write(0, 'Fin Year', style=style)
-        hdr.write(1, year)
+        hdr.write(1, self.reporting_year)
 
         hdr = sheet1.row(row_no())
         hdr.write(0, 'Missing Final', style=style)
-        hdr.write(1, Bushfire.objects.filter(report_status=Bushfire.STATUS_INITIAL_AUTHORISED, year=current_finyear()).count() )
+        hdr.write(1, Bushfire.objects.filter(report_status=Bushfire.STATUS_INITIAL_AUTHORISED, reporting_year=self.reporting_year).count() )
 
         hdr = sheet1.row(row_no())
         hdr = sheet1.row(row_no())
@@ -1673,10 +1675,9 @@ class BushfireByCauseReport():
         return response
 
     def display(self):
-        year = current_finyear()
-        year0 = str(year-1) + '/' + str(year)
-        year1 = str(year-2) + '/' + str(year-1)
-        year2 = str(year-3) + '/' + str(year-2)
+        year0 = str(self.reporting_year-1) + '/' + str(self.reporting_year)
+        year1 = str(self.reporting_year-2) + '/' + str(self.reporting_year-1)
+        year2 = str(self.reporting_year-3) + '/' + str(self.reporting_year-2)
         print '{}\t{}\t{}\t{}\t{}\t{}\t{}'.format('Cause', year2, year1, year0,  year2, year1, year0).expandtabs(20)
         for row in self.rpt_map:
             for cause, data in row.iteritems():
@@ -1686,13 +1687,14 @@ class BushfireByCauseReport():
                     print
 
 class RegionByTenureReport():
-    def __init__(self):
+    def __init__(self,reporting_year=None):
+        self.reporting_year = current_finyear() if (reporting_year is None or reporting_year >= current_finyear()) else reporting_year
         self.rpt_map, self.item_map = self.create()
 
     def create(self):
 
-        #qs = Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, year=current_finyear())
-        qs = Bushfire.objects.filter(authorised_by__isnull=False, year=current_finyear()).exclude(report_status=Bushfire.STATUS_INVALIDATED)
+        #qs = Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, reporting_year=self.reporting_year)
+        qs = Bushfire.objects.filter(authorised_by__isnull=False, reporting_year=self.reporting_year).exclude(report_status=Bushfire.STATUS_INVALIDATED)
         qs = qs.values('region_id','tenure_id').order_by('region_id','tenure_id').annotate(count=Count('tenure_id'), area=Sum('area') )
 
         rpt_map = []
@@ -1712,8 +1714,8 @@ class RegionByTenureReport():
 
     @property
     def all_map(self):
-        #return Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, year=current_finyear()).aggregate(count=Count('id'), area=Sum('area') )
-        return Bushfire.objects.filter(authorised_by__isnull=False, year=current_finyear()).exclude(report_status=Bushfire.STATUS_INVALIDATED).aggregate(count=Count('id'), area=Sum('area') )
+        #return Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, reporting_year=self.reporting_year).aggregate(count=Count('id'), area=Sum('area') )
+        return Bushfire.objects.filter(authorised_by__isnull=False, reporting_year=self.reporting_year).exclude(report_status=Bushfire.STATUS_INVALIDATED).aggregate(count=Count('id'), area=Sum('area') )
 
     @property
     def region_map(self):
@@ -1723,8 +1725,8 @@ class RegionByTenureReport():
             id_dict = [i for i in qs if i.get('region_id')==id]
             return id_dict[0] if id_dict else False
 
-        #qs = Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, year=current_finyear()).values('region_id').annotate(count=Count('region_id'), area=Sum('area') )
-        qs = Bushfire.objects.filter(authorised_by__isnull=False, year=current_finyear()).exclude(report_status=Bushfire.STATUS_INVALIDATED).values('region_id').annotate(count=Count('region_id'), area=Sum('area') )
+        #qs = Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, reporting_year=self.reporting_year).values('region_id').annotate(count=Count('region_id'), area=Sum('area') )
+        qs = Bushfire.objects.filter(authorised_by__isnull=False, reporting_year=self.reporting_year).exclude(report_status=Bushfire.STATUS_INVALIDATED).values('region_id').annotate(count=Count('region_id'), area=Sum('area') )
         regions = {}
         for region in Region.objects.all().order_by('id'):
 
@@ -1744,7 +1746,7 @@ class RegionByTenureReport():
             id_dict = [i for i in qs if i.get('tenure_id')==id]
             return id_dict[0] if id_dict else False
 
-        qs = Bushfire.objects.filter(authorised_by__isnull=False, year=current_finyear()).exclude(report_status=Bushfire.STATUS_INVALIDATED).values('tenure_id').annotate(count=Count('tenure_id'), area=Sum('area') )
+        qs = Bushfire.objects.filter(authorised_by__isnull=False, reporting_year=self.reporting_year).exclude(report_status=Bushfire.STATUS_INVALIDATED).values('tenure_id').annotate(count=Count('tenure_id'), area=Sum('area') )
         tenures = {}
         for tenure in Tenure.objects.all().order_by('id'):
             id_dict = contains_id(tenure.id)
@@ -1757,7 +1759,6 @@ class RegionByTenureReport():
 
     def get_excel_sheet(self, rpt_date, book=Workbook()):
 
-        year = current_finyear()
         # book = Workbook()
         sheet1 = book.add_sheet('Bushfire Region By Tenure')
         sheet1 = book.get_sheet('Bushfire Region By Tenure')
@@ -1789,11 +1790,11 @@ class RegionByTenureReport():
 
         hdr = sheet1.row(row_no())
         hdr.write(0, 'Fin Year', style=style)
-        hdr.write(1, year)
+        hdr.write(1, self.reporting_year)
 
         hdr = sheet1.row(row_no())
         hdr.write(0, 'Missing Final', style=style)
-        hdr.write(1, Bushfire.objects.filter(report_status=Bushfire.STATUS_INITIAL_AUTHORISED, year=current_finyear()).count() )
+        hdr.write(1, Bushfire.objects.filter(report_status=Bushfire.STATUS_INITIAL_AUTHORISED, reporting_year=self.reporting_year).count() )
 
         hdr = sheet1.row(row_no())
         hdr = sheet1.row(row_no())
@@ -1901,37 +1902,37 @@ class RegionByTenureReport():
 
 class Bushfire10YrAverageReport():
 
-    def __init__(self):
+    def __init__(self,reporting_year=None):
+        self.reporting_year = current_finyear() if (reporting_year is None or reporting_year >= current_finyear()) else reporting_year
         self.rpt_map, self.item_map = self.create()
 
     def create(self):
         # Group By Region
-        year = current_finyear()
         #qs = Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED)
         #qs = Bushfire.objects.filter(authorised_by__isnull=False).exclude(report_status=Bushfire.STATUS_INVALIDATED)
         qs = Bushfire.objects.filter(report_status__in=[Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED])
 
-        qs0 = qs.filter(year=year).values('cause_id').annotate(count=Count('cause_id') )
-        qs1 = qs.filter(year=year-1).values('cause_id').annotate(count=Count('cause_id') ) if year-1 >= 2017 else read_col(year-1, 'count')[0]
-        qs2 = qs.filter(year=year-2).values('cause_id').annotate(count=Count('cause_id') ) if year-2 >= 2017 else read_col(year-2, 'count')[0]
-        qs3 = qs.filter(year=year-3).values('cause_id').annotate(count=Count('cause_id') ) if year-3 >= 2017 else read_col(year-3, 'count')[0]
-        qs4 = qs.filter(year=year-4).values('cause_id').annotate(count=Count('cause_id') ) if year-4 >= 2017 else read_col(year-4, 'count')[0]
-        qs5 = qs.filter(year=year-5).values('cause_id').annotate(count=Count('cause_id') ) if year-5 >= 2017 else read_col(year-5, 'count')[0]
-        qs6 = qs.filter(year=year-6).values('cause_id').annotate(count=Count('cause_id') ) if year-6 >= 2017 else read_col(year-6, 'count')[0]
-        qs7 = qs.filter(year=year-7).values('cause_id').annotate(count=Count('cause_id') ) if year-7 >= 2017 else read_col(year-7, 'count')[0]
-        qs8 = qs.filter(year=year-8).values('cause_id').annotate(count=Count('cause_id') ) if year-8 >= 2017 else read_col(year-8, 'count')[0]
-        qs9 = qs.filter(year=year-9).values('cause_id').annotate(count=Count('cause_id') ) if year-9 >= 2017 else read_col(year-9, 'count')[0]
+        qs0 = qs.filter(reporting_year=self.reporting_year).values('cause_id').annotate(count=Count('cause_id') )
+        qs1 = qs.filter(reporting_year=self.reporting_year-1).values('cause_id').annotate(count=Count('cause_id') ) if self.reporting_year-1 >= 2017 else read_col(self.reporting_year-1, 'count')[0]
+        qs2 = qs.filter(reporting_year=self.reporting_year-2).values('cause_id').annotate(count=Count('cause_id') ) if self.reporting_year-2 >= 2017 else read_col(self.reporting_year-2, 'count')[0]
+        qs3 = qs.filter(reporting_year=self.reporting_year-3).values('cause_id').annotate(count=Count('cause_id') ) if self.reporting_year-3 >= 2017 else read_col(self.reporting_year-3, 'count')[0]
+        qs4 = qs.filter(reporting_year=self.reporting_year-4).values('cause_id').annotate(count=Count('cause_id') ) if self.reporting_year-4 >= 2017 else read_col(self.reporting_year-4, 'count')[0]
+        qs5 = qs.filter(reporting_year=self.reporting_year-5).values('cause_id').annotate(count=Count('cause_id') ) if self.reporting_year-5 >= 2017 else read_col(self.reporting_year-5, 'count')[0]
+        qs6 = qs.filter(reporting_year=self.reporting_year-6).values('cause_id').annotate(count=Count('cause_id') ) if self.reporting_year-6 >= 2017 else read_col(self.reporting_year-6, 'count')[0]
+        qs7 = qs.filter(reporting_year=self.reporting_year-7).values('cause_id').annotate(count=Count('cause_id') ) if self.reporting_year-7 >= 2017 else read_col(self.reporting_year-7, 'count')[0]
+        qs8 = qs.filter(reporting_year=self.reporting_year-8).values('cause_id').annotate(count=Count('cause_id') ) if self.reporting_year-8 >= 2017 else read_col(self.reporting_year-8, 'count')[0]
+        qs9 = qs.filter(reporting_year=self.reporting_year-9).values('cause_id').annotate(count=Count('cause_id') ) if self.reporting_year-9 >= 2017 else read_col(self.reporting_year-9, 'count')[0]
 
-        qs0_total = qs.filter(year=year).aggregate(count_total=Count('cause_id') )
-        qs1_total = qs.filter(year=year-1).aggregate(count_total=Count('cause_id') ) if year-1 >= 2017 else read_col(year-1, 'total_count')[0]
-        qs2_total = qs.filter(year=year-2).aggregate(count_total=Count('cause_id') ) if year-2 >= 2017 else read_col(year-2, 'total_count')[0]
-        qs3_total = qs.filter(year=year-3).aggregate(count_total=Count('cause_id') ) if year-3 >= 2017 else read_col(year-3, 'total_count')[0]
-        qs4_total = qs.filter(year=year-4).aggregate(count_total=Count('cause_id') ) if year-4 >= 2017 else read_col(year-4, 'total_count')[0]
-        qs5_total = qs.filter(year=year-5).aggregate(count_total=Count('cause_id') ) if year-5 >= 2017 else read_col(year-5, 'total_count')[0]
-        qs6_total = qs.filter(year=year-6).aggregate(count_total=Count('cause_id') ) if year-6 >= 2017 else read_col(year-6, 'total_count')[0]
-        qs7_total = qs.filter(year=year-7).aggregate(count_total=Count('cause_id') ) if year-7 >= 2017 else read_col(year-7, 'total_count')[0]
-        qs8_total = qs.filter(year=year-8).aggregate(count_total=Count('cause_id') ) if year-8 >= 2017 else read_col(year-8, 'total_count')[0]
-        qs9_total = qs.filter(year=year-9).aggregate(count_total=Count('cause_id') ) if year-9 >= 2017 else read_col(year-9, 'total_count')[0]
+        qs0_total = qs.filter(reporting_year=self.reporting_year).aggregate(count_total=Count('cause_id') )
+        qs1_total = qs.filter(reporting_year=self.reporting_year-1).aggregate(count_total=Count('cause_id') ) if self.reporting_year-1 >= 2017 else read_col(self.reporting_year-1, 'total_count')[0]
+        qs2_total = qs.filter(reporting_year=self.reporting_year-2).aggregate(count_total=Count('cause_id') ) if self.reporting_year-2 >= 2017 else read_col(self.reporting_year-2, 'total_count')[0]
+        qs3_total = qs.filter(reporting_year=self.reporting_year-3).aggregate(count_total=Count('cause_id') ) if self.reporting_year-3 >= 2017 else read_col(self.reporting_year-3, 'total_count')[0]
+        qs4_total = qs.filter(reporting_year=self.reporting_year-4).aggregate(count_total=Count('cause_id') ) if self.reporting_year-4 >= 2017 else read_col(self.reporting_year-4, 'total_count')[0]
+        qs5_total = qs.filter(reporting_year=self.reporting_year-5).aggregate(count_total=Count('cause_id') ) if self.reporting_year-5 >= 2017 else read_col(self.reporting_year-5, 'total_count')[0]
+        qs6_total = qs.filter(reporting_year=self.reporting_year-6).aggregate(count_total=Count('cause_id') ) if self.reporting_year-6 >= 2017 else read_col(self.reporting_year-6, 'total_count')[0]
+        qs7_total = qs.filter(reporting_year=self.reporting_year-7).aggregate(count_total=Count('cause_id') ) if self.reporting_year-7 >= 2017 else read_col(self.reporting_year-7, 'total_count')[0]
+        qs8_total = qs.filter(reporting_year=self.reporting_year-8).aggregate(count_total=Count('cause_id') ) if self.reporting_year-8 >= 2017 else read_col(self.reporting_year-8, 'total_count')[0]
+        qs9_total = qs.filter(reporting_year=self.reporting_year-9).aggregate(count_total=Count('cause_id') ) if self.reporting_year-9 >= 2017 else read_col(self.reporting_year-9, 'total_count')[0]
 
         count_total0 = qs0_total.get('count_total') if qs0_total.get('count_total') else 0
         count_total1 = qs1_total.get('count_total') if qs1_total.get('count_total') else 0
@@ -2044,17 +2045,16 @@ class Bushfire10YrAverageReport():
 
     def get_excel_sheet(self, rpt_date, book=Workbook()):
 
-        year = current_finyear()
-        year0 = str(year) + '/' + str(year+1)
-        year1 = str(year-1) + '/' + str(year)
-        year2 = str(year-2) + '/' + str(year-1)
-        year3 = str(year-3) + '/' + str(year-2)
-        year4 = str(year-4) + '/' + str(year-3)
-        year5 = str(year-5) + '/' + str(year-4)
-        year6 = str(year-6) + '/' + str(year-5)
-        year7 = str(year-7) + '/' + str(year-6)
-        year8 = str(year-8) + '/' + str(year-7)
-        year9 = str(year-9) + '/' + str(year-8)
+        year0 = str(self.reporting_year) + '/' + str(self.reporting_year+1)
+        year1 = str(self.reporting_year-1) + '/' + str(self.reporting_year)
+        year2 = str(self.reporting_year-2) + '/' + str(self.reporting_year-1)
+        year3 = str(self.reporting_year-3) + '/' + str(self.reporting_year-2)
+        year4 = str(self.reporting_year-4) + '/' + str(self.reporting_year-3)
+        year5 = str(self.reporting_year-5) + '/' + str(self.reporting_year-4)
+        year6 = str(self.reporting_year-6) + '/' + str(self.reporting_year-5)
+        year7 = str(self.reporting_year-7) + '/' + str(self.reporting_year-6)
+        year8 = str(self.reporting_year-8) + '/' + str(self.reporting_year-7)
+        year9 = str(self.reporting_year-9) + '/' + str(self.reporting_year-8)
 
         # book = Workbook()
         sheet1 = book.add_sheet('Bushfire Causes 10Yr Average')
@@ -2087,11 +2087,11 @@ class Bushfire10YrAverageReport():
 
         hdr = sheet1.row(row_no())
         hdr.write(0, 'Fin Year', style=style)
-        hdr.write(1, year)
+        hdr.write(1, self.reporting_year)
 
         hdr = sheet1.row(row_no())
         hdr.write(0, 'Missing Final', style=style)
-        hdr.write(1, Bushfire.objects.filter(report_status=Bushfire.STATUS_INITIAL_AUTHORISED, year=current_finyear()).count() )
+        hdr.write(1, Bushfire.objects.filter(report_status=Bushfire.STATUS_INITIAL_AUTHORISED, reporting_year=self.reporting_year).count() )
 
         hdr = sheet1.row(row_no())
         hdr = sheet1.row(row_no())
@@ -2247,10 +2247,9 @@ class Bushfire10YrAverageReport():
         return response
 
     def display(self):
-        year = current_finyear()
-        year0 = str(year-1) + '/' + str(year)
-        year1 = str(year-2) + '/' + str(year-1)
-        year2 = str(year-3) + '/' + str(year-2)
+        year0 = str(self.reporting_year-1) + '/' + str(self.reporting_year)
+        year1 = str(self.reporting_year-2) + '/' + str(self.reporting_year-1)
+        year2 = str(self.reporting_year-3) + '/' + str(self.reporting_year-2)
         print '{}\t{}\t{}\t{}\t{}\t{}\t{}'.format('Cause', year2, year1, year0,  year2, year1, year0).expandtabs(20)
         for row in self.rpt_map:
             for cause, data in row.iteritems():
@@ -2260,15 +2259,15 @@ class Bushfire10YrAverageReport():
                     print
 
 class BushfireIndicator():
-    def __init__(self):
+    def __init__(self,reporting_year=None):
+        self.reporting_year = current_finyear() if (reporting_year is None or reporting_year >= current_finyear()) else reporting_year
         self.rpt_map, self.item_map = self.create()
 
     def create(self):
         # Group By Region
-        year = current_finyear()
-        #qs = Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, year=current_finyear(), region__in=Region.objects.filter(forest_region=False), initial_control__name='DBCA P&W')
-        #qs = Bushfire.objects.filter(authorised_by__isnull=False, year=current_finyear(), region__in=Region.objects.filter(forest_region=False), initial_control__name='DBCA P&W').exclude(report_status=Bushfire.STATUS_INVALIDATED)
-        qs = Bushfire.objects.filter(report_status__in=[Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED], year=current_finyear(), region__in=Region.objects.filter(forest_region=True), initial_control=Agency.DBCA)
+        #qs = Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, reporting_year=self.reporting_year, region__in=Region.objects.filter(forest_region=False), initial_control__name='DBCA P&W')
+        #qs = Bushfire.objects.filter(authorised_by__isnull=False, reporting_year=self.reporting_year, region__in=Region.objects.filter(forest_region=False), initial_control__name='DBCA P&W').exclude(report_status=Bushfire.STATUS_INVALIDATED)
+        qs = Bushfire.objects.filter(report_status__in=[Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED], reporting_year=self.reporting_year, region__in=Region.objects.filter(forest_region=True), initial_control=Agency.DBCA)
         qs1 = qs.aggregate(count=Count('id'), area=Sum('area') ) 
         qs2 = qs.filter(area__lte=2.0).aggregate(count=Count('id'), area=Sum('area') ) 
         count1 = qs1.get('count') if qs1.get('count') else 0
@@ -2284,7 +2283,6 @@ class BushfireIndicator():
 
     def get_excel_sheet(self, rpt_date, book=Workbook()):
 
-        year = current_finyear()
         # book = Workbook()
         sheet1 = book.add_sheet('Bushfire Indicator')
         sheet1 = book.get_sheet('Bushfire Indicator')
@@ -2316,11 +2314,11 @@ class BushfireIndicator():
 
         hdr = sheet1.row(row_no())
         hdr.write(0, 'Fin Year', style=style)
-        hdr.write(1, year)
+        hdr.write(1, self.reporting_year)
 
         hdr = sheet1.row(row_no())
         hdr.write(0, 'Missing Final', style=style)
-        hdr.write(1, Bushfire.objects.filter(report_status=Bushfire.STATUS_INITIAL_AUTHORISED, year=current_finyear()).count() )
+        hdr.write(1, Bushfire.objects.filter(report_status=Bushfire.STATUS_INITIAL_AUTHORISED, reporting_year=self.reporting_year).count() )
 
         hdr = sheet1.row(row_no())
         hdr = sheet1.row(row_no())
@@ -2378,7 +2376,6 @@ class BushfireIndicator():
         return response
 
     def display(self):
-        year = current_finyear()
         print '{}\t{}'.format('', 'Number').expandtabs(20)
         for row in self.rpt_map:
             for key, data in row.iteritems():
