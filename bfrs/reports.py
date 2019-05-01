@@ -2265,9 +2265,9 @@ class BushfireIndicator():
 
     def create(self):
         # Group By Region
-        #qs = Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, reporting_year=self.reporting_year, region__in=Region.objects.filter(forest_region=False), initial_control__name='DBCA P&W')
-        #qs = Bushfire.objects.filter(authorised_by__isnull=False, reporting_year=self.reporting_year, region__in=Region.objects.filter(forest_region=False), initial_control__name='DBCA P&W').exclude(report_status=Bushfire.STATUS_INVALIDATED)
-        qs = Bushfire.objects.filter(report_status__in=[Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED], reporting_year=self.reporting_year, region__in=Region.objects.filter(forest_region=True), initial_control=Agency.DBCA)
+        #qs = Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, reporting_year=self.reporting_year, region__in=Region.objects.filter(forest_region=False), first_attack__name='DBCA P&W')
+        #qs = Bushfire.objects.filter(authorised_by__isnull=False, reporting_year=self.reporting_year, region__in=Region.objects.filter(forest_region=False), first_attack__name='DBCA P&W').exclude(report_status=Bushfire.STATUS_INVALIDATED)
+        qs = Bushfire.objects.filter(report_status__in=[Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED], reporting_year=self.reporting_year, region__in=Region.objects.filter(forest_region=True), first_attack=Agency.DBCA)
         qs1 = qs.aggregate(count=Count('id'), area=Sum('area') ) 
         qs2 = qs.filter(area__lte=2.0).aggregate(count=Count('id'), area=Sum('area') ) 
         count1 = qs1.get('count') if qs1.get('count') else 0
