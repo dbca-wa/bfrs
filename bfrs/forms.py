@@ -839,9 +839,9 @@ class BushfireCreateForm(InitialBushfireForm):
             try:
                 self.initial['tenure'] = get_tenure(sss['tenure_ignition_point']['category'])
             except:
-                self.initial['tenure'] = Tenure.UNKNOWN
+                self.initial['tenure'] = Tenure.OTHER
         else:
-            self.initial['tenure'] = Tenure.UNKNOWN
+            self.initial['tenure'] = Tenure.OTHER
 
         if sss.get('region_id') and sss.get('district_id'):
             self.initial['region'] = Region.objects.get(id=sss['region_id'])
@@ -856,9 +856,9 @@ class BushfireCreateForm(InitialBushfireForm):
             try:
                 self.cleaned_data['tenure'] = get_tenure(sss['tenure_ignition_point']['category'])
             except:
-                self.cleaned_data['tenure'] = Tenure.UNKNOWN
+                self.cleaned_data['tenure'] = Tenure.OTHER
         else:
-            self.cleaned_data['tenure'] = Tenure.UNKNOWN
+            self.cleaned_data['tenure'] = Tenure.OTHER
 
         if sss.get('region_id') and sss.get('district_id') and self.instance:
             self.instance.region = Region.objects.get(id=sss['region_id'])
@@ -892,9 +892,9 @@ class BushfireCreateForm(InitialBushfireForm):
             try:
                 self.instance.tenure = get_tenure(sss['tenure_ignition_point']['category'])
             except:
-                self.instance.tenure = Tenure.UNKNOWN
+                self.instance.tenure = Tenure.OTHER
         else:
-            self.instance.tenure = Tenure.UNKNOWN
+            self.instance.tenure = Tenure.OTHER
 
         if sss.has_key('fire_position'):
             if not self.instance.fire_position_override:
