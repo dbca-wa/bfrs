@@ -316,10 +316,10 @@ class BushfireSpatialResource(ModelResource):
             try:
                 bundle.obj.tenure = get_tenure(bundle.data['tenure_ignition_point']['category'])
             except:
-                bundle.obj.tenure = Tenure.UNKNOWN
+                bundle.obj.tenure = Tenure.OTHER
         else:
             #origin point is not within dpaw_tenure
-            bundle.obj.tenure = Tenure.UNKNOWN
+            bundle.obj.tenure = Tenure.OTHER
         #print("processing tenure_ignition_point,set tenure = {}".format(bundle.obj.tenure))
 
 
