@@ -746,7 +746,7 @@ class MinisterialReportAuth():
         # Group By Region
         #qs=Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, reporting_year=self.reporting_year).values('region_id')
         #qs=Bushfire.objects.filter(authorised_by__isnull=False, reporting_year=self.reporting_year).exclude(report_status=Bushfire.STATUS_INVALIDATED).values('region_id')
-        qs=Bushfire.objects.filter(report_status__in=[Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED], reporting_year=self.reporting_year).values('region_id')
+        qs=Bushfire.objects.filter(report_status__in=[Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED], reporting_year=self.reporting_year,fire_not_found=False).values('region_id')
         qs1=qs.filter(initial_control=Agency.DBCA).annotate(dbca_count=Count('region_id'), dbca_sum=Sum('area') )
         qs2=qs.exclude(initial_control__isnull=True).annotate(total_count=Count('region_id'), total_sum=Sum('area') )
 
@@ -1098,7 +1098,7 @@ class QuarterlyReport():
         item_map = {}
         #qs=Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, reporting_year=self.reporting_year).values('region_id')
         #qs=Bushfire.objects.filter(authorised_by__isnull=False, reporting_year=self.reporting_year).exclude(report_status=Bushfire.STATUS_INVALIDATED).values('region_id')
-        qs=Bushfire.objects.filter(report_status__in=[Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED], reporting_year=self.reporting_year).values('region_id')
+        qs=Bushfire.objects.filter(report_status__in=[Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED], reporting_year=self.reporting_year,fire_not_found=False).values('region_id')
 
 
         qs_forest_pw = qs.filter(region__in=Region.objects.filter(forest_region=True)).filter(initial_control=Agency.DBCA).aggregate(count=Count('region_id'), area=Sum('area') )
@@ -1146,7 +1146,7 @@ class QuarterlyReport():
     def escape_burns(self):
         #return Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, reporting_year=self.reporting_year, cause__name__icontains='escape')
         #return Bushfire.objects.filter(authorised_by__isnull=False, reporting_year=self.reporting_year, cause__name__icontains='escape').exclude(report_status=Bushfire.STATUS_INVALIDATED)
-        return Bushfire.objects.filter(report_status__in=[Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED], reporting_year=self.reporting_year, cause__name__icontains='escape')
+        return Bushfire.objects.filter(report_status__in=[Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED], reporting_year=self.reporting_year,fire_not_found=False, cause__name__icontains='escape')
 
     def get_excel_sheet(self, rpt_date, book=Workbook()):
 
@@ -1474,7 +1474,7 @@ class BushfireByCauseReport():
     def create(self):
         # Group By Region
         #qs = Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED)
-        qs = Bushfire.objects.filter(authorised_by__isnull=False).exclude(report_status=Bushfire.STATUS_INVALIDATED)
+        qs = Bushfire.objects.filter(authorised_by__isnull=False,fire_not_found=False).exclude(report_status=Bushfire.STATUS_INVALIDATED)
         qs0 = qs.filter(reporting_year=self.reporting_year).values('cause_id').annotate(count=Count('cause_id'), area=Sum('area') ) # NOTE area not actually used anywhere in this report - can discard if we want!
         qs1 = qs.filter(reporting_year=self.reporting_year-1).values('cause_id').annotate(count=Count('cause_id'), area=Sum('area') ) if self.reporting_year-1 >= 2017 else read_col(self.reporting_year-1, 'count')[0]
         qs2 = qs.filter(reporting_year=self.reporting_year-2).values('cause_id').annotate(count=Count('cause_id'), area=Sum('area') ) if self.reporting_year-2 >= 2017 else read_col(self.reporting_year-2, 'count')[0]
@@ -1694,7 +1694,7 @@ class RegionByTenureReport():
     def create(self):
 
         #qs = Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, reporting_year=self.reporting_year)
-        qs = Bushfire.objects.filter(authorised_by__isnull=False, reporting_year=self.reporting_year).exclude(report_status=Bushfire.STATUS_INVALIDATED)
+        qs = Bushfire.objects.filter(authorised_by__isnull=False, reporting_year=self.reporting_year,fire_not_found=False).exclude(report_status=Bushfire.STATUS_INVALIDATED)
         qs = qs.values('region_id','tenure_id').order_by('region_id','tenure_id').annotate(count=Count('tenure_id'), area=Sum('area') )
 
         rpt_map = []
@@ -1715,7 +1715,7 @@ class RegionByTenureReport():
     @property
     def all_map(self):
         #return Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, reporting_year=self.reporting_year).aggregate(count=Count('id'), area=Sum('area') )
-        return Bushfire.objects.filter(authorised_by__isnull=False, reporting_year=self.reporting_year).exclude(report_status=Bushfire.STATUS_INVALIDATED).aggregate(count=Count('id'), area=Sum('area') )
+        return Bushfire.objects.filter(authorised_by__isnull=False, reporting_year=self.reporting_year,fire_not_found=False).exclude(report_status=Bushfire.STATUS_INVALIDATED).aggregate(count=Count('id'), area=Sum('area') )
 
     @property
     def region_map(self):
@@ -1726,7 +1726,7 @@ class RegionByTenureReport():
             return id_dict[0] if id_dict else False
 
         #qs = Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, reporting_year=self.reporting_year).values('region_id').annotate(count=Count('region_id'), area=Sum('area') )
-        qs = Bushfire.objects.filter(authorised_by__isnull=False, reporting_year=self.reporting_year).exclude(report_status=Bushfire.STATUS_INVALIDATED).values('region_id').annotate(count=Count('region_id'), area=Sum('area') )
+        qs = Bushfire.objects.filter(authorised_by__isnull=False, reporting_year=self.reporting_year,fire_not_found=False).exclude(report_status=Bushfire.STATUS_INVALIDATED).values('region_id').annotate(count=Count('region_id'), area=Sum('area') )
         regions = {}
         for region in Region.objects.all().order_by('id'):
 
@@ -1746,7 +1746,7 @@ class RegionByTenureReport():
             id_dict = [i for i in qs if i.get('tenure_id')==id]
             return id_dict[0] if id_dict else False
 
-        qs = Bushfire.objects.filter(authorised_by__isnull=False, reporting_year=self.reporting_year).exclude(report_status=Bushfire.STATUS_INVALIDATED).values('tenure_id').annotate(count=Count('tenure_id'), area=Sum('area') )
+        qs = Bushfire.objects.filter(authorised_by__isnull=False, reporting_year=self.reporting_year,fire_not_found=False).exclude(report_status=Bushfire.STATUS_INVALIDATED).values('tenure_id').annotate(count=Count('tenure_id'), area=Sum('area') )
         tenures = {}
         for tenure in Tenure.objects.all().order_by('id'):
             id_dict = contains_id(tenure.id)
@@ -1910,7 +1910,7 @@ class Bushfire10YrAverageReport():
         # Group By Region
         #qs = Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED)
         #qs = Bushfire.objects.filter(authorised_by__isnull=False).exclude(report_status=Bushfire.STATUS_INVALIDATED)
-        qs = Bushfire.objects.filter(report_status__in=[Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED])
+        qs = Bushfire.objects.filter(report_status__in=[Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED],fire_not_found=False)
 
         qs0 = qs.filter(reporting_year=self.reporting_year).values('cause_id').annotate(count=Count('cause_id') )
         qs1 = qs.filter(reporting_year=self.reporting_year-1).values('cause_id').annotate(count=Count('cause_id') ) if self.reporting_year-1 >= 2017 else read_col(self.reporting_year-1, 'count')[0]
@@ -2267,7 +2267,7 @@ class BushfireIndicator():
         # Group By Region
         #qs = Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, reporting_year=self.reporting_year, region__in=Region.objects.filter(forest_region=False), first_attack__name='DBCA P&W')
         #qs = Bushfire.objects.filter(authorised_by__isnull=False, reporting_year=self.reporting_year, region__in=Region.objects.filter(forest_region=False), first_attack__name='DBCA P&W').exclude(report_status=Bushfire.STATUS_INVALIDATED)
-        qs = Bushfire.objects.filter(report_status__in=[Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED], reporting_year=self.reporting_year, region__in=Region.objects.filter(forest_region=True), first_attack=Agency.DBCA)
+        qs = Bushfire.objects.filter(report_status__in=[Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED], reporting_year=self.reporting_year,fire_not_found=False, region__in=Region.objects.filter(forest_region=True), first_attack=Agency.DBCA)
         qs1 = qs.aggregate(count=Count('id'), area=Sum('area') ) 
         qs2 = qs.filter(area__lte=2.0).aggregate(count=Count('id'), area=Sum('area') ) 
         count1 = qs1.get('count') if qs1.get('count') else 0
