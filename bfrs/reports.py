@@ -1275,75 +1275,92 @@ class BushfireByTenureReport():
     def create(self):
         # Group By Region
         #qs = Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED)
+        report_group_sql = """
+        SELECT distinct report_group,report_group_order from bfrs_tenure order by report_group_order
+        """
+        report_name_sql = """
+        SELECT distinct report_name,report_order from bfrs_tenure where report_group='{report_group}' order by report_order
+        """
         count_sql = """
-        SELECT a.tenure_id,count(*) 
+        SELECT b.report_name,count(*) 
         FROM (
             SELECT 
                 tenure_id,
                 fire_number
             FROM bfrs_bushfire
-            WHERE report_status in {report_status} AND reporting_year={year} 
-            ) a
-        GROUP BY a.tenure_id
+            WHERE report_status in {report_status} AND reporting_year={year} AND fire_not_found=false
+            ) a join bfrs_tenure b on a.tenure_id = b.id
+        where b.report_group='{report_group}'
+        GROUP BY b.report_name,b.report_order
+        ORDER BY b.report_order
 """
         area_sql = """
-        SELECT a.tenure_id, sum(a.area) AS area 
-        FROM bfrs_areaburnt a JOIN bfrs_bushfire b ON a.bushfire_id = b.id 
-        WHERE b.report_status in {report_status} AND b.reporting_year={year} 
-        GROUP BY a.tenure_id 
+        SELECT c.report_name, sum(a.area) AS area 
+        FROM bfrs_areaburnt a JOIN bfrs_bushfire b ON a.bushfire_id = b.id JOIN bfrs_tenure c on a.tenure_id = c.id
+        WHERE b.report_status in {report_status} AND b.reporting_year={year} AND b.fire_not_found=false and c.report_group='{report_group}'
+        GROUP BY c.report_name,c.report_order
 """
 
         rpt_map = []
-        item_map = {}
-        counts = []
-        areas = []
+        
+        report_groups = []
         with connection.cursor() as cursor:
-            for y in (self.reporting_year - 2,self.reporting_year - 1,self.reporting_year):
-                year_counts = {"total":0}
-                counts.append(year_counts)
-                cursor.execute(count_sql.format(report_status="(3,4)",year=y))
+            cursor.execute(report_group_sql)
+            for result in cursor.fetchall():
+                report_groups.append(result[0])
+
+            for report_group in report_groups:
+                counts = []
+                areas = []
+                rpt_group_map = []
+                rpt_map.append((report_group,rpt_group_map))
+                for y in (self.reporting_year - 2,self.reporting_year - 1,self.reporting_year):
+                    year_counts = {"total":0}
+                    counts.append(year_counts)
+                    cursor.execute(count_sql.format(report_status="(3,4)",year=y,report_group=report_group))
+                    for result in cursor.fetchall():
+                        year_counts[result[0]] = result[1]
+                        year_counts["total"] += result[1]
+
+                    year_areas = {"total":0}
+                    areas.append(year_areas)
+                    cursor.execute(area_sql.format(report_status="(3,4)",year=y,report_group=report_group))
+                    for result in cursor.fetchall():
+                        year_areas[result[0]] = result[1]
+                        year_areas["total"] += result[1]
+
+
+                cursor.execute(report_name_sql.format(report_group=report_group))
                 for result in cursor.fetchall():
-                    year_counts[result[0]] = result[1]
-                    year_counts["total"] += result[1]
-
-                year_areas = {"total":0}
-                areas.append(year_areas)
-                cursor.execute(area_sql.format(report_status="(3,4)",year=y))
-                for result in cursor.fetchall():
-                    year_areas[result[0]] = result[1]
-                    year_areas["total"] += result[1]
-
-
-        for tenure in Tenure.objects.all().order_by('id'):
-            rpt_map.append(
-                {tenure.name: dict(
-                    count2=counts[0].get(tenure.id,0), 
-                    count1=counts[1].get(tenure.id,0), 
-                    count0=counts[2].get(tenure.id,0), 
-                    area2=areas[0].get(tenure.id,0), 
-                    area1=areas[1].get(tenure.id,0), 
-                    area0=areas[2].get(tenure.id,0)
-                )}
-            )
+                    report_name = result[0]
+                    rpt_group_map.append(
+                        {report_name: dict(
+                            count2=counts[0].get(report_name,0), 
+                            count1=counts[1].get(report_name,0), 
+                            count0=counts[2].get(report_name,0), 
+                            area2=areas[0].get(report_name,0), 
+                            area1=areas[1].get(report_name,0), 
+                            area0=areas[2].get(report_name,0)
+                        )}
+                    )
                 
-        rpt_map.append(
-            {'Total': dict(
-                count2=counts[0].get("total",0), 
-                count1=counts[1].get("total",0), 
-                count0=counts[2].get("total",0), 
-                area2=areas[0].get("total",0), 
-                area1=areas[1].get("total",0), 
-                area0=areas[2].get("total",0)
-            )}
-        )
+                rpt_group_map.append(
+                    {'Total': dict(
+                        count2=counts[0].get("total",0), 
+                        count1=counts[1].get("total",0), 
+                        count0=counts[2].get("total",0), 
+                        area2=areas[0].get("total",0), 
+                        area1=areas[1].get("total",0), 
+                        area0=areas[2].get("total",0)
+                    )}
+                )
 
 
-        return rpt_map, item_map
+        return rpt_map, None
 
 
 
     def get_excel_sheet(self, rpt_date, book=Workbook()):
-
         year0 = str(self.reporting_year) + '/' + str(self.reporting_year+1)
         year1 = str(self.reporting_year-1) + '/' + str(self.reporting_year)
         year2 = str(self.reporting_year-2) + '/' + str(self.reporting_year-1)
@@ -1365,7 +1382,6 @@ class BushfireByTenureReport():
 #        style_center.alignment.horz = Alignment.HORZ_CENTER
 
 
-        col_no = lambda c=count(): next(c)
         row_no = lambda c=count(): next(c)
 
         hdr = sheet1.row(row_no())
@@ -1384,46 +1400,48 @@ class BushfireByTenureReport():
         hdr.write(0, 'Missing Final', style=style_bold_gen)
         hdr.write(1, Bushfire.objects.filter(report_status=Bushfire.STATUS_INITIAL_AUTHORISED, reporting_year=self.reporting_year).count() )
 
-        hdr = sheet1.row(row_no())
-        hdr = sheet1.row(row_no())
-        row = row_no()
-        sheet1.write_merge(row, row, 1, 3, "Number", style_bold)
-        sheet1.write_merge(row, row, 4, 6, "Area (ha)", style_bold)
-        hdr = sheet1.row(row_no())
-        hdr.write(col_no(), "ALL REGIONS", style=style_bold_gen)
-        hdr.write(col_no(), year2, style=style_bold_gen)
-        hdr.write(col_no(), year1, style=style_bold_gen)
-        hdr.write(col_no(), year0, style=style_bold_gen)
+        for report_group,rpt_group_map in self.rpt_map:
+            hdr = sheet1.row(row_no())
+            hdr = sheet1.row(row_no())
+            row = row_no()
+            sheet1.write_merge(row, row, 1, 3, "Number", style_bold)
+            sheet1.write_merge(row, row, 4, 6, "Area (ha)", style_bold)
+            hdr = sheet1.row(row_no())
+            col_no = lambda c=count(): next(c)
+            hdr.write(col_no(), report_group, style=style_bold_gen)
+            hdr.write(col_no(), year2, style=style_bold_gen)
+            hdr.write(col_no(), year1, style=style_bold_gen)
+            hdr.write(col_no(), year0, style=style_bold_gen)
 
-        hdr.write(col_no(), year2, style=style_bold_gen)
-        hdr.write(col_no(), year1, style=style_bold_gen)
-        hdr.write(col_no(), year0, style=style_bold_gen)
+            hdr.write(col_no(), year2, style=style_bold_gen)
+            hdr.write(col_no(), year1, style=style_bold_gen)
+            hdr.write(col_no(), year0, style=style_bold_gen)
 
-        for row in self.rpt_map:
-            for tenure, data in row.iteritems():
+            for row in rpt_group_map:
+                for tenure, data in row.iteritems():
 
-                row = sheet1.row(row_no())
-                col_no = lambda c=count(): next(c)
-                if tenure == '':
-                    #row = sheet1.row(row_no())
-                    continue
-                elif 'total' in tenure.lower():
-                    #row = sheet1.row(row_no())
-                    row.write(col_no(), tenure, style=style_bold_gen)
-                    row.write(col_no(), data['count2'] if data['count2'] > 0 else '', style=style_bold_gen)
-                    row.write(col_no(), data['count1'] if data['count1'] > 0 else '', style=style_bold_gen)
-                    row.write(col_no(), data['count0'], style=style_bold_gen)
-                    row.write(col_no(), data['area2'] if data['area2'] > 0 else '', style=style_bold_area)
-                    row.write(col_no(), data['area1'] if data['area1'] > 0 else '', style=style_bold_area)
-                    row.write(col_no(), data['area0'], style=style_bold_area)
-                else:
-                    row.write(col_no(), tenure, style=style_normal )
-                    row.write(col_no(), data['count2'] if data['count2'] > 0 else '', style=style_normal_int)
-                    row.write(col_no(), data['count1'] if data['count1'] > 0 else '', style=style_normal_int)
-                    row.write(col_no(), data['count0'], style=style_normal_int)
-                    row.write(col_no(), data['area2'] if data['area2'] > 0 else '', style=style_normal_area)
-                    row.write(col_no(), data['area1'] if data['area1'] > 0 else '', style=style_normal_area)
-                    row.write(col_no(), data['area0'], style=style_normal_area)
+                    row = sheet1.row(row_no())
+                    col_no = lambda c=count(): next(c)
+                    if tenure == '':
+                        #row = sheet1.row(row_no())
+                        continue
+                    elif 'total' in tenure.lower():
+                        #row = sheet1.row(row_no())
+                        row.write(col_no(), tenure, style=style_bold_gen)
+                        row.write(col_no(), data['count2'] if data['count2'] > 0 else '', style=style_bold_gen)
+                        row.write(col_no(), data['count1'] if data['count1'] > 0 else '', style=style_bold_gen)
+                        row.write(col_no(), data['count0'], style=style_bold_gen)
+                        row.write(col_no(), data['area2'] if data['area2'] > 0 else '', style=style_bold_area)
+                        row.write(col_no(), data['area1'] if data['area1'] > 0 else '', style=style_bold_area)
+                        row.write(col_no(), data['area0'], style=style_bold_area)
+                    else:
+                        row.write(col_no(), tenure, style=style_normal )
+                        row.write(col_no(), data['count2'] if data['count2'] > 0 else '', style=style_normal_int)
+                        row.write(col_no(), data['count1'] if data['count1'] > 0 else '', style=style_normal_int)
+                        row.write(col_no(), data['count0'], style=style_normal_int)
+                        row.write(col_no(), data['area2'] if data['area2'] > 0 else '', style=style_normal_area)
+                        row.write(col_no(), data['area1'] if data['area1'] > 0 else '', style=style_normal_area)
+                        row.write(col_no(), data['area0'], style=style_normal_area)
 
         # DISCLAIMER
         col_no = lambda c=count(): next(c)
@@ -1506,7 +1524,7 @@ class BushfireByCauseReport():
                 row = [d for d in qs if d.get('cause_id')==cause.id]
                 return row[0] if len(row) > 0 else {}
 
-        for cause in Cause.objects.all().order_by('id'):
+        for cause in Cause.objects.all().order_by('report_order'):
             row0 = qs0.get(cause_id=cause.id) if qs0.filter(cause_id=cause.id).count() > 0 else {}
             row1 = get_row(qs1, cause)
             row2 = get_row(qs2, cause)
@@ -1523,13 +1541,26 @@ class BushfireByCauseReport():
             perc2  = round(count2 * 100. / count_total2, 2) if count_total2 > 0 else 0
             area2  = row2.get('area') if row2.get('area') else 0
 
-            rpt_map.append(
-                {cause.name: dict(
-                    count2=count2, count1=count1, count0=count0, 
-                    perc2=perc2, perc1=perc1, perc0=perc0, 
-                    area2=area2, area1=area1, area0=area0
-                )}
-            )
+            if rpt_map and cause.report_name in rpt_map[-1]:
+                rpt_map[-1][cause.report_name]["count2"] = rpt_map[-1][cause.report_name]["count2"] + count2
+                rpt_map[-1][cause.report_name]["count1"] = rpt_map[-1][cause.report_name]["count1"] + count1
+                rpt_map[-1][cause.report_name]["count0"] = rpt_map[-1][cause.report_name]["count0"] + count0
+
+                rpt_map[-1][cause.report_name]["perc2"] = rpt_map[-1][cause.report_name]["perc2"] + perc2
+                rpt_map[-1][cause.report_name]["perc1"] = rpt_map[-1][cause.report_name]["perc1"] + perc1
+                rpt_map[-1][cause.report_name]["perc0"] = rpt_map[-1][cause.report_name]["perc0"] + perc0
+
+                rpt_map[-1][cause.report_name]["area2"] = rpt_map[-1][cause.report_name]["area2"] + area2
+                rpt_map[-1][cause.report_name]["area1"] = rpt_map[-1][cause.report_name]["area1"] + area1
+                rpt_map[-1][cause.report_name]["area0"] = rpt_map[-1][cause.report_name]["area0"] + area0
+            else:
+                rpt_map.append(
+                    {cause.report_name: dict(
+                        count2=count2, count1=count1, count0=count0, 
+                        perc2=perc2, perc1=perc1, perc0=perc0, 
+                        area2=area2, area1=area1, area0=area0
+                    )}
+                )
                 
             net_count0 += count0 
             net_count1 += count1 

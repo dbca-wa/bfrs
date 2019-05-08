@@ -12,6 +12,7 @@ from django.core.exceptions import (ValidationError)
 from django.conf import settings
 from django.core import serializers
 from django.utils.safestring import mark_safe
+from django.core.exceptions import ObjectDoesNotExist
 
 from smart_selects.db_fields import ChainedForeignKey
 import LatLon
@@ -735,15 +736,38 @@ class Bushfire(BushfireBase):
 @python_2_unicode_compatible
 class Tenure(models.Model):
     name = models.CharField(verbose_name='Tenure category', max_length=200)
+    report_name = models.CharField(verbose_name='Tenure category report name', max_length=200,default="")
+    report_group = models.CharField(verbose_name='Tenure category report group', max_length=32,default="")
+    report_order = models.PositiveSmallIntegerField(verbose_name='order in annual report',default=1)
+    report_group_order = models.PositiveSmallIntegerField(verbose_name='group order in annual report',default=1)
 
     class Meta:
         ordering = ['id']
 
     def __str__(self):
         return self.name
-Tenure.OTHER = Tenure.objects.get(name="Other")
-Tenure.PRIVATE_PROPERTY = Tenure.objects.get(name="Private Property")
-Tenure.OTHER_CROWN = Tenure.objects.get(name="Other Crown")
+
+try:
+    Tenure.OTHER = Tenure.objects.get(name="Other")
+except ObjectDoesNotExist as ex:
+    raise
+except:
+    Tenure.OTHER = None
+
+try:
+    Tenure.PRIVATE_PROPERTY = Tenure.objects.get(name="Private Property")
+except ObjectDoesNotExist as ex:
+    raise
+except:
+    Tenure.PRIVATE_PROPERTY = None
+
+try: 
+    Tenure.OTHER_CROWN = Tenure.objects.get(name="Other Crown")
+except ObjectDoesNotExist as ex:
+    raise
+except:
+    Tenure.OTHER_CROWN = None
+
 
 
 @python_2_unicode_compatible
@@ -771,14 +795,29 @@ class FuelType(models.Model):
 @python_2_unicode_compatible
 class Cause(models.Model):
     name = models.CharField(max_length=50)
+    report_name = models.CharField(max_length=50,default="")
+    report_order = models.PositiveSmallIntegerField(verbose_name='order in annual report',default=1)
 
     class Meta:
         ordering = ['id']
 
     def __str__(self):
         return self.name
-Cause.OTHER = Cause.objects.get(name="Other (specify)")
-Cause.ESCAPE_DPAW_BURNING = Cause.objects.get(name="Escape P&W burning")
+
+try:
+    Cause.OTHER = Cause.objects.get(name="Other (specify)")
+except ObjectDoesNotExist as ex:
+    raise
+except:
+    Cause.OTHER = None
+
+try:
+    Cause.ESCAPE_DPAW_BURNING = Cause.objects.get(name="Escape P&W burning")
+except ObjectDoesNotExist as ex:
+    raise
+except:
+    Cause.ESCAPE_DPAW_BURNING = None
+
 
 @python_2_unicode_compatible
 class Agency(models.Model):
