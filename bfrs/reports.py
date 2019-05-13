@@ -39,6 +39,17 @@ region_order = {
     'Wheatbelt':-96
 }
 
+sorted_regions = {}
+def get_sorted_regions(forest_region=None):
+    key = "all" if forest_region is None else ("forest" if forest_region else "nonforest")
+    if key not in sorted_regions:
+        if forest_region is None:
+            sorted_regions[key] = sorted(Region.objects.all(),cmp=lambda r1,r2: cmp(region_order.get(r1.name,r1.id),region_order.get(r2.name,r2.id)))
+        else:
+            sorted_regions[key] = sorted(Region.objects.filter(forest_region=forest_region),cmp=lambda r1,r2: cmp(region_order.get(r1.name,r1.id),region_order.get(r2.name,r2.id)))
+
+    return sorted_regions[key]
+
 def style(bold=False, num_fmt='#,##0', horz_align=Alignment.HORZ_GENERAL, colour=None):
     style = XFStyle()
     font = Font()
@@ -198,7 +209,7 @@ class MinisterialReport():
 
         rpt_map = []
         item_map = {}
-        for region in sorted(Region.objects.filter(forest_region=True),cmp=lambda r1,r2: cmp(region_order.get(r1.name,r1.id),region_order.get(r2.name,r2.id))):
+        for region in get_sorted_regions(True):
             map_auth = [i for i in rpt_map_auth if i.has_key(region.name)][0]
             map_268  = [i for i in rpt_map_268 if i.has_key(region.name)][0]
             rpt_map.append({
@@ -231,7 +242,7 @@ class MinisterialReport():
             {'': ''}
         )
 
-        for region in sorted(Region.objects.filter(forest_region=False),cmp=lambda r1,r2: cmp(region_order.get(r1.name,r1.id),region_order.get(r2.name,r2.id))):
+        for region in get_sorted_regions(False):
             map_auth = [i for i in rpt_map_auth if i.has_key(region.name)][0]
             map_268  = [i for i in rpt_map_268 if i.has_key(region.name)][0]
             rpt_map.append({
@@ -491,7 +502,7 @@ class MinisterialReport268():
 
     def get_268_data(self, dbca_initial_control=None):
         """ Retrieves the 268b fires from PBS and Aggregates the Area and Number count by region """
-        qs_regions = Region.objects.all()
+        qs_regions = get_sorted_regions()
 
         if dbca_initial_control:
             # get the fires managed by DBCA
@@ -540,7 +551,7 @@ class MinisterialReport268():
         net_forest_total_all_tenure = 0
         net_forest_total_area     = 0
 
-        for region in sorted(Region.objects.filter(forest_region=True),cmp=lambda r1,r2: cmp(region_order.get(r1.name,r1.id),region_order.get(r2.name,r2.id))):
+        for region in get_sorted_regions(True):
             if data_268_pw.has_key(region.id):
                 pw_tenure      = data_268_pw[region.id]['number']
                 area_pw_tenure = data_268_pw[region.id]['area']
@@ -583,7 +594,7 @@ class MinisterialReport268():
         net_nonforest_total_all_tenure = 0
         net_nonforest_total_area     = 0
 
-        for region in sorted(Region.objects.filter(forest_region=False),cmp=lambda r1,r2: cmp(region_order.get(r1.name,r1.id),region_order.get(r2.name,r2.id))):
+        for region in get_sorted_regions(False):
             if data_268_pw.has_key(region.id):
                 pw_tenure      = data_268_pw[region.id]['number']
                 area_pw_tenure = data_268_pw[region.id]['area']
@@ -801,7 +812,7 @@ class MinisterialReportAuth():
             for result in cursor.fetchall():
                 total_area_data[result[0]] = result[1]
 
-        for region in sorted(Region.objects.filter(forest_region=True),cmp=lambda r1,r2: cmp(region_order.get(r1.name,r1.id),region_order.get(r2.name,r2.id))):
+        for region in get_sorted_regions(True):
             pw_tenure      = dbca_count_data.get(region.id,0)
             area_pw_tenure = round(dbca_area_data.get(region.id,0), 2) 
             total_all_area = total_count_data.get(region.id,0)
@@ -835,7 +846,7 @@ class MinisterialReportAuth():
         net_nonforest_total_all_area = 0
         net_nonforest_total_area     = 0
 
-        for region in sorted(Region.objects.filter(forest_region=False),cmp=lambda r1,r2: cmp(region_order.get(r1.name,r1.id),region_order.get(r2.name,r2.id))):
+        for region in get_sorted_regions(False):
             pw_tenure      = dbca_count_data.get(region.id,0)
             area_pw_tenure = round(dbca_area_data.get(region.id,0), 2) 
             total_all_area = total_count_data.get(region.id,0)
@@ -1817,7 +1828,7 @@ class RegionByTenureReport():
         
         tenure_count_total_forest={}
         tenure_area_total_forest = {}
-        for region in sorted(Region.objects.filter(forest_region=True),cmp=lambda r1,r2: cmp(region_order.get(r1.name,r1.id),region_order.get(r2.name,r2.id))):
+        for region in get_sorted_regions(True):
             region_count_data = count_data.get(region.id,{})
             region_area_data = area_data.get(region.id,{})
             region_data = {}
@@ -1842,7 +1853,7 @@ class RegionByTenureReport():
 
         tenure_count_total_nonforest={}
         tenure_area_total_nonforest = {}
-        for region in sorted(Region.objects.filter(forest_region=False),cmp=lambda r1,r2: cmp(region_order.get(r1.name,r1.id),region_order.get(r2.name,r2.id))):
+        for region in get_sorted_regions(False):
             region_count_data = count_data.get(region.id,{})
             region_area_data = area_data.get(region.id,{})
             region_data = {}
@@ -2308,7 +2319,7 @@ class BushfireIndicator():
         # Group By Region
         #qs = Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, reporting_year=self.reporting_year, region__in=Region.objects.filter(forest_region=False), first_attack__name='DBCA P&W')
         #qs = Bushfire.objects.filter(authorised_by__isnull=False, reporting_year=self.reporting_year, region__in=Region.objects.filter(forest_region=False), first_attack__name='DBCA P&W').exclude(report_status=Bushfire.STATUS_INVALIDATED)
-        qs = Bushfire.objects.filter(report_status__in=[Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED], reporting_year=self.reporting_year,fire_not_found=False, region__in=Region.objects.filter(forest_region=True), first_attack=Agency.DBCA)
+        qs = Bushfire.objects.filter(report_status__in=[Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED], reporting_year=self.reporting_year,fire_not_found=False, region__in=get_sorted_regions(True), first_attack=Agency.DBCA)
         qs1 = qs.aggregate(count=Count('id'), area=Sum('area') ) 
         qs2 = qs.filter(area__lt=2.0).aggregate(count=Count('id'), area=Sum('area') ) 
         count1 = qs1.get('count') if qs1.get('count') else 0

@@ -497,6 +497,13 @@ def refresh_originpoint_tenure(bushfire,is_snapshot):
                     "name":"brc_fms_le",
                     "category":"brc_fms_le"
                 },
+            },{
+                "id":"sa_nt_burntarea",
+                "layerid":"cddp:sa_nt_state_polygons_burntarea",
+                "kmiservice":settings.KMI_URL,
+                "properties":{
+                    "category":"name"
+                },
             }]
     }
     req_data["options"] = json.dumps(req_options)
