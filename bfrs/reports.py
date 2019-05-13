@@ -2310,7 +2310,7 @@ class BushfireIndicator():
         #qs = Bushfire.objects.filter(authorised_by__isnull=False, reporting_year=self.reporting_year, region__in=Region.objects.filter(forest_region=False), first_attack__name='DBCA P&W').exclude(report_status=Bushfire.STATUS_INVALIDATED)
         qs = Bushfire.objects.filter(report_status__in=[Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED], reporting_year=self.reporting_year,fire_not_found=False, region__in=Region.objects.filter(forest_region=True), first_attack=Agency.DBCA)
         qs1 = qs.aggregate(count=Count('id'), area=Sum('area') ) 
-        qs2 = qs.filter(area__lte=2.0).aggregate(count=Count('id'), area=Sum('area') ) 
+        qs2 = qs.filter(area__lt=2.0).aggregate(count=Count('id'), area=Sum('area') ) 
         count1 = qs1.get('count') if qs1.get('count') else 0
         count2 = qs2.get('count') if qs2.get('count') else 0
 
