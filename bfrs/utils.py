@@ -249,7 +249,19 @@ def get_tenure(category,createIfMissing=True):
             if not createIfMissing:
                 raise ObjectDoesNotExist("Tenure({}) Not Found".format(category))
             #can't find tenure through mapping and default mapping. create it as new tenure
-            tenure = Tenure(name=category)
+            default_group = 'ALL REGIONS'
+            last_group_tenure = Tenure.objects.filter(report_group=default_group).order_by("-report_order").first()
+            if last_group_tenure:
+                report_group_order = last_group_tenure.report_group_order
+                report_order = last_group_tenure.report_order + 10
+            else:
+                report_order = 10
+                last_group = Tenure.objects.all().order_by("-report_group_order").first()
+                if last_group:
+                    report_group_order = last_group.report_group_order + 1
+                else:
+                    report_group_order = 1
+            tenure = Tenure(name=category,report_name=category,report_group=default_group, report_group_order=report_group_order,report_order= report_order)
             tenure.save()
             TenureMapping(tenure=tenure,name=normalized_category).save()
             logger.info('The Tenure({}) is automatically created'.format(category))
