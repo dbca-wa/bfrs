@@ -3,6 +3,8 @@ import json
 import itertools
 import traceback
 import os
+import shutil
+import tempfile
 from datetime import datetime,timedelta
 from collections import defaultdict, OrderedDict
 
@@ -10,9 +12,13 @@ from django.core import serializers
 from django.conf import settings
 from django.db import IntegrityError, transaction
 from django.utils import timezone
+from django.contrib.gis.geos import Point, GEOSGeometry, Polygon, MultiPolygon, GEOSException
+from django.core.exceptions import ObjectDoesNotExist
+from django.contrib.auth.models import User
 
-from bfrs.models import (Bushfire, Tenure,AreaBurntSnapshot,AreaBurnt)
+from bfrs.models import (Bushfire, Tenure,AreaBurntSnapshot,AreaBurnt,BushfireSnapshot)
 from bfrs import utils
+from bfrs.utils import serialize_bushfire
 
 RERUN = 1
 RESUME = 2
@@ -343,12 +349,6 @@ def _refresh_spatial_data(bushfire,scope=BUSHFIRE,data_types=0):
     warnings = [] 
     if data_types == 0 or scope == 0:
         return warnings
-
-    if warnings is None:
-        warnings = {}
-        print_warnings = True
-    else:
-        print_warnings = False
 
     if scope & (BUSHFIRE | SNAPSHOT) == (BUSHFIRE | SNAPSHOT) :
         bushfires = itertools.chain([bushfire],bushfire.snapshots.all())
@@ -795,4 +795,117 @@ def refresh_burnt_area(bushfire,is_snapshot):
 
 
     return warning
+
+def exportBushfire(bushfire,folder=None):
+    """
+    export bushfire as geojson file
+    bushfire should be a Bushfire or BushfireSnapshot object
+    """
+    if not isinstance(bushfire,(Bushfire,BushfireSnapshot)):
+        raise Exception("Bushfire should be a Bushfire or BushfireSnapshot instance")
+    if folder:
+        if not os.path.exists(folder):
+            raise Exception("The folder '{}' doesn't exist".format(folder))
+        if not os.path.isdir(folder):
+            raise Exception("The path '{}' is not a folder".format(folder))
+    folder = folder or tempfile.gettempdir()
+    if isinstance(bushfire,Bushfire):
+        file_name = os.path.join(folder,"{}.geojson".format(bushfire.fire_number.replace(' ','_')))
+        fields = ('id','fire_number')
+    else:
+        file_name = os.path.join(folder,"{}_{}.geojson".format(bushfire.fire_number.replace(' ','_'),bushfire.created.strftime("%Y-%m-%d_%H%M%S")))
+        fields = ('id','fire_number','bushfire_id','created')
+
+    with open(file_name,'w') as f:
+        f.write(serializers.serialize('geojson',[bushfire],geometry_field='fire_boundary',fields=('id','fire_number')))
+
+    return file_name
+
+def exportBushfires(bushfires=None,reporting_year=None,folder=None):
+    if not bushfires:
+        if reporting_year:
+            bushfires = Bushfire.objects.filter(reporting_year=reporting_year)
+    if not bushfires:
+        return
+
+    for bushfire in bushfires:
+        exportBushfire(bushfire,folder)
+
+def importFireboundary(geojson_file,user=None):
+    """
+    import a bushfire's geojson file
+    """
+    if not os.path.exists(geojson_file):
+        raise Exception("The geojson file '{}' doesn't exist".format(geojson_file))
+    if os.path.isdir(geojson_file):
+        raise Exception("The path '{}' is not a file".format(geojson_file))
+
+
+    with open(geojson_file) as f:
+        json_obj = json.loads(f.read())
+
+    if not json_obj.get("features"):
+        return
+
+    user =  user or User.objects.filter(email__iexact = 'rocky.chen@dbca.wa.gov.au').first()
+    if not user:
+        raise Exception("User Not Found")
+
+    for feature in json_obj["features"]:
+        fire_number = feature.get('properties',{}).get('fire_number')
+        if not fire_number:
+            raise Exception("No fire_number found in file '{}'".format(geojson_file))
+        if not feature.get("geometry",{}).get('coordinates'):
+            raise Exception("No geometry found in file '{}'".format(geojson_file))
+        try:
+            bushfire = Bushfire.objects.get(fire_number=fire_number)
+        except ObjectDoesNotExist as ex:
+            raise Exception("The fire_number '{}' does not exist in bfrs".format(fire_number))
+        fire_boundary = MultiPolygon([Polygon(*p) for p in feature['geometry']['coordinates']])
+        #update fire boundary
+        bushfire.fire_boundary = fire_boundary
+        #refresh burnt area
+        warnings = _refresh_spatial_data(bushfire,scope=BUSHFIRE,data_types=BURNT_AREA)
+        if warnings:
+            errors = []
+            for key,msgs in warnings:
+                if key[0] != bushfire.id:
+                    continue
+                if key[3] != "ERROR":
+                    continue
+                for msg in msgs:
+                    errors.append(msg)
+            if errors:
+                raise Exception("Failed to calculate burnt area.{}{}".format(os.linesep,os.linesep.join(errors)))
+        bushfire.modifier = user
+        #save data
+        bushfire.save(update_fields=("fire_boundary","modifier","modified"))
+        #make snapshot
+        serialize_bushfire('final', 'Fix fire boundary issues by OIM', bushfire)
+
+def importFireboundaries(folder):
+    if not os.path.exists(folder):
+        raise Exception("The folder '{}' doesn't exist".format(folder))
+    if not os.path.isdir(folder):
+        raise Exception("The path '{}' is not a folder".format(folder))
+
+    geojson_files = sorted([f for f in os.listdir(folder) if f.lower().endswith(".geojson")])
+
+    processed_folder = os.path.join(folder,"processed")
+    if not os.path.exists(processed_folder):
+        os.mkdir(processed_folder)
+
+    for geojson_file in geojson_files:
+        print("Processing file '{}'".format(geojson_file))
+        source_file = os.path.join(folder,geojson_file)
+        processed_file = os.path.join(processed_folder,geojson_file)
+        try:
+            importFireboundary(source_file)
+            if os.path.exists(processed_file):
+                os.remove(processed_file)
+            shutil.move(source_file,processed_file)
+        except:
+            traceback.print_exc()
+
+            
 
