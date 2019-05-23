@@ -24,6 +24,9 @@ log/
 logs/
 *.log
 
+# tmp
+tmp/
+
 # Environment settings
 .env
 
