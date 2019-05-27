@@ -471,6 +471,15 @@ def refresh_originpoint_tenure(bushfire,is_snapshot):
         "action":"getFeature",
         "layers":[
             {
+                "id":"state_forest_plantation_distribution",
+                "layerid":"cddp:state_forest_plantation_distribution",
+                "kmiservice":settings.KMI_URL,
+                "properties":{
+                    "id":"ogc_fid",
+                    "name":"fbr_fire_r",
+                    "category":"fbr_fire_r"
+                },
+            },{
                 "id":"legislated_lands_and_waters",
                 "layerid":"cddp:legislated_lands_and_waters",
                 "kmiservice":settings.KMI_URL,
@@ -544,143 +553,162 @@ def refresh_originpoint_tenure(bushfire,is_snapshot):
 
 def refresh_burnt_area(bushfire,is_snapshot):
     warning = None
-    if not bushfire.fire_boundary:
-        #no fire boundary, no need to refresh
-        if is_snapshot:
-            print("The bushfire report({})'s snapshot(id={},fire_number='{}',snapshot_type='{}',action='{}') has no fire boundary".format(bushfire.bushfire.fire_number,bushfire.id,bushfire.fire_number,bushfire.snapshot_type,bushfire.action))
-        else:
-            print("The bushfire report({}) has no fire boundary".format(bushfire.fire_number))
-        return warning
-
-    update_fields = ["fb_validation_req","other_area"]
-    req_data = {"features":serializers.serialize('geojson',[bushfire],geometry_field='fire_boundary',fields=('id','fire_number'))}
-    req_options = {}
+    area_burnt_objects = []
+    update_fields = None
     layers =  None
-    if (bushfire.report_status == Bushfire.STATUS_INITIAL ) :
-        layers =  None
-    else: 
-        layers = [{
-            "id":"legislated_lands_and_waters",
-            "layerid":"cddp:legislated_lands_and_waters",
-            "kmiservice":settings.KMI_URL,
-            "properties":{
-                "category":"category"
-            },
-        },{
-            "id":"dept_interest_lands_and_waters",
-            "layerid":"cddp:dept_interest_lands_and_waters",
-            "kmiservice":settings.KMI_URL,
-            "properties":{
-                "category":"category"
-            },
-        },{
-            "id":"other_tenures",
-            "layerid":"cddp:other_tenures_new",
-            "kmiservice":settings.KMI_URL,
-            "properties":{
-                "category":"brc_fms_le"
-            },
-        },{
-            "id":"sa_nt_burntarea",
-            "layerid":"cddp:sa_nt_state_polygons_burntarea",
-            "kmiservice":settings.KMI_URL,
-            "properties":{
-                "category":"name"
-            },
-        }]
-
-    
-    req_options["area"] = {
-        "action":"getArea",
-        "layers":layers,
-        "layer_overlap":False,
-        "merge_result":True,
-        "unit":"ha",
-    }
-    req_data["options"] = json.dumps(req_options)
-    resp=requests.post(url="{}/spatial".format(settings.SSS_URL), data=req_data,auth=requests.auth.HTTPBasicAuth(settings.USER_SSO, settings.PASS_SSO),verify=settings.SSS_CERTIFICATE_VERIFY)
-    resp.raise_for_status()
-    result = resp.json()
-    fb_validation_req = None
+    overlap_area = None
     try:
-        #check result
-        if result["features"]:
-            area_data_status = result["features"][0]["area"]["status"]
-            if area_data_status.get("failed") :
-                raise Exception(area_data_status["failed"])
-            else:
-                if area_data_status.get("invalid"):
-                    fb_validation_req = True
-                else:
-                    fb_validation_req = None
-        else:
-            raise Exception("Unknown Exception")
-
-        area_data = result["features"][0]["area"]["data"]
-        #group burnt area
-        area_burnt_objects = []
-        total_area = 0
-        if layers:
-            #aggregate the area's in like tenure types
-            aggregated_sums = defaultdict(float)
-            for layerid in area_data.get("layers",{}):
-                for data in area_data["layers"][layerid]['areas']:
-                    aggregated_sums[utils.get_tenure(data["category"],createIfMissing=False)] += data["area"]
-                    total_area += data["area"]
-        
-            area_unknown = 0.0
-            for tenure, area in aggregated_sums.iteritems():
-                area = round(area,2)
-                if area > 0:
+        if not bushfire.fire_boundary:
+            #no fire boundary,
+            if (bushfire.report_status != Bushfire.STATUS_INITIAL ) :
+                if bushfire.area > 0:
                     if is_snapshot:
-                        area_burnt_objects.append([{"snapshot":bushfire, "tenure":tenure},{"snapshot_type":bushfire.snapshot_type, "area":area,"created":timezone.now(),"modified":timezone.now()},None,None])
+                        area_burnt_objects.append([{"snapshot":bushfire, "tenure":bushfire.tenure or Tenure.OTHER},{"snapshot_type":bushfire.snapshot_type, "area":bushfire.area,"created":timezone.now(),"modified":timezone.now()},None,None])
                     else:
-                        area_burnt_objects.append([{"bushfire":bushfire, "tenure":tenure},{"area":area},None,None])
+                        area_burnt_objects.append([{"bushfire":bushfire, "tenure":bushfire.tenure or Tenure.OTHER},{"area":bushfire.area},None,None])
+    
+        else:
+            update_fields = ["fb_validation_req","other_area"]
+            req_data = {"features":serializers.serialize('geojson',[bushfire],geometry_field='fire_boundary',fields=('id','fire_number'))}
+            req_options = {}
+            if (bushfire.report_status == Bushfire.STATUS_INITIAL ) :
+                layers =  None
+            else: 
+                layers = [{
+                    "id":"legislated_lands_and_waters",
+                    "layerid":"cddp:legislated_lands_and_waters",
+                    "cqlfilter":"category<>'State Forest'",
+                    "kmiservice":settings.KMI_URL,
+                    "properties":{
+                        "category":"category"
+                    },
+                },{
+                    "id":"state_forest_plantation_distribution",
+                    "layerid":"cddp:state_forest_plantation_distribution",
+                    "kmiservice":settings.KMI_URL,
+                    "properties":{
+                        "category":"fbr_fire_r"
+                    },
+                },{
+                    "id":"dept_interest_lands_and_waters",
+                    "layerid":"cddp:dept_interest_lands_and_waters",
+                    "kmiservice":settings.KMI_URL,
+                    "properties":{
+                        "category":"category"
+                    },
+                },{
+                    "id":"other_tenures",
+                    "layerid":"cddp:other_tenures_new",
+                    "kmiservice":settings.KMI_URL,
+                    "properties":{
+                        "category":"brc_fms_le"
+                    },
+                },{
+                    "id":"sa_nt_burntarea",
+                    "layerid":"cddp:sa_nt_state_polygons_burntarea",
+                    "kmiservice":settings.KMI_URL,
+                    "properties":{
+                        "category":"name"
+                    },
+                }]
         
-            if "other_area" in area_data:
-                area_unknown += area_data["other_area"]
-        
-            area_unknown = round(area_unknown,2)
-            if area_unknown > 0 :
-                if is_snapshot:
-                    area_burnt_objects.append([{"snapshot":bushfire, "tenure":Tenure.OTHER},{"snapshot_type":bushfire.snapshot_type, "area":area_unknown,"created":timezone.now(),"modified":timezone.now()},None,None])
-                else:
-                    area_burnt_objects.append([{"bushfire":bushfire, "tenure":Tenure.OTHER},{"area":area_unknown},None,None])
-                total_area += area_unknown
+            
+            req_options["area"] = {
+                "action":"getArea",
+                "layers":layers,
+                "layer_overlap":False,
+                "merge_result":True,
+                "unit":"ha",
+            }
+            req_data["options"] = json.dumps(req_options)
+            resp=requests.post(url="{}/spatial".format(settings.SSS_URL), data=req_data,auth=requests.auth.HTTPBasicAuth(settings.USER_SSO, settings.PASS_SSO),verify=settings.SSS_CERTIFICATE_VERIFY)
+            resp.raise_for_status()
+            result = resp.json()
+            fb_validation_req = None
 
-                if is_snapshot:
-                    warning  = "The bushfire report({})'s snapshot(id={},fire_number='{}',snapshot_type='{}',action='{}') has {} other burnt area".format(
-                        bushfire.bushfire.fire_number,
-                        bushfire.id,
-                        bushfire.fire_number,
-                        bushfire.snapshot_type,
-                        bushfire.action,
-                        area_unknown
-                    )
+            #check result
+            if result["features"]:
+                area_data_status = result["features"][0]["area"]["status"]
+                if area_data_status.get("failed") :
+                    raise Exception(area_data_status["failed"])
                 else:
-                    warning = "The bushfire report({}) has {} other burnt area".format(bushfire.fire_number,area_unknown)
+                    if area_data_status.get("invalid"):
+                        fb_validation_req = True
+                    else:
+                        fb_validation_req = None
+            else:
+                raise Exception("Unknown Exception")
+    
+            area_data = result["features"][0]["area"]["data"]
+            #group burnt area
+            total_area = 0
+            if layers:
+                #aggregate the area's in like tenure types
+                aggregated_sums = defaultdict(float)
+                for layerid in area_data.get("layers",{}):
+                    for data in area_data["layers"][layerid]['areas']:
+                        aggregated_sums[utils.get_tenure(data["category"],createIfMissing=False)] += data["area"]
+                        total_area += data["area"]
+            
+                area_unknown = 0.0
+                for tenure, area in aggregated_sums.iteritems():
+                    area = round(area,2)
+                    if area > 0:
+                        if is_snapshot:
+                            area_burnt_objects.append([{"snapshot":bushfire, "tenure":tenure},{"snapshot_type":bushfire.snapshot_type, "area":area,"created":timezone.now(),"modified":timezone.now()},None,None])
+                        else:
+                            area_burnt_objects.append([{"bushfire":bushfire, "tenure":tenure},{"area":area},None,None])
+            
+                if "other_area" in area_data:
+                    area_unknown += area_data["other_area"]
+            
+                area_unknown = round(area_unknown,2)
+                if area_unknown > 0 :
+                    if is_snapshot:
+                        area_burnt_objects.append([{"snapshot":bushfire, "tenure":Tenure.OTHER},{"snapshot_type":bushfire.snapshot_type, "area":area_unknown,"created":timezone.now(),"modified":timezone.now()},None,None])
+                    else:
+                        area_burnt_objects.append([{"bushfire":bushfire, "tenure":Tenure.OTHER},{"area":area_unknown},None,None])
+                    total_area += area_unknown
+    
+                    if is_snapshot:
+                        warning  = "The bushfire report({})'s snapshot(id={},fire_number='{}',snapshot_type='{}',action='{}') has {} other burnt area".format(
+                            bushfire.bushfire.fire_number,
+                            bushfire.id,
+                            bushfire.fire_number,
+                            bushfire.snapshot_type,
+                            bushfire.action,
+                            area_unknown
+                        )
+                    else:
+                        warning = "The bushfire report({}) has {} other burnt area".format(bushfire.fire_number,area_unknown)
 
+            if layers:
+                overlap_area = round(total_area - area_data['total_area'],2)
+            else:
+                overlap_area = None
+    
 
         with transaction.atomic():
             #update bushfire
-            if area_data.get('other_area'):
-                bushfire.other_area = round(float(area_data['other_area']),2)
-            else:
-                bushfire.other_area = 0
+            if bushfire.fire_boundary:
+                if area_data.get('other_area'):
+                    bushfire.other_area = round(float(area_data['other_area']),2)
+                else:
+                    bushfire.other_area = 0
     
-            if bushfire.report_status < Bushfire.STATUS_INITIAL_AUTHORISED:
-                update_fields.append("initial_area_unknown")
-                update_fields.append("initial_area")
-                bushfire.initial_area_unknown = False
-                bushfire.initial_area = round(float(area_data['total_area']),2)
-            else:
-                update_fields.append("area_limit")
-                update_fields.append("area")
-                bushfire.area_limit = False
-                bushfire.area = round(float(area_data['total_area']),2)
+                if bushfire.report_status < Bushfire.STATUS_INITIAL_AUTHORISED:
+                    update_fields.append("initial_area_unknown")
+                    update_fields.append("initial_area")
+                    bushfire.initial_area_unknown = False
+                    bushfire.initial_area = round(float(area_data['total_area']),2)
+                else:
+                    update_fields.append("area_limit")
+                    update_fields.append("area")
+                    bushfire.area_limit = False
+                    bushfire.area = round(float(area_data['total_area']),2)
     
-            bushfire.fb_validation_req = fb_validation_req
-            bushfire.save(update_fields=update_fields)
+                bushfire.fb_validation_req = fb_validation_req
+                bushfire.save(update_fields=update_fields)
     
             #update burnt area
             area_ids = []
@@ -728,10 +756,6 @@ def refresh_burnt_area(bushfire,is_snapshot):
 
 
         #print
-        if layers:
-            overlap_area = round(total_area - area_data['total_area'],2)
-        else:
-            overlap_area = None
         if is_snapshot:
             if bushfire.report_status < Bushfire.STATUS_INITIAL_AUTHORISED:
                 print("The bushfire report({})'s snapshot(id={},fire_number='{}',snapshot_type='{}',action='{}') initial_area_unknown={} initial_area={} other_area={} fb_validation_req={} overlap_area={}".format(
@@ -831,7 +855,7 @@ def exportBushfires(bushfires=None,reporting_year=None,folder=None):
     for bushfire in bushfires:
         exportBushfire(bushfire,folder)
 
-def importFireboundary(geojson_file,user=None):
+def importFireboundary(geojson_file,user=None,create_snapshot=True,action=None):
     """
     import a bushfire's geojson file
     """
@@ -864,26 +888,28 @@ def importFireboundary(geojson_file,user=None):
         fire_boundary = MultiPolygon([Polygon(*p) for p in feature['geometry']['coordinates']])
         #update fire boundary
         bushfire.fire_boundary = fire_boundary
-        #refresh burnt area
-        warnings = _refresh_spatial_data(bushfire,scope=BUSHFIRE,data_types=BURNT_AREA)
-        if warnings:
-            errors = []
-            for key,msgs in warnings:
-                if key[0] != bushfire.id:
-                    continue
-                if key[3] != "ERROR":
-                    continue
-                for msg in msgs:
-                    errors.append(msg)
-            if errors:
-                raise Exception("Failed to calculate burnt area.{}{}".format(os.linesep,os.linesep.join(errors)))
         bushfire.modifier = user
+        if bushfire.report_status > Bushfire.STATUS_INITIAL:
+            #refresh burnt area
+            warnings = _refresh_spatial_data(bushfire,scope=BUSHFIRE,data_types=BURNT_AREA)
+            if warnings:
+                errors = []
+                for key,msgs in warnings:
+                    if key[0] != bushfire.id:
+                        continue
+                    if key[3] != "ERROR":
+                        continue
+                    for msg in msgs:
+                        errors.append(msg)
+                if errors:
+                    raise Exception("Failed to calculate burnt area.{}{}".format(os.linesep,os.linesep.join(errors)))
         #save data
         bushfire.save(update_fields=("fire_boundary","modifier","modified"))
         #make snapshot
-        serialize_bushfire('final', 'Fix fire boundary issues by OIM', bushfire)
+        if create_snapshot:
+            serialize_bushfire('final', (action or 'Fix fire boundary issues by OIM'), bushfire)
 
-def importFireboundaries(folder):
+def importFireboundaries(folder,user=None,create_snapshot=True,action=None):
     if not os.path.exists(folder):
         raise Exception("The folder '{}' doesn't exist".format(folder))
     if not os.path.isdir(folder):
@@ -895,12 +921,16 @@ def importFireboundaries(folder):
     if not os.path.exists(processed_folder):
         os.mkdir(processed_folder)
 
+    user =  user or User.objects.filter(email__iexact = 'rocky.chen@dbca.wa.gov.au').first()
+    if not user:
+        raise Exception("User Not Found")
+
     for geojson_file in geojson_files:
         print("Processing file '{}'".format(geojson_file))
         source_file = os.path.join(folder,geojson_file)
         processed_file = os.path.join(processed_folder,geojson_file)
         try:
-            importFireboundary(source_file)
+            importFireboundary(source_file,user=user,create_snapshot=create_snapshot,action=action)
             if os.path.exists(processed_file):
                 os.remove(processed_file)
             shutil.move(source_file,processed_file)
