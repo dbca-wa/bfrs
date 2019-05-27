@@ -1340,7 +1340,7 @@ class BushfireByTenureReport():
         # Group By Region
         #qs = Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED)
         report_group_sql = """
-        SELECT distinct report_group,report_group_order from bfrs_tenure order by report_group_order
+        SELECT distinct report_group,report_group_order from bfrs_tenure where report_group_order > 0 order by report_group_order
         """
         report_name_sql = """
         SELECT distinct report_name,report_order from bfrs_tenure where report_group='{report_group}' order by report_order
