@@ -362,7 +362,6 @@ class BushfireBase(Audit,DictMixin):
     other_cause = models.CharField(verbose_name='Other Fire Cause', max_length=64, null=True, blank=True)
     prescribed_burn_id = models.CharField(verbose_name='Prescribed Burn ID', max_length=7, null=True, blank=True)
     tenure = models.ForeignKey('Tenure', verbose_name="Tenure of Ignition Point", null=True, blank=True)
-    other_tenure = models.PositiveSmallIntegerField(verbose_name="Tenure of ignition point (crown/private)", choices=IGNITION_POINT_CHOICES, null=True, blank=True)
 
     dfes_incident_no = models.CharField(verbose_name='DFES Fire Number', max_length=32, null=True, blank=True)
     job_code = models.CharField(verbose_name="Job Code", max_length=12, null=True, blank=True)
