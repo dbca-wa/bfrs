@@ -986,7 +986,6 @@ FIRE_BOMBING_GOLIVE_DATE = datetime(2018,11,23,tzinfo=pytz.timezone("Australia/P
 SUBMIT_MANDATORY_DEP_FIELDS= {
     'dispatch_pw': [[1, 'dispatch_pw_date']], # if 'dispatch_pw' == 1 then 'dispatch_pw_date' is required
     'initial_control': [[Agency.OTHER, 'other_initial_control']],
-    'tenure': [[Tenure.OTHER, 'other_tenure']],
     'dispatch_aerial': [[True, 'dispatch_aerial_date']],
     ('dispatch_aerial',lambda bf:bf.report_status == Bushfire.STATUS_INITIAL or (bf.init_authorised_date and bf.init_authorised_date > FIRE_BOMBING_GOLIVE_DATE)):[[True,("fire_bombing.ground_controller.username","Ground Controller"),("fire_bombing.ground_controller.callsign","Ground Controller Call Sign"),("fire_bombing.radio_channel","Radio Channel"),("fire_bombing.prefered_resources","Prefered Resource"),("fire_bombing.activation_criterias","Indicate Requesting Activation Criteria")]]
 }

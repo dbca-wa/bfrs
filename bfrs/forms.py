@@ -218,7 +218,6 @@ class BaseBushfireViewForm(baseforms.ModelForm):
             "initial_control":basefields.OtherOptionFieldFactory(Bushfire,"initial_control",("other_initial_control",),other_option=Agency.OTHER),
             "first_attack":basefields.OtherOptionFieldFactory(Bushfire,"first_attack",("other_first_attack",),other_option=Agency.OTHER),
             "final_control":basefields.OtherOptionFieldFactory(Bushfire,"final_control",("other_final_control",),other_option=Agency.OTHER),
-            #"tenure":basefields.OtherOptionFieldFactory(Bushfire,"tenure",("other_tenure",),other_option=Tenure.OTHER,policy=basefields.DATA_MAP,other_layout={1:"{0}<br>Private Property",2:"{0}<br>Other Crown"}),
             "origin_point":basefields.SwitchFieldFactory(Bushfire,"origin_point",("origin_point_mga","origin_point_grid"),true_value="",reverse=True,on_layout=u"{}",off_layout=u"{}<br>{}<br>{}"),
             "field_officer":basefields.OtherOptionFieldFactory(Bushfire,"field_officer",("other_field_officer","other_field_officer_agency","other_field_officer_phone"),
                 other_option=User.OTHER,
@@ -242,7 +241,6 @@ class BaseBushfireViewForm(baseforms.ModelForm):
             "park_trail_impacted":basefields.ChoiceFieldFactory(YESNO_CHOICES,field_params={"coerce":coerce_YESNO,"empty_value":None}),
             "prob_fire_level":basefields.ChoiceFieldFactory(Bushfire.FIRE_LEVEL_CHOICES,field_params={"coerce":coerce_int,"empty_value":None}),
             "report_status":basefields.ChoiceFieldFactory(Bushfire.REPORT_STATUS_CHOICES,field_params={"coerce":coerce_int,"empty_value":None}),
-            "other_tenure":basefields.ChoiceFieldFactory(Bushfire.IGNITION_POINT_CHOICES,field_params={"coerce":coerce_int,"empty_value":None}),
             "reporting_year":basefields.ChoiceFieldFactory(REPORTING_YEAR_CHOICES,field_params={"coerce":coerce_int,"empty_value":None}),
             "dispatch_aerial":basefields.SwitchFieldFactory(Bushfire,"fire_bombing_req",("dispatch_aerial_date","fire_bombing.ground_controller.username","fire_bombing.ground_controller.callsign","fire_bombing.radio_channel","fire_bombing.sar_arrangements","fire_bombing.prefered_resources","fire_bombing.flight_hazards","fire_bombing.response","fire_bombing.activation_criterias","fire_bombing.operational_base_established"),field_class=basefields.ChoiceFieldFactory(YESNO_CHOICES),policy=basefields.ALWAYS,
                 off_layout="""{}""",
@@ -474,11 +472,9 @@ class BaseBushfireEditForm(BushfireViewForm):
                 cleaned_data['tenure'] = self.instance.tenure
 
             if 'tenure' in cleaned_data:
-                if cleaned_data['tenure'] !=Tenure.OTHER:
-                    cleaned_data["other_tenure"] = None
+                pass
             else:
                 cleaned_data['tenure'] = None
-                cleaned_data["other_tenure"] = None
 
         if self.is_editable('reporting_year'):
             reporting_year = cleaned_data.get('reporting_year')
@@ -580,15 +576,8 @@ class BaseBushfireEditForm(BushfireViewForm):
         if self.is_editable("area"):
             if self.instance.area_limit:
                 # if user selects there own final area, set the area to the tenure of ignition point (Tenure, Other Crown, (Other) Private Property)
-                if self.instance.other_tenure == Bushfire.IGNITION_POINT_PRIVATE:
-                    self.instance.tenures_burnt.exclude(tenure=Tenure.PRIVATE_PROPERTY).delete()
-                    self.instance.tenures_burnt.update_or_create(tenure=Tenure.PRIVATE_PROPERTY, defaults={"area": self.instance.area})
-                elif self.instance.other_tenure == Bushfire.IGNITION_POINT_CROWN:
-                    self.instance.tenures_burnt.exclude(tenure=Tenure.OTHER_CROWN).delete()
-                    self.instance.tenures_burnt.update_or_create(tenure=Tenure.OTHER_CROWN, defaults={"area": self.instance.area})
-                elif not self.instance.other_tenure:
-                    self.instance.tenures_burnt.exclude(tenure=self.instance.tenure).delete()
-                    self.instance.tenures_burnt.update_or_create(tenure=self.instance.tenure, defaults={"area": self.instance.area})
+                self.instance.tenures_burnt.exclude(tenure=self.instance.tenure).delete()
+                self.instance.tenures_burnt.update_or_create(tenure=self.instance.tenure, defaults={"area": self.instance.area})
             elif not self.instance.final_fire_boundary:
                 #no final fire boundary, no area limit, delete the burning areas
                 self.instance.tenures_burnt.all().delete()
@@ -776,7 +765,6 @@ class InitialBushfireForm(SubmittedBushfireForm):
             "initial_control":None,
             "other_initial_control":None,
             #"tenure":None,
-            #"other_tenure":forms.RadioSelect(renderer=HorizontalRadioRenderer),
             "media_alert_req":basewidgets.SwitchWidgetFactory(forms.RadioSelect,true_value=True,html="<span>call PICA on 9219 9999</span>")(renderer=HorizontalRadioRenderer),
             "park_trail_impacted":basewidgets.SwitchWidgetFactory(forms.RadioSelect,true_value=True,html="<span>PVS will be notified by email</span>")(renderer=HorizontalRadioRenderer),
             "dispatch_aerial":forms.RadioSelect(renderer=HorizontalRadioRenderer),

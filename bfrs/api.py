@@ -228,16 +228,8 @@ class BushfireResource(APIResource):
             if request.GET.get('year'):
                 qs = qs.filter(year=request.GET.get('year'))
 
-            qs = qs.order_by('fire_number').values('fire_number', 'name', 'tenure__name', 'other_tenure')
+            qs = qs.order_by('fire_number').values('fire_number', 'name', 'tenure__name')
 
-            for i in qs:
-                if i['other_tenure']:
-                    if i['other_tenure'] == Bushfire.IGNITION_POINT_CROWN:
-                        i['other_tenure'] = 'Other - Crown'
-                    elif i['other_tenure'] == Bushfire.IGNITION_POINT_PRIVATE:
-                        i['other_tenure'] = 'Other - Private'
-                    else:
-                        i['other_tenure'] = 'Other'
 
             return self.create_response(request, data=list(qs))
 
