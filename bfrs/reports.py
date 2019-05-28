@@ -792,25 +792,25 @@ class MinisterialReportAuth():
                 agency_condition = "initial_control_id={}".format(Agency.DBCA.pk)
             ))
             for result in cursor.fetchall():
-                dbca_count_data[result[0]] = result[1]
+                dbca_count_data[result[0]] = result[1] or 0
 
             cursor.execute(count_sql.format(
                 agency_condition = "initial_control_id is not null"
             ))
             for result in cursor.fetchall():
-                total_count_data[result[0]] = result[1]
+                total_count_data[result[0]] = result[1] or 0
 
             cursor.execute(area_sql.format(
                 agency_condition = "initial_control_id={}".format(Agency.DBCA.pk)
             ))
             for result in cursor.fetchall():
-                dbca_area_data[result[0]] = result[1]
+                dbca_area_data[result[0]] = result[1] or 0
 
             cursor.execute(area_sql.format(
                 agency_condition = "initial_control_id is not null"
             ))
             for result in cursor.fetchall():
-                total_area_data[result[0]] = result[1]
+                total_area_data[result[0]] = result[1] or 0
 
         for region in get_sorted_regions(True):
             pw_tenure      = dbca_count_data.get(region.id,0)
@@ -1124,28 +1124,28 @@ class QuarterlyReport():
                 agency_condition = "initial_control_id={}".format(Agency.DBCA.pk)
             ))
             result = cursor.fetchone()
-            forest_pw_tenure = result[0]
+            forest_pw_tenure = result[0] or 0
 
             cursor.execute(area_sql.format(
                 forest_region = 'true',
                 agency_condition = "initial_control_id={}".format(Agency.DBCA.pk)
             ))
             result = cursor.fetchone()
-            forest_area_pw_tenure = result[0]
+            forest_area_pw_tenure = result[0] or 0
 
             cursor.execute(count_sql.format(
                 forest_region = 'true',
                 agency_condition = "initial_control_id!={}".format(Agency.DBCA.pk)
             ))
             result = cursor.fetchone()
-            forest_non_pw_tenure = result[0]
+            forest_non_pw_tenure = result[0] or 0
 
             cursor.execute(area_sql.format(
                 forest_region = 'true',
                 agency_condition = "initial_control_id!={}".format(Agency.DBCA.pk)
             ))
             result = cursor.fetchone()
-            forest_area_non_pw_tenure = result[0]
+            forest_area_non_pw_tenure = result[0] or 0
 
             forest_tenure_total = forest_pw_tenure + forest_non_pw_tenure 
             forest_area_total = forest_area_pw_tenure + forest_area_non_pw_tenure
@@ -1163,28 +1163,28 @@ class QuarterlyReport():
                 agency_condition = "initial_control_id={}".format(Agency.DBCA.pk)
             ))
             result = cursor.fetchone()
-            nonforest_pw_tenure = result[0]
+            nonforest_pw_tenure = result[0] or 0
 
             cursor.execute(area_sql.format(
                 forest_region = 'false',
                 agency_condition = "initial_control_id={}".format(Agency.DBCA.pk)
             ))
             result = cursor.fetchone()
-            nonforest_area_pw_tenure = result[0]
+            nonforest_area_pw_tenure = result[0] or 0
 
             cursor.execute(count_sql.format(
                 forest_region = 'false',
                 agency_condition = "initial_control_id!={}".format(Agency.DBCA.pk)
             ))
             result = cursor.fetchone()
-            nonforest_non_pw_tenure = result[0]
+            nonforest_non_pw_tenure = result[0] or 0
 
             cursor.execute(area_sql.format(
                 forest_region = 'false',
                 agency_condition = "initial_control_id!={}".format(Agency.DBCA.pk)
             ))
             result = cursor.fetchone()
-            nonforest_area_non_pw_tenure = result[0]
+            nonforest_area_non_pw_tenure = result[0] or 0
 
             nonforest_tenure_total = nonforest_pw_tenure + nonforest_non_pw_tenure 
             nonforest_area_total = nonforest_area_pw_tenure + nonforest_area_non_pw_tenure
@@ -1388,15 +1388,15 @@ class BushfireByTenureReport():
                     counts.append(year_counts)
                     cursor.execute(count_sql.format(year=y,report_group=report_group))
                     for result in cursor.fetchall():
-                        year_counts[result[0]] = result[1]
-                        year_counts["total"] += result[1]
+                        year_counts[result[0]] = result[1] or 0
+                        year_counts["total"] += result[1] or 0
 
                     year_areas = {"total":0}
                     areas.append(year_areas)
                     cursor.execute(area_sql.format(year=y,report_group=report_group))
                     for result in cursor.fetchall():
-                        year_areas[result[0]] = result[1]
-                        year_areas["total"] += result[1]
+                        year_areas[result[0]] = result[1] or 0
+                        year_areas["total"] += result[1] or 0
 
 
                 cursor.execute(report_name_sql.format(report_group=report_group))
@@ -1593,8 +1593,8 @@ class BushfireByCauseReport():
                 if year >= 2017:
                     cursor.execute(count_sql.format(reporting_year=year))
                     for result in cursor.fetchall():
-                        year_count_data[result[0]] = result[1]
-                        year_total_count += result[1]
+                        year_count_data[result[0]] = result[1] or 0
+                        year_total_count += result[1] or 0
                 else:
                     data = read_col(year,'count')[0]
                     for cause in all_causes:
@@ -1608,7 +1608,7 @@ class BushfireByCauseReport():
         for cause in all_causes:
             if rpt_map and cause.report_name in rpt_map[-1]:
                 for i in range(0,len(year_count_list),1):
-                    rpt_map[-1][cause.report_name]["count{}".format(i)] = rpt_map[-1][cause.report_name]["count{}".format(i)] + year_count_list[i][cause.id]
+                    rpt_map[-1][cause.report_name]["count{}".format(i)] = rpt_map[-1][cause.report_name]["count{}".format(i)] + year_count_list[i].get(cause.id,0)
                     rpt_map[-1][cause.report_name]["perc{}".format(i)] = rpt_map[-1][cause.report_name]["count{}".format(i)] * 100 / (year_total_count_list[i] * 1.0)
 
             else:
@@ -1809,7 +1809,7 @@ class RegionByTenureReport():
             for result in cursor.fetchall():
                 region_id = result[0]
                 tenure_name = result[1]
-                report_count = result[2]
+                report_count = result[2] or 0
 
                 if region_id not in count_data:
                     count_data[region_id] = {}
@@ -1820,7 +1820,7 @@ class RegionByTenureReport():
             for result in cursor.fetchall():
                 region_id = result[0]
                 tenure_name = result[1]
-                report_area = result[2]
+                report_area = result[2] or 0
 
                 if region_id not in area_data:
                     area_data[region_id] = {}
@@ -2043,8 +2043,8 @@ class Bushfire10YrAverageReport():
                 if year >= 2017:
                     cursor.execute(count_sql.format(reporting_year=year))
                     for result in cursor.fetchall():
-                        year_count_data[result[0]] = result[1]
-                        year_total_count += result[1]
+                        year_count_data[result[0]] = result[1] or 0
+                        year_total_count += result[1] or 0
                 else:
                     data = read_col(year,'count')[0]
                     for cause in all_causes:
@@ -2062,7 +2062,7 @@ class Bushfire10YrAverageReport():
         for cause in all_causes:
             if rpt_map and cause.report_name in rpt_map[-1]:
                 for i in range(0,len(year_count_list),1):
-                    rpt_map[-1][cause.report_name]["count{}".format(i)] = rpt_map[-1][cause.report_name]["count{}".format(i)] + year_count_list[i][cause.id]
+                    rpt_map[-1][cause.report_name]["count{}".format(i)] = rpt_map[-1][cause.report_name]["count{}".format(i)] + year_count_list[i].get(cause.id,0)
                     rpt_map[-1][cause.report_name]["perc{}".format(i)] = rpt_map[-1][cause.report_name]["count{}".format(i)] * 100 / (year_total_count_list[i] * 1.0)
                     rpt_map[-1][cause.report_name]["total_count"] += year_count_list[i].get(cause.id,0)
 
