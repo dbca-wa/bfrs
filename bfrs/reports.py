@@ -2329,7 +2329,10 @@ class BushfireIndicator():
         item_map = {}
         rpt_map.append({'No of bushfires in the Forest Regions where DBCA was the initial attack agency': dict(count=count1)})
         rpt_map.append({'No of bushfires in the Forest Regions <2ha, where DBCA was the initial attack agency': dict(count=count2)})
-        rpt_map.append({'Percentage': dict(count=round(count2*100./count1, 2))})
+        if count1 == 0:
+            rpt_map.append({'Percentage': dict(count=100)})
+        else:
+            rpt_map.append({'Percentage': dict(count=round(count2*100./count1, 2))})
 
         return rpt_map, item_map
 
