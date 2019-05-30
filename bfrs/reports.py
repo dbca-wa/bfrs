@@ -1609,13 +1609,19 @@ class BushfireByCauseReport():
             if rpt_map and cause.report_name in rpt_map[-1]:
                 for i in range(0,len(year_count_list),1):
                     rpt_map[-1][cause.report_name]["count{}".format(i)] = rpt_map[-1][cause.report_name]["count{}".format(i)] + year_count_list[i].get(cause.id,0)
-                    rpt_map[-1][cause.report_name]["perc{}".format(i)] = rpt_map[-1][cause.report_name]["count{}".format(i)] * 100 / (year_total_count_list[i] * 1.0)
+                    if year_total_count_list[i] == 0:
+                        rpt_map[-1][cause.report_name]["perc{}".format(i)] = 0
+                    else:
+                        rpt_map[-1][cause.report_name]["perc{}".format(i)] = rpt_map[-1][cause.report_name]["count{}".format(i)] * 100 / (year_total_count_list[i] * 1.0)
 
             else:
                 report_data = {}
                 for i in range(0,len(year_count_list),1):
                     report_data["count{}".format(i)] = year_count_list[i].get(cause.id,0)
-                    report_data["perc{}".format(i)] = year_count_list[i].get(cause.id,0) * 100 / (year_total_count_list[i] * 1.0)
+                    if year_total_count_list[i] == 0:
+                        report_data["perc{}".format(i)] = 0
+                    else:
+                        report_data["perc{}".format(i)] = year_count_list[i].get(cause.id,0) * 100 / (year_total_count_list[i] * 1.0)
                 rpt_map.append(
                     {cause.report_name: report_data}
                 )
@@ -1624,7 +1630,10 @@ class BushfireByCauseReport():
         report_total_data = {}
         for i in range(0,len(year_total_count_list),1):
             report_total_data["count{}".format(i)] = year_total_count_list[i]
-            report_total_data["perc{}".format(i)] = year_total_count_list[i] * 100 / (year_total_count_list[i] * 1.0)
+            if year_total_count_list[i] == 0:
+                report_total_data["perc{}".format(i)] = 0
+            else:
+                report_total_data["perc{}".format(i)] = year_total_count_list[i] * 100 / (year_total_count_list[i] * 1.0)
 
         rpt_map.append(
             {'Total': report_total_data}
@@ -2063,14 +2072,20 @@ class Bushfire10YrAverageReport():
             if rpt_map and cause.report_name in rpt_map[-1]:
                 for i in range(0,len(year_count_list),1):
                     rpt_map[-1][cause.report_name]["count{}".format(i)] = rpt_map[-1][cause.report_name]["count{}".format(i)] + year_count_list[i].get(cause.id,0)
-                    rpt_map[-1][cause.report_name]["perc{}".format(i)] = rpt_map[-1][cause.report_name]["count{}".format(i)] * 100 / (year_total_count_list[i] * 1.0)
+                    if year_total_count_list[i] == 0:
+                        rpt_map[-1][cause.report_name]["perc{}".format(i)] = 0
+                    else:
+                        rpt_map[-1][cause.report_name]["perc{}".format(i)] = rpt_map[-1][cause.report_name]["count{}".format(i)] * 100 / (year_total_count_list[i] * 1.0)
                     rpt_map[-1][cause.report_name]["total_count"] += year_count_list[i].get(cause.id,0)
 
             else:
                 report_data = {"total_count":0}
                 for i in range(0,len(year_count_list),1):
                     report_data["count{}".format(i)] = year_count_list[i].get(cause.id,0)
-                    report_data["perc{}".format(i)] = year_count_list[i].get(cause.id,0) * 100 / (year_total_count_list[i] * 1.0)
+                    if year_total_count_list[i] == 0:
+                        report_data["perc{}".format(i)] = 0
+                    else:
+                        report_data["perc{}".format(i)] = year_count_list[i].get(cause.id,0) * 100 / (year_total_count_list[i] * 1.0)
                     report_data["total_count"] += year_count_list[i].get(cause.id,0)
                 rpt_map.append(
                     {cause.report_name: report_data}
@@ -2079,7 +2094,10 @@ class Bushfire10YrAverageReport():
         for m in rpt_map:
             for data in m.values():
                 data["count_avg"] = round(data["total_count"] / (len(year_count_list) * 1.0))
-                data["perc_avg"] = data["count_avg"] * 100 / (total_count_avg * 1.0)
+                if total_count_avg == 0:
+                    data["perc_avg"] = 0
+                else:
+                    data["perc_avg"] = data["count_avg"] * 100 / (total_count_avg * 1.0)
 
                 
 
@@ -2087,7 +2105,10 @@ class Bushfire10YrAverageReport():
 
         for i in range(0,len(year_total_count_list),1):
             report_total_data["count{}".format(i)] = year_total_count_list[i]
-            report_total_data["perc{}".format(i)] = year_total_count_list[i] * 100 / (year_total_count_list[i] * 1.0)
+            if year_total_count_list[i] == 0:
+               report_total_data["perc{}".format(i)] = 0
+            else:
+               report_total_data["perc{}".format(i)] = year_total_count_list[i] * 100 / (year_total_count_list[i] * 1.0)
 
         rpt_map.append(
             {'Total': report_total_data}
@@ -2330,7 +2351,7 @@ class BushfireIndicator():
         rpt_map.append({'No of bushfires in the Forest Regions where DBCA was the initial attack agency': dict(count=count1)})
         rpt_map.append({'No of bushfires in the Forest Regions <2ha, where DBCA was the initial attack agency': dict(count=count2)})
         if count1 == 0:
-            rpt_map.append({'Percentage': dict(count=100)})
+            rpt_map.append({'Percentage': dict(count=0)})
         else:
             rpt_map.append({'Percentage': dict(count=round(count2*100./count1, 2))})
 
