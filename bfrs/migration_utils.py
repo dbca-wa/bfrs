@@ -388,6 +388,17 @@ def _refresh_spatial_data(bushfire,scope=BUSHFIRE,data_types=0):
 
     return warnings
 
+def get_bushfire(bushfire):
+    if isinstance(bushfire,int):
+        return Bushfire.objects.get(id = bushfire)
+    elif isinstance(bushfire,basestring):
+        return Bushfire.objects.get(fire_number=bushfire)
+    elif isinstance(bushfire,(list,tuple)):
+        return [get_bushfire(bf) for bf in bushfire]
+    elif not isinstance(bushfire,(Bushfire,BushfireSnapshot)):
+        raise Exception("Bushfire should be bushfire id or fire number, Bushfire instance or Bushfiresnapshot instance")
+
+
 def refresh_spatial_data(bushfire,scope=BUSHFIRE,data_types=0):
     if isinstance(bushfire,int):
         bushfire = Bushfire.objects.get(id = bushfire)
@@ -820,11 +831,24 @@ def refresh_burnt_area(bushfire,is_snapshot):
 
     return warning
 
-def exportBushfire(bushfire,folder=None):
+def exportBushfire(bushfire,folder=None,merged_bushfires=None):
     """
     export bushfire as geojson file
     bushfire should be a Bushfire or BushfireSnapshot object
     """
+    bushfire = get_bushfire(bushfire)
+    if merged_bushfires:
+        merged_bushfires = get_bushfire(merged_bushfires)
+        if bushfire.fire_boundary:
+            polygons = [p for p in bushfire.fire_boundary]
+        else:
+            polygons = []
+        for mbf in merged_bushfires:
+            if mbf.fire_boundary:
+                for p in mbf.fire_boundary:
+                    polygons.append(p)
+        bushfire.fire_boundary = MultiPolygon(polygons)
+
     if not isinstance(bushfire,(Bushfire,BushfireSnapshot)):
         raise Exception("Bushfire should be a Bushfire or BushfireSnapshot instance")
     if folder:
