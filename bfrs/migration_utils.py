@@ -415,6 +415,8 @@ def get_bushfire(bushfire):
         return [get_bushfire(bf) for bf in bushfire]
     elif not isinstance(bushfire,(Bushfire,BushfireSnapshot)):
         raise Exception("Bushfire should be bushfire id or fire number, Bushfire instance or Bushfiresnapshot instance")
+    else:
+        return bushfire
 
 
 def refresh_bushfire(bushfire,scope=BUSHFIRE,datatypes=0,layersuffix=""):
@@ -893,7 +895,6 @@ def exportBushfires(bushfires=None,reporting_year=None,folder=None):
             bushfires = Bushfire.objects.filter(reporting_year=reporting_year)
     if not bushfires:
         return
-
     for bushfire in bushfires:
         exportBushfire(bushfire,folder)
 
