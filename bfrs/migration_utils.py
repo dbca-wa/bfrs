@@ -319,7 +319,12 @@ def refresh_bushfires(reporting_year,scope=BUSHFIRE,datatypes = 0,runtype=RESUME
         #refresh bushfires
         if runtype & (RERUN | RESUME) > 0:
             bushfires = Bushfire.objects.filter(reporting_year=reporting_year)
-            for bushfire in bushfires.order_by("id") if last_refreshed_id is None else bushfires.filter(id__gt=last_refreshed_id).order_by("id"):
+            bushfires = bushfires.order_by("id") if last_refreshed_id is None else bushfires.filter(id__gt=last_refreshed_id).order_by("id")
+            index = 0
+            totalcount = len(bushfires)
+            for bushfire in bushfires:
+                index += 1
+                print("Refresh {}'s bushfire({}), {}/{}".format(reporting_year,bushfire.fire_number,index,totalcount))
                 scope_types = get_scope_and_datatypes(status,bushfire,scope,datatypes)
                 warning_key = (bushfire.id,bushfire.fire_number)
                 for s,t in scope_types:
