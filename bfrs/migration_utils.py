@@ -46,16 +46,16 @@ DATATYPES_DESC = {
 
 ALL_DATA = GRID_DATA | ORIGIN_POINT_TENURE
 
-def get_refresh_status_file():
-    status_file = os.path.join(settings.BASE_DIR,"logs","bfrs-refresh-data-{}.json".format(settings.ENV_TYPE))
+def get_refresh_status_file(reporting_year):
+    status_file = os.path.join(settings.BASE_DIR,"logs","bfrs-refresh-data-{}.{}.json".format(reporting_year,settings.ENV_TYPE))
     if not os.path.exists(os.path.dirname(status_file)):
         os.mkdir(os.path.exists(os.path.dirname(status_file)))
 
     return status_file
 
 
-def get_refresh_status(scope,data_type,runtype):
-    status_file = get_refresh_status_file()
+def get_refresh_status(reporting_year,scope,data_type,runtype):
+    status_file = get_refresh_status_file(reporting_year)
 
  
     save = False
@@ -110,14 +110,14 @@ def get_refresh_status(scope,data_type,runtype):
                 save = True
 
     if save:
-        save_refresh_status(status)
+        save_refresh_status(reporting_year,status)
 
 
     return status
 
 
-def save_refresh_status(status):
-    status_file = get_refresh_status_file()
+def save_refresh_status(reporting_year,status):
+    status_file = get_refresh_status_file(reporting_year)
     if not status:
         os.remove(status_file)
         return
@@ -126,7 +126,7 @@ def save_refresh_status(status):
     with open(status_file,"w") as f:
         f.write(status_content)
 
-def get_last_refreshed_bushfireid(status,scope,data_types):
+def get_last_refreshed_bushfireid(status,scope,datatypes):
     bfid = None
     if "progress" not in status:
         status["progress"] = {}
@@ -142,7 +142,7 @@ def get_last_refreshed_bushfireid(status,scope,data_types):
                 "scope":s,
             }
         for t in [GRID_DATA,ORIGIN_POINT_TENURE,BURNT_AREA]:
-            if data_types & t  == 0:
+            if datatypes & t  == 0:
                 continue
             tname = DATATYPES_DESC[t]
             if tname not in progress_status[sname]:
@@ -155,7 +155,7 @@ def get_last_refreshed_bushfireid(status,scope,data_types):
             continue
         sname = SCOPES_DESC[s]
         for t in [GRID_DATA,ORIGIN_POINT_TENURE,BURNT_AREA]:
-            if data_types & t  == 0:
+            if datatypes & t  == 0:
                 continue
             tname = DATATYPES_DESC[t]
             if "last_refreshed_id" not in progress_status[sname][tname]:
@@ -164,7 +164,7 @@ def get_last_refreshed_bushfireid(status,scope,data_types):
                 bfid = progress_status[sname][tname]["last_refreshed_id"]
     return bfid
 
-def set_last_refreshed_bushfireid(status,scope,data_types,bfid):
+def set_last_refreshed_bushfireid(status,scope,datatypes,bfid):
     if "progress" not in status:
         status["progress"] = {}
     progress_status = status["progress"]
@@ -174,7 +174,7 @@ def set_last_refreshed_bushfireid(status,scope,data_types,bfid):
             continue
         sname = SCOPES_DESC[s]
         for t in [GRID_DATA,ORIGIN_POINT_TENURE,BURNT_AREA]:
-            if data_types & t  == 0:
+            if datatypes & t  == 0:
                 continue
             tname = DATATYPES_DESC[t]
             if "last_refreshed_id"  not in progress_status[sname][tname]:
@@ -182,7 +182,7 @@ def set_last_refreshed_bushfireid(status,scope,data_types,bfid):
             elif progress_status[sname][tname]["last_refreshed_id"] < bfid:
                 progress_status[sname][tname]["last_refreshed_id"] = bfid
 
-def get_scope_and_datatypes(status,bushfire,scope,data_types):
+def get_scope_and_datatypes(status,bushfire,scope,datatypes):
     progress_status = status["progress"]
     result = {}
     for s in [BUSHFIRE,SNAPSHOT]:
@@ -190,7 +190,7 @@ def get_scope_and_datatypes(status,bushfire,scope,data_types):
             continue
         sname = SCOPES_DESC[s]
         for t in [GRID_DATA,ORIGIN_POINT_TENURE,BURNT_AREA]:
-            if data_types & t  == 0:
+            if datatypes & t  == 0:
                 continue
             tname = DATATYPES_DESC[t]
             bfid = progress_status[sname][tname].get("last_refreshed_id")
@@ -202,17 +202,17 @@ def get_scope_and_datatypes(status,bushfire,scope,data_types):
 
     #merge scope if possible
     result2 = {}
-    for s,data_types in result.items():
-        if data_types in result2:
-            result2[data_types] = result2[data_types] | s
+    for s,datatypes in result.items():
+        if datatypes in result2:
+            result2[datatypes] = result2[datatypes] | s
         else:
-            result2[data_types] = s
+            result2[datatypes] = s
 
-    #return list of (scope,data_types)
+    #return list of (scope,datatypes)
     return [(s,t) for t,s in result2.items()]
 
 
-def add_warnings(status,bushfire,scope,data_types,warnings):
+def add_warnings(status,bushfire,scope,datatypes,warnings):
     if not warnings:
         return
 
@@ -231,7 +231,7 @@ def add_warnings(status,bushfire,scope,data_types,warnings):
             bfwarnings = all_warnings[warning_key][index]
             if bfwarnings[0][1] & scope == 0:
                 continue
-            if bfwarnings[0][2] & data_types == 0:
+            if bfwarnings[0][2] & datatypes == 0:
                 continue
             del all_warnings[warning_key][index]
         finally:
@@ -240,18 +240,30 @@ def add_warnings(status,bushfire,scope,data_types,warnings):
     for warning in warnings:
         all_warnings[warning_key].append(warning)
 
-def refresh_all_spatial_data(scope=BUSHFIRE,data_types = 0,runtype=RESUME,size=0):
-    if data_types == 0 or scope == 0:
+def refresh_all_bushfires(scope=BUSHFIRE,datatypes = 0,runtype=RESUME,layersuffix=""):
+    try:
+        min_year = Bushfire.objects.all().order_by("reporting_year").first().reporting_year
+        max_year = Bushfire.objects.all().order_by("-reporting_year").first().reporting_year
+        year = min_year
+        while year <= max_year:
+            try:
+                refresh_bushfires(year,scope=scope,datatypes=datatypes,runtype=runtype,layersuffix=layersuffix)
+            finally:
+                year += 1
+    except:
+        return
+
+def refresh_bushfires(reporting_year,scope=BUSHFIRE,datatypes = 0,runtype=RESUME,size=0,layersuffix=""):
+    if datatypes == 0 or scope == 0:
         return
 
     if runtype & RERUN == RERUN:
         runtype = RERUN
 
     all_warnings = OrderedDict()
-    status = get_refresh_status(scope,data_types,runtype)
-    last_refreshed_id = get_last_refreshed_bushfireid(status,scope,data_types)
+    status = get_refresh_status(reporting_year,scope,datatypes,runtype)
+    last_refreshed_id = get_last_refreshed_bushfireid(status,scope,datatypes)
     try:
-        refresh_status_file = os.path.join(settings.BASE_DIR,"logs","")
         warnings = {}
         counter = 0
         start_time = datetime.now()
@@ -271,11 +283,11 @@ def refresh_all_spatial_data(scope=BUSHFIRE,data_types = 0,runtype=RESUME,size=0
                             continue
                         if previous_warning[0][1] & scope == 0:
                             continue
-                        if previous_warning[0][2] & data_types == 0:
+                        if previous_warning[0][2] & datatypes == 0:
                             continue
                         bushfire = Bushfire.objects.get(id = int(key.split(':')[0]))
                         print("Reprocess bushfire({}) {}:{} ".format(bushfire.fire_number,previous_warning[0][3],previous_warning[1]))
-                        warnings = _refresh_spatial_data(bushfire,scope=previous_warning[0][1],data_types=previous_warning[0][2])
+                        warnings = _refresh_bushfire(bushfire,scope=previous_warning[0][1],datatypes=previous_warning[0][2],layersuffix=layersuffix)
                         warning_key = (bushfire.id,bushfire.fire_number)
                         if warnings:
                             add_warnings(status,bushfire,previous_warning[0][1],previous_warning[0][2],warnings)
@@ -295,22 +307,23 @@ def refresh_all_spatial_data(scope=BUSHFIRE,data_types = 0,runtype=RESUME,size=0
                 if size and counter >= size:
                     break
                 if datetime.now() - start_time >= save_interval:
-                    save_refresh_status(status)
+                    save_refresh_status(reporting_year,status)
                     start_time = datetime.now()
             if removed_keys:
                 for key in removed_keys:
                     del status["warnings"][key]
 
-            save_refresh_status(status)
+            save_refresh_status(reporting_year,status)
             
                 
         #refresh bushfires
         if runtype & (RERUN | RESUME) > 0:
-            for bushfire in Bushfire.objects.all().order_by("id") if last_refreshed_id is None else Bushfire.objects.filter(id__gt=last_refreshed_id).order_by("id"):
-                scope_types = get_scope_and_datatypes(status,bushfire,scope,data_types)
+            bushfires = Bushfire.objects.filter(reporting_year=reporting_year)
+            for bushfire in bushfires.order_by("id") if last_refreshed_id is None else bushfires.filter(id__gt=last_refreshed_id).order_by("id"):
+                scope_types = get_scope_and_datatypes(status,bushfire,scope,datatypes)
                 warning_key = (bushfire.id,bushfire.fire_number)
                 for s,t in scope_types:
-                    warnings = _refresh_spatial_data(bushfire,scope=s,data_types=t)
+                    warnings = _refresh_bushfire(bushfire,scope=s,datatypes=t,layersuffix=layersuffix)
                     set_last_refreshed_bushfireid(status,s,t,bushfire.id)
                     if warnings:
                         add_warnings(status,bushfire,s,t,warnings)
@@ -323,14 +336,14 @@ def refresh_all_spatial_data(scope=BUSHFIRE,data_types = 0,runtype=RESUME,size=0
                 if size and counter >= size:
                     break
                 if datetime.now() - start_time >= save_interval:
-                    save_refresh_status(status)
+                    save_refresh_status(reporting_year,status)
                     start_time = datetime.now()
     except Exception as ex:
         print("Failed to refresh the spatial data,{}".format(str(ex)))
         traceback.print_exc()
 
 
-    save_refresh_status(status)
+    save_refresh_status(reporting_year,status)
     
     if all_warnings:
         for bushfire,warnings in all_warnings.items():
@@ -345,9 +358,9 @@ def refresh_all_spatial_data(scope=BUSHFIRE,data_types = 0,runtype=RESUME,size=0
                     index += 1
                     print("    {}. {}:{}".format(index,key[3],msg))
 
-def _refresh_spatial_data(bushfire,scope=BUSHFIRE,data_types=0):
+def _refresh_bushfire(bushfire,scope=BUSHFIRE,datatypes=0,layersuffix=""):
     warnings = [] 
-    if data_types == 0 or scope == 0:
+    if datatypes == 0 or scope == 0:
         return warnings
 
     if scope & (BUSHFIRE | SNAPSHOT) == (BUSHFIRE | SNAPSHOT) :
@@ -361,7 +374,7 @@ def _refresh_spatial_data(bushfire,scope=BUSHFIRE,data_types=0):
     
     for bf in bushfires:
         is_snapshot =  hasattr(bf,"snapshot_type")
-        if data_types & GRID_DATA == GRID_DATA:
+        if datatypes & GRID_DATA == GRID_DATA:
             try:
                 warning = refresh_grid_data(bf,is_snapshot)
                 if warning :
@@ -370,17 +383,17 @@ def _refresh_spatial_data(bushfire,scope=BUSHFIRE,data_types=0):
                 warnings.append(((bf.id,SNAPSHOT if is_snapshot else BUSHFIRE,GRID_DATA,'ERROR'),[str(ex)]))
 
 
-        if data_types & ORIGIN_POINT_TENURE == ORIGIN_POINT_TENURE:
+        if datatypes & ORIGIN_POINT_TENURE == ORIGIN_POINT_TENURE:
             try:
-                warning = refresh_originpoint_tenure(bf,is_snapshot)
+                warning = refresh_originpoint_tenure(bf,is_snapshot,layersuffix=layersuffix)
                 if warning :
                     warnings.append(((bf.id,SNAPSHOT if is_snapshot else BUSHFIRE,ORIGIN_POINT_TENURE,'WARNING'),warning if isinstance(warning,(list,tuple)) else [warning]))
             except Exception as ex:
                 warnings.append(((bf.id,SNAPSHOT if is_snapshot else BUSHFIRE,ORIGIN_POINT_TENURE,'ERROR'),[str(ex)]))
 
-        if data_types & BURNT_AREA == BURNT_AREA:
+        if datatypes & BURNT_AREA == BURNT_AREA:
             try:
-                warning = refresh_burnt_area(bf,is_snapshot)
+                warning = refresh_burnt_area(bf,is_snapshot,layersuffix=layersuffix)
                 if warning :
                     warnings.append(((bf.id,SNAPSHOT if is_snapshot else BUSHFIRE,BURNT_AREA,'WARNING'),warning if isinstance(warning,(list,tuple)) else [warning]))
             except Exception as ex:
@@ -399,7 +412,7 @@ def get_bushfire(bushfire):
         raise Exception("Bushfire should be bushfire id or fire number, Bushfire instance or Bushfiresnapshot instance")
 
 
-def refresh_spatial_data(bushfire,scope=BUSHFIRE,data_types=0):
+def refresh_bushfire(bushfire,scope=BUSHFIRE,datatypes=0,layersuffix=""):
     if isinstance(bushfire,int):
         bushfire = Bushfire.objects.get(id = bushfire)
     elif isinstance(bushfire,basestring):
@@ -407,7 +420,7 @@ def refresh_spatial_data(bushfire,scope=BUSHFIRE,data_types=0):
     elif not isinstance(bushfire,Bushfire):
         raise Exception("Bushfire should be bushfire id or fire number or Bushfire instance")
 
-    warnings = _refresh_spatial_data(bushfire,scope=scope,data_types=data_types)
+    warnings = _refresh_bushfire(bushfire,scope=scope,datatypes=datatypes,layersuffix=layersuffix)
     if warnings:
         for key,msgs in warnings:
             if key[1] == BUSHFIRE:
@@ -473,7 +486,7 @@ def refresh_grid_data(bushfire,is_snapshot):
         print("The bushfire report({})'s grid data is {}".format(bushfire.fire_number,bushfire.origin_point_grid if bushfire.origin_point_grid else "null"))
     return warning
 
-def refresh_originpoint_tenure(bushfire,is_snapshot):
+def refresh_originpoint_tenure(bushfire,is_snapshot,layersuffix=""):
     warning = None
     req_data = {"features":serializers.serialize('geojson',[bushfire],geometry_field='origin_point',fields=('id','fire_number'))}
     req_options = {}
@@ -483,7 +496,7 @@ def refresh_originpoint_tenure(bushfire,is_snapshot):
         "layers":[
             {
                 "id":"state_forest_plantation_distribution",
-                "layerid":"cddp:state_forest_plantation_distribution",
+                "layerid":"cddp:state_forest_plantation_distribution{}".format(layersuffix),
                 "kmiservice":settings.KMI_URL,
                 "properties":{
                     "id":"ogc_fid",
@@ -492,7 +505,7 @@ def refresh_originpoint_tenure(bushfire,is_snapshot):
                 },
             },{
                 "id":"legislated_lands_and_waters",
-                "layerid":"cddp:legislated_lands_and_waters",
+                "layerid":"cddp:legislated_lands_and_waters{}".format(layersuffix),
                 "kmiservice":settings.KMI_URL,
                 "properties":{
                     "id":"ogc_fid",
@@ -501,7 +514,7 @@ def refresh_originpoint_tenure(bushfire,is_snapshot):
                 },
             },{
                 "id":"dept_interest_lands_and_waters",
-                "layerid":"cddp:dept_interest_lands_and_waters",
+                "layerid":"cddp:dept_interest_lands_and_waters{}".format(layersuffix),
                 "kmiservice":settings.KMI_URL,
                 "properties":{
                     "id":"ogc_fid",
@@ -510,7 +523,7 @@ def refresh_originpoint_tenure(bushfire,is_snapshot):
                 },
             },{
                 "id":"other_tenures_new",
-                "layerid":"cddp:other_tenures_new",
+                "layerid":"cddp:other_tenures{}".format(layersuffix or "_new"),
                 "kmiservice":settings.KMI_URL,
                 "properties":{
                     "id":"ogc_fid",
@@ -519,7 +532,7 @@ def refresh_originpoint_tenure(bushfire,is_snapshot):
                 },
             },{
                 "id":"sa_nt_burntarea",
-                "layerid":"cddp:sa_nt_state_polygons_burntarea",
+                "layerid":"cddp:sa_nt_state_polygons_burntarea{}".format(layersuffix),
                 "kmiservice":settings.KMI_URL,
                 "properties":{
                     "category":"name"
@@ -562,7 +575,7 @@ def refresh_originpoint_tenure(bushfire,is_snapshot):
 
     return warning
 
-def refresh_burnt_area(bushfire,is_snapshot):
+def refresh_burnt_area(bushfire,is_snapshot,layersuffix=""):
     warning = None
     area_burnt_objects = []
     update_fields = None
@@ -587,7 +600,7 @@ def refresh_burnt_area(bushfire,is_snapshot):
             else: 
                 layers = [{
                     "id":"legislated_lands_and_waters",
-                    "layerid":"cddp:legislated_lands_and_waters",
+                    "layerid":"cddp:legislated_lands_and_waters{}".format(layersuffix),
                     "cqlfilter":"category<>'State Forest'",
                     "kmiservice":settings.KMI_URL,
                     "properties":{
@@ -595,28 +608,28 @@ def refresh_burnt_area(bushfire,is_snapshot):
                     },
                 },{
                     "id":"state_forest_plantation_distribution",
-                    "layerid":"cddp:state_forest_plantation_distribution",
+                    "layerid":"cddp:state_forest_plantation_distribution{}".format(layersuffix),
                     "kmiservice":settings.KMI_URL,
                     "properties":{
                         "category":"fbr_fire_r"
                     },
                 },{
                     "id":"dept_interest_lands_and_waters",
-                    "layerid":"cddp:dept_interest_lands_and_waters",
+                    "layerid":"cddp:dept_interest_lands_and_waters{}".format(layersuffix),
                     "kmiservice":settings.KMI_URL,
                     "properties":{
                         "category":"category"
                     },
                 },{
                     "id":"other_tenures",
-                    "layerid":"cddp:other_tenures_new",
+                    "layerid":"cddp:other_tenures{}".format(layersuffix or "_new"),
                     "kmiservice":settings.KMI_URL,
                     "properties":{
                         "category":"brc_fms_le"
                     },
                 },{
                     "id":"sa_nt_burntarea",
-                    "layerid":"cddp:sa_nt_state_polygons_burntarea",
+                    "layerid":"cddp:sa_nt_state_polygons_burntarea{}".format(layersuffix),
                     "kmiservice":settings.KMI_URL,
                     "properties":{
                         "category":"name"
@@ -879,7 +892,7 @@ def exportBushfires(bushfires=None,reporting_year=None,folder=None):
     for bushfire in bushfires:
         exportBushfire(bushfire,folder)
 
-def importFireboundary(geojson_file,user=None,create_snapshot=True,action=None):
+def importFireboundary(geojson_file,user=None,create_snapshot=True,action=None,layersuffix=""):
     """
     import a bushfire's geojson file
     """
@@ -915,7 +928,7 @@ def importFireboundary(geojson_file,user=None,create_snapshot=True,action=None):
         bushfire.modifier = user
         if bushfire.report_status > Bushfire.STATUS_INITIAL:
             #refresh burnt area
-            warnings = _refresh_spatial_data(bushfire,scope=BUSHFIRE,data_types=BURNT_AREA)
+            warnings = _refresh_bushfire(bushfire,scope=BUSHFIRE,datatypes=BURNT_AREA,layersuffix=layersuffix)
             if warnings:
                 errors = []
                 for key,msgs in warnings:
