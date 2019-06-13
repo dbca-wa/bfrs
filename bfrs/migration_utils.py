@@ -898,7 +898,7 @@ def exportBushfires(bushfires=None,reporting_year=None,folder=None):
     for bushfire in bushfires:
         exportBushfire(bushfire,folder)
 
-def importFireboundary(geojson_file,user=None,create_snapshot=True,action=None,layersuffix=""):
+def importFireboundary(geojson_file,user=None,create_snapshot=True,action=None,layersuffix="",refresh_data=True):
     """
     import a bushfire's geojson file
     """
@@ -922,8 +922,9 @@ def importFireboundary(geojson_file,user=None,create_snapshot=True,action=None,l
         fire_number = feature.get('properties',{}).get('fire_number')
         if not fire_number:
             raise Exception("No fire_number found in file '{}'".format(geojson_file))
-        if not feature.get("geometry",{}).get('coordinates'):
-            raise Exception("No geometry found in file '{}'".format(geojson_file))
+        if not (feature.get("geometry") or {}).get('coordinates'):
+            print("Fire boundary not found in file '{}'".format(geojson_file))
+            continue
         try:
             bushfire = Bushfire.objects.get(fire_number=fire_number)
         except ObjectDoesNotExist as ex:
@@ -932,27 +933,28 @@ def importFireboundary(geojson_file,user=None,create_snapshot=True,action=None,l
         #update fire boundary
         bushfire.fire_boundary = fire_boundary
         bushfire.modifier = user
-        if bushfire.report_status > Bushfire.STATUS_INITIAL:
-            #refresh burnt area
-            warnings = _refresh_bushfire(bushfire,scope=BUSHFIRE,datatypes=BURNT_AREA,layersuffix=layersuffix)
-            if warnings:
-                errors = []
-                for key,msgs in warnings:
-                    if key[0] != bushfire.id:
-                        continue
-                    if key[3] != "ERROR":
-                        continue
-                    for msg in msgs:
-                        errors.append(msg)
-                if errors:
-                    raise Exception("Failed to calculate burnt area.{}{}".format(os.linesep,os.linesep.join(errors)))
+        if refresh_data:
+            if bushfire.report_status > Bushfire.STATUS_INITIAL:
+                #refresh burnt area
+                warnings = _refresh_bushfire(bushfire,scope=BUSHFIRE,datatypes=BURNT_AREA,layersuffix=layersuffix)
+                if warnings:
+                    errors = []
+                    for key,msgs in warnings:
+                        if key[0] != bushfire.id:
+                            continue
+                        if key[3] != "ERROR":
+                            continue
+                        for msg in msgs:
+                            errors.append(msg)
+                    if errors:
+                        raise Exception("Failed to calculate burnt area.{}{}".format(os.linesep,os.linesep.join(errors)))
         #save data
         bushfire.save(update_fields=("fire_boundary","modifier","modified"))
         #make snapshot
         if create_snapshot:
             serialize_bushfire('final', (action or 'Fix fire boundary issues by OIM'), bushfire)
 
-def importFireboundaries(folder,user=None,create_snapshot=True,action=None):
+def importFireboundaries(folder,user=None,create_snapshot=True,action=None,refresh_data=True):
     if not os.path.exists(folder):
         raise Exception("The folder '{}' doesn't exist".format(folder))
     if not os.path.isdir(folder):
@@ -973,7 +975,7 @@ def importFireboundaries(folder,user=None,create_snapshot=True,action=None):
         source_file = os.path.join(folder,geojson_file)
         processed_file = os.path.join(processed_folder,geojson_file)
         try:
-            importFireboundary(source_file,user=user,create_snapshot=create_snapshot,action=action)
+            importFireboundary(source_file,user=user,create_snapshot=create_snapshot,action=action,refresh_data=refresh_data)
             if os.path.exists(processed_file):
                 os.remove(processed_file)
             shutil.move(source_file,processed_file)
