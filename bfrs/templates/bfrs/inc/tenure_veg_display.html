@@ -11,7 +11,7 @@
 
 
               {% for area in form.tenures_burnt.all %}
-                {% if area.area > 0 %}
+                {% if area.area != 0 %}
                   <tr>
                     <td>{{ area.tenure }}</td>
                     <td>{{ area.area }}</td>
