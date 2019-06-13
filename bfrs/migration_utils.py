@@ -587,7 +587,7 @@ def refresh_burnt_area(bushfire,is_snapshot,layersuffix=""):
     area_burnt_objects = []
     update_fields = None
     layers =  None
-    overlap_area = None
+    overlap_area = 0
     try:
         if not bushfire.fire_boundary:
             #no fire boundary,
