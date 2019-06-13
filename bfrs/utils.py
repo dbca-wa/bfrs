@@ -290,7 +290,7 @@ def update_areas_burnt(bushfire, burning_area):
         other_area = burning_area["other_area"]
 
     other_area = round(other_area,2)
-    if other_area > 0:
+    if other_area != 0:
         new_area_burnt_object.append(AreaBurnt(bushfire=bushfire, tenure=Tenure.OTHER, area=other_area))
 
     try:

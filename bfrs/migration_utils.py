@@ -711,12 +711,30 @@ def refresh_burnt_area(bushfire,is_snapshot,layersuffix=""):
                             area_unknown
                         )
                     else:
-                        warning = "The bushfire report({}) has {} other burnt area".format(bushfire.fire_number,area_unknown)
+                        warning = "The bushfire report({}) has {}ha other burnt area".format(bushfire.fire_number,area_unknown)
+                elif area_unknown < 0:
+                    if is_snapshot:
+                        area_burnt_objects.append([{"snapshot":bushfire, "tenure":Tenure.OTHER},{"snapshot_type":bushfire.snapshot_type, "area":area_unknown,"created":timezone.now(),"modified":timezone.now()},None,None])
+                    else:
+                        area_burnt_objects.append([{"bushfire":bushfire, "tenure":Tenure.OTHER},{"area":area_unknown},None,None])
+                    total_area += area_unknown
+    
+                    if is_snapshot:
+                        warning  = "The bushfire report({})'s snapshot(id={},fire_number='{}',snapshot_type='{}',action='{}') has {}ha overlap area".format(
+                            bushfire.bushfire.fire_number,
+                            bushfire.id,
+                            bushfire.fire_number,
+                            bushfire.snapshot_type,
+                            bushfire.action,
+                            abs(area_unknown)
+                        )
+                    else:
+                        warning = "The bushfire report({}) has {}ha overlap area".format(bushfire.fire_number,abs(area_unknown))
 
             if layers:
-                overlap_area = round(total_area - area_data['total_area'],2)
+                overlap_area = round(abs(area_unknown),2) if area_unknown < 0 else 0
             else:
-                overlap_area = None
+                overlap_area = 0
     
 
         with transaction.atomic():
