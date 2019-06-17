@@ -10,7 +10,7 @@ from collections import defaultdict, OrderedDict
 
 from django.core import serializers
 from django.conf import settings
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError, transaction,connection
 from django.utils import timezone
 from django.contrib.gis.geos import Point, GEOSGeometry, Polygon, MultiPolygon, GEOSException
 from django.core.exceptions import ObjectDoesNotExist
@@ -253,7 +253,7 @@ def refresh_all_bushfires(scope=BUSHFIRE,datatypes = 0,runtype=RESUME,layersuffi
     except:
         return
 
-def refresh_bushfires(reporting_year,scope=BUSHFIRE,datatypes = 0,runtype=RESUME,size=0,layersuffix=""):
+def refresh_bushfires(reporting_year,scope=BUSHFIRE,datatypes = 0,runtype=RESUME,size=0,layersuffix="",debug=False):
     if datatypes == 0 or scope == 0:
         return
 
@@ -287,7 +287,7 @@ def refresh_bushfires(reporting_year,scope=BUSHFIRE,datatypes = 0,runtype=RESUME
                             continue
                         bushfire = Bushfire.objects.get(id = int(key.split(':')[0]))
                         print("Reprocess bushfire({}) {}:{} ".format(bushfire.fire_number,previous_warning[0][3],previous_warning[1]))
-                        warnings = _refresh_bushfire(bushfire,scope=previous_warning[0][1],datatypes=previous_warning[0][2],layersuffix=layersuffix)
+                        warnings = _refresh_bushfire(bushfire,scope=previous_warning[0][1],datatypes=previous_warning[0][2],layersuffix=layersuffix,debug=debug)
                         warning_key = (bushfire.id,bushfire.fire_number)
                         if warnings:
                             add_warnings(status,bushfire,previous_warning[0][1],previous_warning[0][2],warnings)
@@ -328,7 +328,7 @@ def refresh_bushfires(reporting_year,scope=BUSHFIRE,datatypes = 0,runtype=RESUME
                 scope_types = get_scope_and_datatypes(status,bushfire,scope,datatypes)
                 warning_key = (bushfire.id,bushfire.fire_number)
                 for s,t in scope_types:
-                    warnings = _refresh_bushfire(bushfire,scope=s,datatypes=t,layersuffix=layersuffix)
+                    warnings = _refresh_bushfire(bushfire,scope=s,datatypes=t,layersuffix=layersuffix,debug=debug)
                     set_last_refreshed_bushfireid(status,s,t,bushfire.id)
                     if warnings:
                         add_warnings(status,bushfire,s,t,warnings)
@@ -363,7 +363,7 @@ def refresh_bushfires(reporting_year,scope=BUSHFIRE,datatypes = 0,runtype=RESUME
                     index += 1
                     print("    {}. {}:{}".format(index,key[3],msg))
 
-def _refresh_bushfire(bushfire,scope=BUSHFIRE,datatypes=0,layersuffix=""):
+def _refresh_bushfire(bushfire,scope=BUSHFIRE,datatypes=0,layersuffix="",debug=False):
     warnings = [] 
     if datatypes == 0 or scope == 0:
         return warnings
@@ -398,7 +398,7 @@ def _refresh_bushfire(bushfire,scope=BUSHFIRE,datatypes=0,layersuffix=""):
 
         if datatypes & BURNT_AREA == BURNT_AREA:
             try:
-                warning = refresh_burnt_area(bf,is_snapshot,layersuffix=layersuffix)
+                warning = refresh_burnt_area(bf,is_snapshot,layersuffix=layersuffix,debug=debug)
                 if warning :
                     warnings.append(((bf.id,SNAPSHOT if is_snapshot else BUSHFIRE,BURNT_AREA,'WARNING'),warning if isinstance(warning,(list,tuple)) else [warning]))
             except Exception as ex:
@@ -419,7 +419,7 @@ def get_bushfire(bushfire):
         return bushfire
 
 
-def refresh_bushfire(bushfire,scope=BUSHFIRE,datatypes=0,layersuffix=""):
+def refresh_bushfire(bushfire,scope=BUSHFIRE,datatypes=0,layersuffix="",debug=False):
     if isinstance(bushfire,int):
         bushfire = Bushfire.objects.get(id = bushfire)
     elif isinstance(bushfire,basestring):
@@ -427,7 +427,7 @@ def refresh_bushfire(bushfire,scope=BUSHFIRE,datatypes=0,layersuffix=""):
     elif not isinstance(bushfire,Bushfire):
         raise Exception("Bushfire should be bushfire id or fire number or Bushfire instance")
 
-    warnings = _refresh_bushfire(bushfire,scope=scope,datatypes=datatypes,layersuffix=layersuffix)
+    warnings = _refresh_bushfire(bushfire,scope=scope,datatypes=datatypes,layersuffix=layersuffix,debug=debug)
     if warnings:
         for key,msgs in warnings:
             if key[1] == BUSHFIRE:
@@ -582,12 +582,164 @@ def refresh_originpoint_tenure(bushfire,is_snapshot,layersuffix=""):
 
     return warning
 
-def refresh_burnt_area(bushfire,is_snapshot,layersuffix=""):
+def to_wkt(geometry,multiple=False):
+    def line_to_wkt(coordinates):
+        return "({})".format(",".join(["{} {}".format(*coord) for coord in l]))
+    def polygon_to_wkt(coordinates):
+        return "({})".format(",".join([line_to_wkt(l) for l in p]))
+
+    if geometry["type"] == "MultiPolygon":
+        return "({})".format(",".join([polygon_to_wkt(p) for p in geometry["coordinates"]]))
+    elif geometry["type"] == "Polygon":
+        if multiple:
+            return "({})".format(polygon_to_wkt(geometry["coordinates"]))
+        else:
+            return polygon_to_wkt(geometry["coordinates"])
+
+    else:
+        raise NotImplementedError("Not Implemeneted.")
+
+def refresh_burnt_area(bushfire,is_snapshot,layersuffix="",debug=False):
     warning = None
     area_burnt_objects = []
     update_fields = None
     layers =  None
     overlap_area = 0
+    if debug:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT COUNT(*) FROM spatial_ref_sys WHERE srid=9000001")
+            row = cursor.fetchone()
+            if row[0] == 0:
+                #create the projection
+                cursor.execute("""
+                INSERT INTO spatial_ref_sys
+                    (srid,auth_name,auth_srid,proj4text,srtext) 
+                VALUES
+                    (9000001,'wa-dbca',9000001,'+proj=aea +lat_1=-17.5 +lat_2=-31.5 +lat_0=0 +lon_0=121 +x_0=5000000 +y_0=10000000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs','PROJCS["Albers_Equal_Conic_Area_GDA_Western_Australia",GEOGCS["GCS_GDA_1994",DATUM["D_GDA_1994",SPHEROID["GRS_1980",6378137.0,298.257222101]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Albers"],PARAMETER["False_Easting",5000000.0],PARAMETER["False_Northing",10000000.0],PARAMETER["Central_Meridian",121.0],PARAMETER["Standard_Parallel_1",-17.5],PARAMETER["Standard_Parallel_2",-31.5],PARAMETER["Latitude_Of_Origin",0.0],UNIT["Meter",1.0]]')
+                """)
+
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS burnt_area_bushfire(
+                id SERIAL PRIMARY KEY,
+                fire_number VARCHAR(15),
+                snapshot_id integer,
+                area double precision,
+                wkb_geometry geometry(MultiPolygon,9000001)
+            )
+            """)
+
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS burnt_area_dept_managed(
+                id SERIAL PRIMARY KEY,
+                bushfire_id integer REFERENCES burnt_area_bushfire(id) ON DELETE CASCADE,
+                ogc_fid integer,
+                name varchar(254),
+                category varchar(254),
+                wkb_geometry geometry(MultiPolygon,9000001)
+            )
+            """)
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS burnt_area_dept_managed_intersection(
+                id SERIAL PRIMARY KEY,
+                bushfire_id integer REFERENCES burnt_area_bushfire(id) ON DELETE CASCADE,
+                ogc_fid integer,
+                name varchar(254),
+                category varchar(254),
+                area double precision,
+                wkb_geometry geometry(MultiPolygon,9000001)
+            )
+            """)
+
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS burnt_area_dept_interested(
+                id SERIAL PRIMARY KEY,
+                bushfire_id integer REFERENCES burnt_area_bushfire(id) ON DELETE CASCADE,
+                ogc_fid integer,
+                name varchar(254),
+                category varchar(254),
+                wkb_geomtry geometry(MultiPolygon,9000001)
+            )
+            """)
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS burnt_area_dept_interested_intersection(
+                id SERIAL PRIMARY KEY,
+                bushfire_id integer REFERENCES burnt_area_bushfire(id) ON DELETE CASCADE,
+                ogc_fid integer,
+                name varchar(254),
+                category varchar(254),
+                area double precision,
+                wkb_geometry geometry(MultiPolygon,9000001)
+            )
+            """)
+
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS burnt_area_others(
+                id SERIAL PRIMARY KEY,
+                bushfire_id integer REFERENCES burnt_area_bushfire(id) ON DELETE CASCADE,
+                ogc_fid integer,
+                category varchar(50),
+                brc_cad_le varchar(50),
+                wkb_geometry geometry(MultiPolygon,9000001)
+            )
+            """)
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS burnt_area_others_intersection(
+                id SERIAL PRIMARY KEY,
+                bushfire_id integer REFERENCES burnt_area_bushfire(id) ON DELETE CASCADE,
+                ogc_fid integer,
+                category varchar(50),
+                brc_cad_le varchar(50),
+                area double precision,
+                wkb_geometry geometry(MultiPolygon,9000001)
+            )
+            """)
+
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS burnt_area_nt_st(
+                id SERIAL PRIMARY KEY,
+                bushfire_id integer REFERENCES burnt_area_bushfire(id) ON DELETE CASCADE,
+                ogc_fid integer,
+                category varchar(20),
+                state varchar(2),
+                wkb_geometry geometry(MultiPolygon,9000001)
+            )
+            """)
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS burnt_area_nt_st_intersection(
+                id SERIAL PRIMARY KEY,
+                bushfire_id integer REFERENCES burnt_area_bushfire(id) ON DELETE CASCADE,
+                ogc_fid integer,
+                category varchar(20),
+                state varchar(2),
+                area double precision,
+                wkb_geometry geometry(MultiPolygon,9000001)
+            )
+            """)
+
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS burnt_area_state_forest(
+                id SERIAL PRIMARY KEY,
+                bushfire_id integer REFERENCES burnt_area_bushfire(id) ON DELETE CASCADE,
+                ogc_fid integer,
+                category varchar(40),
+                fbr_tenure varchar(50),
+                fbr_planta varchar(33),
+                wkb_geometry geometry(MultiPolygon,9000001)
+            )
+            """)
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS burnt_area_state_forest_intersection(
+                id SERIAL PRIMARY KEY,
+                bushfire_id integer REFERENCES burnt_area_bushfire(id) ON DELETE CASCADE,
+                ogc_fid integer,
+                category varchar(40),
+                fbr_tenure varchar(50),
+                fbr_planta varchar(33),
+                area double precision,
+                wkb_geometry geometry(MultiPolygon,9000001)
+            )
+            """)
+
     try:
         if not bushfire.fire_boundary:
             #no fire boundary,
@@ -642,15 +794,46 @@ def refresh_burnt_area(bushfire,is_snapshot,layersuffix=""):
                         "category":"name"
                     },
                 }]
+                if debug:
+                    for layer in layers:
+                        if layer["id"] == "legislated_lands_and_waters":
+                            layer["properties"]["ogc_fid"] = "ogc_fid"
+                            layer["properties"]["name"] = "name"
+    
+                        elif layer["id"] == "state_forest_plantation_distribution":
+                            layer["properties"]["ogc_fid"] = "ogc_fid"
+                            layer["properties"]["fbr_tenure"] = "fbr_tenure"
+                            layer["properties"]["fbr_planta"] = "fbr_planta"
+    
+                        elif layer["id"] == "dept_interest_lands_and_waters":
+                            layer["properties"]["ogc_fid"] = "ogc_fid"
+                            layer["properties"]["name"] = "name"
+    
+                        elif layer["id"] == "other_tenures":
+                            layer["properties"]["ogc_fid"] = "ogc_fid"
+                            layer["properties"]["brc_cad_le"] = "brc_cad_le"
+    
+                        elif layer["id"] == "sa_nt_burntarea":
+                            layer["properties"]["ogc_fid"] = "ogc_fid"
+                            layer["properties"]["state"] = "state"
         
-            
-            req_options["area"] = {
-                "action":"getArea",
-                "layers":layers,
-                "layer_overlap":False,
-                "merge_result":True,
-                "unit":"ha",
-            }
+            if debug:
+                req_options["area"] = {
+                    "action":"getArea",
+                    "layers":layers,
+                    "layer_overlap":False,
+                    "merge_result":False,
+                    "unit":"ha",
+                    "return_geometry":True
+                }
+            else:
+                req_options["area"] = {
+                    "action":"getArea",
+                    "layers":layers,
+                    "layer_overlap":False,
+                    "merge_result":True,
+                    "unit":"ha",
+                }
             req_data["options"] = json.dumps(req_options)
             resp=requests.post(url="{}/spatial".format(settings.SSS_URL), data=req_data,auth=requests.auth.HTTPBasicAuth(settings.USER_SSO, settings.PASS_SSO),verify=settings.SSS_CERTIFICATE_VERIFY)
             resp.raise_for_status()
@@ -671,6 +854,98 @@ def refresh_burnt_area(bushfire,is_snapshot,layersuffix=""):
                 raise Exception("Unknown Exception")
     
             area_data = result["features"][0]["area"]["data"]
+            #generate the debug data
+            if debug:
+                with connection.cursor() as cursor:
+                    #try to delete existing debug data if exists
+                    if is_snapshot:
+                        cursor.execute("DELETE FROM burnt_area_bushfire WHERE fire_number='{}' and snapshot_id={}".format(bushfire.fire_number,bushfire.id))
+                    else:
+                        cursor.execute("DELETE FROM burnt_area_bushfire WHERE fire_number='{}'".format(bushfire.fire_number))
+                    #populate the new debug data
+                    cursor.execute("""
+                    INSERT INTO burnt_area_bushfire 
+                        (fire_number,snapshot_id,area,wkb_geometry)
+                    VALUES
+                        ('{}',{},{},ST_MPolyFromText('MULTIPOLYGON({},9000001)'))
+                    """.format(bushfire.fire_number,bushfire.id if is_snapshot else "null",area_data["total_area"],to_wkt(area_data["feature_geometry"],multiple=True)))
+                    #fetch back the id
+                    if is_snapshot:
+                        cursor.execute("SELECT id FROM burnt_area_bushfire WHERE fire_number='{}' and snapshot_id={}".format(bushfire.fire_number,bushfire.id))
+                    else:
+                        cursor.execute("SELECT id burnt_area_bushfire WHERE fire_number='{}'".format(bushfire.fire_number))
+                    debug_id = cursor.fetchone()[0]
+
+                    for data in area_data.get("layers",{}).get("legislated_lands_and_waters",{}).get('areas'):
+                        cursor.execute("""
+                        INSERT INTO burnt_area_dept_managed 
+                            (bushfire_id,ogc_fid,name,category,wkb_geometry)
+                        VALUES
+                            ({},{},'{}','{}',ST_MPolyFromText('MULTIPOLYGON({},9000001)'))
+                        """.format(debug_id,area_data if is_snapshot else "null",data.get("ogc_fid") or "null",data.get('category') or "null",to_wkt(data["layer_geometry"],multiple=True)))
+                        cursor.execute("""
+                        INSERT INTO burnt_area_dept_managed_intersection 
+                            (bushfire_id,ogc_fid,name,category,area,wkb_geometry)
+                        VALUES
+                            ({},{},'{}','{}',{},ST_MPolyFromText('MULTIPOLYGON({},9000001)'))
+                        """.format(debug_id,area_data if is_snapshot else "null",data.get("ogc_fid") or "null",data.get('category') or "null",data["area"],to_wkt(data["intersection_geometry"],multiple=True)))
+
+                    for data in area_data.get("layers",{}).get("dept_interest_lands_and_waters",{}).get('areas'):
+                        cursor.execute("""
+                        INSERT INTO burnt_area_dept_interested
+                            (bushfire_id,ogc_fid,name,category,wkb_geometry)
+                        VALUES
+                            ({},{},'{}','{}',ST_MPolyFromText('MULTIPOLYGON({},9000001)'))
+                        """.format(debug_id,area_data if is_snapshot else "null",data.get("ogc_fid") or "null",data.get('category') or "null",to_wkt(data["layer_geometry"],multiple=True)))
+                        cursor.execute("""
+                        INSERT INTO burnt_area_dept_interested_intersection 
+                            (bushfire_id,ogc_fid,name,category,area,wkb_geometry)
+                        VALUES
+                            ({},{},'{}','{}',{},ST_MPolyFromText('MULTIPOLYGON({},9000001)'))
+                        """.format(debug_id,area_data if is_snapshot else "null",data.get("ogc_fid") or "null",data.get('category') or "null",data["area"],to_wkt(data["intersection_geometry"],multiple=True)))
+
+                    for data in area_data.get("layers",{}).get("state_forest_plantation_distribution",{}).get('areas'):
+                        cursor.execute("""
+                        INSERT INTO burnt_area_state_forest
+                            (bushfire_id,ogc_fid,category,fbr_tenure,fbr_planta,wkb_geometry)
+                        VALUES
+                            ({},{},'{}','{}','{}',ST_MPolyFromText('MULTIPOLYGON({},9000001)'))
+                        """.format(debug_id,area_data if is_snapshot else "null",data.get("ogc_fid") or "null",data.get('category') or "null",data.get('fbr_tenure') or 'null',data.get('fbr_planta') or 'null',to_wkt(data["layer_geometry"],multiple=True)))
+                        cursor.execute("""
+                        INSERT INTO burnt_area_state_forest_intersection 
+                            (bushfire_id,ogc_fid,category,fbr_tenure,fbr_planta,area,wkb_geometry)
+                        VALUES
+                            ({},{},'{}','{}','{}',{},ST_MPolyFromText('MULTIPOLYGON({},9000001)'))
+                        """.format(debug_id,area_data if is_snapshot else "null",data.get("ogc_fid") or "null",data.get('category') or "null",data.get('fbr_tenure') or 'null',data.get('fbr_planta') or 'null',data["area"],to_wkt(data["intersection_geometry"],multiple=True)))
+
+                    for data in area_data.get("layers",{}).get("sa_nt_burntarea",{}).get('areas'):
+                        cursor.execute("""
+                        INSERT INTO burnt_area_nt_st
+                            (bushfire_id,ogc_fid,category,state,wkb_geometry)
+                        VALUES
+                            ({},{},'{}','{}',ST_MPolyFromText('MULTIPOLYGON({},9000001)'))
+                        """.format(debug_id,area_data if is_snapshot else "null",data.get("ogc_fid") or "null",data.get('category') or "null",data.get('state') or 'null',to_wkt(data["layer_geometry"],multiple=True)))
+                        cursor.execute("""
+                        INSERT INTO burnt_area_nt_st_intersection 
+                            (bushfire_id,ogc_fid,category,state,area,wkb_geometry)
+                        VALUES
+                            ({},{},'{}','{}',{},ST_MPolyFromText('MULTIPOLYGON({},9000001)'))
+                        """.format(debug_id,area_data if is_snapshot else "null",data.get("ogc_fid") or "null",data.get('category') or "null",data.get('state') or 'null',data["area"],to_wkt(data["intersection_geometry"],multiple=True)))
+
+                    for data in area_data.get("layers",{}).get("other_tenures",{}).get('areas'):
+                        cursor.execute("""
+                        INSERT INTO burnt_area_others
+                            (bushfire_id,ogc_fid,category,brc_cad_le,wkb_geometry)
+                        VALUES
+                            ({},{},'{}','{}',ST_MPolyFromText('MULTIPOLYGON({},9000001)'))
+                        """.format(debug_id,area_data if is_snapshot else "null",data.get("ogc_fid") or "null",data.get('category') or "null",data.get('brc_cad_le') or 'null',to_wkt(data["layer_geometry"],multiple=True)))
+                        cursor.execute("""
+                        INSERT INTO burnt_area_others_intersection 
+                            (bushfire_id,ogc_fid,category,brc_cad_le,area,wkb_geometry)
+                        VALUES
+                            ({},{},'{}','{}',{},ST_MPolyFromText('MULTIPOLYGON({},9000001)'))
+                        """.format(debug_id,area_data if is_snapshot else "null",data.get("ogc_fid") or "null",data.get('category') or "null",data.get('brc_cad_le') or 'null',data["area"],to_wkt(data["intersection_geometry"],multiple=True)))
+
             #group burnt area
             total_area = 0
             if layers:
