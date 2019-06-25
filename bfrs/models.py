@@ -134,25 +134,43 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
                 if is_active_f and not is_active_f(obj):
                     continue
 
-                if hasattr(obj, field) and getattr(obj, field)==dep_set[0]:
-                    for dep in dep_set[1:]:
-                        if isinstance(dep,tuple):
-                            #field label is provided
+                if not hasattr(obj, field):
+                    continue
+                field_val = getattr(obj,field)
+
+                if callable(dep_set[0]):
+                    if not dep_set[0](field_val):
+                        continue
+                elif field_val != dep_set[0]:
+                    continue
+
+                for dep in dep_set[1:]:
+                    is_missing_f = lambda v,dep_v:dep_v is None or (isinstance(dep_v, (str, unicode)) and not dep_v.strip()) or (isinstance(dep_v,(list,tuple)) and not dep_v)
+                    if isinstance(dep,tuple):
+                        #field label is provided
+                        if len(dep) == 1:
+                            dep = dep[0]
+                        elif len(dep) == 2:
                             dep_label = dep[1]
                             dep = dep[0]
                         else:
-                            dep_label = None
+                            is_missing_f = dep[2]
+                            dep_label = dep[1]
+                            dep = dep[0]
 
-                        value = get_field(obj,dep)
-                        if value is None or (isinstance(value, (str, unicode)) and not value.strip()) or (isinstance(value,(list,tuple)) and not value):
-                            # field is unset or empty string
-                            if dep_label:
-                                missing.append(dep_label)
-                            else:
-                                try:
-                                    missing.append(Bushfire._meta.get_field(dep).verbose_name)
-                                except:
-                                    missing.append(dep)
+                    else:
+                        dep_label = None
+
+                    value = get_field(obj,dep)
+                    if is_missing_f(field_val,value):
+                        # field is unset or empty string
+                        if dep_label:
+                            missing.append(dep_label)
+                        else:
+                            try:
+                                missing.append(Bushfire._meta.get_field(dep).verbose_name)
+                            except:
+                                missing.append(dep)
             except:
                 pass
 
@@ -585,7 +603,7 @@ class BushfireSnapshot(BushfireBase):
     sss_id = models.CharField(verbose_name="Unique SSS ID", max_length=64, null=True, blank=True)
 
     snapshot_type = models.PositiveSmallIntegerField(choices=SNAPSHOT_TYPE_CHOICES)
-    action = models.CharField(verbose_name="Action Type", max_length=50)
+    action = models.CharField(verbose_name="Action Type", max_length=100)
     bushfire = models.ForeignKey('Bushfire', related_name='snapshots')
 
     @property
@@ -1018,6 +1036,8 @@ AUTH_MANDATORY_DEP_FIELDS= {
     'final_control': [[Agency.OTHER, 'other_final_control']],
     'area_limit': [[True, 'area']],
     'field_officer': [[User.OTHER, 'other_field_officer', 'other_field_officer_agency']], # username='other'
+    'fire_boundary': [[lambda v:v is not None, ('origin_point','Origin Point muse be inside of fire boundary',lambda fb,op:not fb.contains(op))]],
+
 }
 AUTH_MANDATORY_FORMSETS= [
     #'fire_behaviour',

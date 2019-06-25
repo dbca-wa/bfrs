@@ -460,8 +460,16 @@ class BushfireSpatialResource(ModelResource):
                     BushfireProperty.objects.filter(bushfire=bundle.obj,name="plantations").delete()
     
             if bundle.obj.report_status >=  Bushfire.STATUS_FINAL_AUTHORISED:
-                # if bushfire has been authorised, update snapshot and archive old snapshot
-                serialize_bushfire('final', 'SSS Update', bundle.obj)
+                if bundle.obj.fire_boundar.contains(bundle.obj.origin_point):
+                    # if bushfire has been authorised, update snapshot and archive old snapshot
+                    serialize_bushfire('final', 'SSS Update', bundle.obj)
+                else:
+                    if bundle.obj.is_reviewed:
+                        update_status(bundle.request, bundle.obj, "delete_review",action_desc="Delete review because origin point is outside of fire boundary after uploading from SSS",action_name="Upload")
+
+                    if bundle.obj.is_final_authorised:
+                        update_status(bundle.request, bundle.obj, "delete_final_authorisation",action_desc="Delete final auth because origin point is outside of fire boundary after uploading from SSS",action_name="Upload")
+
                 #print("serizlie bushfire")
     
             if invalidated:

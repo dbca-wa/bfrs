@@ -466,8 +466,9 @@ def save_model(instance,update_fields=None,extra_update_fields=None):
     else:
         instance.save(update_fields=extra_update_fields + update_fields)
 
-def update_status(request, bushfire, action,action_name="",update_fields=None):
+def update_status(request, bushfire, action,action_name="",update_fields=None,action_desc=None):
 
+    action_desc = action_desc or action
     notification = {}
     user_email = request.user.email if settings.CC_TO_LOGIN_USER else None
     if action == 'submit':
@@ -483,7 +484,7 @@ def update_status(request, bushfire, action,action_name="",update_fields=None):
         bushfire.report_status = Bushfire.STATUS_INITIAL_AUTHORISED
 
         save_model(bushfire,update_fields,["init_authorised_by","init_authorised_date","report_status"])
-        serialize_bushfire('initial', action, bushfire)
+        serialize_bushfire('initial', action_desc, bushfire)
 
         if not bushfire.dfes_incident_no:
             if settings.P1CAD_ENDPOINT:
@@ -594,7 +595,7 @@ def update_status(request, bushfire, action,action_name="",update_fields=None):
         bushfire.authorised_date = datetime.now(tz=pytz.utc)
         bushfire.report_status = Bushfire.STATUS_FINAL_AUTHORISED
         save_model(bushfire,update_fields,["report_status","authorised_by","authorised_date"])
-        serialize_bushfire('final', action, bushfire)
+        serialize_bushfire('final', action_desc, bushfire)
 
         # send emails
         resp = send_email({
@@ -621,7 +622,7 @@ def update_status(request, bushfire, action,action_name="",update_fields=None):
         bushfire.reviewed_date = datetime.now(tz=pytz.utc)
         bushfire.report_status = Bushfire.STATUS_REVIEWED
         save_model(bushfire,update_fields,["report_status","reviewed_by","reviewed_date"])
-        serialize_bushfire('review', action, bushfire)
+        serialize_bushfire('review', action_desc, bushfire)
 
         # send emails
         resp = send_email({
@@ -653,7 +654,7 @@ def update_status(request, bushfire, action,action_name="",update_fields=None):
         bushfire.authorised_date = None
         bushfire.report_status = Bushfire.STATUS_INITIAL_AUTHORISED
         save_model(bushfire,update_fields,["authorised_by","authorised_date","report_status","reviewed_by","reviewed_date","final_fire_boundary","archive"])
-        serialize_bushfire('final', action, bushfire)
+        serialize_bushfire('final', action_desc, bushfire)
 
     elif action == 'delete_review':
         if not bushfire.is_reviewed:
@@ -662,7 +663,7 @@ def update_status(request, bushfire, action,action_name="",update_fields=None):
         bushfire.reviewed_date = None
         bushfire.report_status = Bushfire.STATUS_FINAL_AUTHORISED
         save_model(bushfire,update_fields,["reviewed_by","reviewed_date","report_status"])
-        serialize_bushfire('review', action, bushfire)
+        serialize_bushfire('review', action_desc, bushfire)
     elif action == 'archive':
         if bushfire.report_status < Bushfire.STATUS_FINAL_AUTHORISED:
             raise Exception("The report({0}) is not authorised.".format(bushfire.fire_number))
