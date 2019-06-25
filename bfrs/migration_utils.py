@@ -584,15 +584,15 @@ def refresh_originpoint_tenure(bushfire,is_snapshot,layersuffix=""):
 
 def to_wkt(geometry,multiple=False):
     def line_to_wkt(coordinates):
-        return "({})".format(",".join(["{} {}".format(*coord) for coord in l]))
+        return "({})".format(",".join(["{} {}".format(*coord) for coord in coordinates]))
     def polygon_to_wkt(coordinates):
-        return "({})".format(",".join([line_to_wkt(l) for l in p]))
+        return "({})".format(",".join([line_to_wkt(l) for l in coordinates]))
 
     if geometry["type"] == "MultiPolygon":
-        return "({})".format(",".join([polygon_to_wkt(p) for p in geometry["coordinates"]]))
+        return ",".join([polygon_to_wkt(p) for p in geometry["coordinates"]])
     elif geometry["type"] == "Polygon":
         if multiple:
-            return "({})".format(polygon_to_wkt(geometry["coordinates"]))
+            return polygon_to_wkt(geometry["coordinates"])
         else:
             return polygon_to_wkt(geometry["coordinates"])
 
@@ -607,7 +607,7 @@ def refresh_burnt_area(bushfire,is_snapshot,layersuffix="",debug=False):
     overlap_area = 0
     if debug:
         with connection.cursor() as cursor:
-            cursor.execute("SELECT COUNT(*) FROM spatial_ref_sys WHERE srid=9000001")
+            cursor.execute("SELECT COUNT(*) FROM spatial_ref_sys WHERE srid=998999")
             row = cursor.fetchone()
             if row[0] == 0:
                 #create the projection
@@ -615,7 +615,7 @@ def refresh_burnt_area(bushfire,is_snapshot,layersuffix="",debug=False):
                 INSERT INTO spatial_ref_sys
                     (srid,auth_name,auth_srid,proj4text,srtext) 
                 VALUES
-                    (9000001,'wa-dbca',9000001,'+proj=aea +lat_1=-17.5 +lat_2=-31.5 +lat_0=0 +lon_0=121 +x_0=5000000 +y_0=10000000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs','PROJCS["Albers_Equal_Conic_Area_GDA_Western_Australia",GEOGCS["GCS_GDA_1994",DATUM["D_GDA_1994",SPHEROID["GRS_1980",6378137.0,298.257222101]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Albers"],PARAMETER["False_Easting",5000000.0],PARAMETER["False_Northing",10000000.0],PARAMETER["Central_Meridian",121.0],PARAMETER["Standard_Parallel_1",-17.5],PARAMETER["Standard_Parallel_2",-31.5],PARAMETER["Latitude_Of_Origin",0.0],UNIT["Meter",1.0]]')
+                    (998999,'wa-dbca',998999,'+proj=aea +lat_1=-17.5 +lat_2=-31.5 +lat_0=0 +lon_0=121 +x_0=5000000 +y_0=10000000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs','PROJCS["Albers_Equal_Conic_Area_GDA_Western_Australia",GEOGCS["GCS_GDA_1994",DATUM["D_GDA_1994",SPHEROID["GRS_1980",6378137.0,298.257222101]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Albers"],PARAMETER["False_Easting",5000000.0],PARAMETER["False_Northing",10000000.0],PARAMETER["Central_Meridian",121.0],PARAMETER["Standard_Parallel_1",-17.5],PARAMETER["Standard_Parallel_2",-31.5],PARAMETER["Latitude_Of_Origin",0.0],UNIT["Meter",1.0]]')
                 """)
 
             cursor.execute("""
@@ -624,7 +624,8 @@ def refresh_burnt_area(bushfire,is_snapshot,layersuffix="",debug=False):
                 fire_number VARCHAR(15),
                 snapshot_id integer,
                 area double precision,
-                wkb_geometry geometry(MultiPolygon,9000001)
+                other_area double precision,
+                wkb_geometry geometry(MultiPolygon,998999)
             )
             """)
 
@@ -635,7 +636,7 @@ def refresh_burnt_area(bushfire,is_snapshot,layersuffix="",debug=False):
                 ogc_fid integer,
                 name varchar(254),
                 category varchar(254),
-                wkb_geometry geometry(MultiPolygon,9000001)
+                wkb_geometry geometry(MultiPolygon,998999)
             )
             """)
             cursor.execute("""
@@ -646,7 +647,7 @@ def refresh_burnt_area(bushfire,is_snapshot,layersuffix="",debug=False):
                 name varchar(254),
                 category varchar(254),
                 area double precision,
-                wkb_geometry geometry(MultiPolygon,9000001)
+                wkb_geometry geometry(MultiPolygon,998999)
             )
             """)
 
@@ -657,7 +658,7 @@ def refresh_burnt_area(bushfire,is_snapshot,layersuffix="",debug=False):
                 ogc_fid integer,
                 name varchar(254),
                 category varchar(254),
-                wkb_geomtry geometry(MultiPolygon,9000001)
+                wkb_geometry geometry(MultiPolygon,998999)
             )
             """)
             cursor.execute("""
@@ -668,7 +669,7 @@ def refresh_burnt_area(bushfire,is_snapshot,layersuffix="",debug=False):
                 name varchar(254),
                 category varchar(254),
                 area double precision,
-                wkb_geometry geometry(MultiPolygon,9000001)
+                wkb_geometry geometry(MultiPolygon,998999)
             )
             """)
 
@@ -679,7 +680,7 @@ def refresh_burnt_area(bushfire,is_snapshot,layersuffix="",debug=False):
                 ogc_fid integer,
                 category varchar(50),
                 brc_cad_le varchar(50),
-                wkb_geometry geometry(MultiPolygon,9000001)
+                wkb_geometry geometry(MultiPolygon,998999)
             )
             """)
             cursor.execute("""
@@ -690,7 +691,7 @@ def refresh_burnt_area(bushfire,is_snapshot,layersuffix="",debug=False):
                 category varchar(50),
                 brc_cad_le varchar(50),
                 area double precision,
-                wkb_geometry geometry(MultiPolygon,9000001)
+                wkb_geometry geometry(MultiPolygon,998999)
             )
             """)
 
@@ -701,7 +702,7 @@ def refresh_burnt_area(bushfire,is_snapshot,layersuffix="",debug=False):
                 ogc_fid integer,
                 category varchar(20),
                 state varchar(2),
-                wkb_geometry geometry(MultiPolygon,9000001)
+                wkb_geometry geometry(MultiPolygon,998999)
             )
             """)
             cursor.execute("""
@@ -712,7 +713,7 @@ def refresh_burnt_area(bushfire,is_snapshot,layersuffix="",debug=False):
                 category varchar(20),
                 state varchar(2),
                 area double precision,
-                wkb_geometry geometry(MultiPolygon,9000001)
+                wkb_geometry geometry(MultiPolygon,998999)
             )
             """)
 
@@ -724,7 +725,7 @@ def refresh_burnt_area(bushfire,is_snapshot,layersuffix="",debug=False):
                 category varchar(40),
                 fbr_tenure varchar(50),
                 fbr_planta varchar(33),
-                wkb_geometry geometry(MultiPolygon,9000001)
+                wkb_geometry geometry(MultiPolygon,998999)
             )
             """)
             cursor.execute("""
@@ -736,7 +737,7 @@ def refresh_burnt_area(bushfire,is_snapshot,layersuffix="",debug=False):
                 fbr_tenure varchar(50),
                 fbr_planta varchar(33),
                 area double precision,
-                wkb_geometry geometry(MultiPolygon,9000001)
+                wkb_geometry geometry(MultiPolygon,998999)
             )
             """)
 
@@ -865,86 +866,85 @@ def refresh_burnt_area(bushfire,is_snapshot,layersuffix="",debug=False):
                     #populate the new debug data
                     cursor.execute("""
                     INSERT INTO burnt_area_bushfire 
-                        (fire_number,snapshot_id,area,wkb_geometry)
+                        (fire_number,snapshot_id,area,other_area,wkb_geometry)
                     VALUES
-                        ('{}',{},{},ST_MPolyFromText('MULTIPOLYGON({},9000001)'))
-                    """.format(bushfire.fire_number,bushfire.id if is_snapshot else "null",area_data["total_area"],to_wkt(area_data["feature_geometry"],multiple=True)))
+                        ('{}',{},{},{},ST_MPolyFromText('MULTIPOLYGON({})',998999))
+                    """.format(bushfire.fire_number,bushfire.id if is_snapshot else "null",area_data["total_area"],area_data.get('other_area') or 0,to_wkt(area_data["feature_geometry"],multiple=True)))
                     #fetch back the id
                     if is_snapshot:
                         cursor.execute("SELECT id FROM burnt_area_bushfire WHERE fire_number='{}' and snapshot_id={}".format(bushfire.fire_number,bushfire.id))
                     else:
-                        cursor.execute("SELECT id burnt_area_bushfire WHERE fire_number='{}'".format(bushfire.fire_number))
+                        cursor.execute("SELECT id FROM burnt_area_bushfire WHERE fire_number='{}'".format(bushfire.fire_number))
                     debug_id = cursor.fetchone()[0]
-
-                    for data in area_data.get("layers",{}).get("legislated_lands_and_waters",{}).get('areas'):
+                    for data in area_data.get("layers",{}).get("legislated_lands_and_waters",{}).get('areas') or []:
                         cursor.execute("""
                         INSERT INTO burnt_area_dept_managed 
                             (bushfire_id,ogc_fid,name,category,wkb_geometry)
                         VALUES
-                            ({},{},'{}','{}',ST_MPolyFromText('MULTIPOLYGON({},9000001)'))
-                        """.format(debug_id,area_data if is_snapshot else "null",data.get("ogc_fid") or "null",data.get('category') or "null",to_wkt(data["layer_geometry"],multiple=True)))
+                            ({},{},'{}','{}',ST_MPolyFromText('MULTIPOLYGON({})',998999))
+                        """.format(debug_id,data.get("ogc_fid") or "null",data.get('name') or 'null',data.get('category') or "null",to_wkt(data["layer_geometry"],multiple=True)))
                         cursor.execute("""
                         INSERT INTO burnt_area_dept_managed_intersection 
                             (bushfire_id,ogc_fid,name,category,area,wkb_geometry)
                         VALUES
-                            ({},{},'{}','{}',{},ST_MPolyFromText('MULTIPOLYGON({},9000001)'))
-                        """.format(debug_id,area_data if is_snapshot else "null",data.get("ogc_fid") or "null",data.get('category') or "null",data["area"],to_wkt(data["intersection_geometry"],multiple=True)))
+                            ({},{},'{}','{}',{},ST_MPolyFromText('MULTIPOLYGON({})',998999))
+                        """.format(debug_id,data.get("ogc_fid") or "null",data.get('name') or 'null',data.get('category') or "null",data["area"],to_wkt(data["intersection_geometry"],multiple=True)))
 
-                    for data in area_data.get("layers",{}).get("dept_interest_lands_and_waters",{}).get('areas'):
+                    for data in area_data.get("layers",{}).get("dept_interest_lands_and_waters",{}).get('areas') or []:
                         cursor.execute("""
                         INSERT INTO burnt_area_dept_interested
                             (bushfire_id,ogc_fid,name,category,wkb_geometry)
                         VALUES
-                            ({},{},'{}','{}',ST_MPolyFromText('MULTIPOLYGON({},9000001)'))
-                        """.format(debug_id,area_data if is_snapshot else "null",data.get("ogc_fid") or "null",data.get('category') or "null",to_wkt(data["layer_geometry"],multiple=True)))
+                            ({},{},'{}','{}',ST_MPolyFromText('MULTIPOLYGON({})',998999))
+                        """.format(debug_id,data.get("ogc_fid") or "null",data.get('name') or 'null',data.get('category') or "null",to_wkt(data["layer_geometry"],multiple=True)))
                         cursor.execute("""
                         INSERT INTO burnt_area_dept_interested_intersection 
                             (bushfire_id,ogc_fid,name,category,area,wkb_geometry)
                         VALUES
-                            ({},{},'{}','{}',{},ST_MPolyFromText('MULTIPOLYGON({},9000001)'))
-                        """.format(debug_id,area_data if is_snapshot else "null",data.get("ogc_fid") or "null",data.get('category') or "null",data["area"],to_wkt(data["intersection_geometry"],multiple=True)))
+                            ({},{},'{}','{}',{},ST_MPolyFromText('MULTIPOLYGON({})',998999))
+                        """.format(debug_id,data.get("ogc_fid") or "null",data.get('name') or 'null',data.get('category') or "null",data["area"],to_wkt(data["intersection_geometry"],multiple=True)))
 
-                    for data in area_data.get("layers",{}).get("state_forest_plantation_distribution",{}).get('areas'):
+                    for data in area_data.get("layers",{}).get("state_forest_plantation_distribution",{}).get('areas') or []:
                         cursor.execute("""
                         INSERT INTO burnt_area_state_forest
                             (bushfire_id,ogc_fid,category,fbr_tenure,fbr_planta,wkb_geometry)
                         VALUES
-                            ({},{},'{}','{}','{}',ST_MPolyFromText('MULTIPOLYGON({},9000001)'))
-                        """.format(debug_id,area_data if is_snapshot else "null",data.get("ogc_fid") or "null",data.get('category') or "null",data.get('fbr_tenure') or 'null',data.get('fbr_planta') or 'null',to_wkt(data["layer_geometry"],multiple=True)))
+                            ({},{},'{}','{}','{}',ST_MPolyFromText('MULTIPOLYGON({})',998999))
+                        """.format(debug_id,data.get("ogc_fid") or "null",data.get('category') or "null",data.get('fbr_tenure') or 'null',data.get('fbr_planta') or 'null',to_wkt(data["layer_geometry"],multiple=True)))
                         cursor.execute("""
                         INSERT INTO burnt_area_state_forest_intersection 
                             (bushfire_id,ogc_fid,category,fbr_tenure,fbr_planta,area,wkb_geometry)
                         VALUES
-                            ({},{},'{}','{}','{}',{},ST_MPolyFromText('MULTIPOLYGON({},9000001)'))
-                        """.format(debug_id,area_data if is_snapshot else "null",data.get("ogc_fid") or "null",data.get('category') or "null",data.get('fbr_tenure') or 'null',data.get('fbr_planta') or 'null',data["area"],to_wkt(data["intersection_geometry"],multiple=True)))
+                            ({},{},'{}','{}','{}',{},ST_MPolyFromText('MULTIPOLYGON({})',998999))
+                        """.format(debug_id,data.get("ogc_fid") or "null",data.get('category') or "null",data.get('fbr_tenure') or 'null',data.get('fbr_planta') or 'null',data["area"],to_wkt(data["intersection_geometry"],multiple=True)))
 
-                    for data in area_data.get("layers",{}).get("sa_nt_burntarea",{}).get('areas'):
+                    for data in area_data.get("layers",{}).get("sa_nt_burntarea",{}).get('areas') or []:
                         cursor.execute("""
                         INSERT INTO burnt_area_nt_st
                             (bushfire_id,ogc_fid,category,state,wkb_geometry)
                         VALUES
-                            ({},{},'{}','{}',ST_MPolyFromText('MULTIPOLYGON({},9000001)'))
-                        """.format(debug_id,area_data if is_snapshot else "null",data.get("ogc_fid") or "null",data.get('category') or "null",data.get('state') or 'null',to_wkt(data["layer_geometry"],multiple=True)))
+                            ({},{},'{}','{}',ST_MPolyFromText('MULTIPOLYGON({})',998999))
+                        """.format(debug_id,data.get("ogc_fid") or "null",data.get('category') or "null",data.get('state') or 'null',to_wkt(data["layer_geometry"],multiple=True)))
                         cursor.execute("""
                         INSERT INTO burnt_area_nt_st_intersection 
                             (bushfire_id,ogc_fid,category,state,area,wkb_geometry)
                         VALUES
-                            ({},{},'{}','{}',{},ST_MPolyFromText('MULTIPOLYGON({},9000001)'))
-                        """.format(debug_id,area_data if is_snapshot else "null",data.get("ogc_fid") or "null",data.get('category') or "null",data.get('state') or 'null',data["area"],to_wkt(data["intersection_geometry"],multiple=True)))
+                            ({},{},'{}','{}',{},ST_MPolyFromText('MULTIPOLYGON({})',998999))
+                        """.format(debug_id,data.get("ogc_fid") or "null",data.get('category') or "null",data.get('state') or 'null',data["area"],to_wkt(data["intersection_geometry"],multiple=True)))
 
-                    for data in area_data.get("layers",{}).get("other_tenures",{}).get('areas'):
+                    for data in area_data.get("layers",{}).get("other_tenures",{}).get('areas') or []:
                         cursor.execute("""
                         INSERT INTO burnt_area_others
                             (bushfire_id,ogc_fid,category,brc_cad_le,wkb_geometry)
                         VALUES
-                            ({},{},'{}','{}',ST_MPolyFromText('MULTIPOLYGON({},9000001)'))
-                        """.format(debug_id,area_data if is_snapshot else "null",data.get("ogc_fid") or "null",data.get('category') or "null",data.get('brc_cad_le') or 'null',to_wkt(data["layer_geometry"],multiple=True)))
+                            ({},{},'{}','{}',ST_MPolyFromText('MULTIPOLYGON({})',998999))
+                        """.format(debug_id,data.get("ogc_fid") or "null",data.get('category') or "null",data.get('brc_cad_le') or 'null',to_wkt(data["layer_geometry"],multiple=True)))
                         cursor.execute("""
                         INSERT INTO burnt_area_others_intersection 
                             (bushfire_id,ogc_fid,category,brc_cad_le,area,wkb_geometry)
                         VALUES
-                            ({},{},'{}','{}',{},ST_MPolyFromText('MULTIPOLYGON({},9000001)'))
-                        """.format(debug_id,area_data if is_snapshot else "null",data.get("ogc_fid") or "null",data.get('category') or "null",data.get('brc_cad_le') or 'null',data["area"],to_wkt(data["intersection_geometry"],multiple=True)))
+                            ({},{},'{}','{}',{},ST_MPolyFromText('MULTIPOLYGON({})',998999))
+                        """.format(debug_id,data.get("ogc_fid") or "null",data.get('category') or "null",data.get('brc_cad_le') or 'null',data["area"],to_wkt(data["intersection_geometry"],multiple=True)))
 
             #group burnt area
             total_area = 0
