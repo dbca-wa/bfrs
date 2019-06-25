@@ -695,6 +695,9 @@ class BushfireUpdateView(ExceptionMixin,FormRequestMixin,MainUrlMixin,LoginRequi
             elif action in ["submit","authorise"]:
                 context["confirm_action"] = action
                 context["form"] = BushfireViewForm(instance=self.object)
+                msg = getattr(settings,"{}_MESSAGE".format(action.upper()))
+                if msg:
+                    context["confirm_message"]=msg
                 context["submit_actions"]=[("confirm","Yes, I'm sure",'btn-success')]
                 if action == "submit":
                     context["link_actions"]=[(reverse("bushfire:bushfire_initial",kwargs={"pk":self.object.pk}),"Cancel","btn-danger")]

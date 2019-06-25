@@ -70,6 +70,8 @@ PASS_SSO = env('PASS_SSO')
 FSSDRS_USERS = env('FSSDRS_USERS') or []
 FSSDRS_GROUP = env('FSSDRS_GROUP') or 'Fire Information Management'
 
+AUTHORISE_MESSAGE = env("AUTHORISE_MESSAGE","Once the fire is closed DFES COMCEN need to be informed IMMEDIATELY by phone and email on XXXXXX and xxxx@dfes.wa.gov.au")
+
 FINAL_AUTHORISE_GROUP_USERS = env('FINAL_AUTHORISE_GROUP_USERS') or []
 FINAL_AUTHORISE_GROUP = env('FINAL_AUTHORISE_GROUP') or 'Fire Final Authorise Group'
 

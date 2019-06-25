@@ -141,7 +141,7 @@
 </div>
 
 {% if submit_actions %}
-<form action="" method="post">
+<form action="" method="post" id="id_bushfire_edit_form">
 {% csrf_token %}
 {% endif %}
 
@@ -423,5 +423,11 @@
             $('#fire_behaviour').collapse('hide')
         {% endif %}
     })
+{% if confirm_message %}
+    $("#id_bushfire_edit_form").bind("submit" ,function() {
+        alert("{{confirm_message}}")
+
+    })
+{% endif %}
 </script>
 {% endblock %}
