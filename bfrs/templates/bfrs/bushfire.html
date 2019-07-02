@@ -24,8 +24,6 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown_btn">
       <li><a href="javascript: bushfire_filter({action:'export_to_excel'});">Export Excel</a></li>
       <li><a href="javascript: bushfire_filter({action:'export_excel_outstanding_fires'});">Export Outstanding Fires</a></li>
-      <li><a href="javascript: bushfire_filter({action:'export_excel_ministerial_report'});" onclick='growl({"message": "Creating Bushfire Report (Excel) ...", "type": "info"});'>Export Bushfire Report</a></li>
-      <li><a href="{% url 'bushfire:bushfire_report' %}">PDF Ministerial Report</a></li>
   </ul>
 </div>
 
@@ -121,7 +119,7 @@
             <input type="checkbox" name="selected_ids" value="{{bushfire.id}}" {% if selected_ids and bushfire.id in selected_ids %}checked {% endif %}>
           </td>
         {% endif %}
-        
+
 		<td><a href="#" onclick='openGokart({"action": "select", "region":{{bushfire.region.id}},"district":{{bushfire.district.id}},"bushfireid":"{{bushfire.fire_number}}" });' title="Open report in SSS">{{ bushfire.fire_number }}</a></td>
 		<td>{% if bushfire.dfes_incident_no %}{{ bushfire.dfes_incident_no }}{% else %}  {% endif %}</td>
         <td>{{ bushfire.name }}</td>
