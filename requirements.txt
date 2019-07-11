@@ -1,15 +1,15 @@
-ipython==5.2.2
+git+git://github.com/dbca-wa/dbca-utils@1.0.0
+psycopg2-binary==2.8.2
+Django==1.10.7
 django-extensions==1.7.6
-ipdb
-django==1.10.7
-#south
-dj-database-url==0.4.2
-django-confy==1.0.4
-psycopg2==2.7.5
-https://static.dpaw.wa.gov.au/static/py/dpaw-utils/dist/dpaw-utils-0.3a9.tar.gz
-django-auth-ldap==1.2.0
+django-dotenv==1.4.2
+dj-database-url==0.5.0
+gunicorn==19.9.0
+dj-static==0.0.6
+django-crispy-forms==1.6.1
+webtemplate-dbca==0.6.0
+django-tastypie==0.13.3
 django-model-utils==2.0.3
-django-debug-toolbar==1.6
 django-filter==1.0.1
 python-dateutil==2.6.0
 python-magic==0.4.10
@@ -17,26 +17,11 @@ Unidecode==0.4.18
 django-reversion==2.0.8
 django-reversion-compare==0.7.5
 django-smart-selects==1.3.4
-django-crispy-forms==1.6.1
 unicodecsv==0.14.1
 LatLon==1.0.2
-
 lxml==3.8.0
-dj-static==0.0.6
 pytz==2016.10
 xlwt==1.2.0
-django-tastypie==0.13.3
 pandas==0.19.2
-
-webtemplate-dpaw==0.4.3
-Fabric==1.12.0
-#git clone https://github.com/elo80ka/django-dynamic-formset - copy jquery.forset.js to statics/js dir
-
-# install postgress
-# sudp apt-get install postgresql postgresql-contrib
-# sudo apt-get update
-# pip install psycopg2 (from virtual env) (NOT sudo apt-get install python-psycopg2)
-# sudo apt-get install libpq-dev
-
-pyopenssl
-requests-ntlm
+requests==2.18.4
+requests-ntlm==1.1.0
