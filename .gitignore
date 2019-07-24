@@ -28,7 +28,7 @@ logs/
 tmp/
 
 # Environment settings
-.env
+.env*
 
 # Static files dirs
 /static/
