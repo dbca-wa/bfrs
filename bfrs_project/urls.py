@@ -11,6 +11,7 @@ from django.contrib.auth import views as auth_views
 from django.http import HttpResponseRedirect
 from django.conf import settings
 
+from .signals import webserver_ready
 
 def sss_selection_view(request):
     return HttpResponseRedirect(settings.SSS_URL)
@@ -63,3 +64,5 @@ urlpatterns = [
     url(r'^__debug__/', include(debug_toolbar.urls)),
 ]
 
+
+webserver_ready.send(sender="urls")

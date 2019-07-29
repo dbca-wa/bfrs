@@ -1275,5 +1275,3 @@ def importFireboundaries(folder,user=None,create_snapshot=True,action=None,refre
         except:
             traceback.print_exc()
 
-            
-

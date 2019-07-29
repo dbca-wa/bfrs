@@ -4,6 +4,7 @@ from django import forms
 from bfrs.models import (Bushfire, AreaBurnt, Damage, Injury,BushfireSnapshot,DamageSnapshot,InjurySnapshot,AreaBurntSnapshot,
         Region, District, Profile,
         current_finyear,Tenure,Cause,
+        DocumentTitle,Document,DocumentSnapshot,
         reporting_years,Agency,BushfireProperty
     )
 from datetime import datetime, timedelta
@@ -215,12 +216,12 @@ class BaseBushfireViewForm(baseforms.ModelForm):
             "dispatch_pw":basefields.SwitchFieldFactory(Bushfire,"dispatch_pw",("dispatch_pw_date",),field_class=basefields.ChoiceFieldFactory(Bushfire.DISPATCH_PW_CHOICES),true_value=1,field_params={"coerce":coerce_int,'empty_value':None}),
             "arson_squad_notified":basefields.SwitchFieldFactory(Bushfire,"arson_squad_notified",("offence_no",),policy=basefields.ALWAYS,on_layout="{0}<br>Police offence no: {1}",field_class=basefields.ChoiceFieldFactory(YESNO_CHOICES),field_params={"coerce":coerce_YESNO,"empty_value":None}),
             "initial_area":basefields.CompoundFieldFactory(fields.InitialAreaField,Bushfire,"initial_area"),
-            "initial_control":basefields.OtherOptionFieldFactory(Bushfire,"initial_control",("other_initial_control",),other_option=Agency.OTHER),
-            "first_attack":basefields.OtherOptionFieldFactory(Bushfire,"first_attack",("other_first_attack",),other_option=Agency.OTHER),
-            "final_control":basefields.OtherOptionFieldFactory(Bushfire,"final_control",("other_final_control",),other_option=Agency.OTHER),
+            "initial_control":basefields.OtherOptionFieldFactory(Bushfire,"initial_control",("other_initial_control",),other_option=lambda:Agency.OTHER),
+            "first_attack":basefields.OtherOptionFieldFactory(Bushfire,"first_attack",("other_first_attack",),other_option=lambda:Agency.OTHER),
+            "final_control":basefields.OtherOptionFieldFactory(Bushfire,"final_control",("other_final_control",),other_option=lambda:Agency.OTHER),
             "origin_point":basefields.SwitchFieldFactory(Bushfire,"origin_point",("origin_point_mga","origin_point_grid"),true_value="",reverse=True,on_layout=u"{}",off_layout=u"{}<br>{}<br>{}"),
             "field_officer":basefields.OtherOptionFieldFactory(Bushfire,"field_officer",("other_field_officer","other_field_officer_agency","other_field_officer_phone"),
-                other_option=User.OTHER,
+                other_option=lambda:User.OTHER,
                 policy=basefields.ALWAYS,
                 other_layout=u"{}<br> Name: {}<br> Agency: {}<br> Phone: {}",
                 edit_layout=u"""
@@ -242,7 +243,7 @@ class BaseBushfireViewForm(baseforms.ModelForm):
             "prob_fire_level":basefields.ChoiceFieldFactory(Bushfire.FIRE_LEVEL_CHOICES,field_params={"coerce":coerce_int,"empty_value":None}),
             "report_status":basefields.ChoiceFieldFactory(Bushfire.REPORT_STATUS_CHOICES,field_params={"coerce":coerce_int,"empty_value":None}),
             "reporting_year":basefields.ChoiceFieldFactory(REPORTING_YEAR_CHOICES,field_params={"coerce":coerce_int,"empty_value":None}),
-            "dispatch_aerial":basefields.SwitchFieldFactory(Bushfire,"fire_bombing_req",("dispatch_aerial_date","fire_bombing.ground_controller.username","fire_bombing.ground_controller.callsign","fire_bombing.radio_channel","fire_bombing.sar_arrangements","fire_bombing.prefered_resources","fire_bombing.flight_hazards","fire_bombing.response","fire_bombing.activation_criterias","fire_bombing.operational_base_established"),field_class=basefields.ChoiceFieldFactory(YESNO_CHOICES),policy=basefields.ALWAYS,
+            "dispatch_aerial":basefields.SwitchFieldFactory(Bushfire,"dispatch_aerial",("dispatch_aerial_date","fire_bombing.ground_controller.username","fire_bombing.ground_controller.callsign","fire_bombing.radio_channel","fire_bombing.sar_arrangements","fire_bombing.prefered_resources","fire_bombing.flight_hazards","fire_bombing.response","fire_bombing.activation_criterias","fire_bombing.operational_base_established"),field_class=basefields.ChoiceFieldFactory(YESNO_CHOICES),policy=basefields.ALWAYS,
                 off_layout="""{}""",
                 on_layout="""Yes<div id='id_{11}_body'>
                 <table style="width:90%">
@@ -1100,4 +1101,103 @@ DamageFormSet               = inlineformset_factory(Bushfire, Damage, formset=Ba
 #FireBehaviourFormSet        = inlineformset_factory(Bushfire, FireBehaviour, formset=BaseFireBehaviourFormSet, extra=1, min_num=0, validate_min=False, exclude=())
 
 
+class DocumentField(basefields.CompoundField):
+    related_field_names = ("downable_document","deleted_document","deleteby","deleteon")
+    def _view_layout(self,f):
+        if f.value():
+            return ("{1}<br><span style='color:red;font-style:italic'> Deleted by {2} on {3}</spac>",("deleted_document","deleteby","deleteon"))
+        else:
+            return ("{1}",("downable_document",))
+
+    def _edit_layout(self,f):
+        return ("",None)
+
+class DocumentTitleCreateForm(baseforms.ModelForm):
+    class Meta:
+        model = DocumentTitle
+        fields = ('name',)
+
+class DocumentCreateForm(baseforms.ModelForm):
+    def clean_other_title(self):
+        if self.cleaned_data["title"] == DocumentTitle.OTHER:
+            value = self.cleaned_data.get("other_title")
+            if value:
+                return value
+            else:
+                raise forms.ValidationError("Required.")
+        else:
+            return None
+
+    class Meta:
+        model = Document
+        field_classes = {
+            "__all__":forms.fields.CharField,
+            "title":basefields.OtherOptionFieldFactory(Document,"title",("other_title",),other_option=lambda:lambda:DocumentTitle.OTHER),
+        }
+        fields = ('title','document',"other_title")
+        widgets = {
+            "comment":forms.Textarea(attrs={"style":"width:100%","rows":4}),
+            "title":forms.Select(attrs={"style":"width:auto"}),
+            "other_title":forms.TextInput(attrs={"style":"width:90%"}),
+        }
+
+
+class DocumentViewForm(baseforms.ModelForm):
+    @property
+    def submit_actions(self):
+        if self.instance.deleted:
+            return []
+        else:
+            return [('delete','Delete','btn-warning')]
+
+    class Meta:
+        model = Document
+        fields = ('title',)
+        other_fields = ("downable_document","deleted_document","document_link","deleteby","deleteon","creator","created")
+        field_classes = {
+            "downable_document":basefields.AliasFieldFactory(Document,"file_name"),
+            "deleted_document":basefields.AliasFieldFactory(Document,"file_name"),
+            "document_link":basefields.CompoundFieldFactory(DocumentField,Document,"deleted",field_class=forms.BooleanField),
+        }
+        widgets = {
+            "title": basewidgets.TextDisplay(),
+            "document_link":basewidgets.TextDisplay(),
+            "deleteby": basewidgets.TextDisplay(),
+            "creator": basewidgets.TextDisplay(),
+            "deleteon": basewidgets.DatetimeDisplay("%Y-%m-%d %H:%M:%S"),
+            "created": basewidgets.DatetimeDisplay("%Y-%m-%d %H:%M:%S"),
+            "downable_document":basewidgets.HyperlinkDisplayFactory("bushfire:document_download",'file_name',basewidgets.TextDisplay,template='<a href="{0}"><i class="icon-download-alt"></i></a> {1}')(),
+            "deleted_document":basewidgets.TemplateDisplay(basewidgets.TextDisplay(),'{0}'),
+            "comment":basewidgets.TextareaDisplay(),
+
+        }
+
+
+class DocumentUpdateForm(DocumentViewForm):
+    @property
+    def submit_actions(self):
+        if self.editable:
+            return [('save','Save','btn-success')]
+        else:
+            return []
+
+    class Meta:
+        model = Document
+        extra_update_fields = ('modified','modifier')
+        widgets = {
+            #"comment":forms.Textarea(attrs={"style":"width:100%","rows":4})
+        }
+
+class DocumentFilterForm(baseforms.ModelForm):
+    include_deleted = forms.BooleanField(required=False)
+
+    class Meta:
+        model = Document
+        fields = ('title',)
+        field_classes = {
+            "title":basefields.OverrideFieldFactory(Document,"title",required=False,empty_label="Please Select Document Title")
+        }
+        widgets = {
+            "title":forms.Select(attrs={"style":"width:250px"})
+        }
 

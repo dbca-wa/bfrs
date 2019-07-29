@@ -11,9 +11,6 @@ from bfrs.models import (Bushfire, BushfireSnapshot, District, Region,BushfirePr
     AreaBurnt, Damage, Injury, Tenure,TenureMapping,
     SNAPSHOT_INITIAL, SNAPSHOT_FINAL,
     DamageSnapshot, InjurySnapshot, AreaBurntSnapshot,BushfirePropertySnapshot,
-    SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS, SUBMIT_MANDATORY_FORMSETS,
-    AUTH_MANDATORY_FIELDS, AUTH_MANDATORY_FIELDS_FIRE_NOT_FOUND, 
-    AUTH_MANDATORY_DEP_FIELDS, AUTH_MANDATORY_DEP_FIELDS_FIRE_NOT_FOUND, AUTH_MANDATORY_FORMSETS,
     check_mandatory_fields,
     )
 from django.db import IntegrityError, transaction
@@ -147,7 +144,7 @@ def invalidate_bushfire(obj, user,cur_obj=None):
         #new object, can't invalidate it
         return (obj,False)
 
-    #get the current object for database if it is None
+    #get the current object from database if it is None
     cur_obj = cur_obj or Bushfire.objects.get(pk=obj.pk)
 
     if cur_obj.district == obj.district:
@@ -209,6 +206,10 @@ def invalidate_bushfire(obj, user,cur_obj=None):
         cur_obj.valid_bushfire = obj
         cur_obj.save(update_fields=["valid_bushfire"])
 
+        #move the documents to new bushfire
+        for doc in cur_obj.documents:
+            obj.documents.add(doc)
+
         if obj.report_status >= Bushfire.STATUS_FINAL_AUTHORISED:
             serialize_bushfire('Final', 'Update District ({} --> {})'.format(cur_obj.district.code, obj.district.code), obj)
 
@@ -220,12 +221,12 @@ def get_missing_mandatory_fields(obj,action):
     if no missing mandatory fields, return None
     """
     if action == 'submit':
-        return check_mandatory_fields(obj, SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS, SUBMIT_MANDATORY_FORMSETS) or None
+        return check_mandatory_fields(obj, Bushfire.SUBMIT_MANDATORY_FIELDS, Bushfire.SUBMIT_MANDATORY_DEP_FIELDS, Bushfire.SUBMIT_MANDATORY_FORMSETS) or None
 
     elif action in ['save_final','save_reviewed','authorise']:
-        fields = AUTH_MANDATORY_FIELDS_FIRE_NOT_FOUND if obj.fire_not_found else AUTH_MANDATORY_FIELDS
-        dep_fields = AUTH_MANDATORY_DEP_FIELDS_FIRE_NOT_FOUND if obj.fire_not_found else AUTH_MANDATORY_DEP_FIELDS
-        return (check_mandatory_fields(obj, SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS, SUBMIT_MANDATORY_FORMSETS) + check_mandatory_fields(obj, fields, dep_fields, AUTH_MANDATORY_FORMSETS)) or None
+        fields = Bushfire.AUTH_MANDATORY_FIELDS_FIRE_NOT_FOUND if obj.fire_not_found else Bushfire.AUTH_MANDATORY_FIELDS
+        dep_fields = Bushfire.AUTH_MANDATORY_DEP_FIELDS_FIRE_NOT_FOUND if obj.fire_not_found else Bushfire.AUTH_MANDATORY_DEP_FIELDS
+        return (check_mandatory_fields(obj, Bushfire.SUBMIT_MANDATORY_FIELDS, Bushfire.SUBMIT_MANDATORY_DEP_FIELDS, Bushfire.SUBMIT_MANDATORY_FORMSETS) + check_mandatory_fields(obj, fields, dep_fields, Bushfire.AUTH_MANDATORY_FORMSETS)) or None
     return None
 
 
@@ -423,6 +424,13 @@ def update_damage_fs(bushfire, damage_formset):
     return 1
 
 def get_bushfire_url(request, bushfire,url_type):
+    if isinstance(url_type,(list,tuple)):
+        for t in url_type:
+            url = get_bushfire_url(request,bushfire,t)
+            if url:
+                return url
+        return ""
+
     if request:
         build_absolute_uri = request.build_absolute_uri
     else:
@@ -728,6 +736,10 @@ def update_status(request, bushfire, action,action_name="",update_fields=None,ac
                     mbf.valid_bushfire = primary_bushfire
                     mbf.save(update_fields=["invalid_details","valid_bushfire"])
 
+                #move the documents from merged bushfire to primary bushfire
+                for doc in bf.documents:
+                    primary_bushfire.documents.add(doc)
+
             #send emails
         resp = send_email({
             "bushfire":primary_bushfire, 
@@ -776,6 +788,11 @@ def update_status(request, bushfire, action,action_name="",update_fields=None,ac
                     dbf.invalid_details = "Duplicated with bushfire '{}'".format(primary_bushfire.fire_number)
                     dbf.valid_bushfire = primary_bushfire
                     dbf.save(update_fields=["invalid_details","valid_bushfire"])
+
+
+                #move the documents from duplicated bushfire to primary bushfire
+                for doc in bf.documents:
+                    primary_bushfire.documents.add(doc)
 
         #send emails
         resp = send_email({

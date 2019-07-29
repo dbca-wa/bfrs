@@ -1,10 +1,13 @@
 import md5
 import json
+import inspect
 
 from django import forms
 from django.db import models
+from django.dispatch import receiver
 
 from . import basewidgets
+from bfrs_project.signals import webserver_ready
 
 class_id = 0
 field_classes = {}
@@ -25,7 +28,10 @@ class _JSONEncoder(json.JSONEncoder):
             return obj.pk
         elif callable(obj) or isinstance(obj,staticmethod):
             return id(obj)
-        return json.JSONEncoder.default(self,obj)
+        try:
+            return json.JSONEncoder.default(self,obj)
+        except:
+            return id(obj)
 
 class FieldParametersMixin(object):
     field_params = None
@@ -36,7 +42,55 @@ class FieldParametersMixin(object):
                 kwargs[k] = v
         super(FieldParametersMixin,self).__init__(*args,**kwargs)
 
-class CompoundField(FieldParametersMixin):
+
+class AliasFieldMixin(object):
+    field_name = None
+
+def AliasFieldFactory(model,field_name,field_class=None,field_params=None):
+    global class_id
+    field_class = field_class or model._meta.get_field(field_name).formfield().__class__
+    if field_params:
+        class_key = md5.new("AliasField<{}.{}{}{}{}>".format(model.__module__,model.__name__,field_name,field_class,json.dumps(field_params,cls=_JSONEncoder))).hexdigest()
+    else:
+        class_key = md5.new("AliasField<{}.{}{}{}>".format(model.__module__,model.__name__,field_name,field_class)).hexdigest()
+
+    if class_key not in field_classes:
+        class_id += 1
+        class_name = "{}_{}".format(field_class.__name__,class_id)
+        if field_params:
+            field_classes[class_key] = type(class_name,(FieldParametersMixin,AliasFieldMixin,field_class),{"field_name":field_name,"field_params":field_params})
+        else:
+            field_classes[class_key] = type(class_name,(AliasFieldMixin,field_class),{"field_name":field_name})
+    return field_classes[class_key]
+
+def OverrideFieldFactory(model,field_name,field_class=None,**field_params):
+    """
+    A factory method to create a field class to override some field parameters
+    """
+    global class_id
+
+    field_params = field_params or {}
+    field_class = field_class or model._meta.get_field(field_name).formfield().__class__
+    class_key = md5.new("OverrideField<{}.{}.{}.{}.{}.{}>".format(model.__module__,model.__name__,field_name,field_class.__module__,field_class.__name__,json.dumps(field_params,cls=_JSONEncoder))).hexdigest()
+    if class_key not in field_classes:
+        class_id += 1
+        class_name = "{}_{}".format(field_class.__name__,class_id)
+        argspec = inspect.getargspec(field_class.__init__)
+        extra_fields = {}
+        for k,v in field_params.items():
+            if k not in argspec.args:
+                extra_fields[k] = v
+        if extra_fields:
+            for k in extra_fields.keys():
+                del field_params[k]
+        else:
+            extra_fields = None
+        field_classes[class_key] = type(class_name,(FieldParametersMixin,field_class),{"field_name":field_name,"field_params":field_params,"extra_fields":extra_fields})
+        #print("{}.{}={}".format(field_name,field_classes[class_key],field_classes[class_key].get_layout))
+    return field_classes[class_key]
+
+
+class CompoundField(AliasFieldMixin,FieldParametersMixin):
     field_name = None
     related_field_names = []
     field_mixin = None
@@ -56,6 +110,10 @@ class CompoundField(FieldParametersMixin):
 
     def _edit_layout(self,f):
         raise Exception("Not implemented")
+
+    @classmethod
+    def _initialize_class(cls):
+        pass
 
 def CompoundFieldFactory(compoundfield_class,model,field_name,related_field_names=None,field_class=None,**kwargs):
     global class_id
@@ -214,9 +272,21 @@ class OtherOptionField(CompoundField):
     other_option = None
 
     @classmethod
+    def _initialize_class(cls):
+        if cls.other_option and callable(cls.other_option):
+            other_option = cls.other_option()
+            if callable(other_option):
+                cls.other_option = staticmethod(other_option)
+            else:
+                cls.other_option = other_option
+
+
+    @classmethod
     def init_kwargs(cls,model,field_name,related_field_names,kwargs):
         if not kwargs.get("other_option"):
             raise Exception("Missing 'other_option' keyword parameter")
+        elif callable(kwargs.get("other_option")):
+            kwargs["other_option"] = staticmethod(kwargs["other_option"])
 
         if not kwargs.get("other_layout"):
             kwargs["other_layout"] = u"{{}}{}".format("<br>{}" * len(related_field_names))
@@ -231,7 +301,16 @@ class OtherOptionField(CompoundField):
 
     def _view_layout(self,f):
         val1 = f.value()
-        if val1 == self.other_option:
+        if callable(self.other_option):
+            try:
+                other_option = self.other_option()
+            except:
+                return (self.layout,None)
+
+        else:
+            other_option = self.other_option
+
+        if val1 == other_option:
             val2 = f.related_fields[0].value()
             if self.policy == ALWAYS:
                 return (self.other_layout,f.field.related_field_names)
@@ -253,7 +332,16 @@ class OtherOptionField(CompoundField):
             val1 = int(val1) if val1 else None
         #if f.name == "field_officer":
         #    import ipdb;ipdb.set_trace()
-        other_value = self.other_option.id if hasattr(self.other_option,"id") else self.other_option
+        if callable(self.other_option):
+            try:
+                other_option = self.other_option()
+            except:
+                #no other option,
+                return (None,None)
+
+        else:
+            other_option = self.other_option
+        other_value = other_option.id if hasattr(other_option,"id") else other_option
 
         f.field.widget.attrs = f.field.widget.attrs or {}
         show_fields = "$('#id_{}_body').show();{}".format(f.auto_id,";".join(["$('#{0}').prop('disabled',false)".format(field.auto_id) for field in f.related_fields]))
@@ -284,3 +372,8 @@ class OtherOptionField(CompoundField):
             return (self.edit_layout,f.field.related_field_names)
         
     
+@receiver(webserver_ready)
+def initialize(sender,**kwargs):
+    for cls in field_classes.values():
+        if hasattr(cls,"_initialize_class"):
+            cls._initialize_class()

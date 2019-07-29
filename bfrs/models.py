@@ -1,4 +1,5 @@
 import sys
+import os
 import json
 from datetime import datetime, timedelta
 import pytz
@@ -18,6 +19,8 @@ from smart_selects.db_fields import ChainedForeignKey
 import LatLon
 import reversion
 
+from classproperty import (classproperty,cachedclassproperty)
+
 from bfrs.base import Audit,DictMixin
 
 
@@ -28,7 +31,7 @@ SNAPSHOT_TYPE_CHOICES = (
     (SNAPSHOT_FINAL, 'Final'),
 )
 
-User.OTHER = User.objects.get(username='other')
+setattr(User,"OTHER",cachedclassproperty(lambda cls:User.objects.get(username='other')))
 
 def current_finyear():
     return datetime.now().year if datetime.now().month>6 else datetime.now().year-1
@@ -368,8 +371,8 @@ class BushfireBase(Audit,DictMixin):
         show_all=False, auto_choose=True, verbose_name="District")
 
     name = models.CharField(max_length=100, verbose_name="Fire Name")
-    year = models.PositiveSmallIntegerField(verbose_name="Financial Year", default=current_finyear())
-    reporting_year = models.PositiveSmallIntegerField(verbose_name="Reporting Year", default=current_finyear(), blank=True)
+    year = models.PositiveSmallIntegerField(verbose_name="Financial Year", default=current_finyear)
+    reporting_year = models.PositiveSmallIntegerField(verbose_name="Reporting Year", default=current_finyear, blank=True)
 
     prob_fire_level = models.PositiveSmallIntegerField(verbose_name='Probable fire level', choices=FIRE_LEVEL_CHOICES, null=True, blank=True)
     max_fire_level = models.PositiveSmallIntegerField(verbose_name='Maximum fire level', choices=FIRE_LEVEL_CHOICES, null=True, blank=True)
@@ -630,6 +633,66 @@ class Bushfire(BushfireBase):
 
     fire_number = models.CharField(max_length=15, verbose_name="Fire Number", unique=True)
     sss_id = models.CharField(verbose_name="Unique SSS ID", max_length=64, null=True, blank=True, unique=True)
+    
+    SUBMIT_MANDATORY_FIELDS = [
+        'region', 'district', 'year', 'fire_number', 'name', 'fire_detected_date', 'prob_fire_level',
+        'dispatch_pw', 'dispatch_aerial', 'investigation_req', 'park_trail_impacted', 'media_alert_req',
+        'duty_officer', 'initial_control'
+    ]
+
+
+    FIRE_BOMBING_GOLIVE_DATE = datetime(2018,11,23,tzinfo=pytz.timezone("Australia/Perth"))
+
+    @cachedclassproperty
+    def SUBMIT_MANDATORY_DEP_FIELDS(cls): 
+        return {
+            'dispatch_pw': [[1, 'dispatch_pw_date']], # if 'dispatch_pw' == 1 then 'dispatch_pw_date' is required
+            'initial_control': [[Agency.OTHER, 'other_initial_control']],
+            'dispatch_aerial': [[True, 'dispatch_aerial_date']],
+            ('dispatch_aerial',lambda bf:bf.report_status == Bushfire.STATUS_INITIAL or (bf.init_authorised_date and bf.init_authorised_date > Bushfire.FIRE_BOMBING_GOLIVE_DATE)):[[True,("fire_bombing.ground_controller.username","Ground Controller"),("fire_bombing.ground_controller.callsign","Ground Controller Call Sign"),("fire_bombing.radio_channel","Radio Channel"),("fire_bombing.prefered_resources","Prefered Resource"),("fire_bombing.activation_criterias","Indicate Requesting Activation Criteria")]]
+        }
+
+    SUBMIT_MANDATORY_FORMSETS = []
+    
+    AUTH_MANDATORY_FIELDS = [
+        'area',
+        'cause_state', 'cause',
+        'fire_contained_date', 'fire_controlled_date',
+        'fire_safe_date',
+        'final_control',
+        'max_fire_level', 'arson_squad_notified', 'job_code',
+        'dfes_incident_no'
+    ]
+    
+    AUTH_MANDATORY_FIELDS_FIRE_NOT_FOUND= ['duty_officer']
+
+    @cachedclassproperty
+    def AUTH_MANDATORY_DEP_FIELDS_FIRE_NOT_FOUND(cls):
+        return {
+            'dispatch_pw': [[1, 'field_officer', 'dispatch_pw_date']], # if 'dispatch_pw' == '1' then 'field_officer' is required
+            'field_officer': [[User.OTHER, 'other_field_officer','other_field_officer_agency']], # username='other'
+        }
+    
+    @cachedclassproperty
+    def AUTH_MANDATORY_DEP_FIELDS(cls): 
+        return {
+            'dispatch_pw': [[1, 'field_officer', 'dispatch_pw_date']], # if 'dispatch_pw' == '1' then 'field_officer' is required
+            'fire_monitored_only': [[False, 'first_attack']],
+        
+            'cause': [[Cause.OTHER, 'other_cause'], [Cause.ESCAPE_DPAW_BURNING, 'prescribed_burn_id']],
+            'first_attack': [[Agency.OTHER, 'other_first_attack']],
+            'final_control': [[Agency.OTHER, 'other_final_control']],
+            'area_limit': [[True, 'area']],
+            'field_officer': [[User.OTHER, 'other_field_officer', 'other_field_officer_agency']], # username='other'
+            'fire_boundary': [[lambda v:v is not None, ('origin_point','Origin Point muse be inside of fire boundary',lambda fb,op:not fb.contains(op))]],
+    
+        }
+
+    AUTH_MANDATORY_FORMSETS= [
+        #'fire_behaviour',
+        'damages',
+        'injuries',
+    ]
 
     class Meta:
         permissions = (
@@ -733,7 +796,7 @@ class Bushfire(BushfireBase):
 
 
     def missing_initial(self):
-        missing_fields = check_mandatory_fields(self, SUBMIT_MANDATORY_FIELDS, SUBMIT_MANDATORY_DEP_FIELDS)
+        missing_fields = check_mandatory_fields(self, self.SUBMIT_MANDATORY_FIELDS, self.SUBMIT_MANDATORY_DEP_FIELDS)
         l = []
         for field in missing_fields:
             l.append(
@@ -742,7 +805,7 @@ class Bushfire(BushfireBase):
         return l
 
     def missing_final(self):
-        missing_fields = check_mandatory_fields(self, AUTH_MANDATORY_FIELDS, AUTH_MANDATORY_DEP_FIELDS)
+        missing_fields = check_mandatory_fields(self, self.AUTH_MANDATORY_FIELDS, self.AUTH_MANDATORY_DEP_FIELDS)
         l = []
         for field in missing_fields:
             l.append(
@@ -758,34 +821,24 @@ class Tenure(models.Model):
     report_order = models.PositiveSmallIntegerField(verbose_name='order in annual report',default=1)
     report_group_order = models.PositiveSmallIntegerField(verbose_name='group order in annual report',default=1)
 
+
+    @cachedclassproperty
+    def OTHER(cls):
+        return Tenure.objects.get(name="Other")
+
+    @cachedclassproperty
+    def PRIVATE_PROPERTY(cls):
+        return Tenure.objects.get(name="Private Property")
+
+    @cachedclassproperty
+    def OTHER_CROWN(cls):
+        return Tenure.objects.get(name="Other Crown")
+
     class Meta:
         ordering = ['id']
 
     def __str__(self):
         return self.name
-
-try:
-    Tenure.OTHER = Tenure.objects.get(name="Other")
-except ObjectDoesNotExist as ex:
-    raise
-except:
-    Tenure.OTHER = None
-
-try:
-    Tenure.PRIVATE_PROPERTY = Tenure.objects.get(name="Private Property")
-except ObjectDoesNotExist as ex:
-    raise
-except:
-    Tenure.PRIVATE_PROPERTY = None
-
-try: 
-    Tenure.OTHER_CROWN = Tenure.objects.get(name="Other Crown")
-except ObjectDoesNotExist as ex:
-    raise
-except:
-    Tenure.OTHER_CROWN = None
-
-
 
 @python_2_unicode_compatible
 class TenureMapping(models.Model):
@@ -815,26 +868,19 @@ class Cause(models.Model):
     report_name = models.CharField(max_length=50,default="")
     report_order = models.PositiveSmallIntegerField(verbose_name='order in annual report',default=1)
 
+    @cachedclassproperty
+    def OTHER(cls):
+        return Cause.objects.get(name="Other (specify)")
+
+    @cachedclassproperty
+    def ESCAPE_DPAW_BURNING(cls):
+        return Cause.objects.get(name="Escape P&W burning")
+
     class Meta:
         ordering = ['id']
 
     def __str__(self):
         return self.name
-
-try:
-    Cause.OTHER = Cause.objects.get(name="Other (specify)")
-except ObjectDoesNotExist as ex:
-    raise
-except:
-    Cause.OTHER = None
-
-try:
-    Cause.ESCAPE_DPAW_BURNING = Cause.objects.get(name="Escape P&W burning")
-except ObjectDoesNotExist as ex:
-    raise
-except:
-    Cause.ESCAPE_DPAW_BURNING = None
-
 
 @python_2_unicode_compatible
 class Agency(models.Model):
@@ -842,14 +888,20 @@ class Agency(models.Model):
     name = models.CharField(max_length=50, verbose_name="Agency Name")
     code = models.CharField(verbose_name="Agency Short Code", max_length=10)
 
+    @cachedclassproperty
+    def OTHER(cls): 
+        return Agency.objects.get(code="OTHER")
+
+
+    @cachedclassproperty
+    def DBCA(cls):
+        return Agency.objects.get(code="DBCA")
+
     class Meta:
         ordering = ['id']
 
     def __str__(self):
         return self.name
-
-Agency.OTHER = Agency.objects.get(code="OTHER")
-Agency.DBCA = Agency.objects.get(code="DBCA")
 
 @python_2_unicode_compatible
 class InjuryType(models.Model):
@@ -992,58 +1044,77 @@ class BushfirePropertySnapshot(BushfirePropertyBase):
     class Meta:
         unique_together = ('snapshot','name')
 
+@python_2_unicode_compatible
+class DocumentTitle(DictMixin,Audit):
+    name = models.CharField(max_length=64,null=False,editable=True,unique=True, verbose_name="Name")
+    sorting = models.CharField(max_length=64,null=True,editable=False, verbose_name="Used for sorting")
+
+    @classproperty
+    def OTHER(cls):
+        return cls.objects.get(name='Other')
+
+    def save(self,*args,**kwargs):
+        if self.name.lower() == 'other':
+            self.name = 'Other'
+            self.sorting = 'ZZZZZZZ'
+        else:
+            self.sorting = self.name.lower()
+        super(DocumentTitle,self).save(*args,**kwargs)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering =  ['sorting']
+
+def document_path(instance,filename):
+    basefilename,fileext = os.path.splitext(filename)
+    upload_time = datetime.now().strftime("%Y%m%d-%H%M%S")
+    instance.file_name = filename
+    return "documents/{}/{}_{}{}".format(instance.upload_bushfire.fire_number.replace(" ","_"),basefilename,upload_time,fileext)
 
 
-SUBMIT_MANDATORY_FIELDS= [
-    'region', 'district', 'year', 'fire_number', 'name', 'fire_detected_date', 'prob_fire_level',
-    'dispatch_pw', 'dispatch_aerial', 'investigation_req', 'park_trail_impacted', 'media_alert_req',
-    'duty_officer', 'initial_control'
-]
-FIRE_BOMBING_GOLIVE_DATE = datetime(2018,11,23,tzinfo=pytz.timezone("Australia/Perth"))
-SUBMIT_MANDATORY_DEP_FIELDS= {
-    'dispatch_pw': [[1, 'dispatch_pw_date']], # if 'dispatch_pw' == 1 then 'dispatch_pw_date' is required
-    'initial_control': [[Agency.OTHER, 'other_initial_control']],
-    'dispatch_aerial': [[True, 'dispatch_aerial_date']],
-    ('dispatch_aerial',lambda bf:bf.report_status == Bushfire.STATUS_INITIAL or (bf.init_authorised_date and bf.init_authorised_date > FIRE_BOMBING_GOLIVE_DATE)):[[True,("fire_bombing.ground_controller.username","Ground Controller"),("fire_bombing.ground_controller.callsign","Ground Controller Call Sign"),("fire_bombing.radio_channel","Radio Channel"),("fire_bombing.prefered_resources","Prefered Resource"),("fire_bombing.activation_criterias","Indicate Requesting Activation Criteria")]]
-}
-SUBMIT_MANDATORY_FORMSETS= [
-]
+class DocumentBase(DictMixin,models.Model):
+    upload_bushfire = models.ForeignKey(Bushfire, verbose_name='Upload Bushfire',editable=False,related_name="uploaded_documents")
+    title = models.ForeignKey(DocumentTitle, verbose_name='Document Title')
+    other_title = models.CharField(max_length=64, verbose_name="Other Document Title",null=True,blank=True)
+    document = models.FileField(upload_to=document_path,null=False,verbose_name="Document")
+    file_name = models.CharField(max_length=128,null=False,editable=False, verbose_name="Document File Name")
+    comment = models.TextField(null=True,editable=True,verbose_name="Comment",blank=True)
+    deleted = models.BooleanField(default=False,editable=False)
+    deleteby = models.ForeignKey(settings.AUTH_USER_MODEL,null=True, editable=False,related_name="deletedby",verbose_name="Deleted By")
+    deleteon = models.DateTimeField(null=True,editable=False,verbose_name="Deleted on")
 
-AUTH_MANDATORY_FIELDS= [
-    'area',
-    'cause_state', 'cause',
-    'fire_contained_date', 'fire_controlled_date',
-    'fire_safe_date',
-    'final_control',
-    'max_fire_level', 'arson_squad_notified', 'job_code',
-    'dfes_incident_no'
-]
+    @property
+    def document_title(self):
+        if self.title == DocumentTitle.OTHER:
+            return "Other - {}".format(self.other_title)
+        else:
+            return self.title.name
 
-AUTH_MANDATORY_FIELDS_FIRE_NOT_FOUND= [
-    'duty_officer',
-]
-AUTH_MANDATORY_DEP_FIELDS_FIRE_NOT_FOUND= {
-    'dispatch_pw': [[1, 'field_officer', 'dispatch_pw_date']], # if 'dispatch_pw' == '1' then 'field_officer' is required
-    'field_officer': [[User.OTHER, 'other_field_officer','other_field_officer_agency']], # username='other'
-}
 
-AUTH_MANDATORY_DEP_FIELDS= {
-    'dispatch_pw': [[1, 'field_officer', 'dispatch_pw_date']], # if 'dispatch_pw' == '1' then 'field_officer' is required
-    'fire_monitored_only': [[False, 'first_attack']],
+    class Meta:
+        abstract = True
 
-    'cause': [[Cause.OTHER, 'other_cause'], [Cause.ESCAPE_DPAW_BURNING, 'prescribed_burn_id']],
-    'first_attack': [[Agency.OTHER, 'other_first_attack']],
-    'final_control': [[Agency.OTHER, 'other_final_control']],
-    'area_limit': [[True, 'area']],
-    'field_officer': [[User.OTHER, 'other_field_officer', 'other_field_officer_agency']], # username='other'
-    'fire_boundary': [[lambda v:v is not None, ('origin_point','Origin Point muse be inside of fire boundary',lambda fb,op:not fb.contains(op))]],
+class Document(DocumentBase,Audit):
+    bushfire = models.ForeignKey(Bushfire, verbose_name='Bushfire',related_name="documents",editable=False)
 
-}
-AUTH_MANDATORY_FORMSETS= [
-    #'fire_behaviour',
-    'damages',
-    'injuries',
-]
+    class Meta:
+        pass
+
+
+class DocumentSnapshot(DamageBase):
+    snapshot_type = models.PositiveSmallIntegerField(choices=SNAPSHOT_TYPE_CHOICES,editable=False)
+    snapshot = models.ForeignKey(BushfireSnapshot, related_name='documents_snapshot',editable=False)
+    creator = models.ForeignKey(settings.AUTH_USER_MODEL, editable=False,related_name="creator")
+    modifier = models.ForeignKey(settings.AUTH_USER_MODEL, editable=False,related_name="modifier")
+    created = models.DateTimeField(editable=False)
+    modified = models.DateTimeField(editable=False)
+    snapshot_created = models.DateTimeField(default=timezone.now,editable=False)
+    snapshot_creator = models.ForeignKey(settings.AUTH_USER_MODEL, editable=False,related_name="snapshot_creator")
+
+    class Meta:
+        pass
 
 reversion.register(Bushfire, follow=['tenures_burnt', 'injuries', 'damages'])
 reversion.register(Profile)
@@ -1059,5 +1130,8 @@ reversion.register(AreaBurnt)       # related_name=tenures_burnt
 reversion.register(Injury)          # related_name=injuries
 reversion.register(Damage)          # related_name=damages
 reversion.register(BushfireSnapshot) # related_name=snapshots
+reversion.register(DocumentTitle)
+reversion.register(Document)
 
 reversion.register(BushfireProperty) 
+

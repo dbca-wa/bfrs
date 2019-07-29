@@ -29,6 +29,10 @@ class TextDisplay(DisplayWidget):
     def render(self,name,value,attrs=None,renderer=None):
         return to_str(value)
 
+class TextareaDisplay(DisplayWidget):
+    def render(self,name,value,attrs=None,renderer=None):
+        return safestring.SafeText("<pre style='border:none;background-color:unset'>{}</pre>".format(to_str(value)))
+
 class FinancialYearDisplay(DisplayWidget):
     def render(self,name,value,attrs=None,renderer=None):
         value = int(value)
@@ -53,55 +57,63 @@ class DatetimeDisplay(DisplayWidget):
             return ""
 
 class HyperlinkTextDisplay(DisplayWidget):
+    template = "<a href='{0}'>{1}</a>"
     def __init__(self,**kwargs):
         super(HyperlinkTextDisplay,self).__init__(**kwargs)
         self.widget = self.widget_class(**kwargs)
 
-    def value_from_datadict(self,data,files,name):
-        result = []
-        for f in self.ids:
-            val = data.get(f[0])
-            if val is None:
-                result.clear()
-                break
-            elif isinstance(val,models.Model):
-                result.append(val.pk)
-            else:
-                result.append(val)
-        result.append(self.widget.value_from_datadict(data,files,name))
-        return result
+    def prepare_initial_data(self,form,name):
+        if self.widget:
+            value = form.initial.get(name)
+        else:
+            value = None
+
+        url = self.get_url(form,name)
+        return (value,url)
+        
 
     def render(self,name,value,attrs=None,renderer=None):
         if value:
-            link = self.hyperlink(value[0:-1])
-            if link:
-                return "<a href='{}'>{}</a>".format(link,self.widget.render(name,value[-1],attrs,renderer)) if value else ""
+            if value[1]:
+                return self.template.format(value[1],self.widget.render(name,value[0],attrs,renderer) if self.widget else "" )
             else:
-                return self.widget.render(name,value[-1],attrs,renderer)
+                return self.widget.render(name,value[0],attrs,renderer) if self.widget else ""
         else:
             return ""
 
-    def hyperlink(self,pks):
-        if len(pks) == 0:
-            return None
+    def get_url(self,form,name):
+        url = None
+        if not self.ids:
+            url = reverse(self.url_name)
         else:
             kwargs = {}
-            index = 0
-            while index < len(pks):
-                kwargs[self.ids[index][1]] = pks[index]
-                index += 1
-            return reverse(self.url_name,kwargs=kwargs)
+            for f in self.ids:
+                val = form.initial.get(f[0])
+                if val is None:
+                    #can't find value for url parameter, no link can be generated
+                    kwargs = None
+                    break;
+                elif isinstance(val,models.Model):
+                    kwargs[f[1]] = val.pk
+                else:
+                    kwargs[f[1]] = val
+            if kwargs:
+                url = reverse(self.url_name,kwargs=kwargs)
+        return url
 
 widget_classes = {}
 widget_class_id = 0
-def HyperlinkDisplayFactory(url_name,field_name,widget_class,ids=[("id","pk")],baseclass=HyperlinkTextDisplay):
+def HyperlinkDisplayFactory(url_name,field_name,widget_class,ids=[("id","pk")],baseclass=HyperlinkTextDisplay,template=None):
     global widget_class_id
-    key = hashlib.md5("{}{}{}".format(baseclass.__name__,url_name,field_name).encode('utf-8')).hexdigest()
+    key = hashlib.md5("{}{}{}{}".format(baseclass.__name__,url_name,field_name,template if template else "").encode('utf-8')).hexdigest()
     cls = widget_classes.get(key)
     if not cls:
         widget_class_id += 1
-        class_name = "{}_{}".format(baseclass.__name,widget_class_id)
-        cls = type(class_name,(baseclass,),{"url_name":url_name,"widget_class":widget_class,"ids":ids})
+        class_name = "{}_{}".format(baseclass.__name__,widget_class_id)
+        if template:
+            cls = type(class_name,(baseclass,),{"url_name":url_name,"widget_class":widget_class,"ids":ids,"template":template})
+        else:
+            cls = type(class_name,(baseclass,),{"url_name":url_name,"widget_class":widget_class,"ids":ids})
         widget_classes[key] = cls
     return cls
 

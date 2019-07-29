@@ -105,6 +105,7 @@
 
 
 <div>
+ <table style="width:100%"><tr><td>
   <div style='float: left;'>
     {% if object.report_status and object.report_status >= object.STATUS_INVALIDATED %}
     <h1>Bushfire Detail
@@ -135,9 +136,11 @@
       <h1>Bushfire Detail</h1>
     {% endif %}
   </div>
+  </td><td style="vertical-align:middle">
   <div style='float: right;'>
 	  <a href="#" onclick='openGokart({"action": "select", "region":{{object.region.id}},"district":{{object.district.id}},"bushfireid":"{{bushfire.fire_number}}" });' title="Open report in SSS">View in SSS</a></td>
   </div>
+  </td></tr></table>
 </div>
 
 {% if submit_actions %}
@@ -380,7 +383,12 @@
                 <input type="hidden" name="confirm_action" value="{{action}}" />
             {% endif %}
             {% for submit_action in submit_actions %}
-            <button type="submit" class="btn btn-primary {{submit_action.2}}"  name="action" value="{{submit_action.0}}"/>{{submit_action.1}} </button>
+            {% if submit_action.3 %}
+                <button type="button" class="btn btn-primary {{submit_action.2}}"  onclick="if ({{submit_action.3}}) {$('#id_button_{{submit_action.0}}').click();};">{{submit_action.1}} </button>
+                <button type="submit" id="id_button_{{submit_action.0}}" name="action" value="{{submit_action.0}}" style="display:none"/>{{submit_action.1}} </button>
+            {% else %}
+                <button type="submit" class="btn btn-primary {{submit_action.2}}"  name="action" value="{{submit_action.0}}"/>{{submit_action.1}} </button>
+            {% endif %}
             {% endfor %}
         {% endif %}
         {% for link_action in link_actions %}
@@ -423,11 +431,5 @@
             $('#fire_behaviour').collapse('hide')
         {% endif %}
     })
-{% if confirm_message %}
-    $("#id_bushfire_edit_form").bind("submit" ,function() {
-        alert("{{confirm_message}}")
-
-    })
-{% endif %}
 </script>
 {% endblock %}
