@@ -1089,8 +1089,8 @@ def refresh_burnt_area(bushfire,is_snapshot,layersuffix="",debug=False):
                     bushfire.snapshot_type,
                     bushfire.action,
                     bushfire.initial_area_unknown,
-                    round(bushfire.initial_area,2),
-                    round(bushfire.other_area,2),
+                    round(bushfire.initial_area,2) if bushfire.initial_area is not None else "",
+                    round(bushfire.other_area,2) if bushfire.other_area is not None else "",
                     bushfire.fb_validation_req,
                     overlap_area
                 ))
@@ -1102,8 +1102,8 @@ def refresh_burnt_area(bushfire,is_snapshot,layersuffix="",debug=False):
                     bushfire.snapshot_type,
                     bushfire.action,
                     bushfire.area_limit,
-                    round(bushfire.area,2),
-                    round(bushfire.other_area,2),
+                    round(bushfire.area,2) if bushfire.area is not None else "", 
+                    round(bushfire.other_area,2) if bushfire.other_area is not None else "",
                     bushfire.fb_validation_req,
                     overlap_area
                 ))
