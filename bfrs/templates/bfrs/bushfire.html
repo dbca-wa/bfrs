@@ -123,7 +123,7 @@
             <input type="checkbox" name="selected_ids" value="{{bushfire.id}}" {% if selected_ids and bushfire.id in selected_ids %}checked {% endif %}>
           </td>
         {% endif %}
-        
+
 		<td><a href="#" onclick='openGokart({"action": "select", "region":{{bushfire.region.id}},"district":{{bushfire.district.id}},"bushfireid":"{{bushfire.fire_number}}" });' title="Open report in SSS">{{ bushfire.fire_number }}</a></td>
 		<td>{% if bushfire.dfes_incident_no %}{{ bushfire.dfes_incident_no }}{% else %}  {% endif %}</td>
         <td>{{ bushfire.name }}</td>
