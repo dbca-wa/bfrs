@@ -7,6 +7,7 @@ from datetime import datetime
 from xlwt import Workbook, Font, XFStyle, Alignment, Pattern, Style
 from itertools import count
 import unicodecsv
+import shutil
 
 from django.http import HttpResponse
 from django.core.mail import send_mail
@@ -20,6 +21,7 @@ import csv
 import traceback
 
 from django.template.loader import render_to_string
+from .utils import generate_pdf
 
 import logging
 logger = logging.getLogger(__name__)
@@ -452,45 +454,17 @@ class MinisterialReport():
             '{0}; filename="{1}"'.format(
                 disposition, downloadname))
 
-        directory = os.path.join(settings.MEDIA_ROOT, 'ministerial_report' + os.sep)
-        if not os.path.exists(directory):
-            logger.debug("Making a new directory: {}".format(directory))
-            os.makedirs(directory)
-
-        logger.debug('Starting  render_to_string step')
-        err_msg = None
+        folder = None
         try:
-            output = render_to_string("latex/" + template + ".tex", context, request=request)
-        except Exception as e:
-            import traceback
-            err_msg = u"PDF tex template render failed (might be missing attachments):"
-            logger.debug(err_msg + "\n{}".format(e))
-
-            error_response.write(err_msg + "\n\n{0}\n\n{1}".format(e,traceback.format_exc()))
-            return error_response
-
-        with open(directory + texname, "w") as f:
-            f.write(output.encode('utf-8'))
-            logger.debug("Writing to {}".format(directory + texname))
-
-        logger.debug("Starting PDF rendering process ...")
-        cmd = ['latexmk', '-cd', '-f', '-silent', '-pdf', directory + texname]
-        #cmd = ['latexmk', '-cd', '-f', '-pdf', directory + texname]
-        logger.debug("Running: {0}".format(" ".join(cmd)))
-        subprocess.call(cmd)
-
-        logger.debug("Cleaning up ...")
-        cmd = ['latexmk', '-cd', '-c', directory + texname]
-        logger.debug("Running: {0}".format(" ".join(cmd)))
-        subprocess.call(cmd)
-
-        logger.debug("Reading PDF output from {}".format(filename))
-        response.write(open(directory + filename).read())
-        logger.debug("Finally: returning PDF response.")
-        return response
-
-
-
+            folder,pdf_file = generate_pdf("latex/{}.tex".format(template),context=context,request=request,check_output=False)
+            logger.debug("Reading PDF output from {}".format(filename))
+            with open(pdf_file) as f:
+                response.write(f.read())
+            logger.debug("Finally: returning PDF response.")
+            return response
+        finally:
+            if folder:
+                shutil.rmtree(folder)
 
 class MinisterialReport268():
     """
@@ -1048,42 +1022,17 @@ class MinisterialReportAuth():
             '{0}; filename="{1}"'.format(
                 disposition, downloadname))
 
-        directory = os.path.join(settings.MEDIA_ROOT, 'ministerial_report' + os.sep)
-        if not os.path.exists(directory):
-            logger.debug("Making a new directory: {}".format(directory))
-            os.makedirs(directory)
-
-        logger.debug('Starting  render_to_string step')
-        err_msg = None
+        folder = None
         try:
-            output = render_to_string("latex/" + template + ".tex", context, request=request)
-        except Exception as e:
-            import traceback
-            err_msg = u"PDF tex template render failed (might be missing attachments):"
-            logger.debug(err_msg + "\n{}".format(e))
-
-            error_response.write(err_msg + "\n\n{0}\n\n{1}".format(e,traceback.format_exc()))
-            return error_response
-
-        with open(directory + texname, "w") as f:
-            f.write(output.encode('utf-8'))
-            logger.debug("Writing to {}".format(directory + texname))
-
-        logger.debug("Starting PDF rendering process ...")
-        cmd = ['latexmk', '-cd', '-f', '-silent', '-pdf', directory + texname]
-        #cmd = ['latexmk', '-cd', '-f', '-pdf', directory + texname]
-        logger.debug("Running: {0}".format(" ".join(cmd)))
-        subprocess.call(cmd)
-
-        logger.debug("Cleaning up ...")
-        cmd = ['latexmk', '-cd', '-c', directory + texname]
-        logger.debug("Running: {0}".format(" ".join(cmd)))
-        subprocess.call(cmd)
-
-        logger.debug("Reading PDF output from {}".format(filename))
-        response.write(open(directory + filename).read())
-        logger.debug("Finally: returning PDF response.")
-        return response
+            folder,pdf_file = generate_pdf("latex/{}.tex".format(template),context=context,request=request,check_output=False)
+            logger.debug("Reading PDF output from {}".format(filename))
+            with open(pdf_file) as f:
+                response.write(f.read())
+            logger.debug("Finally: returning PDF response.")
+            return response
+        finally:
+            if folder:
+                shutil.rmtree(folder)
 
 class QuarterlyReport():
     def __init__(self,reporting_year=None):

@@ -1520,8 +1520,8 @@ def dms_coordinate(point):
     
 
 
-def generate_pdf(tex_template_file,context):
-    tex_doc = render_to_string(tex_template_file,context=context)
+def generate_pdf(tex_template_file,context,request=None,check_output=True):
+    tex_doc = render_to_string(tex_template_file,context=context,request=request)
     tex_doc = tex_doc.encode('utf-8')
 
     foldername = tempfile.mkdtemp()
@@ -1530,7 +1530,11 @@ def generate_pdf(tex_template_file,context):
     with open(tex_filename,"wb") as tex_file:
         tex_file.write(tex_doc)
     cmd = ['latexmk', '-cd', '-f', '-silent','-auxdir={}'.format(foldername),'-outdir={}'.format(foldername), '-pdf', tex_filename]
-    subprocess.check_output(cmd)
+    if check_output:
+        subprocess.check_output(cmd)
+    else:
+        subprocess.call(cmd)
+
     return (foldername,pdf_filename)
 
 
