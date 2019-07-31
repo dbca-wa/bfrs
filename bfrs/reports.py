@@ -409,10 +409,7 @@ class MinisterialReport():
         #template = request.GET.get("template", "pfp")
         template = "ministerial_report"
         response = HttpResponse(content_type='application/pdf')
-        #texname = template + ".tex"
-        #filename = template + ".pdf"
-        texname = template + "_" + request.user.username + ".tex"
-        filename = template + "_" + request.user.username + ".pdf"
+        filename = template + ".pdf"
         timestamp = now.isoformat().rsplit(
             ".")[0].replace(":", "")
         if template == "ministerial_report":
@@ -457,7 +454,6 @@ class MinisterialReport():
         folder = None
         try:
             folder,pdf_file = generate_pdf("latex/{}.tex".format(template),context=context,request=request,check_output=False)
-            logger.debug("Reading PDF output from {}".format(filename))
             with open(pdf_file) as f:
                 response.write(f.read())
             logger.debug("Finally: returning PDF response.")
@@ -977,10 +973,7 @@ class MinisterialReportAuth():
         #template = request.GET.get("template", "pfp")
         template = "ministerial_auth_report"
         response = HttpResponse(content_type='application/pdf')
-        #texname = template + ".tex"
-        #filename = template + ".pdf"
-        texname = template + "_" + request.user.username + ".tex"
-        filename = template + "_" + request.user.username + ".pdf"
+        filename = template + ".pdf"
         timestamp = now.isoformat().rsplit(
             ".")[0].replace(":", "")
         if template == "ministerial_auth_report":
@@ -1025,7 +1018,6 @@ class MinisterialReportAuth():
         folder = None
         try:
             folder,pdf_file = generate_pdf("latex/{}.tex".format(template),context=context,request=request,check_output=False)
-            logger.debug("Reading PDF output from {}".format(filename))
             with open(pdf_file) as f:
                 response.write(f.read())
             logger.debug("Finally: returning PDF response.")
