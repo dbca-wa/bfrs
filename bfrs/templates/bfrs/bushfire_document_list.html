@@ -73,12 +73,13 @@
           <td>{{doc.creator}}</td>
           <td>{{doc.created | date:"Y-m-d H:i:s"}}</td>
           <td>
-              <a href="{% url "bushfire:document_update" doc.id %}"><i class="icon-edit"></i></a>
               {% if not doc.deleted %}
-                <a href="{% url "bushfire:document_download" doc.id  %}"><i class="icon-download-alt"></i></a>
+              <a style="margin-left:10px" href="{% url "bushfire:document_update" doc.id %}"><i class="icon-edit"></i></a>
               {% endif %}
+              <a style="margin-left:10px" href="{% url "bushfire:document_view" doc.id %}"><i class="icon-eye-open"></i></a>
               {% if not doc.deleted %}
-              <a href="{% url "bushfire:document_delete" doc.id %}"><i class="icon-trash"></i></a>
+              <a style="margin-left:10px" href="{% url "bushfire:document_download" doc.id  %}"><i class="icon-download-alt"></i></a>
+              <a style="margin-left:10px" href="{% url "bushfire:document_delete" doc.id %}"><i class="icon-trash"></i></a>
               {% endif %}
           </td>
       </tr>

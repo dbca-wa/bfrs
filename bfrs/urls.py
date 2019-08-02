@@ -19,6 +19,7 @@ urlpatterns = [
     url(r'^document/(?P<pk>\d+)/download/$', views.DocumentDownloadView.as_view(), name='document_download'),
     url(r'^document/(?P<pk>\d+)/delete/$', views.DocumentDeleteView.as_view(), name='document_delete'),
     url(r'^document/(?P<pk>\d+)$', views.DocumentUpdateView.as_view(), name='document_update'),
+    url(r'^document/(?P<pk>\d+)/view/$', views.DocumentDetailView.as_view(), name='document_view'),
 
 ]
 

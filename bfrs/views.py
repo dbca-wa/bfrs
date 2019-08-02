@@ -1002,7 +1002,7 @@ class DocumentDeleteView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin,UpdateVi
         context['bushfireurl'] = get_bushfire_url(None,self.object.bushfire,("final","initial"))
         context['snapshot'] = False
         context['link_actions'] =[(self.get_success_url(),'Cancel','btn-danger')]
-        context['submit_actions'] = context['form'].submit_actions
+        context['submit_actions'] = [('delete','Delete','btn-warning')]
         return context
     """
     def post(self,*args,**kwargs):
@@ -1033,17 +1033,41 @@ class DocumentUpdateView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin,UpdateVi
 
     def get_context_data(self, **kwargs):
         context = super(DocumentUpdateView,self).get_context_data(**kwargs)
-        context['can_maintain_data'] = can_maintain_data(self.request.user)
         context['bushfire'] = self.object.bushfire
         context['bushfireurl'] = get_bushfire_url(None,self.object.bushfire,("final","initial"))
-        context['snapshot'] = False
-        context['link_actions'] =[(self.get_success_url(),'Cancel','btn-danger')]
-        context['submit_actions'] = context['form'].submit_actions
+        if self.object.deleted:
+            context['link_actions'] =[(self.get_success_url(),'Cancel','btn-danger')]
+        else:
+            context['link_actions'] =[(reverse("bushfire:document_delete",kwargs={"pk":self.object.id}),"Delete","btn-warning"),(self.get_success_url(),'Cancel','btn-danger')]
+        context['submit_actions'] = [('save','Save','btn-success')]
         return context
 
     def form_valid(self, form):
         form.instance.modifier = self.request.user
         return super(DocumentUpdateView, self).form_valid(form)
+
+    def _get_success_url(self):
+        return reverse('bushfire:bushfire_document_list',kwargs={"bushfireid":self.object.bushfire.id})
+
+class DocumentDetailView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin,UpdateView):
+    """
+    View a document
+    """
+    model = Document
+    template_name = 'bfrs/bushfire_document.html'
+    form_class = DocumentViewForm
+    next_url = "lastDocumentUrl"
+
+    def get_context_data(self, **kwargs):
+        context = super(DocumentDetailView,self).get_context_data(**kwargs)
+        context['bushfire'] = self.object.bushfire
+        context['bushfireurl'] = get_bushfire_url(None,self.object.bushfire,("final","initial"))
+        if self.object.deleted:
+            context['link_actions'] =[(self.get_success_url(),'Cancel','btn-danger')]
+        else:
+            context['link_actions'] =[(reverse("bushfire:document_delete",kwargs={"pk":self.object.id}),"Delete","btn-warning"),(self.get_success_url(),'Cancel','btn-danger')]
+        context['submit_actions'] = []
+        return context
 
     def _get_success_url(self):
         return reverse('bushfire:bushfire_document_list',kwargs={"bushfireid":self.object.bushfire.id})

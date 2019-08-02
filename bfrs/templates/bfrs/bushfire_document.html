@@ -31,7 +31,13 @@
 <table style="width:100%">
 <tr>
     <td style="padding-left:0px">
-      <h1 style="float:left">Delete Bushfire Document</h1>
+      <h1 style="float:left">
+      {% if form.editable %}
+        Edit Bushfire Document
+      {% else %}
+        View Bushfire Document
+      {% endif %}
+      </h1>
     </td>
 </tr>
 </table>

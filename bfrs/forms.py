@@ -1117,50 +1117,21 @@ class DocumentTitleCreateForm(baseforms.ModelForm):
         model = DocumentTitle
         fields = ('name',)
 
-class DocumentCreateForm(baseforms.ModelForm):
-    def clean_other_title(self):
-        if self.cleaned_data["title"] == DocumentTitle.OTHER:
-            value = self.cleaned_data.get("other_title")
-            if value:
-                return value
-            else:
-                raise forms.ValidationError("Required.")
-        else:
-            return None
-
-    class Meta:
-        model = Document
-        field_classes = {
-            "__all__":forms.fields.CharField,
-            "title":basefields.OtherOptionFieldFactory(Document,"title",("other_title",),other_option=lambda:lambda:DocumentTitle.OTHER),
-        }
-        fields = ('title','document',"other_title")
-        widgets = {
-            "comment":forms.Textarea(attrs={"style":"width:100%","rows":4}),
-            "title":forms.Select(attrs={"style":"width:auto"}),
-            "other_title":forms.TextInput(attrs={"style":"width:90%"}),
-        }
-
-
 class DocumentViewForm(baseforms.ModelForm):
-    @property
-    def submit_actions(self):
-        if self.instance.deleted:
-            return []
-        else:
-            return [('delete','Delete','btn-warning')]
 
     class Meta:
         model = Document
-        fields = ('title',)
+        fields = ('title',"other_title")
         other_fields = ("downable_document","deleted_document","document_link","deleteby","deleteon","creator","created")
         field_classes = {
             "downable_document":basefields.AliasFieldFactory(Document,"file_name"),
             "deleted_document":basefields.AliasFieldFactory(Document,"file_name"),
             "document_link":basefields.CompoundFieldFactory(DocumentField,Document,"deleted",field_class=forms.BooleanField),
+            "title":basefields.OtherOptionFieldFactory(Document,"title",("other_title",),other_option=lambda:lambda:DocumentTitle.OTHER,other_layout="{} - {}"),
         }
         widgets = {
             "title": basewidgets.TextDisplay(),
+            "other_title": basewidgets.TextDisplay(),
             "document_link":basewidgets.TextDisplay(),
             "deleteby": basewidgets.TextDisplay(),
             "creator": basewidgets.TextDisplay(),
@@ -1174,18 +1145,36 @@ class DocumentViewForm(baseforms.ModelForm):
 
 
 class DocumentUpdateForm(DocumentViewForm):
-    @property
-    def submit_actions(self):
-        if self.editable:
-            return [('save','Save','btn-success')]
+    def clean_other_title(self):
+        if self.cleaned_data["title"] == DocumentTitle.OTHER:
+            value = self.cleaned_data.get("other_title")
+            if value:
+                return value
+            else:
+                raise forms.ValidationError("Required.")
         else:
-            return []
+            return None
 
     class Meta:
         model = Document
         extra_update_fields = ('modified','modifier')
+        fields = ('title',"other_title")
+        other_fields = ("downable_document","deleted_document","document_link","deleteby","deleteon","creator","created")
         widgets = {
             #"comment":forms.Textarea(attrs={"style":"width:100%","rows":4})
+            "title":forms.Select(attrs={"style":"width:auto"}),
+            "other_title":forms.TextInput(attrs={"style":"width:90%"}),
+        }
+
+class DocumentCreateForm(DocumentUpdateForm):
+
+    class Meta:
+        model = Document
+        fields = ('title','document',"other_title")
+        widgets = {
+            #"comment":forms.Textarea(attrs={"style":"width:100%","rows":4}),
+            "title":forms.Select(attrs={"style":"width:auto"}),
+            "other_title":forms.TextInput(attrs={"style":"width:90%"}),
         }
 
 class DocumentFilterForm(baseforms.ModelForm):
