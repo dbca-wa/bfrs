@@ -684,7 +684,7 @@ class Bushfire(BushfireBase):
             'final_control': [[Agency.OTHER, 'other_final_control']],
             'area_limit': [[True, 'area']],
             'field_officer': [[User.OTHER, 'other_field_officer', 'other_field_officer_agency']], # username='other'
-            'fire_boundary': [[lambda v:v is not None, ('origin_point','Origin Point muse be inside of fire boundary',lambda fb,op:not fb.contains(op))]],
+            'fire_boundary': [[lambda v:v is not None, ('origin_point','Origin Point must be inside of fire boundary',lambda fb,op:not fb.contains(op))]],
     
         }
 
