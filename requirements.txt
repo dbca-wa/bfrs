@@ -23,5 +23,5 @@ lxml==3.8.0
 pytz==2016.10
 xlwt==1.2.0
 pandas==0.19.2
-requests==2.18.4
+requests==2.20.0
 requests-ntlm==1.1.0
