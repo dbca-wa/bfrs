@@ -84,6 +84,7 @@ class P1CAD(object):
                     "user_email":user_email,
                     "to_email":settings.P1CAD_NOTIFY_EMAIL,
                     "request":request,
+                    "external_email":False,
                     "subject":subject,
                     "p1cad_endpoint":url,
                     "payload":escape(payload),

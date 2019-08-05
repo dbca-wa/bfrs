@@ -48,7 +48,6 @@ from bfrs.utils import (breadcrumbs_li,
     )
 from bfrs.reports import BushfireReport, MinisterialReport, export_outstanding_fires 
 from django.db import IntegrityError, transaction
-from django.contrib import messages
 from django.forms import ValidationError
 from datetime import datetime
 import pytz
@@ -65,6 +64,24 @@ from .utils import invalidate_bushfire
 
 import logging
 logger = logging.getLogger(__name__)
+
+
+def process_update_status_result(request,result):
+    if not result:
+        return
+    if result[0]:
+        if result[0][0]:
+            messages.success(request,result[0][1])
+        else:
+            messages.error(request,result[0][1])
+    if result[2]:
+        #add error message
+        for msg in result[2]:
+            messages.error(request," {}".format(msg[1]),extra_tags="submsg" if result[0] else "")
+    if result[1]:
+        #add success message
+        for msg in result[1]:
+            messages.success(request," {}".format(msg[1]),extra_tags="submsg" if result[0] else "")
 
 
 class FormRequestMixin(object):
@@ -331,12 +348,12 @@ class BushfireView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin, filter_views.
                 raise Exception("Confirm action is missing.")
             elif confirm_action in ('delete_review','delete_final_authorisation','mark_reviewed'):
                 bushfire = Bushfire.objects.get(id=self.request.POST.get('bushfire_id'))
-                update_status(request, bushfire, confirm_action)
+                process_update_status_result(request,update_status(request, bushfire, confirm_action))
                 refresh_gokart(request, fire_number=bushfire.fire_number) #, region=None, district=None, action='update')
             # Archive / Unarchive
             elif confirm_action in ('archive','unarchive'):
                 bushfire = Bushfire.objects.get(id=self.request.POST.get('bushfire_id'))
-                update_status(request, bushfire, confirm_action)
+                process_update_status_result(request,update_status(request, bushfire, confirm_action))
             else:
                 raise Exception("Unknown confirm action({})".format(confirm_action))
 
@@ -420,7 +437,7 @@ class BushfireView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin, filter_views.
                     return TemplateResponse(request, self.link_bushfire_confirm_template, context=context)
 
                 elif step == "confirm":
-                    update_status(request, (primary_bushfire,bushfires.exclude(id=primary_bushfire_id)), action,self.actions.get(action))
+                    process_update_status_result(request,update_status(request, (primary_bushfire,bushfires.exclude(id=primary_bushfire_id)), action,self.actions.get(action)))
                 else:
                     raise Exception("Unknown step({1}) for action({0})".format(action,step))
             else:
@@ -620,7 +637,7 @@ class BushfireUpdateView(ExceptionMixin,FormRequestMixin,NextUrlMixin,LoginRequi
                 form_class = self.get_form_class()
                 if not any(a[0] == confirm_action for a in form_class.get_submit_actions(self.request)):
                     return TemplateResponse(request, self.template_error, context={'is_external_user': False, 'status':401}, status=401)
-                update_status(self.request, self.object, confirm_action)
+                process_update_status_result(request,update_status(self.request, self.object, confirm_action))
                 refresh_gokart(self.request, fire_number=self.object.fire_number, region=self.object.region.id, district=self.object.district.id)
                 return HttpResponseRedirect(self.get_success_url())
 
@@ -691,14 +708,14 @@ class BushfireUpdateView(ExceptionMixin,FormRequestMixin,NextUrlMixin,LoginRequi
             if missing_fields:
                 if action in ["save_final","save_reviewed"]:
                     #delete authorise, because some mandatory fields are empty,this will trigger to create a report snatpshot
-                    update_status(request, self.object, 'delete_authorisation_(missing_fields_-_FSSDRS)')
+                    process_update_status_result(request,update_status(request, self.object, 'delete_authorisation_(missing_fields_-_FSSDRS)'))
                 #have missing fields,show error pages
                 context['mandatory_fields'] = missing_fields
                 context['action'] = action
                 return TemplateResponse(request, self.template_mandatory_fields, context=context)
             elif action == "submit":
                 #skip confirm step when submit a initial report
-                update_status(self.request, self.object, action)
+                process_update_status_result(request,update_status(self.request, self.object, action))
                 refresh_gokart(self.request, fire_number=self.object.fire_number, region=self.object.region.id, district=self.object.district.id)
                 return HttpResponseRedirect(self.get_success_url())
             elif action in ["submit","authorise"]:
@@ -824,6 +841,12 @@ class DocumentTitleCreateView(ExceptionMixin,LoginRequiredMixin,CreateView):
     def get_success_url(self):
         return reverse('bushfire:documenttitle_list')
 
+DOCUMENT_SORT_MAPPING={
+    "title":["title__sorting","other_title","document"],
+    "-title":["-title__sorting","-other_title","-document"],
+    "creator":["creator__username","title__sorting","other_title","document"],
+    "-creator":["-creator__username","-title__sorting","-other_title","-document"]
+}
 class BushfireDocumentFilter(django_filters.FilterSet):
 
     # try/except block hack added here to allow initial migration before the model exists - else migration fails
@@ -843,13 +866,17 @@ class BushfireDocumentFilter(django_filters.FilterSet):
         return queryset
     
     def filter_order_by(self,queryset,filter_name,value):
-        if value:
-            if value[0] == "+":
-                value = value[1:]
+        if not value:
+            value = "-created"
+
+        if value[0] == "+":
+            value = value[1:]
+        if value in DOCUMENT_SORT_MAPPING:
+            queryset = queryset.order_by(*DOCUMENT_SORT_MAPPING[value])
+        else:
             queryset = queryset.order_by(value)
 
         return queryset
-
 
     class Meta:
         model = Document
@@ -885,7 +912,7 @@ class BushfireDocumentListView(ExceptionMixin,LoginRequiredMixin,filter_views.Fi
             data["include_deleted"] = False
 
         if "order_by" not in data:
-            data["order_by"] = "-modified"
+            data["order_by"] = "-created"
 
 
         filters = "&".join(["{}={}".format(k,v) for k,v in data.iteritems() if k in BushfireDocumentFilter.Meta.fields and v])

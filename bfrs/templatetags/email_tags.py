@@ -57,7 +57,7 @@ def field_label(field_name, bushfire=None):
 
 
 @register.simple_tag()
-def field_value(field_name, bushfire=None, request=None, url_type="auto",is_upper=None):
+def field_value(field_name, bushfire=None, request=None, url_type="auto",is_upper=None,external_email=False):
     """
     Return the value of model field to dispay in the email
     """
@@ -76,7 +76,7 @@ def field_value(field_name, bushfire=None, request=None, url_type="auto",is_uppe
                 else:
                     return bushfire.district.name
             elif field_name == "fire_number":
-                if request:
+                if request and not external_email:
                     return mark_safe("<a href='{}'>{}</a>".format(utils.get_bushfire_url(request,bushfire,url_type),bushfire.fire_number))
                 else:
                     return bushfire.fire_number

@@ -156,8 +156,10 @@ OUTSTANDING_FIRES_EMAIL = [
     {"Wheatbelt": WHEATBELT_EMAIL},
 ]
 
+DFES_CLOSE_BUSHFIRE_NOTIFICATION_EMAIL=env('DFES_CLOSE_BUSHFIRE_NOTIFICATION_EMAIL',None)
+
 #Others
-AUTHORISE_MESSAGE = env("AUTHORISE_MESSAGE","Once the fire is closed DFES COMCEN need to be informed IMMEDIATELY by phone and email on XXXXXX and xxxx@dfes.wa.gov.au")
+AUTHORISE_MESSAGE = env("AUTHORISE_MESSAGE",None)
 
 # Database configuration
 DATABASES = {
