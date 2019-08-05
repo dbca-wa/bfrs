@@ -1,6 +1,6 @@
 # Dockerfile to build BFRS application images.
 # Prepare the base environment.
-FROM ubuntu:18.04 as builder_base_bfrs
+FROM dbcawa/ubuntu:18.04-latexmk as builder_base_bfrs
 MAINTAINER asi@dbca.wa.gov.au
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update -y \
