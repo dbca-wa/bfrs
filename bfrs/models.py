@@ -33,8 +33,13 @@ SNAPSHOT_TYPE_CHOICES = (
 
 setattr(User,"OTHER",cachedclassproperty(lambda cls:User.objects.get(username='other')))
 
+def get_finyear(d = None):
+    if d is None:
+        d = datetime.now()
+    return d.year if d.month>6 else d.year-1
+
 def current_finyear():
-    return datetime.now().year if datetime.now().month>6 else datetime.now().year-1
+    return get_finyear()
 
 def reporting_years():
     """ Returns: [[2016, '2016/2017'], [2017, '2017/2018']] """

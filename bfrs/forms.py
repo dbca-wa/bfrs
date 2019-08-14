@@ -3,7 +3,7 @@ import json
 from django import forms
 from bfrs.models import (Bushfire, AreaBurnt, Damage, Injury,BushfireSnapshot,DamageSnapshot,InjurySnapshot,AreaBurntSnapshot,
         Region, District, Profile,
-        current_finyear,Tenure,Cause,
+        current_finyear,get_finyear,Tenure,Cause,
         DocumentTitle,Document,DocumentSnapshot,
         reporting_years,Agency,BushfireProperty
     )
@@ -34,6 +34,36 @@ YESNO_CHOICES = (
     (True, 'Yes'),
     (False, 'No')
 )
+
+def get_fire_detected_date_template(val):
+    if not val:
+        return "{}"
+
+    current_fyear = current_finyear()
+    fyear = get_finyear(val)
+    if current_fyear == fyear:
+        return "{}"
+    else:
+        return "{{}}<div style='color:red' id='id_fire_detected_date_warning'><i class='icon-warning-sign'></i> Not in current financial year({}) </div>".format(current_fyear)
+
+
+fire_detected_date_widget = basewidgets.TemplateWidgetFactory(basewidgets.DatetimeInput,template=get_fire_detected_date_template)(attrs={"onchange":"""
+    val = moment(this.value,'YYYY-MM-DD HH:mm');
+    now = moment();
+    current_fyear = (now.month() < 6)?now.year() - 1:now.year();
+    fyear =  (val.month() < 6)?val.year() - 1:val.year();   
+    error_div = $("#id_fire_detected_date_warning")
+    if (current_fyear !== fyear) {
+        if (error_div.length === 0) {
+            html = '<div class=\\'error\\' style=\\'margin:0px;color:red\\' id=\\'id_fire_detected_date_warning\\'><i class=\\'icon-warning-sign\\'></i> Not in current financial year(' + current_fyear  + ') </div>'
+            $(html).insertAfter($(this))
+        } else {
+            error_div.show()
+        }
+    } else if(error_div.length !== 0) {
+        error_div.hide()
+    }
+"""})
 
 REPORTING_YEAR_CHOICES = ( reporting_years() )
 
@@ -699,7 +729,7 @@ class SubmittedBushfireFSSGForm(SubmittedBushfireForm):
             "region":None,
             "district":None,
             "reporting_year":None,
-            "fire_detected_date":basewidgets.DatetimeInput(),
+            "fire_detected_date":fire_detected_date_widget,
             "dispatch_pw":forms.RadioSelect(renderer=HorizontalRadioRenderer),
             "dispatch_pw_date":basewidgets.DatetimeInput(),
         }
@@ -719,7 +749,7 @@ class AuthorisedBushfireFSSGForm(AuthorisedBushfireForm):
             "region":None,
             "district":None,
             "reporting_year":None,
-            "fire_detected_date":basewidgets.DatetimeInput(),
+            "fire_detected_date":fire_detected_date_widget,
             "dispatch_pw":forms.RadioSelect(renderer=HorizontalRadioRenderer),
             "dispatch_pw_date":basewidgets.DatetimeInput(),
         }
@@ -741,6 +771,7 @@ class ReviewedBushfireFSSGForm(ReviewedBushfireForm):
             "dispatch_pw":forms.RadioSelect(renderer=HorizontalRadioRenderer),
             "dispatch_pw_date":basewidgets.DatetimeInput(),
         }
+
 class InitialBushfireForm(SubmittedBushfireForm):
     submit_actions = [('save_draft','Save draft','btn-success'),('submit','Save and Submit','btn-warning')]
     class Meta:
@@ -752,7 +783,7 @@ class InitialBushfireForm(SubmittedBushfireForm):
         widgets = {
             "__all__": basewidgets.TextDisplay(),
             "name":None,
-            "fire_detected_date":basewidgets.DatetimeInput(),
+            "fire_detected_date":fire_detected_date_widget,
             "duty_officer":basewidgets.SelectableSelect(),
             "dispatch_pw":forms.RadioSelect(renderer=HorizontalRadioRenderer),
             "dispatch_pw_date":basewidgets.DatetimeInput(),

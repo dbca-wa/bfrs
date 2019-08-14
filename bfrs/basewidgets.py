@@ -179,7 +179,10 @@ class TemplateWidgetMixin(object):
 
     def render(self,name,value,attrs=None,renderer=None):
         widget_html = super(TemplateWidgetMixin,self).render(name,value,attrs)
-        return safestring.SafeText(self.template.format(widget_html))
+        if callable(self.template):
+            return safestring.SafeText(self.template(value).format(widget_html))
+        else:
+            return safestring.SafeText(self.template.format(widget_html))
 
 
 def TemplateWidgetFactory(widget_class,template):
@@ -189,7 +192,10 @@ def TemplateWidgetFactory(widget_class,template):
     if not cls:
         widget_class_id += 1
         class_name = "{}_template_{}".format(widget_class.__name__,widget_class_id)
-        cls = type(class_name,(TemplateWidgetMixin,widget_class),{"template":template})
+        if callable(template):
+            cls = type(class_name,(TemplateWidgetMixin,widget_class),{"template":staticmethod(template)})
+        else:
+            cls = type(class_name,(TemplateWidgetMixin,widget_class),{"template":template})
         widget_classes[key] = cls
     return cls
 
