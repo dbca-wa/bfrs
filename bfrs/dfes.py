@@ -68,11 +68,8 @@ class P1CAD(object):
         except Exception as e:
             traceback.print_exc()
             subject = "Failed to create dfes incident no for bushfire report '{0}'".format(bushfire.fire_number)
-            if settings.DEBUG:
-                response = traceback.format_exc()
-            else:
-                response = e.message()
-            raise Exception("Failed to create dfes incident no for bushfire ({}). {}".format(bushfire.fire_number,e.message))
+            response = traceback.format_exc()
+            raise Exception("Failed to create dfes incident no for bushfire ({}). {}".format(bushfire.fire_number,str(e)))
         finally:
             previous_incident_no = bushfire.dfes_incident_no
             try:
