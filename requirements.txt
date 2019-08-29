@@ -1,4 +1,4 @@
-git+git://github.com/dbca-wa/dbca-utils@1.0.0
+git+git://github.com/dbca-wa/dbca-utils@1.0.2
 psycopg2-binary==2.8.2
 Django==1.10.7
 django-extensions==1.7.6
@@ -23,5 +23,5 @@ lxml==3.8.0
 pytz==2016.10
 xlwt==1.2.0
 pandas==0.19.2
-requests==2.18.4
+requests==2.20.0
 requests-ntlm==1.1.0
