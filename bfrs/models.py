@@ -1064,7 +1064,7 @@ class DocumentTitle(DictMixin,Audit):
 
     @classproperty
     def OTHER(cls):
-        return cls.objects.get(name='Other')
+        return cls.objects.get(name__iexact='other')
 
     def save(self,*args,**kwargs):
         if self.name.lower() == 'other':
