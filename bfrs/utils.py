@@ -3,6 +3,7 @@ import tempfile
 import subprocess
 import shutil
 import re
+import traceback
 
 from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
@@ -1130,6 +1131,7 @@ def send_email(context):
             support_email(subject,body,context.get("user_email"))
         return (True if ret else False,"")
     except Exception as ex:
+        traceback.print_exc()
         return (False,str(ex))
 
 def rdo_email_addresses(bushfire,related_bushfires=None):
