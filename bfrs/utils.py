@@ -550,7 +550,8 @@ def update_status(request, bushfire, action,action_name="",update_fields=None,ac
             else:
                 errors.append(('fire_bombing', 'Faild to send Fire Bombing Request email for the bushfire({0}).{1}'.format(bushfire.fire_number,resp[1])))
 
-        if BushfireProperty.objects.filter(bushfire=bushfire,name="plantations").count() > 0:
+        #send a notification email to fpc for all fires from regions except kimberley and pilbara, or bushfire has plantations data
+        if bushfire.region not in (Region.kimberley,Region.pilbara) or BushfireProperty.objects.filter(bushfire=bushfire,name="plantations").count() > 0:
             resp = send_email({
                 "bushfire":bushfire, 
                 "user_email":user_email,

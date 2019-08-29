@@ -253,6 +253,14 @@ class Region(models.Model):
     name = models.CharField(max_length=64, unique=True)
     forest_region = models.BooleanField(default=False)
 
+    @cachedclassproperty
+    def kimberley(cls):
+        return cls.objects.get(name="Kimberley")
+
+    @cachedclassproperty
+    def pilbara(cls):
+        return cls.objects.get(name="Pilbara")
+
     def to_dict(self):
         """ Returns a dict of regions with their corresponding districts
         """
