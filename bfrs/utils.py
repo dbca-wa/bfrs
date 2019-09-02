@@ -1249,7 +1249,8 @@ def _add_users_to_users_group(resp):
     for user in resp.json()['objects']:
         try:
             if user['email'] and user['email'].split('@')[-1].lower() in settings.INTERNAL_EMAIL:
-                u = User.objects.get(username__iexact=user['username'].lower())
+                #use email to find the user instead of username, because username can be changed by user, but email can't be changed.
+                u = User.objects.get(email__iexact=user['email'].lower())
                 if users_group not in u.groups.all():
                     u.groups.add(users_group)
                     logger.info('Adding user {} to group {}'.format(u.get_full_name(), users_group.name))
