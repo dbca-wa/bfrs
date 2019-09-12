@@ -418,7 +418,7 @@ class OtherOptionField(CompoundField):
 
         if is_other_value is None:
             #no other option
-            return (None,None)
+            return (u"{}<script type='text/javascript'>{}</script>".format(self.edit_layout,hide_fields),f.field.related_field_names)
 
         f.field.widget.attrs = f.field.widget.attrs or {}
         show_fields = "$('#id_{}_body').show();{}".format(f.auto_id,";".join(["$('#{0}').prop('disabled',false)".format(field.auto_id) for field in f.related_fields]))
