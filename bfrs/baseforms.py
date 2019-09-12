@@ -114,11 +114,11 @@ class SubpropertyEnabledDict(dict):
 class ChainDict(dict):
     def __init__(self,dict_objs):
         super(ChainDict,self).__init__()
-        if isinstance(self.dicts,list):
+        if isinstance(dict_objs,list):
             self.dicts = dict_objs
-        elif isinstance(self.dicts,tuple):
+        elif isinstance(dict_objs,tuple):
             self.dicts = list(dict_objs)
-        elif isinstance(self.dicts,dict):
+        elif isinstance(dict_objs,dict):
             self.dicts = [dict_objs] 
         else:
             self.dicts = [dict(dict_objs)] 
@@ -234,6 +234,8 @@ class BoundField(forms.boundfield.BoundField):
         Returns the value for this BoundField, using the initial value if
         the form is not bound or the data otherwise.
         """
+        #if self.name == "search":
+        #    import ipdb;ipdb.set_trace()
         if not self.form.is_bound or isinstance(self.field.widget,basewidgets.DisplayWidget) or self.field.widget.attrs.get("disabled"):
             data = self.initial
         else:
@@ -397,6 +399,8 @@ class BaseModelFormMetaclass(forms.models.ModelFormMetaclass):
         subproperty_enabled = False
         
         for field_name in opts.other_fields or []:
+            #if field_name == "last_modified":
+            #    import ipdb;ipdb.set_trace()
             if "." in field_name:
                 property_name = field_name.split(".",1)[0]
                 subproperty_enabled = True
@@ -426,7 +430,7 @@ class BaseModelFormMetaclass(forms.models.ModelFormMetaclass):
             if hasattr(opts,"field_classes")  and opts.field_classes and field_name in opts.field_classes and isinstance(opts.field_classes[field_name],forms.Field):
                 #already configure a form field instance, use it directly
                 form_field = opts.field_classes[field_name]
-                field_list.append((field_name, formfield))
+                field_list.append((field_name, form_field))
                 continue
 
             if opts.widgets and field_name in opts.widgets:
@@ -455,8 +459,6 @@ class BaseModelFormMetaclass(forms.models.ModelFormMetaclass):
                 kwargs['form_class'] = opts.field_classes[field_name]
             elif not db_field :
                 raise Exception("Please cofigure form field for property '{}' in 'field_classes' option".format(field_name))
-            #if field_name == "document":
-            #    import ipdb;ipdb.set_trace()
             if formfield_callback is None:
                 if db_field:
                     formfield = model_field.formfield(**kwargs)
