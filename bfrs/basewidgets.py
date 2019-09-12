@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django import forms
 from django.core.cache import caches
 from django.urls import reverse
@@ -157,10 +159,12 @@ class FloatInput(forms.NumberInput):
         self.precision = precision
 
     def render(self,name,value,attrs=None,renderer=None):
-        return super(FloatInput,self).render(name,"" if value is None else round(value,self.precision),attrs=attrs)
+        return super(FloatInput,self).render(name,"" if (value is None or value == "") else round(value,self.precision),attrs=attrs)
 
 class DatetimeInput(forms.TextInput):
     def render(self,name,value,attrs=None,renderer=None):
+        if isinstance(value,datetime):
+            value = value.strftime("%Y-%m-%d %H:%M")
         html = super(DatetimeInput,self).render(name,value,attrs)
         datetime_picker = """
         <script type="text/javascript">
@@ -400,4 +404,18 @@ def DisplayWidgetFactory(widget_class):
         widget_classes[key] = cls
     return cls
 
+
+class NullBooleanSelect(forms.widgets.NullBooleanSelect):
+    """
+    A Select Widget intended to be used with NullBooleanField.
+    """
+    def __init__(self, attrs=None,true='Yes',false='No',none='--------'):
+        if none is None:
+            choices = (('2', true),
+                       ('3', false))
+        else:
+            choices = (('1', none),
+                       ('2', true),
+                       ('3', false))
+        forms.widgets.Select.__init__(self,attrs, choices)
 
