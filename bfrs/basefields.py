@@ -5,12 +5,43 @@ import inspect
 from django import forms
 from django.db import models
 from django.dispatch import receiver
+from django.core.exceptions import ValidationError
 
 from . import basewidgets
 from bfrs_project.signals import webserver_ready
 
 class_id = 0
 field_classes = {}
+
+def getallargs(func):
+    func_name = func.__name__
+    if hasattr(func,"im_class") and getattr(func,"im_class"):
+        #is a class method
+        cls = func.im_class
+        #it is a class method
+        argspec = inspect.getargspec(func)
+        func_args = []
+        #get the args introduced by current method
+        if argspec.args and func_name in cls.__dict__:
+            for k in argspec.args if type(cls.__dict__[func_name]) == staticmethod else argspec.args[1:]:
+                func_args.append(k)
+
+        #get the args and kwargs introduced by parent class
+        if argspec.varargs or argspec.keywords:
+            for base_cls in cls.__bases__:
+                if base_cls != object and hasattr(base_cls,func_name):
+                    base_args = getallargs(getattr(base_cls,func_name))
+                    if base_args :
+                        for k in base_args:
+                            if k not in func_args:
+                                func_args.append(k)
+
+        return func_args
+
+    return inspect.getargspec(func).args
+
+
+
 
 def hide_field(field):
     if field.widget.attrs:
@@ -75,10 +106,10 @@ def OverrideFieldFactory(model,field_name,field_class=None,**field_params):
     if class_key not in field_classes:
         class_id += 1
         class_name = "{}_{}".format(field_class.__name__,class_id)
-        argspec = inspect.getargspec(field_class.__init__)
+        func_args= getallargs(field_class.__init__)
         extra_fields = {}
         for k,v in field_params.items():
-            if k not in argspec.args:
+            if k not in func_args:
                 extra_fields[k] = v
         if extra_fields:
             for k in extra_fields.keys():
@@ -269,7 +300,42 @@ class OtherOptionField(CompoundField):
     other_layout = None
     layout = None
     edit_layout = None
-    other_option = None
+
+    is_other_value = None
+    is_other_value_js = None
+    is_other_option = None
+
+    @classmethod
+    def _initialize_other_option(cls,other_option,edit=True):
+        if isinstance(other_option,(list,tuple)):
+            if len(other_option) == 0:
+                other_option = None
+            elif len(other_option) == 1:
+                other_option = other_option[0]
+
+        is_other_value_js = None
+        if other_option is None:
+            if edit:
+                is_other_value = None
+                is_other_value_js = None
+            else:
+                is_other_value = None
+        elif isinstance(other_option,(list,tuple)):
+            if edit:
+                other_value = [o.id for o in other_option] if hasattr(other_option[0],"id") else other_option
+                is_other_value = (lambda other_value:lambda val: val in other_value)(other_value)
+                is_other_value_js = (lambda other_value:"['{}'].indexOf(this.value) >= 0".format("','".join([str(o) for o in other_value])))(other_value)
+            else:
+                is_other_value = (lambda other_value:lambda val: val in other_value)(other_option)
+        else:
+            if edit:
+                other_value = other_option.id if hasattr(other_option,"id") else other_option
+                is_other_value = (lambda other_value:lambda val: val == other_value)(other_value)
+                is_other_value_js = (lambda other_value:"this.value === '{}'".format(other_value))(other_value)
+            else:
+                is_other_value = (lambda other_value:lambda val: val == other_value)(other_option)
+
+        return is_other_value,is_other_value_js
 
     @classmethod
     def _initialize_class(cls):
@@ -279,6 +345,11 @@ class OtherOptionField(CompoundField):
                 cls.other_option = staticmethod(other_option)
             else:
                 cls.other_option = other_option
+                is_other_value,is_other_value_js = cls._initialize_other_option(cls.other_option,edit=True)
+                is_other_option = cls._initialize_other_option(cls.other_option,edit=False)[0]
+                cls.is_other_value = staticmethod(is_other_value) if is_other_value else is_other_value
+                cls.is_other_value_js = staticmethod(is_other_value_js) if is_other_value_js else is_other_value_js
+                cls.is_other_option = staticmethod(is_other_option) if is_other_option else is_other_option
 
 
     @classmethod
@@ -303,14 +374,17 @@ class OtherOptionField(CompoundField):
         val1 = f.value()
         if callable(self.other_option):
             try:
-                other_option = self.other_option()
+                is_other_option = self._initialize_other_option(self.other_option(val1),edit=False)[0]
             except:
-                return (self.layout,None)
+                is_other_option = None
 
         else:
-            other_option = self.other_option
+            is_other_option = self.is_other_option
 
-        if val1 == other_option:
+        if not is_other_option:
+            return (self.layout,None)
+
+        if is_other_option(val1):
             val2 = f.related_fields[0].value()
             if self.policy == ALWAYS:
                 return (self.other_layout,f.field.related_field_names)
@@ -334,14 +408,17 @@ class OtherOptionField(CompoundField):
         #    import ipdb;ipdb.set_trace()
         if callable(self.other_option):
             try:
-                other_option = self.other_option()
+                is_other_value,is_other_value_js = self._initialize_other_option(self.other_option(val1),edit=True)
             except:
-                #no other option,
-                return (None,None)
-
+                is_other_value = None
+                is_other_value_js = None
         else:
-            other_option = self.other_option
-        other_value = other_option.id if hasattr(other_option,"id") else other_option
+            is_other_value = self.is_other_value
+            is_other_value_js = self.is_other_value_js
+
+        if is_other_value is None:
+            #no other option
+            return (None,None)
 
         f.field.widget.attrs = f.field.widget.attrs or {}
         show_fields = "$('#id_{}_body').show();{}".format(f.auto_id,";".join(["$('#{0}').prop('disabled',false)".format(field.auto_id) for field in f.related_fields]))
@@ -349,29 +426,58 @@ class OtherOptionField(CompoundField):
 
         if isinstance(f.field.widget,forms.widgets.RadioSelect):
             f.field.widget.attrs["onclick"]="""
-                if (this.value === '{0}') {{
+                if ({0}) {{
                     {1}
                 }} else {{
                     {2}
                 }}
-            """.format(str(other_value),show_fields,hide_fields)
+            """.format(is_other_value_js,show_fields,hide_fields)
         elif isinstance(f.field.widget,forms.widgets.Select):
             f.field.widget.attrs["onchange"]="""
-                if (this.value === '{0}') {{
+                if ({0}) {{
                     {1}
                 }} else {{
                     {2}
                 }}
-            """.format(str(other_value),show_fields,hide_fields)
+            """.format(is_other_value_js,show_fields,hide_fields)
         else:
             raise Exception("Not  implemented")
 
-        if val1 != other_value:
-            return (u"{}<script type='text/javascript'>{}</script>".format(self.edit_layout,hide_fields),f.field.related_field_names)
-        else:
+        if is_other_value(val1):
             return (self.edit_layout,f.field.related_field_names)
-        
-    
+        else:
+            return (u"{}<script type='text/javascript'>{}</script>".format(self.edit_layout,hide_fields),f.field.related_field_names)
+
+
+class FileField(forms.FileField):
+    """
+    content_types: content type list, for example. 'application/pdf', 'image/tiff', 'image/tif', 'image/jpeg', 'image/jpg', 'image/gif', 'image/png','application/zip', 'application/x-zip-compressed',
+        help_text='Acceptable file types: pdf, tiff, jpg, gif, png, zip')
+
+    """
+    def __init__(self,max_size=None,content_types=None,*args,**kwargs):
+        if "error_messages" not in kwargs:
+            kwargs["error_messages"] = {}
+
+        if "max_size" not in kwargs["error_messages"]:
+            kwargs["error_messages"]["max_size"] = "The uploaded file size is %(max_size)d, which is exceed the maximum file size %(file_size)d."
+
+        if "unsupported_content_type" not in kwargs["error_messages"]:
+            kwargs["error_messages"]["unsupported_content_type"] = "The content type(%(file_content_type)s) of the uploaded file is not supported, The Acceptable file types are pdf,tiff,jpg,gif,png and zip."
+        super(FileField,self).__init__(*args,**kwargs)
+        self.max_size = max_size
+        self.content_types = content_types
+
+    def validate(self,value):
+        super(FileField,self).validate(value)
+        if self.content_types:
+            if value.content_type not in self.content_types:
+                raise ValidationError(self.error_messages["unsupported_content_type"], code='unsupported_content_type', params={'file_content_type':value.content_type})
+
+        if self.max_size:
+            if value.size > self.max_size:
+                raise ValidationError(self.error_messages["max_size"], code='max_size', params={'file_size':value.size,'max_size':self.max_size})
+
 @receiver(webserver_ready)
 def initialize(sender,**kwargs):
     for cls in field_classes.values():
