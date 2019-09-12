@@ -4,6 +4,7 @@ from dateutil import tz
 
 from django.contrib.auth.models import User
 from django import template
+from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 from django.utils.safestring import mark_safe
 
