@@ -14,7 +14,7 @@ from django.forms.models import inlineformset_factory, formset_factory, BaseInli
 from django.contrib import messages
 from django.contrib.auth.models import User, Group
 from django.contrib.gis.geos import Point, GEOSGeometry, Polygon, MultiPolygon, GEOSException
-from django.utils import timezone
+from django.utils import timezone,safestring
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Fieldset, ButtonHolder, Submit, Div, HTML
@@ -35,19 +35,63 @@ YESNO_CHOICES = (
     (False, 'No')
 )
 
+def is_current_financialyear(val):
+    if get_finyear(val) != current_finyear():
+        raise ValidationError("Must be in current financial year.")
+
 def get_fire_detected_date_template(val):
+    return "{}"
+    """
     if not val:
         return "{}"
-
-    current_fyear = current_finyear()
-    fyear = get_finyear(val)
-    if current_fyear == fyear:
-        return "{}"
+    if isinstance(val,datetime):
+        current_fyear = current_finyear()
+        fyear = get_finyear(val)
+        if current_fyear == fyear:
+            return "{}"
+        else:
+            return "{{}}<div style='color:red' id='id_fire_detected_date_warning'><i class='icon-warning-sign'></i> Not in current financial year({}) </div>".format(current_fyear)
     else:
-        return "{{}}<div style='color:red' id='id_fire_detected_date_warning'><i class='icon-warning-sign'></i> Not in current financial year({}) </div>".format(current_fyear)
+        return "{}"
+    """
 
+class DatetimeInCurrentFinYearInput(forms.TextInput):
+    def render(self,name,value,attrs=None,renderer=None):
+        year = current_finyear()
+        if isinstance(value,datetime):
+            value = value.strftime("%Y-%m-%d %H:%M")
+        html = super(DatetimeInCurrentFinYearInput,self).render(name,value,attrs)
+        datetime_picker = """
+        <script type="text/javascript">
+            $("#{}").datetimepicker({{ 
+                format: "Y-m-d H:i" ,
+                minDate:"{}-7-1",
+                maxDate:true,
+                step: 30,
+            }}); 
+        </script>
+        """.format(attrs["id"],year)
+        return safestring.SafeText("{}{}".format(html,datetime_picker))
 
 fire_detected_date_widget = basewidgets.TemplateWidgetFactory(basewidgets.DatetimeInput,template=get_fire_detected_date_template)(attrs={"onchange":"""
+    val = moment(this.value,'YYYY-MM-DD HH:mm');
+    now = moment();
+    current_fyear = (now.month() < 6)?now.year() - 1:now.year();
+    fyear =  (val.month() < 6)?val.year() - 1:val.year();   
+    error_div = $("#id_fire_detected_date_warning")
+    if (current_fyear !== fyear) {
+        if (error_div.length === 0) {
+            html = '<div class=\\'error\\' style=\\'margin:0px;color:red\\' id=\\'id_fire_detected_date_warning\\'><i class=\\'icon-warning-sign\\'></i> Not in current financial year(' + current_fyear  + ') </div>'
+            $(html).insertAfter($(this))
+        } else {
+            error_div.show()
+        }
+    } else if(error_div.length !== 0) {
+        error_div.hide()
+    }
+"""})
+
+new_fire_detected_date_widget = basewidgets.TemplateWidgetFactory(DatetimeInCurrentFinYearInput,template=get_fire_detected_date_template)(attrs={"onchange":"""
     val = moment(this.value,'YYYY-MM-DD HH:mm');
     now = moment();
     current_fyear = (now.month() < 6)?now.year() - 1:now.year();
@@ -963,10 +1007,12 @@ class BushfireCreateForm(InitialBushfireForm):
                     'archive','authorised_by','init_authorised_by','reviewed_by','valid_bushfire','fireboundary_uploaded_by',
                     'fireboundary_uploaded_date','capturemethod','other_capturemethod')
         field_classes = {
+            "fire_detected_date":basefields.OverrideFieldFactory(Bushfire,"fire_detected_date",validators=[is_current_financialyear])
         }
         widgets = {
             "__all__": basewidgets.TextDisplay(),
             "sss_data":forms.widgets.HiddenInput(),
+            "fire_detected_date":new_fire_detected_date_widget,
         }
 
 class BaseInjuryFormSet(BaseInlineFormSet):
