@@ -2,6 +2,17 @@
 {% load static from staticfiles %}
 {% load bfrs_tags %}
 
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" type="text/css" href="{% static 'css/jquery.datetimepicker.css' %}"/ >
+{% endblock %}
+
+{% block extra_js %}
+  {{ block.super }}
+  <script src="{% static 'js/jquery.datetimepicker.full.min.js' %}"></script>
+  {{ form.media }}
+{% endblock %}
+
 {% block breadcrumbs %}
 <ul class="breadcrumb">
   <li><a href="{% url 'main' %}">Bushfire Overview</a></li>
@@ -16,7 +27,7 @@
       {% endif %}
   </a></li>
   <li><a href="{% url 'bushfire:bushfire_document_list' bushfireid=bushfire.id %}">Documents</a></li>
-  <li>Upload</li>
+  <li>Add document</li>
 </ul>
 {% endblock %}
 
@@ -53,12 +64,20 @@
 {% csrf_token %}
 <table class="table table-bordered table-striped table-condensed">
 <tr>
-    <th class="cbas" >Title</th>
-    <td class="cbas" >{{form.title}}</td>
+    <th class="cbas" >Category*</th>
+    <td class="cbas" >{{form.category}}</td>
 </tr>
 <tr>
-    <th class="cbas" >Document</th>
+    <th class="cbas" >Descriptor*</th>
+    <td class="cbas" >{{form.tag}}</td>
+</tr>
+<tr>
+    <th class="cbas" >Document*</th>
     <td class="cbas" >{{form.document}}</td>
+</tr>
+<tr>
+    <th class="cbas" >Document created</th>
+    <td class="cbas" >{{form.document_created}}</td>
 </tr>
 </table>
 <div class="navbar navbar-fixed-bottom">

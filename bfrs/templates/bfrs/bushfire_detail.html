@@ -25,19 +25,19 @@
 </ul>
 {% endblock %}
 
-  {% block extrastyle %}
+{% block extrastyle %}
   {{ block.super }}
   <link rel="stylesheet" type="text/css" href="{% static 'css/jquery.datetimepicker.css' %}"/ >
-  {% endblock %}
+{% endblock %}
 
 
-  {% block extra_js %}
+{% block extra_js %}
   {{ block.super }}
 
   <!-- http://xdsoft.net/jqplugins/datetimepicker/ -->
   <script src="{% static 'js/jquery.datetimepicker.full.min.js' %}"></script>
   <script src="{% static 'js/jquery.formset.js' %}"></script>
-  {% endblock %}
+{% endblock %}
 
 
 {% block content %}

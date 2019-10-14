@@ -291,11 +291,33 @@ class CompoundBoundField(BoundField):
         field's default widget will be used.
         """
         html_layout,field_names = self.field.get_layout(self)
-        html = super(CompoundBoundField,self).as_widget(widget,attrs,only_initial)
+        if isinstance(html_layout,(tuple,list)):
+            html = super(CompoundBoundField,self).as_widget(attrs=html_layout[1],only_initial=only_initial)
+            html_layout = html_layout[0]
+        else:
+            html = super(CompoundBoundField,self).as_widget(only_initial=only_initial)
+
         if field_names:
-            args = [f.as_widget(only_initial=only_initial) for f in self.related_fields if f.form_field_name in field_names]
-            args.append(self.auto_id)
-            return safestring.SafeText(html_layout.format(html,*args))
+            index0 = 0
+            index1 = 0
+            arguments = []
+            while index1 < len(field_names):
+                if isinstance(field_names[index1],(tuple,list)):
+                    if field_names[index1][0] != self.field.related_field_names[index0]:
+                        index0 += 1
+                    else:
+                        arguments.append(self.related_fields[index0].as_widget(only_initial=only_initial,attrs=field_names[index1][1]))
+                        index0 += 1
+                        index1 += 1
+                elif field_names[index1] != self.field.related_field_names[index0]:
+                    index0 += 1
+                else:
+                    arguments.append(self.related_fields[index0].as_widget(only_initial=only_initial))
+                    index0 += 1
+                    index1 += 1
+
+            arguments.append(self.auto_id)
+            return safestring.SafeText(html_layout.format(html,*arguments))
         elif html_layout:
             return safestring.SafeText(html_layout.format(html,self.auto_id))
         else:

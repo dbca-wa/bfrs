@@ -10,6 +10,8 @@ from django.contrib.auth import views as auth_views
 from django.http import HttpResponseRedirect
 from django.conf import settings
 
+from .views import ChainedModelChoicesView
+
 from .signals import webserver_ready
 
 def sss_selection_view(request):
@@ -45,6 +47,7 @@ urlpatterns = [
     url(r'^profile/$', views.ProfileView.as_view(), name='profile'),
     url(r'^sss/$', sss_selection_view, name="sss_home"),
     url(r'^chaining/', include('smart_selects.urls')),
+    url(r'^options/js/(?P<chained_model_app>[a-zA-Z0-9\_\-]+)/(?P<chained_model_name>[a-zA-Z0-9\_\-]+)/(?P<model_app>[a-zA-Z0-9\_\-]+)/(?P<model_name>[a-zA-Z0-9\_\-]+)', ChainedModelChoicesView.as_view(),name="chained_model_choices"),
     url(r'^$', home_view_selection_view, name='home'),
 ]
 

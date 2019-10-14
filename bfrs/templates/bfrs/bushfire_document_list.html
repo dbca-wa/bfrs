@@ -28,29 +28,81 @@
     <td style="padding-left:0px">
       <h1 style="float:left">Bushfire Documents</h1>
     </td>
-    <td style="vertical-align:bottom;padding-right:0px">
-      <span style="float:right">
-        <form id="document_filter_form" action="" method="get">
-          <span class="controls">{{ filterform.title }}</span>
 
-          <span class="controls" style="padding-left:50px">{{ filterform.include_deleted }}</span>
-          <label class="nowrap" >Include deleted</label>
-
-          <button type="submit"  class="btn btn-primary btn-success" style="margin-left:50px" ><i class="icon-refresh icon-white"></i> Search</button>
-          <button class="btn btn-primary btn-info" type="button" style="padding-left:20px" onclick="window.location='{% url "bushfire:bushfire_document_upload"  bushfireid=bushfire.id %}'"><i class="icon-upload-alt"></i> Document</button>
-        </form>
-      </span>
-    </td>
 </tr>
 </table>
 
+<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true" style="margin-bottom:10px">
+  <div class="panel-primary">
+    <a role="button" data-toggle="collapse" data-parent="#accordion" href="#filter" aria-expanded="true" aria-controls="filter"><button><i class="icon-filter icon-white"></i> Filter tools</button></a>
+    <button class="btn btn-primary btn-info" type="button" style="float:right;margin-right:15px" onclick="window.location='{% url "bushfire:bushfire_document_upload"  bushfireid=bushfire.id %}'"><i class="icon-upload-alt"></i> Add Document</button>
+    <div id="filter" class="panel-collapse collapse" role="tabpanel" aria-labelledby="pn_filter">
+      <div class="panel-body">
+        <!--<form action="" method="get">-->
+	<form id="bushfire_document_filter" action="" method="get">
+        <table class="table table-bordered table-striped table-condensed" style="margin-bottom:0px">
+          <body>
+
+            <tr>
+              <td class="cbas">
+                <div class="col-sm-2" >
+                  <div class="form-group"> 
+                    <label class="nowrap" >Category</label>
+                    <div class="controls ">{{ filterform.category }}</div><br>
+                      <button type="submit"><i class="icon-refresh icon-white"></i> Update</button>
+                  </div>
+                </div>
+
+                <div class="col-sm-2" >
+                  <div  class="form-group"> 
+                    <label class="nowrap" >Archived</label>
+                    <div class="controls ">{{ filterform.archived }}</div>
+                  </div>
+                </div>
+
+                <div class="col-sm-2" >
+                  <div class="form-group"> 
+                    <label class="nowrap" >Last modified</label>
+                    <div class="controls ">{{ filterform.last_modified }}</div>
+                  </div>
+                </div>
+
+                <div class="col-sm-2" >
+                  <div class="form-group"> 
+                    <label class="nowrap" >Search Tag,Custom Tag and Creator</label>
+                    <div class="controls ">{{ filterform.search }}</div>
+                  </div>
+                </div>
+
+              </td>
+            </tr>
+
+          </body>
+        </table>
+        </form>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+
+</script>
 <table id="table" class="table table-striped table-bordered table-hover table-condensed" style="cursor:pointer;">
   <thead>
-     <th onclick="document.location='{{filters_without_order}}{{'title'|toggle_sort:filterform.initial}}'" class="headerSort {{'title'|sort_class:filterform.initial}}">
-       <font color="dodgerblue">Title</font>
+     <th onclick="document.location='{{filters_without_order}}{{'document_tag'|toggle_sort:filterform.initial}}'" class="headerSort {{'document_tag'|sort_class:filterform.initial}}">
+       <font color="dodgerblue">Descriptor</font>
      </th>
-     <th onclick="document.location='{{filters_without_order}}{{'document'|toggle_sort:filterform.initial}}'" class="headerSort {{'document'|sort_class:filterform.initial}}">
-       <font color="dodgerblue">Document</font>
+     <th onclick="document.location='{{filters_without_order}}{{'category'|toggle_sort:filterform.initial}}'" class="headerSort {{'category'|sort_class:filterform.initial}}">
+       <font color="dodgerblue">Category</font>
+     </th>
+     <th onclick="document.location='{{filters_without_order}}{{'document_created'|toggle_sort:filterform.initial}}'" class="headerSort {{'document_created'|sort_class:filterform.initial}}">
+       <font color="dodgerblue">Created on</font>
+     </th>
+     <th onclick="document.location='{{filters_without_order}}{{'archived'|toggle_sort:filterform.initial}}'" class="headerSort {{'archived'|sort_class:filterform.initial}}">
+       <font color="dodgerblue">Archived?</font>
      </th>
      <th onclick="document.location='{{filters_without_order}}{{'creator'|toggle_sort:filterform.initial}}'" class="headerSort {{'creator'|sort_class:filterform.initial}}">
        <font color="dodgerblue">Uploaded By</font>
@@ -63,29 +115,34 @@
   <tbody>
     {% for doc in object_list %}
       <tr class="row-vm" data-toggle="myCollapse" data-target="#{{bushfire.id}}">
-          <td>{{doc.document_title}}</td>
+          <td>{{doc.document_tag}}</td>
           <td>
-              {{doc.file_name}}
-              {% if doc.deleted %}
-              <br><span style="color:red;font-style:italic">Deleted by {{doc.deleteby}} on {{doc.deleteon | date:"Y-m-d H:i:s"}}</span>
+              {{doc.category}}
+          </td>
+          <td>{{doc.document_created}}</td>
+          <td>{% if doc.archived %} 
+              Yes
+              {% else %} 
+              No
               {% endif %}
           </td>
           <td>{{doc.creator}}</td>
           <td>{{doc.created | date:"Y-m-d H:i:s"}}</td>
           <td>
-              {% if not doc.deleted %}
-              <a style="margin-left:10px" href="{% url "bushfire:document_update" doc.id %}" title="Edit Document"><i class="icon-edit"></i></a>
-              {% endif %}
+              {% if not doc.archived %}
+              <a style="margin-left:10px" href="{% url "bushfire:document_edit" doc.id %}" title="Edit Document"><i class="icon-edit"></i></a>
+              <a style="margin-left:10px" href="{% url "bushfire:document_archive" doc.id %}" title="Archive Document"><i class="icon-folder-close"></i></a>
+              {% else %}
               <a style="margin-left:10px" href="{% url "bushfire:document_view" doc.id %}" title="View Document"><i class="icon-eye-open"></i></a>
-              {% if not doc.deleted %}
+              <a style="margin-left:10px" href="{% url "bushfire:document_unarchive" doc.id %}" title="Unarchive Document"><i class="icon-folder-open"></i></a>
+              {% endif %}
               <a style="margin-left:10px" href="{% url "bushfire:document_download" doc.id  %}" title="Download Document"><i class="icon-download-alt"></i></a>
               <a style="margin-left:10px" href="{% url "bushfire:document_delete" doc.id %}" title="Delete Document"><i class="icon-trash"></i></a>
-              {% endif %}
           </td>
       </tr>
     {% empty %}
       <tr>
-          <td colspan="5" style="text-align:center">There are no documents</td>
+          <td colspan="7" style="text-align:center">There are no attached documents</td>
       </tr>
     {% endfor %}
   </tbody>

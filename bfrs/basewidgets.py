@@ -419,3 +419,45 @@ class NullBooleanSelect(forms.widgets.NullBooleanSelect):
                        ('3', false))
         forms.widgets.Select.__init__(self,attrs, choices)
 
+class ChainedSelect(forms.Select):
+    def render(self,name,value,attrs=None):
+        if value is not None and value != "":
+            if attrs is None:
+                attrs = {"data-initial":str(value)}
+            else:
+                attrs["data-initial"] = str(value)
+
+        return super(ChainedSelect,self).render(name,value,attrs=attrs)
+
+def ChainedSelectFactory(model,field_name,chained_field,archived=None,other_options=None,casesensitive=True):
+    field_model = model._meta.get_field(field_name).related_model
+    chained_field_model = model._meta.get_field(chained_field).related_model
+    js_url = "/options/js/{}/{}/{}/{}".format(chained_field_model._meta.app_label,chained_field_model.__name__,field_model._meta.app_label,field_model.__name__)
+    first_param = True
+    if archived is not None:
+        js_url = "{}?archived={}".format(js_url,"true" if archived else "false")
+        first_param = False
+    if other_options :
+        if len(other_options) == 1:
+            js_url = "{}{}other_option={}".format(js_url,"?" if first_param else "&",other_options[0])
+        else:
+            js_url = "{}{}other_option={}".format(js_url,"?" if first_param else "&",",".join(other_options))
+
+        first_param = False
+        if not casesensitive:
+            js_url = "{}{}caseinsensitive=".format(js_url,"?" if first_param else "&")
+            
+    global widget_class_id
+
+    key = hashlib.md5("ChainedSelect<{}>".format(js_url)).hexdigest()
+    cls = widget_classes.get(key)
+    if not cls:
+        widget_class_id += 1
+        class_name = "{}_{}".format(ChainedSelect.__name__,widget_class_id)
+        
+        cls = type(class_name,(ChainedSelect,),{"media":forms.Media(css=None,js=(js_url,))})
+        widget_classes[key] = cls
+    return cls
+
+
+

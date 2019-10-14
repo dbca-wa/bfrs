@@ -2,6 +2,19 @@
 {% load static from staticfiles %}
 {% load bfrs_tags %}
 
+{% if form.editable %}
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" type="text/css" href="{% static 'css/jquery.datetimepicker.css' %}"/ >
+{% endblock %}
+
+{% block extra_js %}
+  {{ block.super }}
+  <script src="{% static 'js/jquery.datetimepicker.full.min.js' %}"></script>
+  {{ form.media }}
+{% endblock %}
+{% endif %}
+
 {% block breadcrumbs %}
 <ul class="breadcrumb">
   <li><a href="{% url 'main' %}">Bushfire Overview</a></li>
@@ -16,32 +29,14 @@
       {% endif %}
   </a></li>
   <li><a href="{% url 'bushfire:bushfire_document_list' bushfireid=bushfire.id %}">Documents</a></li>
-  <li>{{object.file_name}}</li>
+  <li>{{object.document_tag}}</li>
   <li>
-  {% if form.editable %}
-    Edit
-  {% else %}
-    Detail
-  {% endif %}
+      {{page_action}}
   </li>
 </ul>
 {% endblock %}
 
 {% block content %}
-<table style="width:100%">
-<tr>
-    <td style="padding-left:0px">
-      <h1 style="float:left">
-      {% if form.editable %}
-        Edit Bushfire Document
-      {% else %}
-        View Bushfire Document
-      {% endif %}
-      </h1>
-    </td>
-</tr>
-</table>
-
 {% if form.errors %}
     <h1 class="errornote">
       <p>Form Errors</p>
@@ -66,12 +61,24 @@
 {% csrf_token %}
 <table class="table table-bordered table-striped table-condensed">
 <tr>
-    <th class="cbas" >Title</th>
-    <td class="cbas" >{{form.title}}</td>
+    <th class="cbas" >Category</th>
+    <td class="cbas" >{{form.category}}</td>
+</tr>
+<tr>
+    <th class="cbas" >Descriptor</th>
+    <td class="cbas" >{{form.tag}}</td>
 </tr>
 <tr>
     <th class="cbas" >Document</th>
-    <td class="cbas" >{{form.document_link}}</td>
+    <td class="cbas" >{{form.document}}</td>
+</tr>
+<tr>
+    <th class="cbas" >Document created on</th>
+    <td class="cbas" >{{form.document_created}}</td>
+</tr>
+<tr>
+    <th class="cbas" >Archived</th>
+    <td class="cbas" >{{form.archived}}</td>
 </tr>
 <tr>
     <th class="cbas" >Uploaded by</th>
@@ -80,6 +87,14 @@
 <tr>
     <th class="cbas" >Uploaded on</th>
     <td class="cbas" >{{form.created}}</td>
+</tr>
+<tr>
+    <th class="cbas" >Last Modified by</th>
+    <td class="cbas" >{{form.modifier}}</td>
+</tr>
+<tr>
+    <th class="cbas" >Last Modified on</th>
+    <td class="cbas" >{{form.modified}}</td>
 </tr>
 </table>
 <div class="navbar navbar-fixed-bottom">

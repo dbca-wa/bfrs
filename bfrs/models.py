@@ -1,6 +1,7 @@
 import sys
 import os
 import json
+import traceback
 from datetime import datetime, timedelta
 import pytz
 
@@ -14,6 +15,8 @@ from django.conf import settings
 from django.core import serializers
 from django.utils.safestring import mark_safe
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 
 from smart_selects.db_fields import ChainedForeignKey
 import LatLon
@@ -1058,53 +1061,147 @@ class BushfirePropertySnapshot(BushfirePropertyBase):
         unique_together = ('snapshot','name')
 
 @python_2_unicode_compatible
-class DocumentTitle(DictMixin,Audit):
-    name = models.CharField(max_length=64,null=False,editable=True,unique=True, verbose_name="Name")
-    sorting = models.CharField(max_length=64,null=True,editable=False, verbose_name="Used for sorting")
+class DocumentCategory(DictMixin,Audit):
+    name = models.CharField(max_length=200,null=False,editable=True,unique=True, verbose_name="Document Category")
+    archived = models.BooleanField(default=False,editable=True)
+    archivedby = models.ForeignKey(settings.AUTH_USER_MODEL,null=True, editable=False,blank=True,verbose_name="Archived By")
+    archivedon = models.DateTimeField(null=True,editable=False,verbose_name="Archived on")
 
-    @classproperty
-    def OTHER(cls):
-        return cls.objects.get(name__iexact='other')
+    OTHER_TAGS = {}
 
-    def save(self,*args,**kwargs):
-        if self.name.lower() == 'other':
-            self.name = 'Other'
-            self.sorting = 'ZZZZZZZ'
-        else:
-            self.sorting = self.name.lower()
-        super(DocumentTitle,self).save(*args,**kwargs)
+    @property
+    def other_tag(self):
+        """
+        Return the other tag of this category if have; otherwise return None
+        """
+        if self.pk not in self.OTHER_TAGS:
+            try:
+                self.OTHER_TAGS[self.pk] = DocumentTag.objects.get(category=self,name__iexact='other')
+            except ObjectDoesNotExist as ex:
+                self.OTHER_TAGS[self.pk] = None
+
+        return self.OTHER_TAGS[self.pk]
+
 
     def __str__(self):
         return self.name
 
     class Meta:
-        ordering =  ['sorting']
+        ordering =  ['name']
+
+@python_2_unicode_compatible
+class DocumentTag(DictMixin,Audit):
+    name = models.CharField(verbose_name="Document Tag", max_length=200)
+    category = models.ForeignKey(DocumentCategory, on_delete=models.PROTECT)
+    archived = models.BooleanField(default=False,editable=True)
+    archivedby = models.ForeignKey(settings.AUTH_USER_MODEL,null=True, editable=False,blank=True,verbose_name="Archived By")
+    archivedon = models.DateTimeField(null=True,editable=False,verbose_name="Archived on")
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def other_tag(self):
+        """
+        Return the other tag of this tag's category if have; otherwise return None
+        """
+        if not self.category:
+            return None
+
+        return self.category.other_tag
+
+    @cachedclassproperty
+    def other_tags(self):
+        """
+        Return all other tags.
+        """
+        return DocumentTag.objects.filter(name__iexact='other')
+
+    @property
+    def is_other_tag(self):
+        """
+        Return true if this tag is a other tat
+        """
+        if not self.category:
+            return False
+
+        return self == self.category.other_tag
+
+    @classmethod
+    def check_other_tag(cls,tag):
+        """
+        Return true if this tag is a other tat
+        """
+        return (tag if isinstance(tag,DocumentTag) else cls.objects.get(id=tag)).is_other_tag
+
+    @classmethod
+    def get_other_tag(cls,tag,raise_exception=True):
+        """
+        Return other tag if have;otherwise throw ObjectDoesNotExist if raise_exception is True else return None
+        """
+        if not tag:
+            return None
+        other_tag = (tag if isinstance(tag,DocumentTag) else DocumentTag.objects.get(id=tag)).other_tag
+        if other_tag:
+            return other_tag
+        elif raise_exception:
+            raise ObjectDoesNotExist("Document category({}) doesn't support other tag.".format(self.category.name))
+        else:
+            return None
+
+    class Meta:
+        ordering = ['name']
+        unique_together = [("category","name")]
 
 def document_path(instance,filename):
-    basefilename,fileext = os.path.splitext(filename)
-    upload_time = datetime.now().strftime("%Y%m%d-%H%M%S")
-    instance.file_name = filename
-    return "documents/{}/{}_{}{}".format(instance.upload_bushfire.fire_number.replace(" ","_"),basefilename,upload_time,fileext)
+    """
+    if filename.rsplit('.')[-1] == "zip":
+        extension = "zip"
+    else:
+        extension = "pdf"
+    """
+    extension = filename.rsplit('.')[-1]
+
+    return "uploads/{0}/{1}/{1}_{2}_{3}.{4}".format(
+        str(instance.bushfire.year),
+        instance.bushfire.fire_number.replace(" ","_"),
+        instance.document_tag.strip().replace(" ", "_"),
+        timezone.localtime(instance.document_created).isoformat().rsplit(".")[0].replace(":", "")[:-7],
+        extension)
 
 
 class DocumentBase(DictMixin,models.Model):
     upload_bushfire = models.ForeignKey(Bushfire, verbose_name='Upload Bushfire',editable=False,related_name="uploaded_documents")
-    title = models.ForeignKey(DocumentTitle, verbose_name='Document Title')
-    other_title = models.CharField(max_length=64, verbose_name="Other Document Title",null=True,blank=True)
+    category = models.ForeignKey(DocumentCategory, verbose_name='Document Category',on_delete=models.PROTECT)
+    tag = models.ForeignKey(DocumentTag,verbose_name="Document Tag",on_delete=models.PROTECT)
+    custom_tag = models.CharField(max_length=64, blank=True,null=True, verbose_name="Custom Descriptor")
     document = models.FileField(upload_to=document_path,null=False,verbose_name="Document")
-    file_name = models.CharField(max_length=128,null=False,editable=False, verbose_name="Document File Name")
-    comment = models.TextField(null=True,editable=True,verbose_name="Comment",blank=True)
-    deleted = models.BooleanField(default=False,editable=False)
-    deleteby = models.ForeignKey(settings.AUTH_USER_MODEL,null=True, editable=False,related_name="deletedby",verbose_name="Deleted By")
-    deleteon = models.DateTimeField(null=True,editable=False,verbose_name="Deleted on")
+    document_created = models.DateTimeField(editable=True,verbose_name="Created on")
+    archived = models.BooleanField(default=False,editable=True)
+    archivedby = models.ForeignKey(settings.AUTH_USER_MODEL,null=True, editable=False,verbose_name="Archived By")
+    archivedon = models.DateTimeField(null=True,editable=False,verbose_name="Archived on")
 
     @property
-    def document_title(self):
-        if self.title == DocumentTitle.OTHER:
-            return "Other - {}".format(self.other_title)
+    def document_tag(self):
+        if self.category:
+            if self.tag:
+                if self.tag == self.category.other_tag:
+                    return "Other-{}".format(self.custom_tag)
+                else:
+                    return self.tag.name
+            else:
+                return "{}-Unknown".format(self.category.name)
         else:
-            return self.title.name
+            return ""
 
+    def __str__(self):
+        if self.category:
+            if self.tag == self.category.other_tag:
+                return "{} - {}".format(self.category.name,self.custom_tag)
+            else:
+                return "{} - {}".format(self.category.name,self.tag.name)
+        else:
+            return ""
 
     class Meta:
         abstract = True
@@ -1115,7 +1212,7 @@ class Document(DocumentBase,Audit):
     class Meta:
         pass
 
-
+"""
 class DocumentSnapshot(DamageBase):
     snapshot_type = models.PositiveSmallIntegerField(choices=SNAPSHOT_TYPE_CHOICES,editable=False)
     snapshot = models.ForeignKey(BushfireSnapshot, related_name='documents_snapshot',editable=False)
@@ -1128,6 +1225,21 @@ class DocumentSnapshot(DamageBase):
 
     class Meta:
         pass
+"""
+
+class DocumentListener(object):
+    @staticmethod
+    @receiver(post_delete, sender=Document)
+    def delete_document(sender, instance, **kwargs):
+        """
+        Delete the document from disk if the document is deleted
+        """
+        if instance.document:
+            try:
+                instance.document.delete(save=False)
+            except:
+                traceback.print_exc()
+
 
 reversion.register(Bushfire, follow=['tenures_burnt', 'injuries', 'damages'])
 reversion.register(Profile)
@@ -1143,7 +1255,6 @@ reversion.register(AreaBurnt)       # related_name=tenures_burnt
 reversion.register(Injury)          # related_name=injuries
 reversion.register(Damage)          # related_name=damages
 reversion.register(BushfireSnapshot) # related_name=snapshots
-reversion.register(DocumentTitle)
 reversion.register(Document)
 
 reversion.register(BushfireProperty) 

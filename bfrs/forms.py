@@ -4,7 +4,7 @@ from django import forms
 from bfrs.models import (Bushfire, AreaBurnt, Damage, Injury,BushfireSnapshot,DamageSnapshot,InjurySnapshot,AreaBurntSnapshot,
         Region, District, Profile,
         current_finyear,get_finyear,Tenure,Cause,
-        DocumentTitle,Document,DocumentSnapshot,
+        Document,DocumentTag,DocumentCategory,
         reporting_years,Agency,BushfireProperty
     )
 from datetime import datetime, timedelta
@@ -24,10 +24,11 @@ from django.forms.widgets import Widget
 
 from bfrs.utils import (can_maintain_data,get_tenure)
 
+from .filters import DOCUMENT_MODIFIED_CHOICES
 from . import baseforms
 from . import basewidgets
 from . import basefields
-from .utils import update_damage_fs, update_injury_fs
+from .utils import update_damage_fs, update_injury_fs,update_documenttag_fs,can_maintain_data,get_tenure
 from . import fields
 
 YESNO_CHOICES = (
@@ -1177,54 +1178,44 @@ InjuryFormSet               = inlineformset_factory(Bushfire, Injury, formset=Ba
 DamageFormSet               = inlineformset_factory(Bushfire, Damage, formset=BaseDamageFormSet, extra=1, max_num=7, min_num=0, validate_min=False, exclude=())
 #FireBehaviourFormSet        = inlineformset_factory(Bushfire, FireBehaviour, formset=BaseFireBehaviourFormSet, extra=1, min_num=0, validate_min=False, exclude=())
 
-
-class DocumentField(basefields.CompoundField):
-    related_field_names = ("downable_document","deleted_document","deleteby","deleteon")
-    def _view_layout(self,f):
-        if f.value():
-            return ("{1}<br><span style='color:red;font-style:italic'> Deleted by {2} on {3}</spac>",("deleted_document","deleteby","deleteon"))
-        else:
-            return ("{1}",("downable_document",))
-
-    def _edit_layout(self,f):
-        return ("",None)
-
-class DocumentTitleCreateForm(baseforms.ModelForm):
-    class Meta:
-        model = DocumentTitle
-        fields = ('name',)
-
 class DocumentViewForm(baseforms.ModelForm):
+    def __init__(self,request=None,*args,**kwargs):
+        super(DocumentViewForm,self).__init__(*args,**kwargs)
+        self.request = request
 
     class Meta:
         model = Document
-        fields = ('title',"other_title")
-        other_fields = ("downable_document","deleted_document","document_link","deleteby","deleteon","creator","created")
+        fields = ('category',"tag","custom_tag","document")
+        other_fields = ("archived","archivedby","archivedon","creator","created","document_created","modifier","modified")
         field_classes = {
-            "downable_document":basefields.AliasFieldFactory(Document,"file_name"),
-            "deleted_document":basefields.AliasFieldFactory(Document,"file_name"),
-            "document_link":basefields.CompoundFieldFactory(DocumentField,Document,"deleted",field_class=forms.BooleanField),
-            "title":basefields.OtherOptionFieldFactory(Document,"title",("other_title",),other_option=lambda:lambda:DocumentTitle.OTHER,other_layout="{} - {}"),
+            "tag":basefields.ChainedOtherOptionFieldFactory(Document,"tag",("custom_tag",),"category","category",other_option=lambda:lambda val:list(DocumentTag.other_tags),other_layout="{} - {}"),
+            "archived":basefields.SwitchFieldFactory(Document,"archived",("archivedby","archivedon"),
+                on_layout="Archived by {1} on {2}",
+                off_layout="No"
+            )
         }
         widgets = {
-            "title": basewidgets.TextDisplay(),
-            "other_title": basewidgets.TextDisplay(),
-            "document_link":basewidgets.TextDisplay(),
-            "deleteby": basewidgets.TextDisplay(),
+            "category": basewidgets.TextDisplay(),
+            "tag": basewidgets.TextDisplay(),
+            "custom_tag": basewidgets.TextDisplay(),
+            "document":basewidgets.HyperlinkDisplayFactory("bushfire:document_download",'document',basewidgets.TextDisplay,template='<a href="{0}"><i class="icon-download-alt"></i></a> {1}')(),
+            "archived":basewidgets.TextDisplay(),
+            "archivedby":basewidgets.TextDisplay(),
+            "archivedon": basewidgets.DatetimeDisplay("%Y-%m-%d %H:%M:%S"),
+            "document_created": basewidgets.DatetimeDisplay("%Y-%m-%d %H:%M"),
             "creator": basewidgets.TextDisplay(),
-            "deleteon": basewidgets.DatetimeDisplay("%Y-%m-%d %H:%M:%S"),
             "created": basewidgets.DatetimeDisplay("%Y-%m-%d %H:%M:%S"),
-            "downable_document":basewidgets.HyperlinkDisplayFactory("bushfire:document_download",'file_name',basewidgets.TextDisplay,template='<a href="{0}"><i class="icon-download-alt"></i></a> {1}')(),
-            "deleted_document":basewidgets.TemplateDisplay(basewidgets.TextDisplay(),'{0}'),
-            "comment":basewidgets.TextareaDisplay(),
+            "modifier": basewidgets.TextDisplay(),
+            "modified": basewidgets.DatetimeDisplay("%Y-%m-%d %H:%M:%S"),
+            
 
         }
 
 
 class DocumentUpdateForm(DocumentViewForm):
-    def clean_other_title(self):
-        if self.cleaned_data["title"] == DocumentTitle.OTHER:
-            value = self.cleaned_data.get("other_title")
+    def clean_custom_tag(self):
+        if DocumentTag.check_other_tag(self.cleaned_data["tag"]):
+            value = self.cleaned_data.get("custom_tag")
             if value:
                 return value
             else:
@@ -1235,35 +1226,301 @@ class DocumentUpdateForm(DocumentViewForm):
     class Meta:
         model = Document
         extra_update_fields = ('modified','modifier')
-        fields = ('title',"other_title")
-        other_fields = ("downable_document","deleted_document","document_link","deleteby","deleteon","creator","created")
+        fields = ('category','tag',"custom_tag","document_created","document")
+        other_fields = ("archived","archivedby","archivedon","creator","created","document_created","modifier","modified")
         widgets = {
-            #"comment":forms.Textarea(attrs={"style":"width:100%","rows":4})
-            "title":forms.Select(attrs={"style":"width:auto"}),
-            "other_title":forms.TextInput(attrs={"style":"width:90%"}),
+            #"category":forms.Select(attrs={"style":"width:auto"}),
+            #"tag":None,
+            #"custom_tag":forms.TextInput(attrs={"style":"width:90%"}),
+            'document_created':basewidgets.DatetimeInput(),
         }
 
 class DocumentCreateForm(DocumentUpdateForm):
 
+    def __init__(self,*args,**kwargs):
+        if "initial" in kwargs:
+            kwargs["initial"]["document_created"] = timezone.now()
+        else:
+            kwargs["initial"] = {"document_created":timezone.now()}
+        super(DocumentCreateForm,self).__init__(*args,**kwargs)
+
     class Meta:
         model = Document
-        fields = ('title','document',"other_title")
+        fields = ('category','tag','custom_tag','document',"document_created")#,"archived")
+        field_classes = {
+            "archived":forms.BooleanField,
+            "document":basefields.OverrideFieldFactory(Document,"document",field_class=basefields.FileField,max_size=0),
+            "tag":basefields.ChainedOtherOptionFieldFactory(Document,"tag",("custom_tag",),"category","category",other_option=lambda:lambda val:list(DocumentTag.other_tags),archived=False),
+        }
         widgets = {
-            #"comment":forms.Textarea(attrs={"style":"width:100%","rows":4}),
-            "title":forms.Select(attrs={"style":"width:auto"}),
-            "other_title":forms.TextInput(attrs={"style":"width:90%"}),
+            #"archived":None,
+            "category":forms.Select(attrs={"style":"width:auto"}),
+            "tag":None,
+            "custom_tag":forms.TextInput(attrs={"style":"width:90%"}),
+            "document":None
         }
 
 class DocumentFilterForm(baseforms.ModelForm):
-    include_deleted = forms.BooleanField(required=False)
+    def __init__(self,request=None,*args,**kwargs):
+        super(DocumentFilterForm,self).__init__(*args,**kwargs)
+        self.request = request
 
     class Meta:
         model = Document
-        fields = ('title',)
+        fields = ('category',)
+        other_fields = ("archived","last_modified","search")
         field_classes = {
-            "title":basefields.OverrideFieldFactory(Document,"title",required=False,empty_label="Please Select Document Title")
+            "category":basefields.OverrideFieldFactory(Document,"category",required=False),
+            "archived":forms.NullBooleanField,
+            "last_modified":forms.ChoiceField(choices=DOCUMENT_MODIFIED_CHOICES,required=False),
+            "search":basefields.OverrideFieldFactory(Document,"search",field_class=forms.CharField,required=False,initial=""),
         }
         widgets = {
-            "title":forms.Select(attrs={"style":"width:250px"})
+            "category":forms.Select(),
+            "archived":basewidgets.NullBooleanSelect(),
+            "search":forms.TextInput(attrs={"placeholder":'Search Tag,Custom Tag,creator.',"style":"width:300px"})
+
         }
+
+def ArchiveableFieldFactory(model,field_name):
+    class ArchiveableField(basefields.CompoundField):
+        related_field_names = ("archived","archivedby","archivedon")
+
+            
+        def  get_layout(self,f):
+            if self.editmode == True:
+                return self._edit_layout(f)
+            elif isinstance(self.widget,basewidgets.DisplayWidget) and isinstance(f.related_fields[0].field.widget,basewidgets.DisplayWidget):
+                return self._view_layout(f)
+            else:
+                return self._edit_layout(f)
+
+        def _view_layout(self,f):
+            if f.related_fields[0].value():
+                return ("{0}<br><span style='color:#f0ad4e;font-style:italic;margin-left:20px'> Archived by {1} on {2}</spac>",("archivedby","archivedon"))
+            else:
+                return ("{0}",None)
+
+        def _edit_layout(self,f):
+            if f.related_fields[0].value():
+                return ("{0}<span style='margin-left:50px'>{1} Archived</span><br><span style='color:#f0ad4e;font-style:italic;margin-left:20px'> Archived by {2} on {3}</spac>",("archived","archivedby","archivedon"))
+            else:
+                return ("{0}<span style='margin-left:50px'>{1} Archived",("archived",))
+    return basefields.CompoundFieldFactory(ArchiveableField,model,field_name)
+
+
+class DocumentTagViewForm(baseforms.ModelForm):
+    def __init__(self,request=None,*args,**kwargs):
+        super(DocumentTagViewForm,self).__init__(*args,**kwargs)
+        self.request = request
+
+
+    class Meta:
+        model = DocumentTag
+        fields = ('name',)
+        other_fields = ("archived","archivedby","archivedon")
+        field_classes = {
+            "name":ArchiveableFieldFactory(DocumentTag,"name"),
+            "id":forms.IntegerField(),
+        }
+        widgets = {
+            "category":basewidgets.TextDisplay(),
+            "id":forms.HiddenInput(),
+            "name":basewidgets.TextDisplay(),
+            "archived":basewidgets.BooleanDisplay(),
+            "archivedby":basewidgets.TextDisplay(),
+            "archivedon":basewidgets.DatetimeDisplay(),
+        }
+
+class DocumentTagUpdateForm(DocumentTagViewForm):
+    def clean_name(self):
+        value = self.cleaned_data.get("name")
+        if self.instance and self.instance.pk:
+            if self.instance.name.lower() == 'other' and value.lower() != 'other' :
+                raise ValidationError("You can't change an other option to an non-other option")
+            elif self.instance.name.lower() != 'other' and value.lower() == 'other':
+                raise ValidationError("You can't change an non-other option to an other option")
+
+        if value and value.lower() == "other":
+            value = "Other"
+
+        return value
+
+    class Meta:
+        model = DocumentTag
+        fields = ('name',)
+        other_fields = ("archived","archivedby","archivedon","id")
+        widgets = {
+            "name":None,
+            "id":forms.HiddenInput(),
+            "archived":None
+        }
+
+class BaseDocumentTagFormSet(BaseInlineFormSet):
+
+    def __init__(self,request=None,*args,**kwargs):
+        super(BaseDocumentTagFormSet,self).__init__(*args,**kwargs)
+        self.request = request
+
+    def clean(self):
+        """
+        Adds validation to check:
+            1. no duplicate (injury_type) combination
+            2. all fields are filled
+        """
+        #import ipdb; ipdb.set_trace()
+        #if any(self.errors):
+        #    return
+
+        duplicates = False
+        tags = []
+        for form in self.forms:
+            if form.cleaned_data:
+                name = form.cleaned_data['name'] if form.cleaned_data.has_key('name') else None
+                remove = form.cleaned_data['DELETE'] if form.cleaned_data.has_key('DELETE') else False
+
+                duplicates = False
+                if not remove:
+                    if not name:
+                        #if name is null, the injury data will be removed if it exists; 
+                        form.cleaned_data['DELETE'] = True
+                        continue
+
+                    # Check that no two records have the same injury_type
+                    if name in tags:
+                        duplicates = True
+                    else:
+                        tags.append(name)
+
+                    if duplicates:
+                        form.add_error('name', 'Duplicate: Document descriptor must be unique')
+
+        return
+
+    def is_valid(self):
+        return super(BaseDocumentTagFormSet, self).is_valid()
+
+DocumentTagFormSet = inlineformset_factory(DocumentCategory, DocumentTag, formset=BaseDocumentTagFormSet,form=DocumentTagUpdateForm, extra=1, min_num=0, validate_min=False, exclude=(),can_delete=False)
+DocumentTagViewFormSet = inlineformset_factory(DocumentCategory, DocumentTag, formset=BaseDocumentTagFormSet,form=DocumentTagViewForm, extra=0, min_num=0, validate_min=False, exclude=(),can_delete=False)
+
+
+class DocumentCategoryBaseForm(baseforms.ModelForm):
+    def __init__(self,request=None,*args,**kwargs):
+        super(DocumentCategoryBaseForm,self).__init__(*args,**kwargs)
+        self.request = request
+
+    class Meta:
+        model = DocumentCategory
+        fields = ('name',)
+        other_fields = ("archived","archivedby","archivedon")
+        field_classes = {
+            "name":ArchiveableFieldFactory(DocumentCategory,"name"),
+        }
+        widgets = {
+            "name":basewidgets.TextDisplay(),
+            "archived":basewidgets.BooleanDisplay(),
+            "archivedby":basewidgets.TextDisplay(),
+            "archivedon":basewidgets.DatetimeDisplay(),
+        }
+
+class DocumentCategoryViewForm(DocumentCategoryBaseForm):
+    def __init__(self,*args,**kwargs):
+        super(DocumentCategoryViewForm,self).__init__(*args,**kwargs)
+        tagformset_cls = DocumentTagFormSet if self.instance and self.instance.pk and not self.instance.archived else DocumentTagViewFormSet
+        self.documenttag_formset = DocumentTagViewFormSet(instance=self.instance, prefix='tag_fs')
+        self.documenttag_formset.min_num = self.documenttag_formset.initial_form_count()
+        self.documenttag_formset.max_num = self.documenttag_formset.initial_form_count()
+
+    class Meta:
+        model = DocumentCategory
+        fields = ('name',)
+        other_fields = ("archived","archivedby","archivedon")
+        field_classes = {
+            "name":ArchiveableFieldFactory(DocumentCategory,"name"),
+        }
+        widgets = {
+            "name":basewidgets.TextDisplay(),
+            "archived":basewidgets.BooleanDisplay(),
+            "archivedby":basewidgets.TextDisplay(),
+            "archivedon":basewidgets.DatetimeDisplay(),
+        }
+
+class DocumentCategoryUpdateForm(DocumentCategoryBaseForm):
+    def __init__(self,*args,**kwargs):
+        super(DocumentCategoryUpdateForm,self).__init__(*args,**kwargs)
+        tagformset_cls = DocumentTagFormSet if self.instance and self.instance.pk and not self.instance.archived else DocumentTagViewFormSet
+        if self.request and self.request.method == "POST":
+            self.documenttag_formset = tagformset_cls(data=self.request.POST, prefix='tag_fs')
+        else:
+            self.documenttag_formset = tagformset_cls(instance=self.instance, prefix='tag_fs')
+
+        if isinstance(self.documenttag_formset,DocumentTagViewFormSet):
+            self.documenttag_formset.min_num = self.documenttag_formset.initial_form_count()
+            self.documenttag_formset.max_num = self.documenttag_formset.initial_form_count()
+
+    def clean_archived(self):
+        value = self.cleaned_data.get("archived")
+        if self.instance.archived and not value:
+            self.instance.archivedby = None
+            self.instance.archivedon = None
+        elif not self.instance.archived and value:
+            self.instance.archivedby = self.request.user
+            self.instance.archivedon = timezone.now()
+
+        return value
+
+    def clean_name(self):
+        value = self.cleaned_data.get("name")
+        if self.instance.name != value:
+            if self.instance and self.instance.pk:
+                if self.instance.name.lower() == 'other' and value.lower() != 'other':
+                    raise ValidationError("You can't change an other option to an non-other option")
+                elif self.instance.name.lower() != 'other' and value.lower() == 'other':
+                    raise ValidationError("You can't change an non-other option to an other option")
+            self.instance.modifier = self.request.user
+
+
+        return value
+            
+
+    def is_valid(self):
+        is_valid = super(DocumentCategoryUpdateForm,self).is_valid()
+        if isinstance(self.documenttag_formset,DocumentTagFormSet):
+            is_valid = self.documenttag_formset.is_valid() and is_valid
+
+        return is_valid
+
+
+    def _save_m2m(self):
+        if isinstance(self.documenttag_formset,DocumentTagFormSet):
+            update_documenttag_fs(self.instance, self.documenttag_formset,self.request.user)
+
+
+    class Meta:
+        model = DocumentCategory
+        fields = ('name',)
+        other_fields = ("archived","archivedby","archivedon")
+        extra_update_fields = ("archivedby","archivedon","modifier","modified")
+        widgets = {
+            "archived":None,
+            "name":None,
+
+        }
+
+
+class DocumentCategoryCreateForm(DocumentCategoryUpdateForm):
+    class Meta:
+        model = DocumentCategory
+        fields = ('name',)
+        other_fields = ("archived","archivedby","archivedon")
+        widgets = {
+            "name":None,
+            "archived":None
+
+        }
+
+
+class DocumentCategoryCreateForm(DocumentCategoryUpdateForm):
+    pass
+
 

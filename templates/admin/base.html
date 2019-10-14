@@ -113,9 +113,9 @@
                     {% endif %}
                     {% if can_maintain_data %}
                       <li><a href="{% url 'admin:auth_user_changelist' %}">Manage Users</a></li>
-                      <li><a href="{% url 'bushfire:documenttitle_list' %}">Manage Document Titles</a></li>
+                      <li><a href="{% url 'bushfire:documentcategory_list' %}">Manage Document Categories</a></li>
                     {% else %}
-                      <li><a href="{% url 'bushfire:documenttitle_list' %}">Document Titles</a></li>
+                      <li><a href="{% url 'bushfire:documentcategory_list' %}">Document Categories</a></li>
                     {% endif %}
                     <li><a href="{% url 'profile' %}">{% trans 'User profile' %}</a></li>
                     {% comment %}

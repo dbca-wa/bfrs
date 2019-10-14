@@ -13,6 +13,7 @@ from bfrs.models import (Bushfire, BushfireSnapshot, District, Region,BushfirePr
     SNAPSHOT_INITIAL, SNAPSHOT_FINAL,
     DamageSnapshot, InjurySnapshot, AreaBurntSnapshot,BushfirePropertySnapshot,
     check_mandatory_fields,
+    DocumentTag
     )
 from django.db import IntegrityError, transaction
 from django.http import HttpResponse
@@ -22,6 +23,7 @@ from django.core.mail import EmailMessage
 from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 from django.contrib.auth.models import User, Group, Permission
+from django.utils import timezone,safestring
 import json
 import pytz
 
@@ -376,6 +378,70 @@ def update_injury_fs(bushfire, injury_formset):
         return 0
 
     return 1
+
+def update_documenttag_fs(category, tag_formset,user):
+    if not tag_formset:
+        return 
+
+    new_fs_object = []
+    deleted_fs_id = []
+    updated_fs_object = []
+    for form in tag_formset:
+        if not form.cleaned_data:
+            continue
+        name = form.cleaned_data.get('name')
+        archived = form.cleaned_data.get('archived')
+        remove = form.cleaned_data.get('DELETE')
+        obj = form.cleaned_data.get('id')
+
+        #if either damage_type or number is null, remove will be set tp True in BaseDamageFormSet
+        if remove:
+            if obj:
+                #this object exists in database, removed by user
+                deleted_fs_id.append(obj.id)
+            else:
+                #this object doesn't exist in database,ignore it
+                pass
+        elif form.is_valid():
+            #this is a valid object
+            if obj:
+                #the object exists in database
+                if obj.name != name or obj.archived != archived:
+                    #existing object has been changed
+                    if obj.name != name:
+                        obj.modifier = user
+                        obj.name = name
+                    if obj.archived != archived:
+                        obj.archived = archived
+                        if obj.archived:
+                            obj.archivedby = user
+                            obj.archivedon = timezone.now()
+                        else:
+                            obj.archivedby = None
+                            obj.archivedon = None
+                    updated_fs_object.append(obj)
+                else:
+                    #existing object is not changed,ignore 
+                    pass
+            else:
+                #this is a new object, add it
+                new_fs_object.append(DocumentTag(category=category, name=name, archived=archived,
+                    modifier=user,creator=user,
+                    archivedby=user if archived else None,
+                    archivedon=timezone.now() if archived else None))
+
+        with transaction.atomic():
+            #delete removed objects
+            #currently, we do not allow the user to delete document tag and doucment category
+            #if deleted_fs_id:
+            #    DocumentTag.objects.filter(id__in=deleted_fs_id).delete()
+
+            #update changed objects
+            for obj in updated_fs_object:
+                obj.save()
+            #add new objects
+            for obj in new_fs_object:
+                obj.save()
 
 def update_damage_fs(bushfire, damage_formset):
     if not damage_formset:
