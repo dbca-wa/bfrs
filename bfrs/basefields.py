@@ -530,7 +530,10 @@ class ChainedModelChoiceFieldMixin(object):
     def __init__(self,queryset,widget=None,*args,**kwargs):
         if not widget or not isinstance(widget,(basewidgets.ChainedSelect,basewidgets.DisplayMixin)):
             widget = basewidgets.ChainedSelectFactory(self.model,self.field_name,self.chained_field,self.archived,self.other_option_names)()
-        self.original_queryset = queryset or self.field_model.objects.all()
+        try:
+            self.original_queryset = queryset or self.field_model.objects.all()
+        except:
+            self.original_queryset = self.field_model.objects.none()
         super(ChainedModelChoiceFieldMixin,self).__init__(queryset=self.original_queryset.none(),widget=widget,*args,**kwargs)
         try:
             self.empty_option = list(self.choices)[0]
