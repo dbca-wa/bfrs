@@ -11,7 +11,7 @@ from tastypie.utils.mime import determine_format
 from tastypie.api import Api
 from tastypie import fields
 from bfrs.models import Profile, Region, District, Bushfire, Tenure, current_finyear,BushfireProperty,CaptureMethod
-from bfrs.utils import update_areas_burnt, invalidate_bushfire, serialize_bushfire, is_external_user, can_maintain_data,get_tenure
+from bfrs.utils import update_areas_burnt, invalidate_bushfire, serialize_bushfire, is_external_user, can_maintain_data,get_tenure,update_status
 
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point, GEOSGeometry, Polygon, MultiPolygon, GEOSException
@@ -460,7 +460,7 @@ class BushfireSpatialResource(ModelResource):
                     BushfireProperty.objects.filter(bushfire=bundle.obj,name="plantations").delete()
     
             if bundle.obj.report_status >=  Bushfire.STATUS_FINAL_AUTHORISED:
-                if bundle.obj.fire_boundar.contains(bundle.obj.origin_point):
+                if bundle.obj.fire_boundary.contains(bundle.obj.origin_point):
                     # if bushfire has been authorised, update snapshot and archive old snapshot
                     serialize_bushfire('final', 'SSS Update', bundle.obj)
                 else:
