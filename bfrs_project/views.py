@@ -12,6 +12,25 @@ except ImportError:
 class ChainedModelChoicesView(FormView):
     """
     Return chained model choices
+    the url  is 
+        url(r'^options/js/(?P<chained_model_app>[a-zA-Z0-9\_\-]+)/(?P<chained_model_name>[a-zA-Z0-9\_\-]+)/(?P<model_app>[a-zA-Z0-9\_\-]+)/(?P<model_name>[a-zA-Z0-9\_\-]+)', ChainedModelChoicesView.as_view(),name="chained_model_choices")
+
+    Support  two request parameters
+    1. archived: support archived status.
+        If a model doesn't support archived feature, this feature is ignored.
+        If a model supports archived feature, can 
+        A. Return all options if request dones not have 'archived' parameter. each option is a dict object with properties "value","display" and "archived"
+        B. Return all archived options if request parameter 'archived' is true. each option is a dict object with properties "value" and "display"
+        C. Return all non archived options if request parameter 'archived' is not true. each option is a dict object with properties "value" and "display"
+    2. other_option or other_options: support other option or other options
+        Other option will be returned at the bottom
+
+    Response is a javascript object
+    [model_name.lower()]_map = {
+        chained_model_object_pk: list of model object with properties "value","display" and "archived" if archived is not present in request and archived feature supported.)
+    }
+
+
     """
     next_url = "lastDocumentUrl"
     _cache = {}
@@ -34,6 +53,7 @@ class ChainedModelChoicesView(FormView):
         archived = request.GET.get('archived') or None
         other_option = request.GET.get('other_option') or None
 
+        #get the function to check whether a option is an other option or not
         is_other_option = None
         if other_option:
             casesensitive = "caseinsensitive" not in request.GET
@@ -57,8 +77,10 @@ class ChainedModelChoicesView(FormView):
                     else:
                         is_other_option = (lambda other_options:lambda val:(val or "").lower() in other_options)([o.lower() for o in other_options])
 
+        #set archived to None if not present in request, True if arvhived is true with case-insensitive, otherwise False
         if archived is not None:
             archived = archived.lower() in ("true")
+        #get the meta function to return the model, archived_supported and an add_opiton fuction to populate the options list.
         if model_name not in self._cache:
             model = get_model(model_app,model_name)
             chained_model = get_model(chained_model_app,chained_model_name)
@@ -103,11 +125,13 @@ class ChainedModelChoicesView(FormView):
             
             self._cache[model_name] = (model,archive_supported,add_option(get_model_value,get_model_display,archive_supported))
 
+        #retrieve all model objects from db and converted them to a list of options
         model,archive_supported,add_option = self._cache[model_name]
         options = []
         for obj in model.objects.all():
             add_option(options,obj,archived)
 
+        #convert the option list to a option list grouped by chained model. and also guarantee the other option will be in the end of the option list 
         option_map = {}
         if is_other_option:
             for option in options:
@@ -123,8 +147,10 @@ class ChainedModelChoicesView(FormView):
             for option in options:
                 self.add_option(option_map,option,archive_supported,archived)
 
+        #populate the javascipt string to decalre option map.
         #js = "{}_map = {}".format(model_name.lower(),json.dumps(option_map,indent=4))
         js = "{}_map = {}".format(model_name.lower(),json.dumps(option_map))
+
 
         return HttpResponse(js,content_type="application/x-javascript")
 
