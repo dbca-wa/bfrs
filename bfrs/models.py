@@ -1078,7 +1078,7 @@ class DocumentCategory(DictMixin,Audit):
             try:
                 self.OTHER_TAGS[self.pk] = DocumentTag.objects.get(category=self,name__iexact='other')
             except ObjectDoesNotExist as ex:
-                self.OTHER_TAGS[self.pk] = None
+                return None
 
         return self.OTHER_TAGS[self.pk]
 
