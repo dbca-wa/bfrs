@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand, CommandError
 from optparse import make_option
 from django.conf import settings
-from bfrs.sql_views import create_view, create_final_view, create_fireboundary_view
+from bfrs.sql_views import create_all_views
 
 import os
 import sys
@@ -16,8 +16,6 @@ class Command(BaseCommand):
     '
 
     def handle(self, *args, **options):
-        create_view()
-        create_final_view()
-        create_fireboundary_view()
+        create_all_views()
         self.stdout.write('Done')
 

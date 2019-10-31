@@ -34,7 +34,6 @@ def create_bushfirelist_view():
     END as park_trail_impacted,
     b.cause_state,
     b.other_cause,
-    b.other_tenure,
     b.dfes_incident_no,
     b.job_code,
     b.fire_position,
@@ -148,11 +147,6 @@ def create_bushfire_view():
          ELSE b.cause_state::text
     END as cause_state,
     b.other_cause,
-    CASE WHEN b.other_tenure IS NULL THEN ''
-         WHEN b.other_tenure = 1 THEN 'Private'
-         WHEN b.other_tenure = 2 THEN 'Crown'
-         ELSE b.other_tenure::text
-    END as other_tenure,
     b.dfes_incident_no,
     b.job_code,
     b.fire_position,
@@ -290,11 +284,6 @@ def create_final_fireboundary_view():
          ELSE b.cause_state::text
     END as cause_state,
     b.other_cause,
-    CASE WHEN b.other_tenure IS NULL THEN ''
-         WHEN b.other_tenure = 1 THEN 'Private'
-         WHEN b.other_tenure = 2 THEN 'Crown'
-         ELSE b.other_tenure::text
-    END as other_tenure,
     b.dfes_incident_no,
     b.job_code,
     b.fire_position,
@@ -423,11 +412,6 @@ def create_fireboundary_view():
          ELSE b.cause_state::text
     END as cause_state,
     b.other_cause,
-    CASE WHEN b.other_tenure IS NULL THEN ''
-         WHEN b.other_tenure = 1 THEN 'Private'
-         WHEN b.other_tenure = 2 THEN 'Crown'
-         ELSE b.other_tenure::text
-    END as other_tenure,
     b.dfes_incident_no,
     b.job_code,
     b.fire_position,
@@ -527,21 +511,6 @@ def create_all_views():
     create_bushfire_view()
     create_final_fireboundary_view()
     create_fireboundary_view()
-
-def test_view():
-    cursor=connection.cursor()
-    cursor.execute('''select fire_number, year, district_id from bfrs_bushfire_v''')
-    return cursor.fetchall()
-
-def test_final_view():
-    cursor=connection.cursor()
-    cursor.execute('''select fire_number, year, district_id from bfrs_bushfire_final_fireboundary_v''')
-    return cursor.fetchall()
-
-def test_fireboundary_view():
-    cursor=connection.cursor()
-    cursor.execute('''select fire_number, year, district_id from bfrs_bushfire_fireboundary_v''')
-    return cursor.fetchall()
 
 def drop_bushfirelist_view():
     try:

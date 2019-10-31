@@ -1,4 +1,5 @@
 from collections import OrderedDict
+import datetime
 
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.html import html_safe
@@ -113,11 +114,11 @@ class SubpropertyEnabledDict(dict):
 class ChainDict(dict):
     def __init__(self,dict_objs):
         super(ChainDict,self).__init__()
-        if isinstance(self.dicts,list):
+        if isinstance(dict_objs,list):
             self.dicts = dict_objs
-        elif isinstance(self.dicts,tuple):
+        elif isinstance(dict_objs,tuple):
             self.dicts = list(dict_objs)
-        elif isinstance(self.dicts,dict):
+        elif isinstance(dict_objs,dict):
             self.dicts = [dict_objs] 
         else:
             self.dicts = [dict(dict_objs)] 
@@ -170,6 +171,16 @@ class BoundField(forms.boundfield.BoundField):
     Extend django's BoundField to support the following features
     1. Get extra css_classes from field's attribute 'css_classes'
     """
+    def __init__(self, form, field, name):
+        self.form_field_name = name
+        if isinstance(field,basefields.AliasFieldMixin) and name != field.field_name:
+            super(BoundField,self).__init__(form,field,field.field_name)
+            self.html_name = form.add_prefix(name)
+            self.html_initial_name = form.add_initial_prefix(name)
+            self.html_initial_id = form.add_initial_prefix(self.auto_id)
+        else:
+            super(BoundField,self).__init__(form,field,name)
+
     def css_classes(self, extra_classes=None):
         if hasattr(self.field,"css_classes"):
             if extra_classes:
@@ -188,9 +199,12 @@ class BoundField(forms.boundfield.BoundField):
 
     @property
     def initial(self):
+        if self.is_display and hasattr(self.field.widget,"prepare_initial_data"):
+            return self.field.widget.prepare_initial_data(self.form,self.name)
+
         data = self.form.initial.get(self.name, self.field.initial)
         if callable(data):
-            if self._initial_value is not UNSET:
+            if self._initial_value is not forms.boundfield.UNSET:
                 data = self._initial_value
             else:
                 data = data()
@@ -220,6 +234,8 @@ class BoundField(forms.boundfield.BoundField):
         Returns the value for this BoundField, using the initial value if
         the form is not bound or the data otherwise.
         """
+        #if self.name == "search":
+        #    import ipdb;ipdb.set_trace()
         if not self.form.is_bound or isinstance(self.field.widget,basewidgets.DisplayWidget) or self.field.widget.attrs.get("disabled"):
             data = self.initial
         else:
@@ -275,11 +291,33 @@ class CompoundBoundField(BoundField):
         field's default widget will be used.
         """
         html_layout,field_names = self.field.get_layout(self)
-        html = super(CompoundBoundField,self).as_widget(widget,attrs,only_initial)
+        if isinstance(html_layout,(tuple,list)):
+            html = super(CompoundBoundField,self).as_widget(attrs=html_layout[1],only_initial=only_initial)
+            html_layout = html_layout[0]
+        else:
+            html = super(CompoundBoundField,self).as_widget(only_initial=only_initial)
+
         if field_names:
-            args = [f.as_widget(only_initial=only_initial) for f in self.related_fields if f.name in field_names]
-            args.append(self.auto_id)
-            return safestring.SafeText(html_layout.format(html,*args))
+            index0 = 0
+            index1 = 0
+            arguments = []
+            while index1 < len(field_names):
+                if isinstance(field_names[index1],(tuple,list)):
+                    if field_names[index1][0] != self.field.related_field_names[index0]:
+                        index0 += 1
+                    else:
+                        arguments.append(self.related_fields[index0].as_widget(only_initial=only_initial,attrs=field_names[index1][1]))
+                        index0 += 1
+                        index1 += 1
+                elif field_names[index1] != self.field.related_field_names[index0]:
+                    index0 += 1
+                else:
+                    arguments.append(self.related_fields[index0].as_widget(only_initial=only_initial))
+                    index0 += 1
+                    index1 += 1
+
+            arguments.append(self.auto_id)
+            return safestring.SafeText(html_layout.format(html,*arguments))
         elif html_layout:
             return safestring.SafeText(html_layout.format(html,self.auto_id))
         else:
@@ -383,11 +421,14 @@ class BaseModelFormMetaclass(forms.models.ModelFormMetaclass):
         subproperty_enabled = False
         
         for field_name in opts.other_fields or []:
+            #if field_name == "last_modified":
+            #    import ipdb;ipdb.set_trace()
             if "." in field_name:
                 property_name = field_name.split(".",1)[0]
                 subproperty_enabled = True
             else:
                 property_name = field_name
+
             try:
                 if field_name != property_name:
                     raise Exception("Not a model field")
@@ -404,13 +445,14 @@ class BaseModelFormMetaclass(forms.models.ModelFormMetaclass):
                         model_field = None
                     db_field = False
                 else:
-                    raise Exception("Unknown field {} ".format(field_name))
+                    #raise Exception("Unknown field {} ".format(field_name))
+                    pass
 
             kwargs.clear()
             if hasattr(opts,"field_classes")  and opts.field_classes and field_name in opts.field_classes and isinstance(opts.field_classes[field_name],forms.Field):
                 #already configure a form field instance, use it directly
                 form_field = opts.field_classes[field_name]
-                field_list.append((field_name, formfield))
+                field_list.append((field_name, form_field))
                 continue
 
             if opts.widgets and field_name in opts.widgets:
@@ -439,7 +481,6 @@ class BaseModelFormMetaclass(forms.models.ModelFormMetaclass):
                 kwargs['form_class'] = opts.field_classes[field_name]
             elif not db_field :
                 raise Exception("Please cofigure form field for property '{}' in 'field_classes' option".format(field_name))
-
             if formfield_callback is None:
                 if db_field:
                     formfield = model_field.formfield(**kwargs)
@@ -452,22 +493,28 @@ class BaseModelFormMetaclass(forms.models.ModelFormMetaclass):
 
             field_list.append((field_name, formfield))
 
+
         setattr(opts,'subproperty_enabled',subproperty_enabled)
 
+        #if "Document" in name:
+        #    import ipdb;ipdb.set_trace()
         if field_list:
             field_list = OrderedDict(field_list)
             new_class.base_fields.update(field_list)
 
-        if hasattr(new_class,"all_base_fields"):
-            new_class.all_base_fields.update(new_class.base_fields)
-        else:
-            new_class.all_base_fields = new_class.base_fields
+        #validation check
+        for field_name,formfield in new_class.base_fields.items():
+            if not isinstance(formfield.widget,basewidgets.DisplayMixin):
+                #can't declare alias for editable fields
+                if isinstance(formfield,basefields.AliasFieldMixin) and formfield.field_name != field_name:
+                    raise Exception("Can't declare alias({}) for editable field ({}) in model({}.{})".format(field_name,formfield.field_name,model.__module__,model.__name__))
 
         if opts.ordered_fields:
+            all_fields = new_class.base_fields
             new_class.base_fields = OrderedDict()
-            for field in ordered_fields:
-                if field in new_class.all_base_fields:
-                    new_class.base_fields[field] = new_class.all_base_fields[field]
+            for field in opts.ordered_fields:
+                if field in all_fields:
+                    new_class.base_fields[field] = all_fields[field]
 
         editable_fields = [name for name,field in new_class.base_fields.iteritems() if not isinstance(field.widget,basewidgets.DisplayMixin)]
         setattr(opts,'editable_fields',editable_fields)
@@ -511,6 +558,10 @@ class ModelForm(six.with_metaclass(BaseModelFormMetaclass, forms.models.BaseMode
 
             if self._meta.subproperty_enabled:
                 self.initial = SubpropertyEnabledDict(self.initial)
+
+    @property
+    def editable(self):
+        return True if (self._meta.editable_fields is None or self._meta.editable_fields) else False
 
     def is_editable(self,name):
         return self._meta.editable_fields is None or name in self._meta.editable_fields
@@ -581,7 +632,7 @@ class ModelForm(six.with_metaclass(BaseModelFormMetaclass, forms.models.BaseMode
         fields = self.fields
         try:
             self._meta.fields = self._meta.editable_fields
-            self.editable_fields = self.editable_fields if hasattr(self,'editable_fields') else dict([(n,f) for n,f in self.fields.iteritems() if n in self._meta.fields])
+            self.editable_fields = self.editable_fields if hasattr(self,'editable_fields') else OrderedDict([(f,self.fields[f]) for f in self._meta.fields])
             self.fields = self.editable_fields
             super(ModelForm,self).full_clean()
         finally:

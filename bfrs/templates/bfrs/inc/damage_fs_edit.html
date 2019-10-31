@@ -31,11 +31,11 @@
 
 <script>
     $('.damage-formset tbody tr').formset({
-        prefix: '{{ damage_formset.prefix }}',
+        prefix: '{{ form.damage_formset.prefix }}',
         formCssClass: 'damage_fs',
         addText: '<i class="icon-plus"></i> add another damage',
         deleteText: '<i class="icon-remove"></i>',
-        deleteCssClass: 'delete-row' + '-' + '{{ damage_formset.prefix  }}',
+        deleteCssClass: 'delete-row' + '-' + '{{ form.damage_formset.prefix  }}',
     });
 
 </script>

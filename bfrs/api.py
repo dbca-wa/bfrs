@@ -11,7 +11,7 @@ from tastypie.utils.mime import determine_format
 from tastypie.api import Api
 from tastypie import fields
 from bfrs.models import Profile, Region, District, Bushfire, Tenure, current_finyear,BushfireProperty,CaptureMethod
-from bfrs.utils import update_areas_burnt, invalidate_bushfire, serialize_bushfire, is_external_user, can_maintain_data,tenure_category
+from bfrs.utils import update_areas_burnt, invalidate_bushfire, serialize_bushfire, is_external_user, can_maintain_data,get_tenure,update_status
 
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point, GEOSGeometry, Polygon, MultiPolygon, GEOSException
@@ -228,16 +228,8 @@ class BushfireResource(APIResource):
             if request.GET.get('year'):
                 qs = qs.filter(year=request.GET.get('year'))
 
-            qs = qs.order_by('fire_number').values('fire_number', 'name', 'tenure__name', 'other_tenure')
+            qs = qs.order_by('fire_number').values('fire_number', 'name', 'tenure__name')
 
-            for i in qs:
-                if i['other_tenure']:
-                    if i['other_tenure'] == Bushfire.IGNITION_POINT_CROWN:
-                        i['other_tenure'] = 'Other - Crown'
-                    elif i['other_tenure'] == Bushfire.IGNITION_POINT_PRIVATE:
-                        i['other_tenure'] = 'Other - Private'
-                    else:
-                        i['other_tenure'] = 'Other'
 
             return self.create_response(request, data=list(qs))
 
@@ -314,12 +306,12 @@ class BushfireSpatialResource(ModelResource):
         if bundle.data['tenure_ignition_point'] and bundle.data['tenure_ignition_point'].get('category'):
             #origin point is within dpaw_tenure
             try:
-                bundle.obj.tenure = Tenure.objects.get(name__istartswith=tenure_category(bundle.data['tenure_ignition_point']['category']))
+                bundle.obj.tenure = get_tenure(bundle.data['tenure_ignition_point']['category'])
             except:
-                bundle.obj.tenure = Tenure.UNKNOWN
+                bundle.obj.tenure = Tenure.OTHER
         else:
             #origin point is not within dpaw_tenure
-            bundle.obj.tenure = Tenure.UNKNOWN
+            bundle.obj.tenure = Tenure.OTHER
         #print("processing tenure_ignition_point,set tenure = {}".format(bundle.obj.tenure))
 
 
@@ -468,8 +460,16 @@ class BushfireSpatialResource(ModelResource):
                     BushfireProperty.objects.filter(bushfire=bundle.obj,name="plantations").delete()
     
             if bundle.obj.report_status >=  Bushfire.STATUS_FINAL_AUTHORISED:
-                # if bushfire has been authorised, update snapshot and archive old snapshot
-                serialize_bushfire('final', 'SSS Update', bundle.obj)
+                if bundle.obj.fire_boundary.contains(bundle.obj.origin_point):
+                    # if bushfire has been authorised, update snapshot and archive old snapshot
+                    serialize_bushfire('final', 'SSS Update', bundle.obj)
+                else:
+                    if bundle.obj.is_reviewed:
+                        update_status(bundle.request, bundle.obj, "delete_review",action_desc="Delete review because origin point is outside of fire boundary after uploading from SSS",action_name="Upload")
+
+                    if bundle.obj.is_final_authorised:
+                        update_status(bundle.request, bundle.obj, "delete_final_authorisation",action_desc="Delete final auth because origin point is outside of fire boundary after uploading from SSS",action_name="Upload")
+
                 #print("serizlie bushfire")
     
             if invalidated:

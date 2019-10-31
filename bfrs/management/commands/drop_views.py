@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand, CommandError
 from optparse import make_option
 from django.conf import settings
-from bfrs.sql_views import drop_view, drop_final_view, drop_fireboundary_view
+from bfrs.sql_views import drop_all_views
 
 import os
 import sys
@@ -16,8 +16,6 @@ class Command(BaseCommand):
     '
 
     def handle(self, *args, **options):
-        drop_view()
-        drop_final_view()
-        drop_fireboundary_view()
+        drop_all_views()
         self.stdout.write('Done')
 

@@ -13,11 +13,11 @@ sys.path.insert(0, PROJECT_DIR)
 
 # Application definition
 DEBUG = env('DEBUG', False)
-SECRET_KEY = env('SECRET_KEY', 'PlaceholderSecretKey')
+SECRET_KEY = env('SECRET_KEY', required=True)
 CSRF_COOKIE_SECURE = env('CSRF_COOKIE_SECURE', False)
 SESSION_COOKIE_SECURE = env('SESSION_COOKIE_SECURE', False)
 if not DEBUG:
-    ALLOWED_HOSTS = env('ALLOWED_DOMAINS', 'localhost').split(',')
+    ALLOWED_HOSTS = env('ALLOWED_DOMAINS', ['localhost'])
 else:
     ALLOWED_HOSTS = ['*']
 INTERNAL_IPS = ['127.0.0.1', '::1']
@@ -78,8 +78,8 @@ LATEX_GRAPHIC_FOLDER = os.path.join(BASE_DIR, "templates", "latex", "images")
 P1CAD_ENDPOINT = env('P1CAD_ENDPOINT', None)
 P1CAD_USER = env('P1CAD_USER', None)
 P1CAD_PASSWORD = env('P1CAD_PASSWORD', None)
-P1CAD_SSL_VERIFY = True if env('P1CAD_SSL_VERIFY', True) else False
-P1CAD_NOTIFY_EMAIL = env('P1CAD_NOTIFY_EMAIL', '').split(',')
+P1CAD_SSL_VERIFY = env('P1CAD_SSL_VERIFY', True) 
+P1CAD_NOTIFY_EMAIL = env('P1CAD_NOTIFY_EMAIL', [])
 KMI_URL = env('KMI_URL', 'https://kmi.dbca.wa.gov.au/geoserver')
 AREA_THRESHOLD = env('AREA_THRESHOLD', 2)
 SSS_URL = env('SSS_URL', 'https://sss.dpaw.wa.gov.au')
@@ -100,50 +100,51 @@ ENV_TYPE = env('ENV_TYPE', 'DEV')
 CC_TO_LOGIN_USER = env('CC_TO_LOGIN_USER', False)
 
 # Authentication and group settings.
-USER_SSO = env('USER_SSO', 'sso_user@dbca.wa.gov.au')
-PASS_SSO = env('PASS_SSO', 'password')
-FSSDRS_USERS = env('FSSDRS_USERS', '').split(',')
+USER_SSO = env('USER_SSO', required=True)
+PASS_SSO = env('PASS_SSO', required=True)
+FSSDRS_USERS = env('FSSDRS_USERS', [])
 FSSDRS_GROUP = env('FSSDRS_GROUP', 'Fire Information Management')
-FINAL_AUTHORISE_GROUP_USERS = env('FINAL_AUTHORISE_GROUP_USERS', '').split(',')
+FINAL_AUTHORISE_GROUP_USERS = env('FINAL_AUTHORISE_GROUP_USERS', [])
 FINAL_AUTHORISE_GROUP = env('FINAL_AUTHORISE_GROUP', 'Fire Final Authorise Group')
 
 # Email settings
-EMAIL_HOST = env('EMAIL_HOST', 'email.host')
+EMAIL_HOST = env('EMAIL_HOST', required=True)
 EMAIL_PORT = env('EMAIL_PORT', 25)
-FROM_EMAIL = env('FROM_EMAIL', 'from_email')
-PICA_EMAIL = env('PICA_EMAIL', None)
-PVS_EMAIL = env('PVS_EMAIL', None)
-FPC_EMAIL = env('FPC_EMAIL', None)
-POLICE_EMAIL = env('POLICE_EMAIL', None)
-DFES_EMAIL = env('DFES_EMAIL', None)
-FSSDRS_EMAIL = env('FSSDRS_EMAIL', None)
+FROM_EMAIL = env('FROM_EMAIL', required=True)
+PICA_EMAIL = env('PICA_EMAIL', [])
+PVS_EMAIL = env('PVS_EMAIL', [])
+FPC_EMAIL = env('FPC_EMAIL', [])
+POLICE_EMAIL = env('POLICE_EMAIL', [])
+DFES_EMAIL = env('DFES_EMAIL', [])
+FSSDRS_EMAIL = env('FSSDRS_EMAIL',[])
 EMAIL_TO_SMS_FROMADDRESS = env('EMAIL_TO_SMS_FROMADDRESS', None)
-SMS_POSTFIX = env('SMS_POSTFIX', 'sms_postfix')
+SMS_POSTFIX = env('SMS_POSTFIX', required=True)
 MEDIA_ALERT_SMS_TOADDRESS_MAP = env('MEDIA_ALERT_SMS_TOADDRESS_MAP', None)
 ALLOW_EMAIL_NOTIFICATION = env('ALLOW_EMAIL_NOTIFICATION', False)
-EMAIL_EXCLUSIONS = env('EMAIL_EXCLUSIONS', '').split(',')
-CC_EMAIL = env('CC_EMAIL', '').split(',')
-BCC_EMAIL = env('BCC_EMAIL', '').split(',')
-SUPPORT_EMAIL = env('SUPPORT_EMAIL', '').split(',')
-MERGE_BUSHFIRE_EMAIL = env('MERGE_BUSHFIRE_EMAIL', None)
-FIRE_BOMBING_REQUEST_EMAIL = env('FIRE_BOMBING_REQUEST_EMAIL', '').split(',')
-FIRE_BOMBING_REQUEST_CC_EMAIL = env('FIRE_BOMBING_REQUEST_CC_EMAIL', '').split(',')
-INTERNAL_EMAIL = env('INTERNAL_EMAIL', 'dbca.wa.gov.au,dpaw.wa.gov.au').split(',')
+EMAIL_EXCLUSIONS = env('EMAIL_EXCLUSIONS', [])
+CC_EMAIL = env('CC_EMAIL', [])
+BCC_EMAIL = env('BCC_EMAIL', [])
+SUPPORT_EMAIL = env('SUPPORT_EMAIL', [])
+MERGE_BUSHFIRE_EMAIL = env('MERGE_BUSHFIRE_EMAIL', [])
+FIRE_BOMBING_REQUEST_EMAIL = env("FIRE_BOMBING_REQUEST_EMAIL", [])
+FIRE_BOMBING_REQUEST_CC_EMAIL = env("FIRE_BOMBING_REQUEST_CC_EMAIL", [])
+INTERNAL_EMAIL = env('INTERNAL_EMAIL', ['dbca.wa.gov.au','dpaw.wa.gov.au'])
+
 HARVEST_EMAIL_HOST = env('HARVEST_EMAIL_HOST', None)
 HARVEST_EMAIL_USER = env('HARVEST_EMAIL_USER', None)
 HARVEST_EMAIL_PASSWORD = env('HARVEST_EMAIL_PASSWORD', None)
 HARVEST_EMAIL_FOLDER = env('HARVEST_EMAIL_FOLDER', 'INBOX')
 
 # Outstanding Fires Report
-GOLDFIELDS_EMAIL = env('GOLDFIELDS_EMAIL') or None
-KIMBERLEY_EMAIL = env('KIMBERLEY_EMAIL') or None
-MIDWEST_EMAIL = env('MIDWEST_EMAIL') or None
-PILBARA_EMAIL = env('PILBARA_EMAIL') or None
-SOUTH_COAST_EMAIL = env('SOUTH_COAST_EMAIL') or None
-SOUTH_WEST_EMAIL = env('SOUTH_WEST_EMAIL') or None
-SWAN_EMAIL = env('SWAN_EMAIL') or None
-WARREN_EMAIL = env('WARREN_EMAIL') or None
-WHEATBELT_EMAIL = env('WHEATBELT_EMAIL') or None
+GOLDFIELDS_EMAIL = env('GOLDFIELDS_EMAIL',[])
+KIMBERLEY_EMAIL = env('KIMBERLEY_EMAIL',[])
+MIDWEST_EMAIL = env('MIDWEST_EMAIL',[])
+PILBARA_EMAIL = env('PILBARA_EMAIL',[])
+SOUTH_COAST_EMAIL = env('SOUTH_COAST_EMAIL',[])
+SOUTH_WEST_EMAIL = env('SOUTH_WEST_EMAIL',[])
+SWAN_EMAIL = env('SWAN_EMAIL',[])
+WARREN_EMAIL = env('WARREN_EMAIL',[])
+WHEATBELT_EMAIL = env('WHEATBELT_EMAIL',[])
 OUTSTANDING_FIRES_EMAIL = [
     {"Goldfields": GOLDFIELDS_EMAIL},
     {"Kimberley": KIMBERLEY_EMAIL},
@@ -155,6 +156,12 @@ OUTSTANDING_FIRES_EMAIL = [
     {"Warren": WARREN_EMAIL},
     {"Wheatbelt": WHEATBELT_EMAIL},
 ]
+
+DFES_CLOSE_BUSHFIRE_NOTIFICATION_EMAIL=env('DFES_CLOSE_BUSHFIRE_NOTIFICATION_EMAIL',[])
+
+#Others
+AUTHORISE_MESSAGE = env("AUTHORISE_MESSAGE",None)
+
 # Database configuration
 DATABASES = {
     # Defined in the DATABASE_URL env variable.

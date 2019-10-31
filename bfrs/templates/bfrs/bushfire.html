@@ -84,7 +84,7 @@
       </th>
 	  <th style="width:10%"><font color="dodgerblue">Notifications </th>
 	  <th style="width:10%"><font color="dodgerblue">Report </th>
-	  {% if can_maintain_data %}<th style="width:10%"><font color="dodgerblue">Admin </th>{% endif %}
+	  <th style="width:10%"><font color="dodgerblue">Admin </th>
   </thead>
 {% else %}
 <table id="table" class="tablesorter table table-striped table-bordered table-hover table-condensed" style="cursor:pointer;">
@@ -108,7 +108,7 @@
       </th>
 	  <th style="width:10%"><font color="dodgerblue">Notifications </th>
 	  <th style="width:10%"><font color="dodgerblue">Report </th>
-	  {% if can_maintain_data %}<th style="width:10%"><font color="dodgerblue">Admin </th>{% endif %}
+	  <th style="width:10%"><font color="dodgerblue">Admin </th>
   </thead>
 {% endif %}
   <tbody>
@@ -146,8 +146,8 @@
 		    {% endif %}
 		</td>
 
-        {% if can_maintain_data  %}
          <td>
+         {% if can_maintain_data  %}
            {% if bushfire.report_status < bushfire.STATUS_INVALIDATED %}
            {% if bushfire.report_status >= bushfire.STATUS_FINAL_AUTHORISED %}
              {% if bushfire.is_reviewed %}
@@ -170,13 +170,14 @@
            {% endif %}
            {% endif %}
 
-		 </td>
          {% endif %}
+           <a href="{% url "bushfire:bushfire_document_list" bushfire.id %}" title="Documents"><i class="icon-file"></i></a>
+         </td>
 
       </tr>
 
       <tr class="myCollapse row-details expand-child" id="{{bushfire.id}}">
-        <td colspan="{% if can_maintain_data and actions %} 8 {% elif can_maintain_data or actions %} 7 {% else %} 6 {% endif %}">
+        <td colspan="{% if actions %} 8 {% else %} 7 {% endif %}">
           <table class="table table-bordered table-striped table-condensed">
             <tbody>
               <tr>

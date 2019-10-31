@@ -1,4 +1,4 @@
-git+git://github.com/dbca-wa/dbca-utils@1.0.0
+git+git://github.com/dbca-wa/dbca-utils@1.0.2
 psycopg2-binary==2.8.2
 Django==1.10.7
 django-extensions==1.7.6

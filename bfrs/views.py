@@ -1,12 +1,14 @@
 import traceback
 import collections
+import os
 import sys
 
-from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpResponseNotAllowed
+from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpResponseNotAllowed,FileResponse
 from django.template.response import TemplateResponse
 from django.core.urlresolvers import reverse
 from django.views import generic
-from django.views.generic.edit import CreateView, UpdateView, FormView
+from django.views.generic.edit import CreateView, UpdateView, FormView,DeleteView
+from django.views.generic.list import ListView
 from django.forms.formsets import formset_factory
 from django.forms.widgets import CheckboxInput
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -23,14 +25,18 @@ from django.contrib.auth.models import User, Group
 from django.http import JsonResponse
 from django.contrib import messages
 from django.utils import timezone
+from django.core.exceptions import (PermissionDenied,)
 
 from bfrs.models import (Profile, Bushfire, BushfireSnapshot,BushfireProperty,
         Region, District,
         Tenure, AreaBurnt,
+        Document,DocumentCategory,DocumentTag,
         SNAPSHOT_INITIAL, SNAPSHOT_FINAL,
+        current_finyear
     )
 from bfrs.forms import (ProfileForm, BushfireFilterForm,MergedBushfireForm,SubmittedBushfireForm,InitialBushfireForm,BushfireSnapshotViewForm,BushfireCreateForm,
         BushfireViewForm,InitialBushfireFSSGForm,AuthorisedBushfireFSSGForm,ReviewedBushfireFSSGForm,SubmittedBushfireFSSGForm,
+        DocumentCreateForm,DocumentViewForm,DocumentUpdateForm,DocumentFilterForm,DocumentCategoryCreateForm,DocumentCategoryUpdateForm,DocumentCategoryViewForm,
         AuthorisedBushfireForm,ReviewedBushfireForm,AreaBurntFormSet, InjuryFormSet, DamageFormSet, PDFReportForm,
     )
 from bfrs.utils import (breadcrumbs_li,
@@ -38,27 +44,43 @@ from bfrs.utils import (breadcrumbs_li,
         export_final_csv, export_excel, 
         update_status, serialize_bushfire,
         is_external_user, can_maintain_data, refresh_gokart,
-        get_missing_mandatory_fields
+        get_missing_mandatory_fields,get_bushfire_url,
     )
 from bfrs.reports import BushfireReport, MinisterialReport, export_outstanding_fires 
 from django.db import IntegrityError, transaction
-from django.contrib import messages
 from django.forms import ValidationError
 from datetime import datetime
 import pytz
 import json
 from django.utils.dateparse import parse_duration
 
-import django_filters
 from django_filters import views as filter_views
-from django_filters.widgets import BooleanWidget
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from reversion_compare.views import HistoryCompareDetailView
 
 from .utils import invalidate_bushfire
+from .filters import (BushfireFilter,BushfireDocumentFilter)
 
 import logging
 logger = logging.getLogger(__name__)
+
+
+def process_update_status_result(request,result):
+    if not result:
+        return
+    if result[0]:
+        if result[0][0]:
+            messages.success(request,result[0][1])
+        else:
+            messages.error(request,result[0][1])
+    if result[2]:
+        #add error message
+        for msg in result[2]:
+            messages.error(request," {}".format(msg[1]),extra_tags="submsg" if result[0] else "")
+    if result[1]:
+        #add success message
+        for msg in result[1]:
+            messages.success(request," {}".format(msg[1]),extra_tags="submsg" if result[0] else "")
 
 
 class FormRequestMixin(object):
@@ -73,110 +95,20 @@ class FormRequestMixin(object):
         kwargs["request"] = self.request
         return kwargs
 
-class MainUrlMixin(object):
+class NextUrlMixin(object):
     """
     get last main page url
     """
-    def get_main_url(self):
-        if self.request and self.request.session.has_key("lastMainUrl"):
-            return self.request.session["lastMainUrl"]
+    next_url = "lastMainUrl"
+    def get_success_url(self):
+        if self.request and self.request.session.has_key(self.next_url):
+            return self.request.session[self.next_url]
         else:
-            return reverse('main')
+            return self._get_success_url()
 
-class BooleanFilter(django_filters.filters.BooleanFilter):
-    field_class = forms.BooleanField
+    def _get_success_url(self):
+        return reverse('main')
 
-
-BUSHFIRE_SORT_MAPPING={
-    "modified":["modified","fire_number"],
-    "-modified":["-modified","fire_number"],
-    "-dfes_incident_no":["-dfes_incident_no","fire_number"],
-    "dfes_incident_no":["dfes_incident_no","fire_number"],
-    "name":["name","fire_number"],
-    "-name":["-name","fire_number"],
-    "job_code":["job_code","fire_number"],
-    "-job_code":["-job_code","fire_number"],
-}
-class BushfireFilter(django_filters.FilterSet):
-
-    # try/except block hack added here to allow initial migration before the model exists - else migration fails
-    try:
-        region = django_filters.Filter(name="region",label='Region',lookup_expr="exact")
-        district = django_filters.Filter(name="district",label='District',lookup_expr="exact")
-        year = django_filters.Filter(name="year",label='Year',lookup_expr="exact")
-        reporting_year = django_filters.Filter(name="reporting_year",label='Reporting Year',lookup_expr="exact")
-        report_status = django_filters.Filter(label='Report Status', name='report_status', method='filter_report_status')
-        fire_number = django_filters.CharFilter(name='fire_number', label='Search', method='filter_fire_number')
-        include_archived = BooleanFilter(name='include_archived',label='Include archived', method='filter_include_archived')
-        exclude_missing_final_fire_boundary = BooleanFilter(name='exclude_missing_final_fire_boundary',label='Exclude missing final fire boundary', method='filter_exclude_missing_final_fire_boundary')
-
-        order_by = django_filters.Filter(name="order_by",label="Order by",method="filter_order_by")
-    except:
-        pass
-
-    def filter_report_status(self, queryset, name, value):
-        status = int(value)
-        if status == Bushfire.STATUS_MISSING_FINAL:
-            queryset = queryset.filter(report_status__in=[Bushfire.STATUS_INITIAL_AUTHORISED])
-        elif status == 900:
-            #pending to review
-            queryset = queryset.filter(report_status=Bushfire.STATUS_FINAL_AUTHORISED,final_fire_boundary=True,fire_not_found=False,area__gt=0)
-        elif status == -1:
-            queryset = queryset.exclude(report_status=Bushfire.STATUS_INVALIDATED)
-        else:
-            queryset = queryset.filter(report_status=status)
-
-        return queryset
-
-    def filter_fire_number(self, queryset, filter_name, value):
-        """ 
-        Filter for Global Search Box in main page
-        Searches on:
-            1. fire_number
-            2. name (fire name)
-            3. dfes_incident_no
-
-        Works because 'fire_number' present in self.data (from <input> field in base.html) 
-        NOTE: filter_name in arg is a required dummy arg, not used.
-        """
-        return queryset.filter(Q(fire_number__icontains=value) | Q(name__icontains=value) | Q(dfes_incident_no__icontains=value))
-
-
-    def filter_include_archived(self, queryset, filter_name, value):
-        if not value:
-            queryset = queryset.exclude(archive=True)
-
-        return queryset
-    
-    def filter_exclude_missing_final_fire_boundary(self, queryset, filter_name, value):
-        if value:
-            queryset = queryset.filter(final_fire_boundary=True)
-        return queryset
-
-    def filter_order_by(self,queryset,filter_name,value):
-        if value:
-            if value[0] == "+":
-                value = value[1:]
-            if value in BUSHFIRE_SORT_MAPPING:
-                queryset = queryset.order_by(*BUSHFIRE_SORT_MAPPING[value])
-            else:
-                queryset = queryset.order_by(value)
-
-        return queryset
-
-    class Meta:
-        model = Bushfire
-        fields = [
-            'region',
-            'district',
-            'year',
-            'reporting_year',
-            'report_status',
-            'fire_number',
-            'include_archived',
-            'exclude_missing_final_fire_boundary',
-            'order_by'
-        ]
 
 class ExceptionMixin(object):
     template_exception = 'exception.html'
@@ -195,7 +127,7 @@ class ExceptionMixin(object):
 
             return TemplateResponse(request, self.template_exception, context=context)
 
-class ProfileView(ExceptionMixin,MainUrlMixin,LoginRequiredMixin, generic.FormView):
+class ProfileView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin, generic.FormView):
     model = Profile
     form_class = ProfileForm
     template_name = 'registration/profile.html'
@@ -215,12 +147,12 @@ class ProfileView(ExceptionMixin,MainUrlMixin,LoginRequiredMixin, generic.FormVi
         if form.is_valid():
             if 'cancel' not in self.request.POST:
                 form.save()
-            return HttpResponseRedirect(self.get_main_url())
+            return HttpResponseRedirect(self.get_success_url())
 
         return TemplateResponse(request, self.template_name)
 
 
-class BushfireView(ExceptionMixin,MainUrlMixin,LoginRequiredMixin, filter_views.FilterView):
+class BushfireView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin, filter_views.FilterView):
 #class BushfireView(LoginRequiredMixin, generic.ListView):
     #model = Bushfire
     filterset_class = BushfireFilter
@@ -243,7 +175,7 @@ class BushfireView(ExceptionMixin,MainUrlMixin,LoginRequiredMixin, filter_views.
         else:
             self._filters = "?"
 
-        filters_without_order = "&".join(["{}={}".format(k,v) for k,v in data.iteritems() if k in BushfireFilter.Meta.fields if k != "order_by"])
+        filters_without_order = "&".join(["{}={}".format(k,v) for k,v in data.iteritems() if k in BushfireFilter.Meta.fields and k != "order_by"])
         if filters_without_order:
             self._filters_without_order = "?{}&".format(filters_without_order)
         else:
@@ -285,7 +217,12 @@ class BushfireView(ExceptionMixin,MainUrlMixin,LoginRequiredMixin, filter_views.
             return export_outstanding_fires(self.request, self.get_filterset(self.filterset_class).data['region'], qs)
         elif action == 'export_excel_ministerial_report':
             #return MinisterialReport().export()
-            return BushfireReport().export()
+            try:
+                reporting_year = int(self.request.GET.get('reporting_year')) if self.request.GET.has_key('reporting_year') else None
+            except:
+                reporting_year = None
+
+            return BushfireReport(reporting_year).export()
         elif action == 'snapshot_history':
             bushfire = Bushfire.objects.get(id=self.request.GET.get('bushfire_id'))
             context = {
@@ -315,12 +252,12 @@ class BushfireView(ExceptionMixin,MainUrlMixin,LoginRequiredMixin, filter_views.
                 raise Exception("Confirm action is missing.")
             elif confirm_action in ('delete_review','delete_final_authorisation','mark_reviewed'):
                 bushfire = Bushfire.objects.get(id=self.request.POST.get('bushfire_id'))
-                update_status(request, bushfire, confirm_action)
+                process_update_status_result(request,update_status(request, bushfire, confirm_action))
                 refresh_gokart(request, fire_number=bushfire.fire_number) #, region=None, district=None, action='update')
             # Archive / Unarchive
             elif confirm_action in ('archive','unarchive'):
                 bushfire = Bushfire.objects.get(id=self.request.POST.get('bushfire_id'))
-                update_status(request, bushfire, confirm_action)
+                process_update_status_result(request,update_status(request, bushfire, confirm_action))
             else:
                 raise Exception("Unknown confirm action({})".format(confirm_action))
 
@@ -404,7 +341,7 @@ class BushfireView(ExceptionMixin,MainUrlMixin,LoginRequiredMixin, filter_views.
                     return TemplateResponse(request, self.link_bushfire_confirm_template, context=context)
 
                 elif step == "confirm":
-                    update_status(request, (primary_bushfire,bushfires.exclude(id=primary_bushfire_id)), action,self.actions.get(action))
+                    process_update_status_result(request,update_status(request, (primary_bushfire,bushfires.exclude(id=primary_bushfire_id)), action,self.actions.get(action)))
                 else:
                     raise Exception("Unknown step({1}) for action({0})".format(action,step))
             else:
@@ -412,7 +349,7 @@ class BushfireView(ExceptionMixin,MainUrlMixin,LoginRequiredMixin, filter_views.
         else:
             raise Exception("Unknown action({})" .format(action))
 
-        return HttpResponseRedirect(self.get_main_url())
+        return HttpResponseRedirect(self.get_success_url())
 
     def get_context_data(self, **kwargs):
         context = super(BushfireView, self).get_context_data(**kwargs)
@@ -426,6 +363,8 @@ class BushfireView(ExceptionMixin,MainUrlMixin,LoginRequiredMixin, filter_views.
         context['can_maintain_data'] = can_maintain_data(self.request.user)
         context['is_external_user'] = is_external_user(self.request.user)
         context['selected_ids'] = self.selected_ids if hasattr(self,"selected_ids") else None
+        finyear = current_finyear()
+        context['bushfire_reports'] = [(y,"{}/{}".format(y,y+1)) for y in range(finyear,finyear - 2,-1) if y >= 2017]
         context['actions'] = self.actions
         if hasattr(self,"action"):
             context['action'] = self.action
@@ -438,7 +377,7 @@ class BushfireView(ExceptionMixin,MainUrlMixin,LoginRequiredMixin, filter_views.
             pass
         return context
 
-class BushfireInitialSnapshotView(ExceptionMixin,FormRequestMixin,MainUrlMixin,LoginRequiredMixin, generic.DetailView):
+class BushfireInitialSnapshotView(ExceptionMixin,FormRequestMixin,NextUrlMixin,LoginRequiredMixin, generic.DetailView):
     """
     To view the initial static data (after notifications 'Submitted')
 
@@ -456,11 +395,11 @@ class BushfireInitialSnapshotView(ExceptionMixin,FormRequestMixin,MainUrlMixin,L
             'damages': self.object.initial_snapshot.damage_snapshot.exclude(snapshot_type=SNAPSHOT_FINAL) if hasattr(self.object.initial_snapshot, 'damage_snapshot') else None,
             'injuries': self.object.initial_snapshot.injury_snapshot.exclude(snapshot_type=SNAPSHOT_FINAL) if hasattr(self.object.initial_snapshot, 'injury_snapshot') else None,
             'tenures_burnt': self.object.initial_snapshot.tenures_burnt_snapshot.exclude(snapshot_type=SNAPSHOT_FINAL).order_by('id') if hasattr(self.object.initial_snapshot, 'tenures_burnt_snapshot') else None,
-            'link_actions':[(self.get_main_url(),'Return','btn-info')],
+            'link_actions' : [(reverse("bushfire:bushfire_document_list",kwargs={"bushfireid":self.object.id}),'Documents','btn-info'),(self.get_success_url(),'Return','btn-danger')],
         })
         return context
 
-class BushfireFinalSnapshotView(ExceptionMixin,FormRequestMixin,MainUrlMixin,LoginRequiredMixin, generic.DetailView):
+class BushfireFinalSnapshotView(ExceptionMixin,FormRequestMixin,NextUrlMixin,LoginRequiredMixin, generic.DetailView):
     """
     To view the final static data (after report 'Authorised')
     """
@@ -471,7 +410,7 @@ class BushfireFinalSnapshotView(ExceptionMixin,FormRequestMixin,MainUrlMixin,Log
         context = super(BushfireFinalSnapshotView, self).get_context_data(**kwargs)
         self.object = self.get_object()
 
-        link_actions = [(self.get_main_url(),'Return','btn-info')] 
+        link_actions = [(reverse("bushfire:bushfire_document_list",kwargs={"bushfireid":self.object.id}),'Documents','btn-info'),(self.get_success_url(),'Return','btn-danger')]
         if can_maintain_data(self.request.user):
             link_actions.insert(0,(reverse('bushfire:bushfire_final',kwargs={"pk":self.object.id}) ,'Edit Authorised','btn-success'))
         context.update({
@@ -487,7 +426,7 @@ class BushfireFinalSnapshotView(ExceptionMixin,FormRequestMixin,MainUrlMixin,Log
 
 
 @method_decorator(csrf_exempt, name='dispatch')
-class BushfireUpdateView(ExceptionMixin,FormRequestMixin,MainUrlMixin,LoginRequiredMixin, UpdateView):
+class BushfireUpdateView(ExceptionMixin,FormRequestMixin,NextUrlMixin,LoginRequiredMixin, UpdateView):
     """ Class will Create a new Bushfire and Update an existing Bushfire object"""
 
     model = Bushfire
@@ -602,9 +541,9 @@ class BushfireUpdateView(ExceptionMixin,FormRequestMixin,MainUrlMixin,LoginRequi
                 form_class = self.get_form_class()
                 if not any(a[0] == confirm_action for a in form_class.get_submit_actions(self.request)):
                     return TemplateResponse(request, self.template_error, context={'is_external_user': False, 'status':401}, status=401)
-                update_status(self.request, self.object, confirm_action)
+                process_update_status_result(request,update_status(self.request, self.object, confirm_action))
                 refresh_gokart(self.request, fire_number=self.object.fire_number, region=self.object.region.id, district=self.object.district.id)
-                return HttpResponseRedirect(self.get_main_url())
+                return HttpResponseRedirect(self.get_success_url())
 
         form_class = self.get_form_class()
         form = self.get_form(form_class)
@@ -657,7 +596,7 @@ class BushfireUpdateView(ExceptionMixin,FormRequestMixin,MainUrlMixin,LoginRequi
                 }
                 return TemplateResponse(request, self.template_confirm, context=context)
         else:
-            context = self.get_context_data()
+            context = self.get_context_data(form=form)
             return self.render_to_response(context)
 
     @transaction.atomic
@@ -666,7 +605,6 @@ class BushfireUpdateView(ExceptionMixin,FormRequestMixin,MainUrlMixin,LoginRequi
         self.object = form.save()
 
         refresh_gokart(self.request, fire_number=self.object.fire_number, region=self.object.region.id, district=self.object.district.id)
-        
         if action in ["submit","authorise","save_final","save_reviewed"]:
             #show confirm page
             context = self.get_context_data()
@@ -674,20 +612,24 @@ class BushfireUpdateView(ExceptionMixin,FormRequestMixin,MainUrlMixin,LoginRequi
             if missing_fields:
                 if action in ["save_final","save_reviewed"]:
                     #delete authorise, because some mandatory fields are empty,this will trigger to create a report snatpshot
-                    update_status(request, self.object, 'delete_authorisation_(missing_fields_-_FSSDRS)')
+                    process_update_status_result(request,update_status(request, self.object, 'delete_authorisation_(missing_fields_-_FSSDRS)'))
                 #have missing fields,show error pages
                 context['mandatory_fields'] = missing_fields
                 context['action'] = action
                 return TemplateResponse(request, self.template_mandatory_fields, context=context)
             elif action == "submit":
                 #skip confirm step when submit a initial report
-                update_status(self.request, self.object, action)
+                process_update_status_result(request,update_status(self.request, self.object, action))
                 refresh_gokart(self.request, fire_number=self.object.fire_number, region=self.object.region.id, district=self.object.district.id)
-                return HttpResponseRedirect(self.get_main_url())
+                return HttpResponseRedirect(self.get_success_url())
             elif action in ["submit","authorise"]:
                 context["confirm_action"] = action
                 context["form"] = BushfireViewForm(instance=self.object)
-                context["submit_actions"]=[("confirm","Yes, I'm sure",'btn-success')]
+                msg = getattr(settings,"{}_MESSAGE".format(action.upper()))
+                if msg:
+                    context["submit_actions"]=[("confirm","Yes, I'm sure",'btn-success','(function(){{alert("{}");return true;}})()'.format(msg))]
+                else:
+                    context["submit_actions"]=[("confirm","Yes, I'm sure",'btn-success')]
                 if action == "submit":
                     context["link_actions"]=[(reverse("bushfire:bushfire_initial",kwargs={"pk":self.object.pk}),"Cancel","btn-danger")]
                 else:
@@ -698,7 +640,7 @@ class BushfireUpdateView(ExceptionMixin,FormRequestMixin,MainUrlMixin,LoginRequi
                 #create a snapshot
                 serialize_bushfire('final', action, self.object)
 
-        return HttpResponseRedirect(self.get_main_url())
+        return HttpResponseRedirect(self.get_success_url())
 
     def get_context_data(self, **kwargs):
         bushfire = self.get_object()
@@ -710,9 +652,12 @@ class BushfireUpdateView(ExceptionMixin,FormRequestMixin,MainUrlMixin,LoginRequi
             'initial':'initial' in self.request.get_full_path(),
             'create':False if bushfire else True,
             'can_maintain_data': can_maintain_data(self.request.user),
-            'link_actions':[(self.get_main_url(),'Cancel','btn-danger')],
             'submit_actions':context['form'].submit_actions,
         })
+        if self.object and self.object.id:
+            context['link_actions'] = [(reverse("bushfire:bushfire_document_list",kwargs={"bushfireid":self.object.id}),'Documents','btn-info'),(self.get_success_url(),'Cancel','btn-danger')]
+        else:
+            context['link_actions'] = [(self.get_success_url(),'Cancel','btn-danger')]
 
         return context
 
@@ -754,4 +699,401 @@ class ReportView(ExceptionMixin,FormView):
             return MinisterialReport().pdflatex(self.request, form.cleaned_data)
         return super(ReportView, self).form_valid(form)
 
+
+class BushfireDocumentListView(ExceptionMixin,LoginRequiredMixin,filter_views.FilterView):
+    """
+    View for bushfire's document list
+    """
+    filterset_class = BushfireDocumentFilter
+    model = Document
+    template_name = 'bfrs/bushfire_document_list.html'
+    paginate_by = 50
+
+    def get_filterset_kwargs(self, filterset_class):
+        kwargs = super(BushfireDocumentListView,self).get_filterset_kwargs(filterset_class)
+        if (self.request.method == "POST"):
+            #get the filter data from post
+            kwargs["data"] = self.request.POST
+
+        data = dict(kwargs["data"].iteritems()) if kwargs["data"] else {}
+        kwargs["data"] = data
+        if self.bushfire.is_invalidated:
+            data["upload_bushfire"] = self.bushfire
+        else:
+            data["bushfire"] = self.bushfire
+
+        if "archived" not in data:
+            #default to list unarchived documents
+            data["archived"] = '3'
+
+        if "order_by" not in data:
+            data["order_by"] = "-created"
+
+        filters = "&".join(["{}={}".format(k,v) for k,v in data.iteritems() if k in BushfireDocumentFilter.Meta.fields and v])
+        if filters:
+            self._filters = "?{}&".format(filters)
+        else:
+            self._filters = "?"
+
+        filters_without_order = "&".join(["{}={}".format(k,v) for k,v in data.iteritems() if k in BushfireDocumentFilter.Meta.fields and k != "order_by" and v])
+        if filters_without_order:
+            self._filters_without_order = "?{}&".format(filters_without_order)
+        else:
+            self._filters_without_order = "?"
+
+        self.request.session["lastDocumentUrl"] = self.request.get_full_path()
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super(BushfireDocumentListView,self).get_context_data(**kwargs)
+        context['can_maintain_data'] = can_maintain_data(self.request.user)
+        context['bushfire'] = self.bushfire
+        context['uploadform'] = DocumentCreateForm(instance=Document(upload_bushfire=self.bushfire))
+        context['bushfireurl'] = get_bushfire_url(None,self.bushfire,("final","initial"))
+        context['snapshot'] = False
+        context['filterform'] = DocumentFilterForm(initial=context["filter"].data)
+
+        context['filters'] = self._filters
+        context['filters_without_order'] = self._filters_without_order
+
+        return context
+
+    def get(self,request,bushfireid,*args,**kwargs):
+        self.bushfire = Bushfire.objects.get(id = int(bushfireid))
+        return super(BushfireDocumentListView,self).get(request,bushfireid,*args,**kwargs)
+
+    def post(self,request,bushfireid,*args,**kwargs):
+        self.bushfire = Bushfire.objects.get(id = bushfireid)
+        return super(BushfireDocumentListView,self).post(request,bushfireid,*args,**kwargs)
+
+    def get_success_url(self):
+        return reverse('bushfire:bushfire_document_list',kwargs={"bushfireid":self.bushfire.id})
+
+class BushfireDocumentUploadView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin,FormRequestMixin,CreateView):
+    """
+    View for uploading a document
+    """
+    model = Document
+    template_name = 'bfrs/bushfire_document_create.html'
+    form_class = DocumentCreateForm
+    next_url = "lastDocumentUrl"
+
+    def get_context_data(self, **kwargs):
+        context = super(BushfireDocumentUploadView,self).get_context_data(**kwargs)
+        context['can_maintain_data'] = can_maintain_data(self.request.user)
+        context['bushfire'] = self.bushfire
+        context['bushfireurl'] = get_bushfire_url(None,self.bushfire,("final","initial"))
+        context['snapshot'] = False
+        return context
+
+    def get(self,request,bushfireid,*args,**kwargs):
+        self.bushfire = Bushfire.objects.get(id = int(bushfireid))
+        if self.bushfire.is_final_authorised and not can_maintain_data(request.user):
+            raise PermissionDenied("Only group '{}' can create new document title.".format(settings.FSSDRS_GROUP))
+
+        return super(BushfireDocumentUploadView,self).get(request,*args,**kwargs)
+
+    def post(self,request,bushfireid,*args,**kwargs):
+        self.bushfire = Bushfire.objects.get(id = bushfireid)
+        if self.bushfire.is_final_authorised and not can_maintain_data(request.user):
+            raise PermissionDenied("Only group '{}' can create new document title.".format(settings.FSSDRS_GROUP))
+
+        return super(BushfireDocumentUploadView,self).post(request,*args,**kwargs)
+
+    def form_valid(self, form):
+        if form.instance.archived:
+            form.instance.archivedby = self.request.user
+            form.instance.archivedon = timezone.now()
+        form.instance.creator = self.request.user
+        form.instance.modifier = self.request.user
+        form.instance.upload_bushfire = self.bushfire
+        form.instance.bushfire = self.bushfire
+        return super(BushfireDocumentUploadView, self).form_valid(form)
+
+    def _get_success_url(self):
+        return reverse('bushfire:bushfire_document_list',kwargs={"bushfireid":self.bushfire.id})
+
+class DocumentDownloadView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin,FormView):
+    """
+    View for downloading a document
+    """
+    next_url = "lastDocumentUrl"
+    def get(self,request,pk,*args,**kwargs):
+        self.document = Document.objects.get(id = int(pk))
+        f = open(os.path.join(settings.MEDIA_ROOT,self.document.document.name)) 
+        response = FileResponse(content_type='application/force-download',streaming_content=f)
+        response['Content-Disposition'] = 'attachment; filename="{}"'.format(os.path.basename(self.document.document.name))
+        return response
+
+    def _get_success_url(self):
+        return reverse('bushfire:bushfire_document_list',kwargs={"bushfireid":self.document.bushfire.id})
+
+class DocumentDeleteView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin,FormRequestMixin,UpdateView):
+    """
+    View for deleting a document
+    """
+    model = Document
+    template_name = 'bfrs/bushfire_document.html'
+    form_class = DocumentViewForm
+    next_url = "lastDocumentUrl"
+
+    def get_context_data(self, **kwargs):
+        context = super(DocumentDeleteView,self).get_context_data(**kwargs)
+        context['can_maintain_data'] = can_maintain_data(self.request.user)
+        context['bushfire'] = self.object.bushfire
+        context['bushfireurl'] = get_bushfire_url(None,self.object.bushfire,("final","initial"))
+        context['page_action'] = "Delete"
+        context['title'] = "Delete Bushfire Document" 
+        context['snapshot'] = False
+        context['link_actions'] =[(self.get_success_url(),'Cancel','btn-danger')]
+        context['submit_actions'] = [('delete','Delete','btn-warning')]
+        return context
+    """
+    def post(self,*args,**kwargs):
+        import ipdb;ipdb.set_trace()
+        super(DocumentDeleteView,self).post(*args,**kwargs)
+    """
+
+    def form_valid(self, form):
+        self.object.delete()
+        return HttpResponseRedirect(redirect_to=self.get_success_url())
+
+    def _get_success_url(self):
+        return reverse('bushfire:bushfire_document_list',kwargs={"bushfireid":self.object.bushfire.id})
+
+class DocumentArchiveView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin,FormRequestMixin,UpdateView):
+    """
+    View for archiving a document
+    """
+    model = Document
+    template_name = 'bfrs/bushfire_document.html'
+    form_class = DocumentViewForm
+    next_url = "lastDocumentUrl"
+
+    def get_context_data(self, **kwargs):
+        context = super(DocumentArchiveView,self).get_context_data(**kwargs)
+        context['can_maintain_data'] = can_maintain_data(self.request.user)
+        context['bushfire'] = self.object.bushfire
+        context['bushfireurl'] = get_bushfire_url(None,self.object.bushfire,("final","initial"))
+        context['snapshot'] = False
+        context['page_action'] = "Archive"
+        context['title'] = "Archive Bushfire Document" 
+        context['link_actions'] =[(self.get_success_url(),'Cancel','btn-danger')]
+        context['submit_actions'] = [('archive','Archive','btn-warning')]
+        return context
+    """
+    def post(self,*args,**kwargs):
+        import ipdb;ipdb.set_trace()
+        super(DocumentDeleteView,self).post(*args,**kwargs)
+    """
+
+    def form_valid(self, form):
+        if not self.object.archived:
+            self.object.archived = True
+            self.object.archivedby = self.request.user
+            self.object.archivedon = timezone.now()
+            self.object.save(update_fields=["archived","archivedby","archivedon"])
+        return HttpResponseRedirect(redirect_to=self.get_success_url())
+
+    def _get_success_url(self):
+        return reverse('bushfire:bushfire_document_list',kwargs={"bushfireid":self.object.bushfire.id})
+
+class DocumentUnarchiveView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin,FormRequestMixin,UpdateView):
+    """
+    View for unarchiving a document
+    """
+    model = Document
+    template_name = 'bfrs/bushfire_document.html'
+    form_class = DocumentViewForm
+    next_url = "lastDocumentUrl"
+
+    def get_context_data(self, **kwargs):
+        context = super(DocumentUnarchiveView,self).get_context_data(**kwargs)
+        context['can_maintain_data'] = can_maintain_data(self.request.user)
+        context['bushfire'] = self.object.bushfire
+        context['bushfireurl'] = get_bushfire_url(None,self.object.bushfire,("final","initial"))
+        context['snapshot'] = False
+        context['page_action'] = "Unarchive"
+        context['title'] = "Unarchive Bushfire Document" 
+        context['link_actions'] =[(self.get_success_url(),'Cancel','btn-danger')]
+        context['submit_actions'] = [('unarchive','Unarchive','btn-warning')]
+        return context
+    """
+    def post(self,*args,**kwargs):
+        import ipdb;ipdb.set_trace()
+        super(DocumentDeleteView,self).post(*args,**kwargs)
+    """
+
+    def form_valid(self, form):
+        if self.object.archived:
+            self.object.archived = False
+            self.object.archivedby = None
+            self.object.archivedon = None
+            self.object.save(update_fields=["archived","archivedby","archivedon"])
+        return HttpResponseRedirect(redirect_to=self.get_success_url())
+
+    def _get_success_url(self):
+        return reverse('bushfire:bushfire_document_list',kwargs={"bushfireid":self.object.bushfire.id})
+
+class DocumentUpdateView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin,FormRequestMixin,UpdateView):
+    """
+    View for updating a document
+    """
+    model = Document
+    template_name = 'bfrs/bushfire_document.html'
+    form_class = DocumentUpdateForm
+    next_url = "lastDocumentUrl"
+
+    def get_context_data(self, **kwargs):
+        context = super(DocumentUpdateView,self).get_context_data(**kwargs)
+        context['bushfire'] = self.object.bushfire
+        context['bushfireurl'] = get_bushfire_url(None,self.object.bushfire,("final","initial"))
+        context['page_action'] = "Edit"
+        context['title'] = "Edit Bushfire Document" 
+        if self.object.archived:
+            context['link_actions'] =[(reverse("bushfire:document_unarchive",kwargs={"pk":self.object.id}),"Unarchive","btn-warning"),(reverse("bushfire:document_delete",kwargs={"pk":self.object.id}),"Delete","btn-warning"),(self.get_success_url(),'Cancel','btn-danger')]
+        else:
+            context['link_actions'] =[(reverse("bushfire:document_archive",kwargs={"pk":self.object.id}),"Archive","btn-warning"),(reverse("bushfire:document_delete",kwargs={"pk":self.object.id}),"Delete","btn-warning"),(self.get_success_url(),'Cancel','btn-danger')]
+        context['submit_actions'] = [('save','Save','btn-success')]
+        return context
+
+    def form_valid(self, form):
+        form.instance.modifier = self.request.user
+        return super(DocumentUpdateView, self).form_valid(form)
+
+    def _get_success_url(self):
+        return reverse('bushfire:bushfire_document_list',kwargs={"bushfireid":self.object.bushfire.id})
+
+class DocumentDetailView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin,FormRequestMixin,UpdateView):
+    """
+    View a document
+    """
+    model = Document
+    template_name = 'bfrs/bushfire_document.html'
+    form_class = DocumentViewForm
+    next_url = "lastDocumentUrl"
+
+    def get_context_data(self, **kwargs):
+        context = super(DocumentDetailView,self).get_context_data(**kwargs)
+        context['bushfire'] = self.object.bushfire
+        context['bushfireurl'] = get_bushfire_url(None,self.object.bushfire,("final","initial"))
+        context['page_action'] = "Detail"
+        context['title'] = "View Bushfire Document" 
+        if self.object.archived:
+            context['link_actions'] =[(reverse("bushfire:document_unarchive",kwargs={"pk":self.object.id}),"Unarchive","btn-warning"),(reverse("bushfire:document_delete",kwargs={"pk":self.object.id}),"Delete","btn-warning"),(self.get_success_url(),'Cancel','btn-danger')]
+        else:
+            context['link_actions'] =[(reverse("bushfire:document_archive",kwargs={"pk":self.object.id}),"Archive","btn-warning"),(reverse("bushfire:document_delete",kwargs={"pk":self.object.id}),"Delete","btn-warning"),(self.get_success_url(),'Cancel','btn-danger')]
+        context['submit_actions'] = []
+        return context
+
+    def _get_success_url(self):
+        return reverse('bushfire:bushfire_document_list',kwargs={"bushfireid":self.object.bushfire.id})
+
+class DocumentCategoryListView(ExceptionMixin,LoginRequiredMixin,ListView):
+    """
+    View for document category list
+    """
+    model = DocumentCategory
+    template_name = 'bfrs/documentcategory_list.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(DocumentCategoryListView,self).get_context_data(**kwargs)
+        context['can_maintain_data'] = can_maintain_data(self.request.user)
+        return context
+
+class DocumentCategoryCreateView(ExceptionMixin,LoginRequiredMixin,FormRequestMixin,CreateView):
+    """
+    View for creating document category
+    """
+    model = DocumentCategory
+    template_name = 'bfrs/documentcategory_detail.html'
+    form_class = DocumentCategoryCreateForm
+
+    def get_context_data(self, **kwargs):
+        context = super(DocumentCategoryCreateView,self).get_context_data(**kwargs)
+        context['can_maintain_data'] = can_maintain_data(self.request.user)
+        context["title"] = "Add Document Category"
+        context["page_action"] = "Create"
+        context['link_actions'] =[(self.get_success_url(),'Cancel','btn-danger')]
+        context['submit_actions'] = [('create','Create','btn-success')]
+        return context
+
+    def get(self,request,*args,**kwargs):
+        if not can_maintain_data(request.user):
+            raise PermissionDenied("Only group '{}' can create new document category.".format(settings.FSSDRS_GROUP))
+
+        return super(DocumentCategoryCreateView,self).get(request,*args,**kwargs)
+
+    def post(self,request,*args,**kwargs):
+        if not can_maintain_data(request.user):
+            raise PermissionDenied("Only group '{}' can create new document category.".format(settings.FSSDRS_GROUP))
+
+        return super(DocumentCategoryCreateView,self).post(request,*args,**kwargs)
+
+    def form_valid(self, form):
+        form.instance.creator = self.request.user
+        form.instance.modifier = self.request.user
+        return super(DocumentCategoryCreateView, self).form_valid(form)
+
+    def get_success_url(self):
+        return reverse('bushfire:documentcategory_list')
+
+class DocumentCategoryUpdateView(ExceptionMixin,LoginRequiredMixin,FormRequestMixin,UpdateView):
+    """
+    View for updating document category
+    """
+    model = DocumentCategory
+    template_name = 'bfrs/documentcategory_detail.html'
+    form_class = DocumentCategoryUpdateForm
+
+    def get_context_data(self, **kwargs):
+        context = super(DocumentCategoryUpdateView,self).get_context_data(**kwargs)
+        context['can_maintain_data'] = can_maintain_data(self.request.user)
+        context["title"] = "Update Document Category"
+        context["page_action"] = "Update"
+        context['link_actions'] =[(self.get_success_url(),'Cancel','btn-danger')]
+        context['submit_actions'] = [('save','Save','btn-success')]
+        return context
+
+    def get(self,request,*args,**kwargs):
+        if not can_maintain_data(request.user):
+            raise PermissionDenied("Only group '{}' can create new document category.".format(settings.FSSDRS_GROUP))
+
+        return super(DocumentCategoryUpdateView,self).get(request,*args,**kwargs)
+
+    def post(self,request,*args,**kwargs):
+        if not can_maintain_data(request.user):
+            raise PermissionDenied("Only group '{}' can create new document category.".format(settings.FSSDRS_GROUP))
+
+        return super(DocumentCategoryUpdateView,self).post(request,*args,**kwargs)
+
+    def form_valid(self, form):
+        form.instance.modifier = self.request.user
+        return super(DocumentCategoryUpdateView, self).form_valid(form)
+
+    def get_success_url(self):
+        return reverse('bushfire:documentcategory_list')
+
+class DocumentCategoryDetailView(ExceptionMixin,LoginRequiredMixin,FormRequestMixin,UpdateView):
+    """
+    View for viewing document category
+    """
+    model = DocumentCategory
+    template_name = 'bfrs/documentcategory_detail.html'
+    form_class = DocumentCategoryViewForm
+
+    def get_context_data(self, **kwargs):
+        context = super(DocumentCategoryDetailView,self).get_context_data(**kwargs)
+        context['can_maintain_data'] = can_maintain_data(self.request.user)
+        context["title"] = "Document Category Detail"
+        context["page_action"] = "Detail"
+        context['link_actions'] =[(self.get_success_url(),'Cancel','btn-danger')]
+        context['submit_actions'] = []
+        return context
+
+    def post(self,request,*args,**kwargs):
+        raise PermissionDenied("Not supportted.")
+
+    def get_success_url(self):
+        return reverse('bushfire:documentcategory_list')
 

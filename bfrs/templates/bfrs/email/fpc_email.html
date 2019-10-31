@@ -28,6 +28,10 @@
         <td style="border:1px solid black;text-align: right;padding:2px 10px 2px 10px;">{{plant.area_ha}}</td>
     </tr>
 {% endfor %}
+{% else %}
+    <tr>
+        <td style="border:1px solid black;text-align: center;padding:2px 10px 2px 10px;" colspan=5>There are no plantations within 3km of origin point.</td>
+    </tr>
 {% endif %}
 </table>
 {% endblock %}

@@ -24,8 +24,11 @@ log/
 logs/
 *.log
 
+# tmp
+tmp/
+
 # Environment settings
-.env
+.env*
 
 # Static files dirs
 /static/
@@ -48,3 +51,5 @@ staticfiles/
 uwsgi.ini
 
 localtest.*
+
+fireboundaries/
