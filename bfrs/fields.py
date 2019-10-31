@@ -43,15 +43,8 @@ class FireCauseField(basefields.CompoundField):
         if isinstance(cause,basestring):
             cause = int(cause) if cause else None
 
-        if cause == Cause.OTHER.id:
-            basefields.hide_field(f.related_fields[2].field)
-        elif cause == Cause.ESCAPE_DPAW_BURNING.id:
-            basefields.hide_field(f.related_fields[1].field)
-        else:
-            basefields.hide_field(f.related_fields[1].field)
-            basefields.hide_field(f.related_fields[2].field)
-        f.field.widget.attrs = f.field.widget.attrs or {}
-        f.field.widget.attrs["onchange"]="""
+        attrs = {}
+        attrs["onchange"]="""
         if (this.value === '{0}') {{
             $("#{1}").show();
             $("#{1}").prop("disabled",false);
@@ -67,7 +60,7 @@ class FireCauseField(basefields.CompoundField):
             $("#{3}").prop("disabled",true);
         }}
         """.format(Cause.OTHER.id,f.related_fields[1].auto_id,Cause.ESCAPE_DPAW_BURNING.id,f.related_fields[2].auto_id)
-        return ("{1}<br>{0}<br>{2}{3}",f.field.related_field_names)
+        return (("{{1}}<br>{{0}}<br>{{2}}{{3}}<script type='text/javascript'>$('#{}').change()</script>".format(f.auto_id),attrs),self.related_field_names)
 
 class InitialAreaField(basefields.CompoundField):
     related_field_names = ("fire_boundary","initial_area_unknown")
@@ -83,19 +76,20 @@ class InitialAreaField(basefields.CompoundField):
 
     def _edit_layout(self,f):
         initial_boundary = True if f.related_fields[0].value() else False
+        attrs = {}
         if initial_boundary:
-            f.field.widget.attrs["disabled"] = True
-            return ("{0}",None)
+            attrs["disabled"] = True
+            return (("{0}",attrs),None)
         else:
             area_unknown = f.related_fields[1].value()
 
-            f.field.widget.attrs = f.field.widget.attrs or {}
+            attrs = {}
             if area_unknown:
-                f.field.widget.attrs["disabled"] = True
-                f.field.widget.attrs["style"] = "display:none"
+                attrs["disabled"] = True
+                attrs["style"] = "display:none"
 
-            f.related_fields[1].field.widget.attrs = f.related_fields[1].field.widget.attrs or {}
-            f.related_fields[1].field.widget.attrs["onclick"]="""
+            field1_attrs = {}
+            field1_attrs["onclick"]="""
             if (this.checked) {{
                 $("#{0}").hide();
                 $("#{0}").prop("disabled",true);
@@ -104,7 +98,7 @@ class InitialAreaField(basefields.CompoundField):
                 $("#{0}").prop("disabled",false);
             }}
             """.format(f.auto_id)
-            return ("{1}<br>{0}",("initial_area_unknown",))
+            return (("{1}<br>{0}",attrs),(("initial_area_unknown",field1_attrs),))
 
 class FinalAreaField(basefields.CompoundField):
     related_field_names = ("final_fire_boundary","area_limit")
@@ -113,18 +107,20 @@ class FinalAreaField(basefields.CompoundField):
 
     def _edit_layout(self,f):
         final_boundary = f.related_fields[0].value()
+        attrs = {}
         if final_boundary:
-            f.field.widget.attrs["disabled"] = True
-            return ("{0}",None)
+            attrs["disabled"] = True
+            return (("{0}",attrs),None)
         else:
             area_limit = f.related_fields[1].value()
             f.field.widget.attrs = f.field.widget.attrs or {}
+            attrs = {}
             if not area_limit:
-                f.field.widget.attrs["disabled"] = True
-                f.field.widget.attrs["style"] = "display:none"
+                attrs["disabled"] = True
+                attrs["style"] = "display:none"
 
-            f.related_fields[1].field.widget.attrs = f.related_fields[1].field.widget.attrs or {}
-            f.related_fields[1].field.widget.attrs["onclick"]="""
+            field1_attrs = {}
+            field1_attrs["onclick"]="""
             if (this.checked) {{
                 $("#{0}").show();
                 $("#{0}").prop("disabled",false);
@@ -133,7 +129,7 @@ class FinalAreaField(basefields.CompoundField):
                 $("#{0}").prop("disabled",true);
             }}
             """.format(f.auto_id)
-            return ("{{1}} Area < {}ha<span style='margin: 20px;'></span>{{0}}".format(settings.AREA_THRESHOLD),("area_limit",))
+            return (("{{1}} Area < {}ha<span style='margin: 20px;'></span>{{0}}".format(settings.AREA_THRESHOLD),attrs),(("area_limit",field1_attrs),))
 
 class FirePositionField(basefields.CompoundField):
     related_field_names = ("fire_position_override",)
@@ -142,19 +138,17 @@ class FirePositionField(basefields.CompoundField):
 
     def _edit_layout(self,f):
         override = f.related_fields[0].value()
-        f.field.widget.attrs = f.field.widget.attrs or {}
+        attrs = {}
         if not override:
-            f.field.widget.attrs["disabled"] = True
+            attrs["disabled"] = True
 
-        f.field.widget.attrs = f.field.widget.attrs or {}
-
-        f.related_fields[0].field.widget.attrs = f.related_fields[0].field.widget.attrs or {}
-        f.related_fields[0].field.widget.attrs["onclick"]="""
+        field0_attrs = {}
+        field0_attrs["onclick"]="""
             if (this.checked) {{
                 $("#{0}").prop("disabled",false);
             }} else {{
                 $("#{0}").prop("disabled",true);
             }}
             """.format(f.auto_id)
-        return ("{0}<br>{1} SSS override",self.related_field_names)
+        return (("{0}<br>{1} SSS override",attrs),((self.related_field_names[0],field0_attrs),))
 

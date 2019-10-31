@@ -1,0 +1,16 @@
+{% extends "./base_email.html" %}
+
+{% load email_tags %}
+
+{% block email_head %}
+<div>Bushfire no. {{bushfire.fire_number}} is now closed as of {% field_value "authorised_date" bushfire %}.  Please close this incident in COMCEN</div><br><br>
+{% endblock %}
+
+{% block bushfire_head %}
+<div>
+Report has been authorised by user {% field_value "authorised_by" bushfire %} at {% field_value "authorised_date" bushfire %}.
+<br>
+</div><br>
+{% endblock %}
+
+

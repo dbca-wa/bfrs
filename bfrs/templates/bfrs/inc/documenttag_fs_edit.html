@@ -1,0 +1,41 @@
+<div>
+    <div id="id_documenttag" class="row formset documenttag-formset">
+        <table class="table_fs" border="0">
+            <tr>
+              <th></th>
+              {% for documenttag_form in form.documenttag_formset %}
+              <tr>
+                <td>{{ documenttag_form.name }}</td>
+                <td>
+                  {% if documenttag_form.instance.pk %}{{ documenttag_form.DELETE }}{% endif %}
+                  {{ documenttag_form.id }}
+
+		    {% for field in documenttag_form %} 
+                    {% if field.errors %}
+                       <font color="red"><li>{{ field.label }}: {{ field.errors|striptags }}</li></font>
+                    {% endif %}
+                  {% endfor %}
+
+                </td>
+              </tr>
+              {% endfor %}
+        </table>
+    </div>
+</div>
+{{ form.documenttag_formset.management_form }}
+
+<script>
+    $('.documenttag-formset tbody tr').formset({
+        prefix: '{{ form.documenttag_formset.prefix }}',
+        formCssClass: 'documenttag_fs',
+        addText: '<i class="icon-plus"></i> add another tag',
+        //deleteText: '<i class="icon-remove"></i>',
+        deleteText: '',
+        deleteCssClass: 'delete-row' + '-' + '{{ form.documenttag_formset.prefix  }}',
+    });
+
+</script>
+
+
+
+

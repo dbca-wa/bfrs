@@ -7,6 +7,7 @@ RUN apt-get update -y \
   && apt-get install --no-install-recommends -y wget git libmagic-dev gcc binutils libproj-dev gdal-bin \
   python python-setuptools python-dev python-pip tzdata \
   && pip install --upgrade pip
+
 ENV TZ=Australia/Perth
 
 # Install Python libs from requirements.txt.
@@ -27,8 +28,10 @@ COPY bfrs_project ./bfrs_project
 COPY templates ./templates
 # NOTE: we can't currently run the collectstatic step due to how BFRS is written.
 # Always be sure to run collectstatic locally prior to building the image.
-#RUN python manage.py collectstatic --noinput
-COPY staticfiles ./staticfiles
+COPY .env ./.env
+RUN python manage.py collectstatic --noinput
+RUN rm .env
+
 EXPOSE 8080
 HEALTHCHECK --interval=1m --timeout=5s --start-period=10s --retries=3 CMD ["wget", "-q", "-O", "-", "http://localhost:8080/"]
 CMD ["gunicorn", "bfrs_project.wsgi", "--bind", ":8080", "--config", "gunicorn.ini"]

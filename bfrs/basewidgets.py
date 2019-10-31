@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django import forms
 from django.core.cache import caches
 from django.urls import reverse
@@ -17,9 +19,21 @@ class DisplayWidget(DisplayMixin,forms.Widget):
     def __deepcopy__(self, memo):
         return self
 
+class FloatDisplay(DisplayWidget):
+    def __init__(self,precision=2):
+        super(FloatDisplay,self).__init__()
+        self.precision = precision
+
+    def render(self,name,value,attrs=None,renderer=None):
+        return "" if value is None else round(value,2)
+
 class TextDisplay(DisplayWidget):
     def render(self,name,value,attrs=None,renderer=None):
         return to_str(value)
+
+class TextareaDisplay(DisplayWidget):
+    def render(self,name,value,attrs=None,renderer=None):
+        return safestring.SafeText("<pre style='border:none;background-color:unset'>{}</pre>".format(to_str(value)))
 
 class FinancialYearDisplay(DisplayWidget):
     def render(self,name,value,attrs=None,renderer=None):
@@ -45,55 +59,63 @@ class DatetimeDisplay(DisplayWidget):
             return ""
 
 class HyperlinkTextDisplay(DisplayWidget):
+    template = "<a href='{0}'>{1}</a>"
     def __init__(self,**kwargs):
         super(HyperlinkTextDisplay,self).__init__(**kwargs)
         self.widget = self.widget_class(**kwargs)
 
-    def value_from_datadict(self,data,files,name):
-        result = []
-        for f in self.ids:
-            val = data.get(f[0])
-            if val is None:
-                result.clear()
-                break
-            elif isinstance(val,models.Model):
-                result.append(val.pk)
-            else:
-                result.append(val)
-        result.append(self.widget.value_from_datadict(data,files,name))
-        return result
+    def prepare_initial_data(self,form,name):
+        if self.widget:
+            value = form.initial.get(name)
+        else:
+            value = None
+
+        url = self.get_url(form,name)
+        return (value,url)
+        
 
     def render(self,name,value,attrs=None,renderer=None):
         if value:
-            link = self.hyperlink(value[0:-1])
-            if link:
-                return "<a href='{}'>{}</a>".format(link,self.widget.render(name,value[-1],attrs,renderer)) if value else ""
+            if value[1]:
+                return self.template.format(value[1],self.widget.render(name,value[0],attrs,renderer) if self.widget else "" )
             else:
-                return self.widget.render(name,value[-1],attrs,renderer)
+                return self.widget.render(name,value[0],attrs,renderer) if self.widget else ""
         else:
             return ""
 
-    def hyperlink(self,pks):
-        if len(pks) == 0:
-            return None
+    def get_url(self,form,name):
+        url = None
+        if not self.ids:
+            url = reverse(self.url_name)
         else:
             kwargs = {}
-            index = 0
-            while index < len(pks):
-                kwargs[self.ids[index][1]] = pks[index]
-                index += 1
-            return reverse(self.url_name,kwargs=kwargs)
+            for f in self.ids:
+                val = form.initial.get(f[0])
+                if val is None:
+                    #can't find value for url parameter, no link can be generated
+                    kwargs = None
+                    break;
+                elif isinstance(val,models.Model):
+                    kwargs[f[1]] = val.pk
+                else:
+                    kwargs[f[1]] = val
+            if kwargs:
+                url = reverse(self.url_name,kwargs=kwargs)
+        return url
 
 widget_classes = {}
 widget_class_id = 0
-def HyperlinkDisplayFactory(url_name,field_name,widget_class,ids=[("id","pk")],baseclass=HyperlinkTextDisplay):
+def HyperlinkDisplayFactory(url_name,field_name,widget_class,ids=[("id","pk")],baseclass=HyperlinkTextDisplay,template=None):
     global widget_class_id
-    key = hashlib.md5("{}{}{}".format(baseclass.__name__,url_name,field_name).encode('utf-8')).hexdigest()
+    key = hashlib.md5("{}{}{}{}".format(baseclass.__name__,url_name,field_name,template if template else "").encode('utf-8')).hexdigest()
     cls = widget_classes.get(key)
     if not cls:
         widget_class_id += 1
-        class_name = "{}_{}".format(baseclass.__name,widget_class_id)
-        cls = type(class_name,(baseclass,),{"url_name":url_name,"widget_class":widget_class,"ids":ids})
+        class_name = "{}_{}".format(baseclass.__name__,widget_class_id)
+        if template:
+            cls = type(class_name,(baseclass,),{"url_name":url_name,"widget_class":widget_class,"ids":ids,"template":template})
+        else:
+            cls = type(class_name,(baseclass,),{"url_name":url_name,"widget_class":widget_class,"ids":ids})
         widget_classes[key] = cls
     return cls
 
@@ -131,9 +153,18 @@ class TemplateDisplay(DisplayWidget):
             return self.widget.render(name,value,attrs,renderer)
         return safestring.SafeText(self.template.format(self.widget.render(name,value,attrs,renderer)))
 
+class FloatInput(forms.NumberInput):
+    def __init__(self,precision=2,*args,**kwargs):
+        super(FloatInput,self).__init__(*args,**kwargs)
+        self.precision = precision
+
+    def render(self,name,value,attrs=None,renderer=None):
+        return super(FloatInput,self).render(name,"" if (value is None or value == "") else round(value,self.precision),attrs=attrs)
 
 class DatetimeInput(forms.TextInput):
     def render(self,name,value,attrs=None,renderer=None):
+        if isinstance(value,datetime):
+            value = value.strftime("%Y-%m-%d %H:%M")
         html = super(DatetimeInput,self).render(name,value,attrs)
         datetime_picker = """
         <script type="text/javascript">
@@ -152,7 +183,10 @@ class TemplateWidgetMixin(object):
 
     def render(self,name,value,attrs=None,renderer=None):
         widget_html = super(TemplateWidgetMixin,self).render(name,value,attrs)
-        return safestring.SafeText(self.template.format(widget_html))
+        if callable(self.template):
+            return safestring.SafeText(self.template(value).format(widget_html))
+        else:
+            return safestring.SafeText(self.template.format(widget_html))
 
 
 def TemplateWidgetFactory(widget_class,template):
@@ -162,7 +196,10 @@ def TemplateWidgetFactory(widget_class,template):
     if not cls:
         widget_class_id += 1
         class_name = "{}_template_{}".format(widget_class.__name__,widget_class_id)
-        cls = type(class_name,(TemplateWidgetMixin,widget_class),{"template":template})
+        if callable(template):
+            cls = type(class_name,(TemplateWidgetMixin,widget_class),{"template":staticmethod(template)})
+        else:
+            cls = type(class_name,(TemplateWidgetMixin,widget_class),{"template":template})
         widget_classes[key] = cls
     return cls
 
@@ -366,5 +403,61 @@ def DisplayWidgetFactory(widget_class):
         cls = type(class_name,(DisplayMixin,widget_class),{})
         widget_classes[key] = cls
     return cls
+
+
+class NullBooleanSelect(forms.widgets.NullBooleanSelect):
+    """
+    A Select Widget intended to be used with NullBooleanField.
+    """
+    def __init__(self, attrs=None,true='Yes',false='No',none='--------'):
+        if none is None:
+            choices = (('2', true),
+                       ('3', false))
+        else:
+            choices = (('1', none),
+                       ('2', true),
+                       ('3', false))
+        forms.widgets.Select.__init__(self,attrs, choices)
+
+class ChainedSelect(forms.Select):
+    def render(self,name,value,attrs=None):
+        if value is not None and value != "":
+            if attrs is None:
+                attrs = {"data-initial":str(value)}
+            else:
+                attrs["data-initial"] = str(value)
+
+        return super(ChainedSelect,self).render(name,value,attrs=attrs)
+
+def ChainedSelectFactory(model,field_name,chained_field,archived=None,other_options=None,casesensitive=True):
+    field_model = model._meta.get_field(field_name).related_model
+    chained_field_model = model._meta.get_field(chained_field).related_model
+    js_url = "/options/js/{}/{}/{}/{}".format(chained_field_model._meta.app_label,chained_field_model.__name__,field_model._meta.app_label,field_model.__name__)
+    first_param = True
+    if archived is not None:
+        js_url = "{}?archived={}".format(js_url,"true" if archived else "false")
+        first_param = False
+    if other_options :
+        if len(other_options) == 1:
+            js_url = "{}{}other_option={}".format(js_url,"?" if first_param else "&",other_options[0])
+        else:
+            js_url = "{}{}other_option={}".format(js_url,"?" if first_param else "&",",".join(other_options))
+
+        first_param = False
+        if not casesensitive:
+            js_url = "{}{}caseinsensitive=".format(js_url,"?" if first_param else "&")
+            
+    global widget_class_id
+
+    key = hashlib.md5("ChainedSelect<{}>".format(js_url)).hexdigest()
+    cls = widget_classes.get(key)
+    if not cls:
+        widget_class_id += 1
+        class_name = "{}_{}".format(ChainedSelect.__name__,widget_class_id)
+        
+        cls = type(class_name,(ChainedSelect,),{"media":forms.Media(css=None,js=(js_url,))})
+        widget_classes[key] = cls
+    return cls
+
 
 
