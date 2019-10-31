@@ -596,7 +596,7 @@ class BushfireUpdateView(ExceptionMixin,FormRequestMixin,NextUrlMixin,LoginRequi
                 }
                 return TemplateResponse(request, self.template_confirm, context=context)
         else:
-            context = self.get_context_data()
+            context = self.get_context_data(form=form)
             return self.render_to_response(context)
 
     @transaction.atomic
