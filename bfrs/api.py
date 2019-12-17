@@ -477,7 +477,11 @@ class BushfireSpatialResource(ModelResource):
             else:
                 return bundle
         except:
-            traceback.print_exc()
+            if bundle.request.GET.has_key('checkpermission') and bundle.request.GET['checkpermission'] == 'true':
+                #for permission checking purpose, don't log the exception in log file.
+                pass
+            else:
+                traceback.print_exc()
             raise
 
 v1_api = Api(api_name='v1')
