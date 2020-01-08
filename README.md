@@ -13,19 +13,15 @@ Create a new virtualenv and install required libraries using `pip`:
 # Environment variables
 
 This project uses confy to set environment
-variables (in a `.env` file). Required settings are as follows:
+variables (in a `.env` file). Minimum required settings are as follows:
 
-PORT=8080
-HOSTNAME=localhost
-DJANGO_SETTINGS_MODULE=bfrs_project.settings
-CACHE_URL=uwsgi://
-DATABASE_URL="postgis://USER:PASSWORD@HOST:PORT/DATABASE_NAME"
-SECRET_KEY="ThisIsASecretKey"
-DEBUG=True
-LDAP_SERVER_URI="ldap://URL"
-LDAP_ACCESS_DN="ldap-access-dn"
-LDAP_ACCESS_PASSWORD="password"
-LDAP_SEARCH_SCOPE="DC=searchscope"
+    DATABASE_URL="postgis://username:password@hostname/database"
+    SECRET_KEY="SecretKey"
+    USER_SSO="email@dbca.wa.gov.au"
+    PASS_SSO="password"
+    EMAIL_HOST="smtp.hostname"
+    FROM_EMAIL="email@dbca.wa.gov.au"
+    SMS_POSTFIX="sms.url.endpoint"
 
 # Running
 
@@ -51,8 +47,3 @@ To obtain coverage reports:
 
     coverage run --source='.' manage.py test -k -v2
     coverage report -m
-
-Fabric scripts are also available to run tests:
-
-    fab test
-    fab test_coverage
