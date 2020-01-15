@@ -1,4 +1,5 @@
 from datetime import datetime
+import traceback
 
 from django import forms
 from django.core.cache import caches
@@ -159,7 +160,12 @@ class FloatInput(forms.NumberInput):
         self.precision = precision
 
     def render(self,name,value,attrs=None,renderer=None):
-        return super(FloatInput,self).render(name,"" if (value is None or value == "") else round(value,self.precision),attrs=attrs)
+        try:
+            value = "" if (value is None or value == "") else round(float(value),self.precision)
+        except:
+            traceback.print_exc()
+            pass
+        return super(FloatInput,self).render(name,value,attrs=attrs)
 
 class DatetimeInput(forms.TextInput):
     def render(self,name,value,attrs=None,renderer=None):

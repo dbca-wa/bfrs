@@ -732,13 +732,22 @@ class MinisterialReportAuth():
         net_forest_total_area     = 0
 
         count_sql = """
-        select a.region_id,count(*)
-        from bfrs_bushfire a
-        where a.report_status in {report_statuses} and a.reporting_year={reporting_year} and a.fire_not_found=false and {{agency_condition}}
-        group by a.region_id
+        select r.region_id,count(*)
+        from 
+            ((select a.region_id,a.id
+            from bfrs_bushfire a
+            where a.report_status in {report_statuses} and a.reporting_year={reporting_year} and a.fire_not_found=false and a.{{agency_condition}}
+            )
+            union
+            (select b.region_id,b.id
+            from bfrs_bushfire b join bfrs_bushfire c on b.valid_bushfire_id = c.id and c.report_status in {report_statuses} and c.reporting_year={reporting_year} and c.fire_not_found=false and c.{{agency_condition}}
+            where b.report_status = {status_merged} 
+            )) as r
+        group by r.region_id
         """.format(
             report_statuses="({})".format(",".join([str(i) for i in [Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED]])),
-            reporting_year = self.reporting_year
+            reporting_year = self.reporting_year,
+            status_merged = Bushfire.STATUS_MERGED
         )
 
         area_sql = """
@@ -758,15 +767,19 @@ class MinisterialReportAuth():
         total_area_data = {}
 
         with connection.cursor() as cursor:
-            cursor.execute(count_sql.format(
+            sql = count_sql.format(
                 agency_condition = "initial_control_id={}".format(Agency.DBCA.pk)
-            ))
+            )
+            #print(sql)
+            cursor.execute(sql)
             for result in cursor.fetchall():
                 dbca_count_data[result[0]] = result[1] or 0
 
-            cursor.execute(count_sql.format(
+            sql = count_sql.format(
                 agency_condition = "initial_control_id is not null"
-            ))
+            )
+            #print(sql)
+            cursor.execute(sql)
             for result in cursor.fetchall():
                 total_count_data[result[0]] = result[1] or 0
 
@@ -1042,12 +1055,24 @@ class QuarterlyReport():
         item_map = {}
 
         count_sql = """
-        select count(*) 
-        from bfrs_bushfire a join bfrs_region b on a.region_id = b.id
-        where a.report_status in {report_statuses} and a.reporting_year={reporting_year} and a.fire_not_found=False and b.forest_region={{forest_region}} and {{agency_condition}}
+        select count(*)
+        from 
+          ((select a1.region_id,a1.id
+          from bfrs_bushfire a1 join bfrs_region a2 on a1.region_id = a2.id and a2.forest_region={{forest_region}}
+          where a1.report_status in {report_statuses} and a1.reporting_year={reporting_year} and a1.fire_not_found=False and a1.{{agency_condition}}
+          )
+          union
+          (select b1.region_id,b1.id
+          from bfrs_bushfire b1 
+              join bfrs_region b3 on b1.region_id = b3.id and b3.forest_region={{forest_region}}
+              join bfrs_bushfire b2 on b1.valid_bushfire_id = b2.id and b2.report_status in {report_statuses} and b2.reporting_year={reporting_year} and b2.fire_not_found=false and b2.{{agency_condition}} 
+          where b1.report_status = {status_merged} 
+          )) as r
+
         """.format(
             report_statuses="({})".format(",".join([str(i) for i in [Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED]])),
-            reporting_year = self.reporting_year
+            reporting_year = self.reporting_year,
+            status_merged = Bushfire.STATUS_MERGED
         )
 
         area_sql = """
@@ -1289,17 +1314,27 @@ class BushfireByTenureReport():
         count_sql = """
         SELECT b.report_name,count(*) 
         FROM (
-            SELECT 
-                tenure_id,
-                fire_number
-            FROM bfrs_bushfire
-            WHERE report_status in {report_statuses} AND reporting_year={{year}} AND fire_not_found=false
-            ) a join bfrs_tenure b on a.tenure_id = b.id
+            (SELECT 
+                a1.tenure_id,
+                a1.fire_number
+            FROM bfrs_bushfire a1
+            WHERE a1.report_status in {report_statuses} AND a1.reporting_year={{year}} AND a1.fire_not_found=false
+            )
+            union
+            (SELECT 
+                b1.tenure_id,
+                b1.fire_number
+            FROM bfrs_bushfire b1 
+                join bfrs_bushfire b2 on b1.valid_bushfire_id = b2.id and b2.report_status in {report_statuses} AND b2.reporting_year={{year}} AND b2.fire_not_found=false
+            WHERE b1.report_status = {status_merged}
+            )
+         ) a join bfrs_tenure b on a.tenure_id = b.id
         where b.report_group='{{report_group}}'
         GROUP BY b.report_name,b.report_order
         ORDER BY b.report_order
         """.format(
-            report_statuses="({})".format(",".join([str(i) for i in [Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED]]))
+            report_statuses="({})".format(",".join([str(i) for i in [Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED]])),
+            status_merged = Bushfire.STATUS_MERGED
         )
 
         area_sql = """
@@ -1505,11 +1540,22 @@ class BushfireByCauseReport():
 
         count_sql = """
         select a.cause_id,count(*)
-        from bfrs_bushfire a
-        where a.report_status in {report_statuses} and a.reporting_year={{reporting_year}} and a.fire_not_found=false
+        from ( 
+            (select a1.cause_id,a1.id
+            from bfrs_bushfire a1
+            where a1.report_status in {report_statuses} and a1.reporting_year={{reporting_year}} and a1.fire_not_found=false
+            )
+            union
+            (select b1.cause_id,b1.id
+            from bfrs_bushfire b1
+                join bfrs_bushfire b2 on b1.valid_bushfire_id = b2.id and b2.report_status in {report_statuses} and b2.reporting_year={{reporting_year}} and b2.fire_not_found=false
+            where b1.report_status = {status_merged}
+            )
+          ) as a
         group by a.cause_id
         """.format(
-            report_statuses="({})".format(",".join([str(i) for i in [Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED]]))
+            report_statuses="({})".format(",".join([str(i) for i in [Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED]])),
+            status_merged = Bushfire.STATUS_MERGED
         )
 
         area_sql = """
@@ -1727,12 +1773,24 @@ class RegionByTenureReport():
         """
         count_sql = """
         SELECT a.region_id,b.report_name,count(*)
-        FROM bfrs_bushfire a JOIN bfrs_tenure b on a.tenure_id = b.id
-        WHERE a.report_status in {report_statuses} AND a.reporting_year={{year}} AND a.fire_not_found=false and b.report_group='ALL REGIONS'
+        FROM (
+            (SELECT a1.region_id,a1.tenure_id,a1.id
+            FROM bfrs_bushfire a1
+            WHERE a1.report_status in {report_statuses} AND a1.reporting_year={{year}} AND a1.fire_not_found=false
+            ) 
+            union 
+            (SELECT b1.region_id,b1.tenure_id,b1.id
+            FROM bfrs_bushfire b1
+                join bfrs_bushfire b2 on b1.valid_bushfire_id = b2.id and b2.report_status in {report_statuses} AND b2.reporting_year={{year}} AND b2.fire_not_found=false
+            WHERE b1.report_status = {status_merged}
+            ) 
+         ) as a
+            JOIN bfrs_tenure b on a.tenure_id = b.id and b.report_group='ALL REGIONS'
         GROUP BY a.region_id,b.report_name,b.report_order
         ORDER BY a.region_id,b.report_name
         """.format(
-            report_statuses="({})".format(",".join([str(i) for i in [Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED]]))
+            report_statuses="({})".format(",".join([str(i) for i in [Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED]])),
+            status_merged = Bushfire.STATUS_MERGED
         )
 
         area_sql = """
@@ -1961,11 +2019,22 @@ class Bushfire10YrAverageReport():
 
         count_sql = """
         select a.cause_id,count(*)
-        from bfrs_bushfire a
-        where a.report_status in {report_statuses} and a.reporting_year={{reporting_year}} and a.fire_not_found=false
+        from (
+            (select a1.cause_id,a1.id
+            from bfrs_bushfire a1
+            where a1.report_status in {report_statuses} and a1.reporting_year={{reporting_year}} and a1.fire_not_found=false
+            )
+            union
+            (select b1.cause_id,b1.id
+            from bfrs_bushfire b1
+               join bfrs_bushfire b2 on b1.valid_bushfire_id = b2.id and b2.report_status in {report_statuses} and b2.reporting_year={{reporting_year}} and b2.fire_not_found=false
+            where b1.report_status = {status_merged}
+            )
+         ) as a
         group by a.cause_id
         """.format(
-            report_statuses="({})".format(",".join([str(i) for i in [Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED]]))
+            report_statuses="({})".format(",".join([str(i) for i in [Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED]])),
+            status_merged = Bushfire.STATUS_MERGED
         )
 
         area_sql = """
@@ -2281,11 +2350,48 @@ class BushfireIndicator():
         # Group By Region
         #qs = Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED, reporting_year=self.reporting_year, region__in=Region.objects.filter(forest_region=False), first_attack__name='DBCA P&W')
         #qs = Bushfire.objects.filter(authorised_by__isnull=False, reporting_year=self.reporting_year, region__in=Region.objects.filter(forest_region=False), first_attack__name='DBCA P&W').exclude(report_status=Bushfire.STATUS_INVALIDATED)
+        """
         qs = Bushfire.objects.filter(report_status__in=[Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED], reporting_year=self.reporting_year,fire_not_found=False, region__in=get_sorted_regions(True), first_attack=Agency.DBCA)
         qs1 = qs.aggregate(count=Count('id'), area=Sum('area') ) 
         qs2 = qs.filter(area__lt=2.0).aggregate(count=Count('id'), area=Sum('area') ) 
         count1 = qs1.get('count') if qs1.get('count') else 0
         count2 = qs2.get('count') if qs2.get('count') else 0
+        """
+
+
+        count_sql = """
+        select count(*)
+        from (
+            (select a1.id,a1.area
+            from bfrs_bushfire a1
+            where a1.report_status in {report_statuses} and a1.reporting_year={reporting_year} and a1.fire_not_found=false and a1.region_id in ({regions}) and a1.first_attack_id = {first_attack_agency}
+            )
+            union
+            (select b1.id,b2.area
+            from bfrs_bushfire b1
+               join bfrs_bushfire b2 on b1.valid_bushfire_id = b2.id and b2.report_status in {report_statuses} and b2.reporting_year={reporting_year} and b2.region_id in ({regions}) and b2.fire_not_found=false and b2.first_attack_id = {first_attack_agency}
+            where b1.report_status = {status_merged} 
+            )
+         ) as a
+         {{filter}}
+        """.format(
+            report_statuses="({})".format(",".join([str(i) for i in [Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED]])),
+            status_merged = Bushfire.STATUS_MERGED,
+            regions = ",".join([str(r.id) for r in get_sorted_regions(True)]),
+            reporting_year = self.reporting_year,
+            first_attack_agency = Agency.DBCA.id
+        )
+
+        count1 = 0
+        count2 = 0
+        with connection.cursor() as cursor:
+            cursor.execute(count_sql.format(filter=""))
+            result = cursor.fetchone()
+            count1 = result[0] or 0
+
+            cursor.execute(count_sql.format(filter=" where a.area < 2.0"))
+            result = cursor.fetchone()
+            count2 = result[0] or 0
 
         rpt_map = []
         item_map = {}
