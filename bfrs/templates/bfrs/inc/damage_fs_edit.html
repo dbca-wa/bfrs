@@ -4,11 +4,13 @@
             <tbody>
                 <th>Damage Type</th>
                 <th>Number</th>
+                <th>Description</th>
                 <th></th>
                 {% for damage_form in form.damage_formset %}
                 <tr>
                   <td>{{ damage_form.damage_type }}</td>
                   <td>{{ damage_form.number }}</td>
+                  <td>{{ damage_form.descr }}</td>
 
                   <td>
                     {% if damage_form.instance.pk %}{{ damage_form.DELETE }}{% endif %}

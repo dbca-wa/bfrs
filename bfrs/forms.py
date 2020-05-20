@@ -123,7 +123,6 @@ class VerticalRadioRenderer(forms.RadioSelect.renderer):
 
 
 class DisplayOnlyField(Widget):
-
     def __init__(self,attrs=None):
         self.attrs = attrs or {}
         self.required = False
@@ -151,7 +150,6 @@ class GroupForm(forms.ModelForm):
     class Meta:
         model = Group
         exclude = ()
-
 
 
 class BaseFormHelper(FormHelper):
@@ -260,6 +258,7 @@ def coerce_int(value):
     if value is None or value == '':
         return None
     return int(value)
+
 
 class BaseBushfireViewForm(baseforms.ModelForm):
     submit_actions = None
@@ -449,6 +448,7 @@ class BushfireViewForm(BaseBushfireViewForm):
     class Meta:
         model = Bushfire
 
+
 class BushfireSnapshotViewForm(BaseBushfireViewForm):
     def __init__(self,*args,**kwargs):
         super(BushfireSnapshotViewForm,self).__init__(*args,**kwargs)
@@ -458,6 +458,7 @@ class BushfireSnapshotViewForm(BaseBushfireViewForm):
 
     class Meta:
         model = BushfireSnapshot
+
 
 class BaseBushfireEditForm(BushfireViewForm):
     def __init__(self, *args, **kwargs):
@@ -491,7 +492,6 @@ class BaseBushfireEditForm(BushfireViewForm):
                 is_valid = self.damage_formset.is_valid(self.cleaned_data['damage_unknown']) and is_valid
 
         return is_valid
-
 
     def clean(self):
         cleaned_data = super(BaseBushfireEditForm,self).clean()
@@ -657,7 +657,6 @@ class BaseBushfireEditForm(BushfireViewForm):
             elif not self.instance.final_fire_boundary:
                 #no final fire boundary, no area limit, delete the burning areas
                 self.instance.tenures_burnt.all().delete()
-            
 
         if self.is_editable('fire_not_found') and self.instance.fire_not_found:
             #fire not found
@@ -693,6 +692,7 @@ class MergedBushfireForm(BaseBushfireEditForm):
             "prescribed_burn_id":forms.widgets.TextInput(attrs={"placeholder":"Burn ID","title":"Burn ID","style":"width:100%"}),
         }
 
+
 class SubmittedBushfireForm(MergedBushfireForm):
     def __init__(self,*args,**kwargs):
         super(SubmittedBushfireForm,self).__init__(*args,**kwargs)
@@ -720,7 +720,6 @@ class SubmittedBushfireForm(MergedBushfireForm):
 
         else:
             return [('save_submitted','Save submitted report','btn-success')]
-
 
 
     class Meta:
@@ -767,6 +766,7 @@ class SubmittedBushfireForm(MergedBushfireForm):
             
         }
 
+
 class SubmittedBushfireFSSGForm(SubmittedBushfireForm):
     class Meta:
         model = Bushfire
@@ -787,6 +787,7 @@ class AuthorisedBushfireForm(SubmittedBushfireForm):
         model = Bushfire
         extra_update_fields = ('modified','modifier')
 
+ 
 class AuthorisedBushfireFSSGForm(AuthorisedBushfireForm):
     class Meta:
         model = Bushfire
@@ -799,12 +800,14 @@ class AuthorisedBushfireFSSGForm(AuthorisedBushfireForm):
             "dispatch_pw_date":basewidgets.DatetimeInput(),
         }
 
+
 class ReviewedBushfireForm(SubmittedBushfireForm):
     submit_actions = [('save_reviewed','Save final','btn-success')]
 
     class Meta:
         model = Bushfire
         extra_update_fields = ('modified','modifier')
+
 
 class ReviewedBushfireFSSGForm(ReviewedBushfireForm):
     class Meta:
@@ -816,6 +819,7 @@ class ReviewedBushfireFSSGForm(ReviewedBushfireForm):
             "dispatch_pw":forms.RadioSelect(renderer=HorizontalRadioRenderer),
             "dispatch_pw_date":basewidgets.DatetimeInput(),
         }
+
 
 class InitialBushfireForm(SubmittedBushfireForm):
     submit_actions = [('save_draft','Save draft','btn-success'),('submit','Save and Submit','btn-warning')]
@@ -857,6 +861,7 @@ class InitialBushfireForm(SubmittedBushfireForm):
             "fire_bombing.response":forms.RadioSelect(renderer=HorizontalRadioRenderer),
         }
 
+
 class InitialBushfireFSSGForm(InitialBushfireForm):
     class Meta:
         model = Bushfire
@@ -865,6 +870,7 @@ class InitialBushfireFSSGForm(InitialBushfireForm):
             "district":None,
             "reporting_year":None,
         }
+
 
 class BushfireCreateForm(InitialBushfireForm):
     submit_actions = [('create','Create','btn-success'),('submit','Create and Submit','btn-warning')]
@@ -1016,6 +1022,7 @@ class BushfireCreateForm(InitialBushfireForm):
             "fire_detected_date":new_fire_detected_date_widget,
         }
 
+
 class BaseInjuryFormSet(BaseInlineFormSet):
     def clean(self):
         """
@@ -1061,6 +1068,7 @@ class BaseInjuryFormSet(BaseInlineFormSet):
             return True
         return super(BaseInjuryFormSet, self).is_valid()
 
+
 class BaseDamageFormSet(BaseInlineFormSet):
     def clean(self):
         """
@@ -1075,6 +1083,7 @@ class BaseDamageFormSet(BaseInlineFormSet):
             if form.cleaned_data:
                 damage_type = form.cleaned_data['damage_type'] if form.cleaned_data.has_key('damage_type') else None
                 number = form.cleaned_data['number'] if form.cleaned_data.has_key('number') else None
+                descr = form.cleaned_data['descr'] if form.cleaned_data.has_key('descr') else None
                 remove = form.cleaned_data['DELETE'] if form.cleaned_data.has_key('DELETE') else False
 
                 duplicates = False
@@ -1083,14 +1092,14 @@ class BaseDamageFormSet(BaseInlineFormSet):
                         form.cleaned_data['DELETE'] = True
                         continue
 
-                    # Check that no two records have the same damage_type
-                    if damage_type.name in damages:
+                    # Check that no two records have the same damage_type (unless of damage_type = 'OTHER')
+                    if damage_type.name in damages and damage_type.name != 'OTHER':
                         duplicates = True
                     else:
                         damages.append((damage_type.name))
 
                     if duplicates:
-                        form.add_error('damage_type', 'Duplicate: Damage type must be unique')
+                        form.add_error('damage_type', 'Duplicate: Damage type must be unique (except for \'OTHER\'')
 
         return
 
@@ -1155,6 +1164,7 @@ RECOMMENDATION_CHOICES = (
     (4, 'Accept/Attending'),
 )
 
+
 class PDFReportForm(forms.Form):
     author = forms.CharField(max_length=100)
     position = forms.CharField(max_length=100)
@@ -1175,8 +1185,9 @@ class PDFReportForm(forms.Form):
 
 AreaBurntFormSet            = inlineformset_factory(Bushfire, AreaBurnt, extra=0, min_num=0, exclude=(), form=AreaBurntForm)
 InjuryFormSet               = inlineformset_factory(Bushfire, Injury, formset=BaseInjuryFormSet, extra=1, max_num=7, min_num=0, validate_min=False, exclude=())
-DamageFormSet               = inlineformset_factory(Bushfire, Damage, formset=BaseDamageFormSet, extra=1, max_num=7, min_num=0, validate_min=False, exclude=())
+DamageFormSet               = inlineformset_factory(Bushfire, Damage, formset=BaseDamageFormSet, extra=1, max_num=None, min_num=0, validate_min=False, exclude=())
 #FireBehaviourFormSet        = inlineformset_factory(Bushfire, FireBehaviour, formset=BaseFireBehaviourFormSet, extra=1, min_num=0, validate_min=False, exclude=())
+
 
 class DocumentViewForm(baseforms.ModelForm):
     def __init__(self,request=None,*args,**kwargs):
@@ -1235,8 +1246,8 @@ class DocumentUpdateForm(DocumentViewForm):
             'document_created':basewidgets.DatetimeInput(),
         }
 
-class DocumentCreateForm(DocumentUpdateForm):
 
+class DocumentCreateForm(DocumentUpdateForm):
     def __init__(self,*args,**kwargs):
         if "initial" in kwargs:
             kwargs["initial"]["document_created"] = timezone.now()
@@ -1259,6 +1270,7 @@ class DocumentCreateForm(DocumentUpdateForm):
             "custom_tag":forms.TextInput(attrs={"style":"width:90%"}),
             "document":None
         }
+
 
 class DocumentFilterForm(baseforms.ModelForm):
     def __init__(self,request=None,*args,**kwargs):
@@ -1332,6 +1344,7 @@ class DocumentTagViewForm(baseforms.ModelForm):
             "archivedon":basewidgets.DatetimeDisplay(),
         }
 
+
 class DocumentTagUpdateForm(DocumentTagViewForm):
     def clean_name(self):
         value = self.cleaned_data.get("name")
@@ -1355,6 +1368,7 @@ class DocumentTagUpdateForm(DocumentTagViewForm):
             "id":forms.HiddenInput(),
             "archived":None
         }
+
 
 class BaseDocumentTagFormSet(BaseInlineFormSet):
 
@@ -1423,6 +1437,7 @@ class DocumentCategoryBaseForm(baseforms.ModelForm):
             "archivedon":basewidgets.DatetimeDisplay(),
         }
 
+
 class DocumentCategoryViewForm(DocumentCategoryBaseForm):
     def __init__(self,*args,**kwargs):
         super(DocumentCategoryViewForm,self).__init__(*args,**kwargs)
@@ -1444,6 +1459,7 @@ class DocumentCategoryViewForm(DocumentCategoryBaseForm):
             "archivedby":basewidgets.TextDisplay(),
             "archivedon":basewidgets.DatetimeDisplay(),
         }
+
 
 class DocumentCategoryUpdateForm(DocumentCategoryBaseForm):
     def __init__(self,*args,**kwargs):

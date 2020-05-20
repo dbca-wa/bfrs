@@ -1260,4 +1260,3 @@ reversion.register(BushfireSnapshot) # related_name=snapshots
 reversion.register(Document)
 
 reversion.register(BushfireProperty) 
-

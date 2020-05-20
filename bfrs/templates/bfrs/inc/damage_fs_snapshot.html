@@ -3,11 +3,12 @@
         <tbody>
             <th>Damage Type</th>
             <th>Number</th>
-
+            <th>Description</th>
                 {% for damage in damages.all %}
                 <tr>
                     <td>{{ damage.damage_type }}</td>
                     <td>{{ damage.number }}</td>
+                    <td>{{ damage.descr }}</td>
                 </tr>
                 {% endfor %}
         </tbody>
