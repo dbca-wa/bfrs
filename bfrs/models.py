@@ -1003,6 +1003,7 @@ class InjurySnapshot(InjuryBase, Audit):
 class DamageBase(models.Model):
     damage_type = models.ForeignKey(DamageType)
     number = models.PositiveSmallIntegerField(validators=[MinValueValidator(0)])
+    descr = models.CharField(max_length=255,blank=True, verbose_name="Description")
 
     def __str__(self):
         return 'Damage Type {}, Number {}'.format(self.damage_type, self.number)
@@ -1015,7 +1016,7 @@ class Damage(DamageBase):
     bushfire = models.ForeignKey(Bushfire, related_name='damages')
 
     class Meta:
-        unique_together = ('bushfire', 'damage_type',)
+        unique_together = ('bushfire', 'damage_type', 'descr')
 
 
 class DamageSnapshot(DamageBase, Audit):
@@ -1023,7 +1024,7 @@ class DamageSnapshot(DamageBase, Audit):
     snapshot = models.ForeignKey(BushfireSnapshot, related_name='damage_snapshot')
 
     class Meta:
-        unique_together = ('damage_type', 'snapshot')
+        unique_together = ('damage_type', 'descr', 'snapshot')
 
 
 class BushfirePropertyBase(models.Model):
