@@ -837,6 +837,7 @@ class Tenure(models.Model):
     report_group = models.CharField(verbose_name='Tenure category report group', max_length=32,default="")
     report_order = models.PositiveSmallIntegerField(verbose_name='order in annual report',default=1)
     report_group_order = models.PositiveSmallIntegerField(verbose_name='group order in annual report',default=1)
+    dbca_interest = models.BooleanField(default=True)
 
 
     @cachedclassproperty
