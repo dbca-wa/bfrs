@@ -256,6 +256,7 @@ class Region(models.Model):
     name = models.CharField(max_length=64, unique=True)
     forest_region = models.BooleanField(default=False)
     geometry = models.MultiPolygonField(srid=4326, null=False, blank=False, editable=False, default = 'MULTIPOLYGON((( 110 -10, 120 -10, 120 -40, 110 -40, 110 -10)))')
+    dbca = models.BooleanField(default=True)
 
     @cachedclassproperty
     def kimberley(cls):

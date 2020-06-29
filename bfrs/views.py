@@ -46,7 +46,7 @@ from bfrs.utils import (breadcrumbs_li,
         is_external_user, can_maintain_data, refresh_gokart,
         get_missing_mandatory_fields,get_bushfire_url,
     )
-from bfrs.reports import BushfireReport, MinisterialReport, export_outstanding_fires 
+from bfrs.reports import BushfireReport, MinisterialReport, export_outstanding_fires, calculate_report_tables
 from django.db import IntegrityError, transaction
 from django.forms import ValidationError
 from datetime import datetime
@@ -221,8 +221,16 @@ class BushfireView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin, filter_views.
                 reporting_year = int(self.request.GET.get('reporting_year')) if self.request.GET.has_key('reporting_year') else None
             except:
                 reporting_year = None
-
             return BushfireReport(reporting_year).export()
+            
+        elif action == 'calculate_report_tables':
+            if not self.request.user.groups.filter(name = 'Fire Information Management').exists():
+                messages.info(request, 'Only members of the Fire Information Management group in the database can use Calculate Report Tables.')
+                return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+            else:
+                messages.info(self.request, 'Complete.')
+                return calculate_report_tables(self.request)
+            
         elif action == 'snapshot_history':
             bushfire = Bushfire.objects.get(id=self.request.GET.get('bushfire_id'))
             context = {

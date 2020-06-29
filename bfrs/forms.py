@@ -214,13 +214,16 @@ class BushfireFilterForm(forms.ModelForm):
     YEAR_CHOICES = []
     RPT_YEAR_CHOICES = []
     STATUS_CHOICES = []
+    REGION_CHOICES = []
     try:
         YEAR_CHOICES = [[i['year'], i['year']] for i in Bushfire.objects.all().values('year').distinct()]
         RPT_YEAR_CHOICES = [[i['reporting_year'], i['reporting_year']] for i in Bushfire.objects.all().values('reporting_year').distinct()]
         STATUS_CHOICES = [(u'-1', '---------')] + list(Bushfire.REPORT_STATUS_CHOICES) + [(u'900','Pending to Review')]
+        REGION_CHOICES = [[None, '---------']] + [[r['id'], r['name']] for r in Region.objects.filter(dbca=True).values('id', 'name')]
     except:
         pass
 
+    region = forms.ChoiceField(choices=REGION_CHOICES, required=False)
     year = forms.ChoiceField(choices=YEAR_CHOICES,required=False)
     reporting_year = forms.ChoiceField(choices=RPT_YEAR_CHOICES, required=False)
     include_archived = forms.BooleanField(required=False)
@@ -234,6 +237,7 @@ class BushfireFilterForm(forms.ModelForm):
 
         try:
             # allows dynamic update of the filter set, on page refresh
+            self.fields["region"].choices = [[None, '---------']] + [[r['id'], r['name']] for r in Region.objects.filter(dbca=True).values('id', 'name')]
             self.fields["year"].choices = [[None, '---------']] + [[i['year'], str(i['year']) + '/' + str(i['year']+1)] for i in Bushfire.objects.all().values('year').distinct().order_by('year')]
             self.fields["reporting_year"].choices = [[None, '---------']] + [[i['reporting_year'], str(i['reporting_year']) + '/' + str(i['reporting_year']+1)] for i in Bushfire.objects.all().values('reporting_year').distinct().order_by('reporting_year')]
             # allows dynamic update of the filter set, on page refresh
