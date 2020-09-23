@@ -3,14 +3,18 @@ from bfrs.models import Bushfire, Region, District, Tenure, Cause, current_finye
 from bfrs.utils import get_pbs_bushfires
 from django.db.models import Count, Sum
 from django.db.models.query import QuerySet
+from django.contrib.auth.models import User, Group
+from django.contrib import messages
 from datetime import datetime
 from xlwt import Workbook, Font, XFStyle, Alignment, Pattern, Style
 from itertools import count
 import unicodecsv
 import shutil
 
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
+from django.template.response import TemplateResponse
 from django.core.mail import send_mail
+from django.db import connection
 from cStringIO import StringIO
 from django.core.mail import EmailMessage
 from django.conf import settings
@@ -46,9 +50,11 @@ def get_sorted_regions(forest_region=None):
     key = "all" if forest_region is None else ("forest" if forest_region else "nonforest")
     if key not in sorted_regions:
         if forest_region is None:
-            sorted_regions[key] = sorted(Region.objects.all(),cmp=lambda r1,r2: cmp(region_order.get(r1.name,r1.id),region_order.get(r2.name,r2.id)))
+            #sorted_regions[key] = sorted(Region.objects.all(),cmp=lambda r1,r2: cmp(region_order.get(r1.name,r1.id),region_order.get(r2.name,r2.id)))
+            sorted_regions[key] = sorted(Region.objects.filter(dbca=True) ,cmp=lambda r1,r2: cmp(region_order.get(r1.name,r1.id),region_order.get(r2.name,r2.id)))
         else:
-            sorted_regions[key] = sorted(Region.objects.filter(forest_region=forest_region),cmp=lambda r1,r2: cmp(region_order.get(r1.name,r1.id),region_order.get(r2.name,r2.id)))
+            #sorted_regions[key] = sorted(Region.objects.filter(forest_region=forest_region),cmp=lambda r1,r2: cmp(region_order.get(r1.name,r1.id),region_order.get(r2.name,r2.id)))
+            sorted_regions[key] = sorted(Region.objects.filter(dbca=True).filter(forest_region=forest_region),cmp=lambda r1,r2: cmp(region_order.get(r1.name,r1.id),region_order.get(r2.name,r2.id)))
 
     return sorted_regions[key]
 
@@ -141,7 +147,7 @@ def read_col(fin_year, col_type):
 
 
 class BushfireReport():
-    def __init__(self,reporting_year=None):
+    def __init__(self, reporting_year=None):
         self.reporting_year = current_finyear() if (reporting_year is None or reporting_year >= current_finyear()) else reporting_year
         self.ministerial_auth = MinisterialReportAuth(self.reporting_year)
         self.ministerial_268 = MinisterialReport268(self.reporting_year)
@@ -149,7 +155,7 @@ class BushfireReport():
         self.quarterly = QuarterlyReport(self.reporting_year)
         self.by_tenure = BushfireByTenureReport(self.reporting_year)
         self.by_cause = BushfireByCauseReport(self.reporting_year)
-        self.region_by_tenure = RegionByTenureReport(self.reporting_year)
+        self.region_by_tenure = BushfireByRegionByTenureReport(self.reporting_year)
         self.indicator = BushfireIndicator(self.reporting_year)
         self.by_cause_10YrAverage = Bushfire10YrAverageReport(self.reporting_year)
 
@@ -197,7 +203,7 @@ class MinisterialReport():
     """
     Report for Combined (Authorised and active 268b) fires. This is the sum of MinisterialAuth and Ministerial268b.
     """
-    def __init__(self, ministerial_auth=None, ministerial_268=None,reporting_year=None):
+    def __init__(self, ministerial_auth=None, ministerial_268=None, reporting_year=None):
         self.reporting_year = current_finyear() if (reporting_year is None or reporting_year >= current_finyear()) else reporting_year
         self.ministerial_auth = ministerial_auth if ministerial_auth else MinisterialReportAuth(self.reporting_year)
         self.ministerial_268 = ministerial_268 if ministerial_268 else MinisterialReport268(self.reporting_year)
@@ -308,7 +314,6 @@ class MinisterialReport():
         return response
 
     def get_excel_sheet(self, rpt_date, book=Workbook()):
-
         # book = Workbook()
         sheet1 = book.add_sheet('Ministerial Report')
         sheet1 = book.get_sheet('Ministerial Report')
@@ -367,7 +372,11 @@ class MinisterialReport():
         hdr = sheet1.row(row_no())
         hdr = sheet1.row(row_no())
         hdr.write(col_no(), DISCLAIMER, style=style_normal)
-
+        
+        col_no = lambda c=count(): next(c)
+        hdr = sheet1.row(row_no())
+        hdr = sheet1.row(row_no())
+        hdr.write(col_no(), "See the Ministerial Report (Auth) tab for information re bushfires excluded from the area figures (not from the count figures) above.", style=style_normal)
         #book.save("/tmp/foobar.xls")
         #return sheet1
 
@@ -462,6 +471,7 @@ class MinisterialReport():
             if folder:
                 shutil.rmtree(folder)
 
+
 class MinisterialReport268():
     """
     Report for active 268b bushfires only
@@ -484,6 +494,7 @@ class MinisterialReport268():
 
         if not dbca_initial_control:
             self.pbs_fires_dict = pbs_fires_dict
+            #logger.info("self.pbs_fires_dict: " + str(self.pbs_fires_dict))
             self.found_fires = [i['fire_id'] for i in self.pbs_fires_dict]
             self.missing_fires = list(set(outstanding_fires).difference(self.found_fires)) # fire_numbers not returned from PB
 
@@ -714,14 +725,14 @@ class MinisterialReport268():
         return response
 
 
-
 class MinisterialReportAuth():
     """
     Report for Authorised fires Only
     """
-    def __init__(self,reporting_year=None):
+    def __init__(self, reporting_year=None, overlap_ids=[]):
         self.reporting_year = current_finyear() if (reporting_year is None or reporting_year >= current_finyear()) else reporting_year
-        self.rpt_map, self.item_map = self.create()
+        self.overlap_ids = overlap_ids
+        self.rpt_map, self.item_map, self.excluded_bf_info = self.create()
 
     def create(self):
         rpt_map = []
@@ -730,18 +741,21 @@ class MinisterialReportAuth():
         net_forest_area_pw_tenure = 0
         net_forest_total_all_area = 0
         net_forest_total_area     = 0
+        excluded_bfs_general_info = {}
+        excluded_bfs_region_info = {}
+        excluded_bfs_tenure_info = {}
 
         count_sql = """
-        select r.region_id,count(*)
-        from 
-            ((select a.region_id,a.id
-            from bfrs_bushfire a
-            where a.report_status in {report_statuses} and a.reporting_year={reporting_year} and a.fire_not_found=false and a.{{agency_condition}}
+        SELECT r.region_id,count(*)
+        FROM 
+            ((SELECT a.region_id,a.id
+            FROM reporting_bushfire a JOIN bfrs_tenure t ON a.tenure_id = t.id
+            WHERE a.report_status IN {report_statuses} AND a.reporting_year={reporting_year} AND a.fire_not_found=false {{agency_condition}}
             )
-            union
-            (select b.region_id,b.id
-            from bfrs_bushfire b join bfrs_bushfire c on b.valid_bushfire_id = c.id and c.report_status in {report_statuses} and c.reporting_year={reporting_year} and c.fire_not_found=false and c.{{agency_condition}}
-            where b.report_status = {status_merged} 
+            UNION
+            (SELECT b.region_id,b.id
+            FROM reporting_bushfire b JOIN reporting_bushfire c ON b.valid_bushfire_id = c.id AND c.report_status IN {report_statuses} AND c.reporting_year={reporting_year} AND c.fire_not_found=false JOIN bfrs_tenure t ON b.tenure_id = t.id 
+            WHERE b.report_status = {status_merged}  {{agency_condition}}
             )) as r
         group by r.region_id
         """.format(
@@ -751,12 +765,12 @@ class MinisterialReportAuth():
         )
 
         area_sql = """
-        select a.region_id,sum(b.area) as total_all_regions_area,sum(a.area) as total_area
-        from bfrs_bushfire a join bfrs_areaburnt b on a.id = b.bushfire_id join bfrs_tenure c on b.tenure_id = c.id
-        where a.report_status in {report_statuses} and a.reporting_year={reporting_year} and a.fire_not_found=false and {{agency_condition}} and c.report_group='ALL REGIONS'
-        group by a.region_id
+        SELECT bf.region_id, SUM(ab.area) AS total_all_regions_area, SUM(bf.area) AS total_area
+        FROM reporting_bushfire bf JOIN reporting_areaburnt ab ON bf.id = ab.bushfire_id JOIN bfrs_tenure t ON ab.tenure_id = t.id
+        WHERE bf.report_status IN {report_statuses} AND bf.reporting_year={reporting_year} AND bf.fire_not_found=false AND t.report_group='ALL REGIONS'  {{agency_condition}} 
+        GROUP BY bf.region_id
         """.format(
-            report_statuses="({})".format(",".join([str(i) for i in [Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED]])),
+            report_statuses="({})".format(",".join([str(i) for i in [Bushfire.STATUS_FINAL_AUTHORISED, Bushfire.STATUS_REVIEWED]])),
             reporting_year = self.reporting_year
         )
 
@@ -767,39 +781,32 @@ class MinisterialReportAuth():
         total_area_data = {}
 
         with connection.cursor() as cursor:
-            sql = count_sql.format(
-                agency_condition = "initial_control_id={}".format(Agency.DBCA.pk)
-            )
-            #print(sql)
+            sql = count_sql.format(agency_condition = "AND t.dbca_interest IS TRUE")
             cursor.execute(sql)
             for result in cursor.fetchall():
                 dbca_count_data[result[0]] = result[1] or 0
 
-            sql = count_sql.format(
-                agency_condition = "initial_control_id is not null"
-            )
-            #print(sql)
+            sql = count_sql.format(agency_condition = "")
             cursor.execute(sql)
             for result in cursor.fetchall():
                 total_count_data[result[0]] = result[1] or 0
 
-            cursor.execute(area_sql.format(
-                agency_condition = "initial_control_id={}".format(Agency.DBCA.pk)
-            ))
+            sql = area_sql.format(agency_condition = "AND t.dbca_interest IS TRUE")
+            cursor.execute(sql)
             for result in cursor.fetchall():
                 dbca_area_data[result[0]] = result[1] or 0
 
-            cursor.execute(area_sql.format(
-                agency_condition = "initial_control_id is not null"
-            ))
+            sql = area_sql.format(agency_condition = "")
+            logger.info("sql: " + sql)
+            cursor.execute(sql)
             for result in cursor.fetchall():
                 total_area_data[result[0]] = result[1] or 0
-
+        logger.info("total_area_data: " + str(total_area_data))
         for region in get_sorted_regions(True):
-            pw_tenure      = dbca_count_data.get(region.id,0)
-            area_pw_tenure = round(dbca_area_data.get(region.id,0), 2) 
-            total_all_area = total_count_data.get(region.id,0)
-            total_area     = round(total_area_data.get(region.id,0), 2)
+            pw_tenure      = dbca_count_data.get(region.id, 0)
+            area_pw_tenure = round(dbca_area_data.get(region.id, 0), 2) 
+            total_all_area = total_count_data.get(region.id, 0)
+            total_area     = round(total_area_data.get(region.id, 0), 2)
 
             rpt_map.append(
                 {region.name: dict(pw_tenure=pw_tenure, area_pw_tenure=area_pw_tenure, total_all_tenure=total_all_area, total_area=total_area)}
@@ -859,8 +866,15 @@ class MinisterialReportAuth():
                 total_area=net_forest_total_area + net_nonforest_total_area
             )}
         )
+        
+        # Excluded bushfires
+        excluded_bf_info = {
+            "general":            excluded_bfs_general_info,
+            "region_info":      excluded_bfs_region_info,
+            "tenure_info":      excluded_bfs_tenure_info
+            }
                 
-        return rpt_map, item_map
+        return rpt_map, item_map, excluded_bf_info
 
     def export_final_csv(self, request, queryset):
         writer = unicodecsv.writer(response, quoting=unicodecsv.QUOTE_ALL)
@@ -945,8 +959,6 @@ class MinisterialReportAuth():
         hdr = sheet1.row(row_no())
         hdr.write(col_no(), DISCLAIMER, style=style_normal)
 
-        #book.save("/tmp/foobar.xls")
-        #return sheet1
 
     def write_excel(self):
         rpt_date = datetime.now()
@@ -978,12 +990,8 @@ class MinisterialReportAuth():
                 print '{}\t{}\t{}\t{}\t{}'.format(region, data['pw_tenure'], data['area_pw_tenure'], data['total_all_tenure'], data['total_area']).expandtabs(20)
 
     def pdflatex(self, request, form_data):
-
         now = timezone.localtime(timezone.now())
-        #report_date = now.strptime(request.GET.get('date'), '%Y-%m-%d').date()
         report_date = now
-
-        #template = request.GET.get("template", "pfp")
         template = "ministerial_auth_report"
         response = HttpResponse(content_type='application/pdf')
         filename = template + ".pdf"
@@ -1039,11 +1047,14 @@ class MinisterialReportAuth():
             if folder:
                 shutil.rmtree(folder)
 
-class QuarterlyReport():
-    def __init__(self,reporting_year=None):
-        self.reporting_year = current_finyear() if (reporting_year is None or reporting_year >= current_finyear()) else reporting_year
-        self.rpt_map, self.item_map = self.create()
 
+class QuarterlyReport():
+    def __init__(self, reporting_year=None, overlap_ids=[]):
+        self.reporting_year = current_finyear() if (reporting_year is None or reporting_year >= current_finyear()) else reporting_year
+        self.overlap_ids = overlap_ids
+        self.rpt_map, self.item_map = self.create()
+        #logger.info("overlap_ids: " + str(overlap_ids))
+        
     def create(self):
         """
         To Test:
@@ -1055,20 +1066,20 @@ class QuarterlyReport():
         item_map = {}
 
         count_sql = """
-        select count(*)
-        from 
-          ((select a1.region_id,a1.id
-          from bfrs_bushfire a1 join bfrs_region a2 on a1.region_id = a2.id and a2.forest_region={{forest_region}}
-          where a1.report_status in {report_statuses} and a1.reporting_year={reporting_year} and a1.fire_not_found=False and a1.{{agency_condition}}
+        SELECT COUNT(*)
+        FROM 
+          ((SELECT bf1.region_id, bf1.id
+          FROM reporting_bushfire bf1 JOIN bfrs_region r ON bf1.region_id = r.id AND r.forest_region = {{forest_region}} JOIN bfrs_tenure t ON bf1.tenure_id = t.id
+          WHERE bf1.report_status IN {report_statuses} AND bf1.reporting_year = {reporting_year} AND bf1.fire_not_found=False {{agency_condition}}
           )
-          union
-          (select b1.region_id,b1.id
-          from bfrs_bushfire b1 
-              join bfrs_region b3 on b1.region_id = b3.id and b3.forest_region={{forest_region}}
-              join bfrs_bushfire b2 on b1.valid_bushfire_id = b2.id and b2.report_status in {report_statuses} and b2.reporting_year={reporting_year} and b2.fire_not_found=false and b2.{{agency_condition}} 
-          where b1.report_status = {status_merged} 
-          )) as r
-
+          UNION
+          (SELECT bf2.region_id, bf2.id
+          FROM reporting_bushfire bf2 
+              JOIN bfrs_region r2 ON bf2.region_id = r2.id AND r2.forest_region = {{forest_region}}
+              JOIN reporting_bushfire bf3 ON bf2.valid_bushfire_id = bf3.id AND bf3.report_status IN {report_statuses} AND bf3.reporting_year = {reporting_year} AND bf3.fire_not_found=false 
+              JOIN bfrs_tenure t ON bf2.tenure_id = t.id
+          WHERE bf2.report_status = {status_merged} {{agency_condition}}
+          )) AS x
         """.format(
             report_statuses="({})".format(",".join([str(i) for i in [Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED]])),
             reporting_year = self.reporting_year,
@@ -1076,9 +1087,9 @@ class QuarterlyReport():
         )
 
         area_sql = """
-        select sum(c.area) as total_all_regions_area,sum(a.area) as total_area 
-        from bfrs_bushfire a join bfrs_region b on a.region_id = b.id join bfrs_areaburnt c on a.id = c.bushfire_id join bfrs_tenure d on c.tenure_id = d.id
-        where a.report_status in {report_statuses} and a.reporting_year={reporting_year} and a.fire_not_found=False and b.forest_region={{forest_region}} and {{agency_condition}} and d.report_group='ALL REGIONS'
+        SELECT SUM(ab.area) AS total_all_regions_area, SUM(bf.area) AS total_area 
+        FROM reporting_bushfire bf JOIN bfrs_region r ON bf.region_id = r.id JOIN reporting_areaburnt ab ON bf.id = ab.bushfire_id JOIN bfrs_tenure t ON ab.tenure_id = t.id
+        WHERE bf.report_status IN {report_statuses} AND bf.reporting_year = {reporting_year} AND bf.fire_not_found=False AND r.forest_region = {{forest_region}} {{agency_condition}} AND t.report_group = 'ALL REGIONS'
         """.format(
             report_statuses="({})".format(",".join([str(i) for i in [Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED]])),
             reporting_year = self.reporting_year
@@ -1087,31 +1098,35 @@ class QuarterlyReport():
         with connection.cursor() as cursor:
             cursor.execute(count_sql.format(
                 forest_region = 'true',
-                agency_condition = "initial_control_id={}".format(Agency.DBCA.pk)
+                agency_condition =  "AND t.dbca_interest IS TRUE"
             ))
             result = cursor.fetchone()
             forest_pw_tenure = result[0] or 0
+            logger.info("Quarterly: forest region + DBCA interest count complete")
 
             cursor.execute(area_sql.format(
                 forest_region = 'true',
-                agency_condition = "initial_control_id={}".format(Agency.DBCA.pk)
+                agency_condition = "AND t.dbca_interest IS TRUE"
             ))
             result = cursor.fetchone()
             forest_area_pw_tenure = result[0] or 0
+            logger.info("Quarterly: forest region + DBCA interest area complete")
 
             cursor.execute(count_sql.format(
                 forest_region = 'true',
-                agency_condition = "initial_control_id!={}".format(Agency.DBCA.pk)
+                agency_condition = "AND t.dbca_interest IS NOT TRUE"
             ))
             result = cursor.fetchone()
             forest_non_pw_tenure = result[0] or 0
+            logger.info("Quarterly: forest region + Non DBCA interest count complete")
 
             cursor.execute(area_sql.format(
                 forest_region = 'true',
-                agency_condition = "initial_control_id!={}".format(Agency.DBCA.pk)
+                agency_condition = "AND t.dbca_interest IS NOT TRUE"
             ))
             result = cursor.fetchone()
             forest_area_non_pw_tenure = result[0] or 0
+            logger.info("Quarterly: forest region + Non DBCA interest area complete")
 
             forest_tenure_total = forest_pw_tenure + forest_non_pw_tenure 
             forest_area_total = forest_area_pw_tenure + forest_area_non_pw_tenure
@@ -1126,35 +1141,38 @@ class QuarterlyReport():
 
             cursor.execute(count_sql.format(
                 forest_region = 'false',
-                agency_condition = "initial_control_id={}".format(Agency.DBCA.pk)
+                agency_condition = "AND t.dbca_interest IS TRUE"
             ))
             result = cursor.fetchone()
             nonforest_pw_tenure = result[0] or 0
+            logger.info("Quarterly: Non forest region + DBCA interest count complete")
 
             cursor.execute(area_sql.format(
                 forest_region = 'false',
-                agency_condition = "initial_control_id={}".format(Agency.DBCA.pk)
+                agency_condition = "AND t.dbca_interest IS TRUE"
             ))
             result = cursor.fetchone()
             nonforest_area_pw_tenure = result[0] or 0
+            logger.info("Quarterly: Non forest region + DBCA interest area complete")
 
             cursor.execute(count_sql.format(
                 forest_region = 'false',
-                agency_condition = "initial_control_id!={}".format(Agency.DBCA.pk)
+                agency_condition = "AND t.dbca_interest IS NOT TRUE"
             ))
             result = cursor.fetchone()
             nonforest_non_pw_tenure = result[0] or 0
+            logger.info("Quarterly: Non forest region + non DBCA interest count complete")
 
             cursor.execute(area_sql.format(
                 forest_region = 'false',
-                agency_condition = "initial_control_id!={}".format(Agency.DBCA.pk)
+                agency_condition = "AND t.dbca_interest IS NOT TRUE"
             ))
             result = cursor.fetchone()
             nonforest_area_non_pw_tenure = result[0] or 0
+            logger.info("Quarterly: Non forest region + Non DBCA interest area complete")
 
             nonforest_tenure_total = nonforest_pw_tenure + nonforest_non_pw_tenure 
             nonforest_area_total = nonforest_area_pw_tenure + nonforest_area_non_pw_tenure
-
 
             rpt_map.append(
                 {'Non Forest Regions': dict(
@@ -1171,6 +1189,8 @@ class QuarterlyReport():
                 total_all_tenure=forest_tenure_total + nonforest_tenure_total, total_area=forest_area_total + nonforest_area_total
             )}
         )
+
+        logger.info("Quarterly: create complete")        
         return rpt_map, item_map
 
     def escape_burns(self):
@@ -1297,39 +1317,41 @@ class QuarterlyReport():
                 else:
                     print
 
+
 class BushfireByTenureReport():
     def __init__(self,reporting_year=None):
         self.reporting_year = current_finyear() if (reporting_year is None or reporting_year >= current_finyear()) else reporting_year
-        self.rpt_map, self.item_map = self.create()
+        self.rpt_map, self.item_map, self.other_report_group_fires_info = self.create()
+        logger.info("Starting BushfireByTenureReport")
 
     def create(self):
         # Group By Region
         #qs = Bushfire.objects.filter(report_status__gte=Bushfire.STATUS_FINAL_AUTHORISED)
         report_group_sql = """
-        SELECT distinct report_group,report_group_order from bfrs_tenure where report_group_order > 0 order by report_group_order
+        SELECT DISTINCT report_group, report_group_order FROM bfrs_tenure WHERE report_group_order > 0 ORDER BY report_group_order
         """
         report_name_sql = """
-        SELECT distinct report_name,report_order from bfrs_tenure where report_group='{report_group}' order by report_order
+        SELECT DISTINCT report_name, report_order FROM bfrs_tenure WHERE report_group = '{report_group}' ORDER BY report_order
         """
         count_sql = """
-        SELECT b.report_name,count(*) 
+        SELECT b.report_name, count(*) 
         FROM (
             (SELECT 
                 a1.tenure_id,
                 a1.fire_number
-            FROM bfrs_bushfire a1
-            WHERE a1.report_status in {report_statuses} AND a1.reporting_year={{year}} AND a1.fire_not_found=false
+            FROM reporting_bushfire a1
+            WHERE a1.report_status IN {report_statuses} AND a1.reporting_year = {{year}} AND a1.fire_not_found = false
             )
-            union
+            UNION
             (SELECT 
                 b1.tenure_id,
                 b1.fire_number
-            FROM bfrs_bushfire b1 
-                join bfrs_bushfire b2 on b1.valid_bushfire_id = b2.id and b2.report_status in {report_statuses} AND b2.reporting_year={{year}} AND b2.fire_not_found=false
+            FROM reporting_bushfire b1 
+                JOIN reporting_bushfire b2 ON b1.valid_bushfire_id = b2.id AND b2.report_status IN {report_statuses} AND b2.reporting_year = {{year}} AND b2.fire_not_found = false
             WHERE b1.report_status = {status_merged}
             )
-         ) a join bfrs_tenure b on a.tenure_id = b.id
-        where b.report_group='{{report_group}}'
+         ) a JOIN bfrs_tenure b ON a.tenure_id = b.id
+        WHERE b.report_group='{{report_group}}'
         GROUP BY b.report_name,b.report_order
         ORDER BY b.report_order
         """.format(
@@ -1338,12 +1360,21 @@ class BushfireByTenureReport():
         )
 
         area_sql = """
-        SELECT c.report_name, sum(b.area) AS area 
-        FROM bfrs_bushfire a JOIN bfrs_areaburnt b ON a.id = b.bushfire_id JOIN bfrs_tenure c on b.tenure_id = c.id
-        WHERE a.report_status in {report_statuses} AND a.reporting_year={{year}} AND a.fire_not_found=false and c.report_group='{{report_group}}'
-        GROUP BY c.report_name,c.report_order
+        SELECT t.report_name, SUM(ab.area) AS area 
+        FROM reporting_bushfire bf JOIN reporting_areaburnt ab ON bf.id = ab.bushfire_id JOIN bfrs_tenure t ON ab.tenure_id = t.id
+        WHERE bf.report_status IN {report_statuses} AND bf.reporting_year = {{year}} AND bf.fire_not_found = false AND t.report_group = '{{report_group}}'
+        GROUP BY t.report_name, t.report_order
         """.format(
             report_statuses="({})".format(",".join([str(i) for i in [Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED]]))
+        )
+        
+        other_report_group_sql = """
+        SELECT bf.id, bf.name, bf.fire_number, r.name
+        FROM reporting_bushfire bf JOIN reporting_areaburnt ab ON bf.id = ab.bushfire_id JOIN bfrs_region r ON bf.region_id = r.id
+        WHERE ab.tenure_id = 20 AND bf.report_status in {report_statuses} AND bf.reporting_year = {year} AND bf.fire_not_found = false AND ab.area >= 1;
+        """.format(
+            report_statuses="({})".format(",".join([str(i) for i in [Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED]])),
+            year = self.reporting_year
         )
 
         rpt_map = []
@@ -1358,22 +1389,21 @@ class BushfireByTenureReport():
                 counts = []
                 areas = []
                 rpt_group_map = []
-                rpt_map.append((report_group,rpt_group_map))
-                for y in (self.reporting_year - 2,self.reporting_year - 1,self.reporting_year):
+                rpt_map.append((report_group, rpt_group_map))
+                for y in (self.reporting_year - 2, self.reporting_year - 1, self.reporting_year):
                     year_counts = {"total":0}
                     counts.append(year_counts)
-                    cursor.execute(count_sql.format(year=y,report_group=report_group))
+                    cursor.execute(count_sql.format(year=y, report_group=report_group))
                     for result in cursor.fetchall():
                         year_counts[result[0]] = result[1] or 0
                         year_counts["total"] += result[1] or 0
 
                     year_areas = {"total":0}
                     areas.append(year_areas)
-                    cursor.execute(area_sql.format(year=y,report_group=report_group))
+                    cursor.execute(area_sql.format(year=y, report_group=report_group))
                     for result in cursor.fetchall():
                         year_areas[result[0]] = result[1] or 0
                         year_areas["total"] += result[1] or 0
-
 
                 cursor.execute(report_name_sql.format(report_group=report_group))
                 for result in cursor.fetchall():
@@ -1399,11 +1429,15 @@ class BushfireByTenureReport():
                         area0=areas[2].get("total",0)
                     )}
                 )
-
-
-        return rpt_map, None
-
-
+                
+                # 'Other' report group polys >= 1 ha
+                other_report_group_fires_info = {}
+                cursor.execute(other_report_group_sql)
+                for result in cursor.fetchall():
+                    other_report_group_fires_info[result[0]] = (result[1], result[2], result[3])
+                
+        logger.info("BushfireByTenureReport create complete")
+        return rpt_map, None, other_report_group_fires_info
 
     def get_excel_sheet(self, rpt_date, book=Workbook()):
         year0 = str(self.reporting_year) + '/' + str(self.reporting_year+1)
@@ -1445,7 +1479,7 @@ class BushfireByTenureReport():
         hdr.write(0, 'Missing Final', style=style_bold_gen)
         hdr.write(1, Bushfire.objects.filter(report_status=Bushfire.STATUS_INITIAL_AUTHORISED, reporting_year=self.reporting_year).count() )
 
-        for report_group,rpt_group_map in self.rpt_map:
+        for report_group, rpt_group_map in self.rpt_map:
             hdr = sheet1.row(row_no())
             hdr = sheet1.row(row_no())
             row = row_no()
@@ -1493,6 +1527,27 @@ class BushfireByTenureReport():
         hdr = sheet1.row(row_no())
         hdr = sheet1.row(row_no())
         hdr.write(col_no(), DISCLAIMER, style=style_normal)
+        
+        # 'OTHER' REPORT GROUP FIRES
+        if len(self.other_report_group_fires_info) > 0:
+            col_no = lambda c=count(): next(c)
+            hdr = sheet1.row(row_no())
+            hdr = sheet1.row(row_no())
+            note = "The following fires have a tenure component which comes under the 'OTHER' category and have an area >= 1 ha.  It is likely they extend into SA or the NT and may need a manual check."
+            hdr.write(col_no(), note, style=style_normal)
+            col_no = lambda c=count(): next(c)
+            hdr = sheet1.row(row_no())
+            hdr.write(col_no(),  "ID",  style=style_bold_int)
+            hdr.write(col_no(),  "Name",  style=style_bold_int)
+            hdr.write(col_no(),  "Fire Number",  style=style_bold_int)
+            hdr.write(col_no(),  "Designated region",  style=style_bold_int)
+            for fire in self.other_report_group_fires_info:
+                row = sheet1.row(row_no())
+                col_no = lambda c=count(): next(c)
+                row.write(col_no(), str(fire), style = style_normal )
+                row.write(col_no(), self.other_report_group_fires_info[fire][0], style = style_normal )
+                row.write(col_no(), self.other_report_group_fires_info[fire][1], style = style_normal )
+                row.write(col_no(), self.other_report_group_fires_info[fire][2], style = style_normal )
 
     def write_excel(self):
         rpt_date = datetime.now()
@@ -1529,40 +1584,42 @@ class BushfireByTenureReport():
                 else:
                     print
 
+
 class BushfireByCauseReport():
     def __init__(self,reporting_year=None):
         self.reporting_year = current_finyear() if (reporting_year is None or reporting_year >= current_finyear()) else reporting_year
         self.rpt_map, self.item_map = self.create()
+        logger.info("Starting BushfireByCauseReport")
 
     def create(self):
         rpt_map = []
         item_map = {}
 
         count_sql = """
-        select a.cause_id,count(*)
-        from ( 
-            (select a1.cause_id,a1.id
-            from bfrs_bushfire a1
-            where a1.report_status in {report_statuses} and a1.reporting_year={{reporting_year}} and a1.fire_not_found=false
+        SELECT a.cause_id, COUNT(*)
+        FROM ( 
+            (SELECT COALESCE(a1.cause_id, 9) AS cause_id, a1.id
+            FROM reporting_bushfire a1
+            WHERE a1.report_status IN {report_statuses} AND a1.reporting_year = {{reporting_year}} AND a1.fire_not_found = false
             )
-            union
-            (select b1.cause_id,b1.id
-            from bfrs_bushfire b1
-                join bfrs_bushfire b2 on b1.valid_bushfire_id = b2.id and b2.report_status in {report_statuses} and b2.reporting_year={{reporting_year}} and b2.fire_not_found=false
-            where b1.report_status = {status_merged}
+            UNION
+            (SELECT COALESCE(b1.cause_id, 9) AS cause_id, b1.id
+            FROM reporting_bushfire b1
+                JOIN reporting_bushfire b2 ON b1.valid_bushfire_id = b2.id AND b2.report_status IN {report_statuses} AND b2.reporting_year = {{reporting_year}} AND b2.fire_not_found = false
+            WHERE b1.report_status = {status_merged}
             )
-          ) as a
-        group by a.cause_id
+          ) AS a
+        GROUP BY cause_id
         """.format(
             report_statuses="({})".format(",".join([str(i) for i in [Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED]])),
             status_merged = Bushfire.STATUS_MERGED
         )
 
         area_sql = """
-        select a.cause_id,sum(b.area) as total_all_regions_area,sum(a.area) as total_area
-        from bfrs_bushfire a join bfrs_areaburnt b on a.id = b.bushfire_id join bfrs_tenure c on b.tenure_id = c.id
-        where a.report_status in {report_statuses} and a.reporting_year={{reporting_year}} and a.fire_not_found=false and c.report_group='ALL REGIONS'
-        group by a.cause_id
+        SELECT COALESCE(a.cause_id,  9) AS cause_id, SUM(b.area) AS total_all_regions_area, SUM(a.area) AS total_area
+        FROM reporting_bushfire a JOIN reporting_areaburnt b ON a.id = b.bushfire_id JOIN bfrs_tenure c ON b.tenure_id = c.id
+        WHERE a.report_status IN {report_statuses} AND a.reporting_year = {{reporting_year}} AND a.fire_not_found = false AND c.report_group = 'ALL REGIONS'
+        GROUP BY cause_id
         """.format(
             report_statuses="({})".format(",".join([str(i) for i in [Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED]]))
         )
@@ -1613,7 +1670,6 @@ class BushfireByCauseReport():
                     {cause.report_name: report_data}
                 )
                 
-
         report_total_data = {}
         for i in range(0,len(year_total_count_list),1):
             report_total_data["count{}".format(i)] = year_total_count_list[i]
@@ -1625,11 +1681,10 @@ class BushfireByCauseReport():
         rpt_map.append(
             {'Total': report_total_data}
         )
-
+        logger.info("BushfireByCauseReport create complete" )
         return rpt_map, item_map
 
     def get_excel_sheet(self, rpt_date, book=Workbook()):
-
         year0 = str(self.reporting_year) + '/' + str(self.reporting_year+1)
         year1 = str(self.reporting_year-1) + '/' + str(self.reporting_year)
         year2 = str(self.reporting_year-2) + '/' + str(self.reporting_year-1)
@@ -1762,43 +1817,47 @@ class BushfireByCauseReport():
                 else:
                     print
 
-class RegionByTenureReport():
-    def __init__(self,reporting_year=None):
+
+class BushfireByRegionByTenureReport():
+    def __init__(self, reporting_year=None, overlap_ids=[]):
         self.reporting_year = current_finyear() if (reporting_year is None or reporting_year >= current_finyear()) else reporting_year
-        self.rpt_map,self.tenure_names = self.create()
+        self.overlap_ids = overlap_ids
+        logger.info("Startiing RegionByTenureReport; overlap ids: " + str(self.overlap_ids))
+        self.rpt_map, self.tenure_names = self.create()
 
     def create(self):
         tenure_name_sql = """
-        SELECT distinct report_name,report_order from bfrs_tenure where report_group='ALL REGIONS' order by report_order
+        SELECT distinct report_name, report_order FROM bfrs_tenure WHERE report_group = 'ALL REGIONS' ORDER BY report_order
         """
         count_sql = """
-        SELECT a.region_id,b.report_name,count(*)
+        SELECT a.region_id, b.report_name, count(*)
         FROM (
-            (SELECT a1.region_id,a1.tenure_id,a1.id
-            FROM bfrs_bushfire a1
-            WHERE a1.report_status in {report_statuses} AND a1.reporting_year={{year}} AND a1.fire_not_found=false
+            (SELECT a1.region_id, a1.tenure_id, a1.id
+            FROM reporting_bushfire a1
+            WHERE a1.report_status in {report_statuses} AND a1.reporting_year={{year}} AND a1.fire_not_found = false
             ) 
-            union 
-            (SELECT b1.region_id,b1.tenure_id,b1.id
-            FROM bfrs_bushfire b1
-                join bfrs_bushfire b2 on b1.valid_bushfire_id = b2.id and b2.report_status in {report_statuses} AND b2.reporting_year={{year}} AND b2.fire_not_found=false
+            UNION 
+            (SELECT b1.region_id, b1.tenure_id, b1.id
+            FROM reporting_bushfire b1
+                JOIN reporting_bushfire b2 ON b1.valid_bushfire_id = b2.id AND b2.report_status IN {report_statuses} AND b2.reporting_year = {{year}} AND b2.fire_not_found = false
             WHERE b1.report_status = {status_merged}
             ) 
-         ) as a
-            JOIN bfrs_tenure b on a.tenure_id = b.id and b.report_group='ALL REGIONS'
-        GROUP BY a.region_id,b.report_name,b.report_order
-        ORDER BY a.region_id,b.report_name
+         ) AS a
+            JOIN bfrs_tenure b ON a.tenure_id = b.id JOIN bfrs_region r ON a.region_id = r.id
+            WHERE r.dbca AND b.report_group='ALL REGIONS'
+        GROUP BY a.region_id,b.report_name, b.report_order
+        ORDER BY a.region_id, b.report_name
         """.format(
             report_statuses="({})".format(",".join([str(i) for i in [Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED]])),
             status_merged = Bushfire.STATUS_MERGED
         )
-
+        
         area_sql = """
-        SELECT a.region_id,c.report_name, sum(b.area) AS area 
-        FROM bfrs_bushfire a JOIN bfrs_areaburnt b ON a.id = b.bushfire_id JOIN bfrs_tenure c on b.tenure_id = c.id
-        WHERE a.report_status in {report_statuses} AND a.reporting_year={{year}} AND a.fire_not_found=false and c.report_group='ALL REGIONS'
-        GROUP BY a.region_id,c.report_name,c.report_order
-        ORDER BY a.region_id,c.report_name
+        SELECT ab.region_id, t.report_name, SUM(ab.area) AS area 
+        FROM reporting_bushfire bf JOIN reporting_areaburnt ab ON bf.id = ab.bushfire_id JOIN bfrs_tenure t on ab.tenure_id = t.id JOIN bfrs_region r ON ab.region_id = r.id
+        WHERE bf.report_status in {report_statuses} AND bf.reporting_year = {{year}} AND bf.fire_not_found = False AND t.report_group = 'ALL REGIONS' AND r.dbca
+        GROUP BY ab.region_id, t.report_name, t.report_order
+        ORDER BY ab.region_id, t.report_name
         """.format(
             report_statuses="({})".format(",".join([str(i) for i in [Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED]]))
         )
@@ -1822,8 +1881,8 @@ class RegionByTenureReport():
                 if region_id not in count_data:
                     count_data[region_id] = {}
                 count_data[region_id][tenure_name] = count_data[region_id].get(tenure_name,0) + report_count
-                
-
+            logger.info("Region by Tenure: count complete")
+            #cursor.execute(area_sql.format(year=self.reporting_year, excluded_ids=str(excluded_ids)[1:-1]))
             cursor.execute(area_sql.format(year=self.reporting_year))
             for result in cursor.fetchall():
                 region_id = result[0]
@@ -1832,7 +1891,8 @@ class RegionByTenureReport():
 
                 if region_id not in area_data:
                     area_data[region_id] = {}
-                area_data[region_id][tenure_name] = area_data[region_id].get(tenure_name,0) + report_area
+                area_data[region_id][tenure_name] = area_data[region_id].get(tenure_name, 0) + report_area
+        logger.info("Region by Tenure: area complete")
         
         tenure_count_total_forest={}
         tenure_area_total_forest = {}
@@ -1892,11 +1952,9 @@ class RegionByTenureReport():
                 area = tenure_area_total_nonforest.get(tenure_name,0) + tenure_area_total_forest.get(tenure_name,0)
             )
 
-        return rpt_map,tenure_names
-
+        return rpt_map, tenure_names
 
     def get_excel_sheet(self, rpt_date, book=Workbook()):
-
         # book = Workbook()
         sheet1 = book.add_sheet('Bushfire Region By Tenure')
         sheet1 = book.get_sheet('Bushfire Region By Tenure')
@@ -1913,7 +1971,6 @@ class RegionByTenureReport():
         font.bold = True
         style_center.font = font
         style_center.alignment.horz = Alignment.HORZ_CENTER
-
 
         col_no = lambda c=count(): next(c)
         row_no = lambda c=count(): next(c)
@@ -1948,7 +2005,7 @@ class RegionByTenureReport():
             row.write(col_no(), name, style=style)
         row.write(col_no(), "Total", style=style)
 
-        for region,region_data in self.rpt_map:
+        for region, region_data in self.rpt_map:
             row = sheet1.row(row_no())
             col_no = lambda c=count(): next(c)
             row.write(col_no(), region, style=style_bold_gen)
@@ -1969,13 +2026,12 @@ class RegionByTenureReport():
 
             row = sheet1.row(row_no())
 
-
         # DISCLAIMER
         col_no = lambda c=count(): next(c)
         hdr = sheet1.row(row_no())
         hdr = sheet1.row(row_no())
         hdr.write(col_no(), DISCLAIMER, style=style_normal)
-
+        
 
     def write_excel(self):
         rpt_date = datetime.now()
@@ -1986,7 +2042,6 @@ class RegionByTenureReport():
 
     def export(self):
         """ Executed from the Overview page in BFRS, returns an Excel WB as a HTTP Response object """
-
         rpt_date = datetime.now()
         filename = 'bushfire_regionbytenure_report_{}.xls'.format(rpt_date.strftime('%d%b%Y'))
         response = HttpResponse(content_type='application/vnd.ms-excel')
@@ -2008,40 +2063,40 @@ class RegionByTenureReport():
 
 
 class Bushfire10YrAverageReport():
-
     def __init__(self,reporting_year=None):
         self.reporting_year = current_finyear() if (reporting_year is None or reporting_year >= current_finyear()) else reporting_year
         self.rpt_map, self.item_map = self.create()
+        logger.info("Starting Bushfire10YrAverageReport")
 
     def create(self):
         rpt_map = []
         item_map = {}
 
         count_sql = """
-        select a.cause_id,count(*)
-        from (
-            (select a1.cause_id,a1.id
-            from bfrs_bushfire a1
-            where a1.report_status in {report_statuses} and a1.reporting_year={{reporting_year}} and a1.fire_not_found=false
+        SELECT a.cause_id, COUNT(*)
+        FROM (
+            (SELECT COALESCE(a1.cause_id, 9) AS cause_id, a1.id
+            FROM reporting_bushfire a1
+            WHERE a1.report_status IN {report_statuses} AND a1.reporting_year = {{reporting_year}} AND a1.fire_not_found = false
             )
-            union
-            (select b1.cause_id,b1.id
-            from bfrs_bushfire b1
-               join bfrs_bushfire b2 on b1.valid_bushfire_id = b2.id and b2.report_status in {report_statuses} and b2.reporting_year={{reporting_year}} and b2.fire_not_found=false
-            where b1.report_status = {status_merged}
+            UNION
+            (SELECT COALESCE(b1.cause_id, 9) AS cause_id, b1.id
+            FROM reporting_bushfire b1
+               JOIN reporting_bushfire b2 ON b1.valid_bushfire_id = b2.id AND b2.report_status IN {report_statuses} AND b2.reporting_year = {{reporting_year}} AND b2.fire_not_found = false
+            WHERE b1.report_status = {status_merged}
             )
-         ) as a
-        group by a.cause_id
+         ) AS a
+        GROUP BY a.cause_id
         """.format(
-            report_statuses="({})".format(",".join([str(i) for i in [Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED]])),
+            report_statuses="({})".format(",".join([str(i) for i in [Bushfire.STATUS_FINAL_AUTHORISED, Bushfire.STATUS_REVIEWED]])),
             status_merged = Bushfire.STATUS_MERGED
         )
 
         area_sql = """
-        select a.cause_id,sum(b.area) as total_all_regions_area,sum(a.area) as total_area
-        from bfrs_bushfire a join bfrs_areaburnt b on a.id = b.bushfire_id join bfrs_tenure c on b.tenure_id = c.id
-        where a.report_status in {report_statuses} and a.reporting_year={{reporting_year}} and a.fire_not_found=false and c.report_group='ALL REGIONS'
-        group by a.cause_id
+        SELECT COALESCE(a.cause_id, 9) AS cause_id, SUM(b.area) AS total_all_regions_area, SUM(a.area) AS total_area
+        FROM reporting_bushfire a JOIN reporting_areaburnt b ON a.id = b.bushfire_id JOIN bfrs_tenure c ON b.tenure_id = c.id
+        WHERE a.report_status IN {report_statuses} AND a.reporting_year = {{reporting_year}} AND a.fire_not_found = false AND c.report_group = 'ALL REGIONS'
+        GROUP BY a.cause_id
         """.format(
             report_statuses="({})".format(",".join([str(i) for i in [Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED]]))
         )
@@ -2123,11 +2178,10 @@ class Bushfire10YrAverageReport():
         rpt_map.append(
             {'Total': report_total_data}
         )
-
+        logger.info("Bushfire10YrAverageReport create complete")
         return rpt_map, item_map
 
     def get_excel_sheet(self, rpt_date, book=Workbook()):
-
         year0 = str(self.reporting_year) + '/' + str(self.reporting_year+1)
         year1 = str(self.reporting_year-1) + '/' + str(self.reporting_year)
         year2 = str(self.reporting_year-2) + '/' + str(self.reporting_year-1)
@@ -2341,10 +2395,12 @@ class Bushfire10YrAverageReport():
                 else:
                     print
 
+
 class BushfireIndicator():
     def __init__(self,reporting_year=None):
         self.reporting_year = current_finyear() if (reporting_year is None or reporting_year >= current_finyear()) else reporting_year
         self.rpt_map, self.item_map = self.create()
+        logger.info("Starting BushfireIndicator")
 
     def create(self):
         # Group By Region
@@ -2363,13 +2419,13 @@ class BushfireIndicator():
         select count(*)
         from (
             (select a1.id,a1.area
-            from bfrs_bushfire a1
+            from reporting_bushfire a1
             where a1.report_status in {report_statuses} and a1.reporting_year={reporting_year} and a1.fire_not_found=false and a1.region_id in ({regions}) and a1.first_attack_id = {first_attack_agency}
             )
             union
             (select b1.id,b2.area
-            from bfrs_bushfire b1
-               join bfrs_bushfire b2 on b1.valid_bushfire_id = b2.id and b2.report_status in {report_statuses} and b2.reporting_year={reporting_year} and b2.region_id in ({regions}) and b2.fire_not_found=false and b2.first_attack_id = {first_attack_agency}
+            from reporting_bushfire b1
+               join reporting_bushfire b2 on b1.valid_bushfire_id = b2.id and b2.report_status in {report_statuses} and b2.reporting_year={reporting_year} and b2.region_id in ({regions}) and b2.fire_not_found=false and b2.first_attack_id = {first_attack_agency}
             where b1.report_status = {status_merged} 
             )
          ) as a
@@ -2401,7 +2457,7 @@ class BushfireIndicator():
             rpt_map.append({'Percentage': dict(count=0)})
         else:
             rpt_map.append({'Percentage': dict(count=round(count2*100./count1, 2))})
-
+        logger.info("BushfireIndicator create complete")
         return rpt_map, item_map
 
     def get_excel_sheet(self, rpt_date, book=Workbook()):
@@ -2508,14 +2564,10 @@ class BushfireIndicator():
                     print
 
 
-
-
-
-
 def export_outstanding_fires(request, region_id, queryset):
     """ Executed from the Overview page in BFRS, returns an Excel WB as a HTTP Response object """
-
-    regions = Region.objects.filter(id=region_id) if region_id else Region.objects.all()
+    #regions = Region.objects.filter(id=region_id) if region_id else Region.objects.all()
+    regions = Region.objects.filter(id=region_id) if region_id else Region.objects.filter(dbca=True)
     region_name = regions[0].name if region_id else 'All-Regions'
 
     rpt_date = datetime.now()
@@ -2570,9 +2622,7 @@ def email_outstanding_fires(region_id=None):
 
                 message.send()
 
-
 def outstanding_fires(book, region, queryset, rpt_date):
-
     qs = queryset.filter(region_id=region.id)
     sheet1 = book.add_sheet(region.name)
 
@@ -2617,4 +2667,227 @@ def outstanding_fires(book, region, queryset, rpt_date):
 
 export_outstanding_fires.short_description = u"Outstanding Fires"
 
+def calculate_report_tables(request):
+    url = request.META.get('HTTP_REFERER')
+    with connection.cursor() as csr:
+        csr.execute("""
+--------------------------------------------------------------------
+--reporting_bushfire and reporting_areaburnt CREATION AND INDEXES
+---------------------------------------------------------------------
+DROP TABLE IF EXISTS reporting_bushfire;
+CREATE TABLE reporting_bushfire AS SELECT * FROM bfrs_bushfire;
 
+--CREATE INDEX idx_reporting_bushfire_origin ON reporting_bushfire USING GIST(origin_point);
+DROP INDEX IF EXISTS idx_reporting_bushfire_tenure;
+CREATE INDEX idx_reporting_bushfire_tenure ON reporting_bushfire (tenure_id);
+DROP INDEX IF EXISTS idx_reporting_bushfire_region;
+CREATE INDEX idx_reporting_bushfire_region ON reporting_bushfire (region_id);
+DROP INDEX IF EXISTS idx_reporting_bushfire_rpt_status;
+CREATE INDEX idx_reporting_bushfire_rpt_status ON reporting_bushfire (report_status);
+DROP INDEX IF EXISTS idx_reporting_bushfire_rpt_year;
+CREATE INDEX idx_reporting_bushfire_rpt_year ON reporting_bushfire (reporting_year);
+
+DROP TABLE IF EXISTS reporting_areaburnt;
+CREATE TABLE reporting_areaburnt AS SELECT * FROM bfrs_areaburnt;
+ALTER TABLE reporting_areaburnt DROP CONSTRAINT IF EXISTS reporting_areaburnt_bushfire_id_tenure_id_key;
+ALTER TABLE reporting_areaburnt ADD COLUMN region_id Integer;
+ALTER TABLE reporting_areaburnt ADD COLUMN has_fire_boundary Boolean;
+CREATE INDEX idx_reporting_areaburnt_tenure ON reporting_areaburnt(tenure_id);
+CREATE INDEX idx_reporting_areaburnt_bushfire ON reporting_areaburnt(bushfire_id);
+CREATE INDEX idx_reporting_areaburnt_region ON reporting_areaburnt(region_id);
+DELETE FROM reporting_areaburnt WHERE bushfire_id IN
+    (SELECT id FROM reporting_bushfire WHERE fire_boundary IS NOT NULL);
+UPDATE reporting_areaburnt ab SET region_id = (SELECT bf.region_id FROM reporting_bushfire bf WHERE ab.bushfire_id = bf.id);
+UPDATE reporting_areaburnt SET has_fire_boundary = False;
+
+--make valid geometries (NB checked cadastre_for_bfrs and no invalid geometries
+UPDATE reporting_bushfire SET fire_boundary = ST_MakeValid(fire_boundary) WHERE NOT ST_IsValid(fire_boundary);
+UPDATE reporting_state_forest SET shape = ST_MakeValid(shape) WHERE NOT ST_IsValid(shape);
+UPDATE reporting_cadastre SET shape = ST_MakeValid(shape) WHERE NOT ST_IsValid(shape);
+UPDATE reporting_dept_managed SET geometry = ST_MakeValid(geometry) WHERE NOT ST_IsValid(geometry);
+UPDATE reporting_dept_interest SET geometry = ST_MakeValid(geometry) WHERE NOT ST_IsValid(geometry);
+
+----------------------------------------
+--GET REGION-CROSSING FIRES
+----------------------------------------
+DROP TABLE IF EXISTS reporting_crossregion_fires;
+CREATE TABLE reporting_crossregion_fires AS SELECT DISTINCT bf.id FROM reporting_bushfire bf JOIN bfrs_region r ON ST_Overlaps(bf.fire_boundary, r.geometry);
+DROP INDEX IF EXISTS idx_reporting_crossregion_fires;
+CREATE INDEX idx_reporting_crossregion_fires ON reporting_crossregion_fires(id);
+
+---------------------------------------    
+--UCL/Other Crown/Private Property 13 min
+---------------------------------------
+
+--insert recalculated 'other crown' / UCL / Freehold 
+--Other Crown 5min
+INSERT INTO reporting_areaburnt (area, bushfire_id, tenure_id, region_id, has_fire_boundary)
+    SELECT ROUND((ST_Area(ST_Transform(ST_Intersection(bf.fire_boundary, cad.shape), 900914))/10000)::numeric,2), bf.id, 19, bf.region_id, True
+    FROM reporting_bushfire bf JOIN reporting_cadastre cad ON ST_Intersects(bf.fire_boundary, cad.shape)
+    WHERE brc_fms_legend = 'Other Crown Land' AND bf.report_status IN (3, 4) AND NOT bf.fire_not_found AND bf.id NOT IN (SELECT id FROM reporting_crossregion_fires);
+    
+--UCL 5min
+INSERT INTO reporting_areaburnt (area, bushfire_id, tenure_id, region_id, has_fire_boundary)
+    SELECT ROUND((ST_Area(ST_Transform(ST_Intersection(bf.fire_boundary, cad.shape), 900914))/10000)::numeric,2), bf.id, 25, bf.region_id, True
+    FROM reporting_bushfire bf JOIN reporting_cadastre cad ON ST_Intersects(bf.fire_boundary, cad.shape)
+    WHERE brc_fms_legend = 'UCL' AND bf.report_status IN (3, 4) AND NOT bf.fire_not_found AND bf.id NOT IN (SELECT id FROM reporting_crossregion_fires);
+    
+--Freehold 15s
+INSERT INTO reporting_areaburnt (area, bushfire_id, tenure_id, region_id, has_fire_boundary)
+    SELECT ROUND((ST_Area(ST_Transform(ST_Intersection(bf.fire_boundary, cad.shape), 900914))/10000)::numeric,2), bf.id, 18, bf.region_id, True
+    FROM reporting_bushfire bf JOIN reporting_cadastre cad ON ST_Intersects(bf.fire_boundary, cad.shape)
+    WHERE brc_fms_legend = 'Freehold' AND bf.report_status IN (3, 4) AND NOT bf.fire_not_found AND bf.id NOT IN (SELECT id FROM reporting_crossregion_fires);
+
+--UPDATE tenure_id FOR IGNITION POINTS IN UCL, FREEHOLD AND OTHER CROWN
+UPDATE reporting_bushfire bf SET tenure_id = 19 WHERE bf.id IN 
+(SELECT id FROM reporting_bushfire bf, reporting_cadastre cad WHERE ST_Within(bf.origin_point, cad.shape) AND cad.brc_fms_legend = 'Other Crown Land');
+
+UPDATE reporting_bushfire bf SET tenure_id = 18 WHERE bf.id IN 
+(SELECT id FROM reporting_bushfire bf, reporting_cadastre cad WHERE ST_Within(bf.origin_point, cad.shape) AND cad.brc_fms_legend = 'Freehold');
+
+UPDATE reporting_bushfire bf SET tenure_id = 25 WHERE bf.id IN 
+(SELECT id FROM reporting_bushfire bf, reporting_cadastre cad WHERE ST_Within(bf.origin_point, cad.shape) AND cad.brc_fms_legend = 'UCL');
+
+
+-------------------------------------------
+--DEPT LAND
+---------------------------------------------
+--INTEREST 20s
+INSERT INTO reporting_areaburnt (area, bushfire_id, tenure_id, region_id, has_fire_boundary)
+    SELECT ROUND((ST_Area(ST_Transform(ST_Intersection(bf.fire_boundary, di.geometry), 900914))/10000)::numeric,2),
+    bf.id, t.id, bf.region_id, True
+    FROM reporting_bushfire bf JOIN reporting_dept_interest di ON ST_Intersects(bf.fire_boundary, di.geometry) JOIN bfrs_tenure t ON di.category = t.name
+    WHERE bf.report_status IN (3, 4) AND NOT bf.fire_not_found AND bf.id NOT IN (SELECT id FROM reporting_crossregion_fires);
+
+--MANAGED 3min
+INSERT INTO reporting_areaburnt (area, bushfire_id, tenure_id, region_id, has_fire_boundary)
+    SELECT ROUND((ST_Area(ST_Transform(ST_Intersection(bf.fire_boundary, dm.geometry), 900914))/10000)::numeric,2),
+    bf.id, t.id, bf.region_id, True
+    FROM reporting_bushfire bf JOIN reporting_dept_managed dm ON ST_Intersects(bf.fire_boundary, dm.geometry) JOIN bfrs_tenure t ON dm.category = t.name
+    WHERE dm.category <> 'State Forest' AND bf.report_status IN (3, 4) AND NOT bf.fire_not_found AND bf.id NOT IN (SELECT id FROM reporting_crossregion_fires);
+
+--UPDATE tenure_id FOR OLD 'Other' TENURE IN DEPT-MANAGED LAND
+UPDATE reporting_bushfire
+SET tenure_id = t_id
+FROM (SELECT bf.id AS bf_id, t.id AS t_id FROM reporting_bushfire bf, reporting_dept_managed dm 
+JOIN bfrs_tenure t ON dm.category = t.name
+WHERE tenure_id = 20
+AND st_within(bf.origin_point, dm.geometry)) AS sqry
+WHERE id = bf_id;
+
+--------------------------------------------------
+--STATE FOREST 20s
+--------------------------------------------------
+--Hardwood 4s
+INSERT INTO reporting_areaburnt (area, bushfire_id, tenure_id, region_id, has_fire_boundary)
+    SELECT ROUND((ST_Area(ST_Transform(ST_Intersection(bf.fire_boundary, sf.shape), 900914))/10000)::numeric,2), bf.id, 26, bf.region_id, True
+    FROM reporting_bushfire bf JOIN reporting_state_forest sf ON ST_Intersects(bf.fire_boundary, sf.shape)
+    WHERE fbr_fire_report_classification = 'Native Hardwood' AND bf.report_status IN (3, 4) AND NOT bf.fire_not_found AND bf.id NOT IN (SELECT id FROM reporting_crossregion_fires);
+
+--Softwood 1s    
+INSERT INTO reporting_areaburnt (area, bushfire_id, tenure_id, region_id, has_fire_boundary)
+    SELECT ROUND((ST_Area(ST_Transform(ST_Intersection(bf.fire_boundary, sf.shape), 900914))/10000)::numeric,2), bf.id, 27, bf.region_id, True
+    FROM reporting_bushfire bf JOIN reporting_state_forest sf ON ST_Intersects(bf.fire_boundary, sf.shape)
+    WHERE fbr_fire_report_classification = 'State - Coniferous' AND bf.report_status IN (3, 4) AND NOT bf.fire_not_found AND bf.id NOT IN (SELECT id FROM reporting_crossregion_fires);
+
+--where NOT has_fire_boundary
+UPDATE reporting_areaburnt
+SET tenure_id = 27 WHERE id IN
+(SELECT ab.id
+FROM reporting_areaburnt ab JOIN reporting_bushfire bf ON ab.bushfire_id = bf.id 
+JOIN reporting_state_forest sf ON ST_Within(bf.origin_point, sf.shape)
+WHERE ab.tenure_id = 3 AND NOT has_fire_boundary AND sf.fbr_fire_report_classification = 'State - Coniferous');
+
+--remaining '3's should be 26
+UPDATE reporting_areaburnt
+SET tenure_id = 26 WHERE id IN
+(SELECT ab.id
+FROM reporting_areaburnt ab JOIN reporting_bushfire bf ON ab.bushfire_id = bf.id 
+JOIN reporting_state_forest sf ON ST_Within(bf.origin_point, sf.shape)
+WHERE ab.tenure_id = 3 AND NOT has_fire_boundary AND sf.fbr_fire_report_classification = 'Native Hardwood');
+
+DELETE FROM reporting_areaburnt WHERE tenure_id = 3;
+
+--UPDATE STATE FOREST IGNITION POINTS
+UPDATE reporting_bushfire bf SET tenure_id = 26 WHERE bf.tenure_id = 3 AND bf.id IN 
+(SELECT id FROM reporting_bushfire bf, reporting_state_forest sf WHERE ST_Within(bf.origin_point, sf.shape) AND sf.fbr_fire_report_classification = 'Native Hardwood');
+
+UPDATE reporting_bushfire bf SET tenure_id = 27 WHERE bf.tenure_id = 3 AND bf.id IN 
+(SELECT id FROM reporting_bushfire bf, reporting_state_forest sf WHERE ST_Within(bf.origin_point, sf.shape) AND sf.fbr_fire_report_classification = 'State - Coniferous');
+
+---------------------------------------
+--ADD IN INFO FOR REGION-CROSSING FIRES 20min in total
+---------------------------------------
+--SA/NT: insert into reporting_areaburnt the SA/NT components of trans-state fires (this is done USING r.name = t.name) 1 min
+INSERT INTO reporting_areaburnt (area, bushfire_id, tenure_id, region_id, has_fire_boundary)
+SELECT ROUND((ST_Area(ST_Transform(ST_Intersection(bf.fire_boundary, r.geometry), 900914))/10000)::numeric,2),
+bf.id, t.id, r.id, True
+FROM reporting_bushfire bf JOIN bfrs_region r ON ST_Intersects(bf.fire_boundary, r.geometry) JOIN bfrs_tenure t ON r.name = t.name;
+    
+--insert into reporting_areaburnt the Prvt Prpty / UCL / Other Crown Land components of trans-region fires (13 min)
+--Other Crown Land
+INSERT INTO reporting_areaburnt (area, bushfire_id, tenure_id, region_id, has_fire_boundary)
+SELECT area, bushfire_id, 19, region_id, True
+FROM (
+    SELECT SUM(ROUND((ST_Area(ST_Transform(ST_Intersection(ST_Intersection(bf.fire_boundary, cad.shape), r.geometry), 900914))/10000)::numeric, 2)) AS area,
+    bf.id as bushfire_id, r.id as region_id
+    FROM reporting_bushfire bf JOIN reporting_cadastre cad ON ST_Intersects(bf.fire_boundary, cad.shape) JOIN bfrs_region r ON ST_Intersects(bf.fire_boundary, r.geometry)
+    WHERE brc_fms_legend = 'Other Crown Land' AND bf.id IN (SELECT id FROM reporting_crossregion_fires) AND r.dbca
+    GROUP BY bf.id, r.id) AS sqry;
+    
+--UCL 3 min
+INSERT INTO reporting_areaburnt (area, bushfire_id, tenure_id, region_id, has_fire_boundary)
+SELECT area, bushfire_id, 25, region_id, True
+FROM (
+    SELECT SUM(ROUND((ST_Area(ST_Transform(ST_Intersection(ST_Intersection(bf.fire_boundary, cad.shape), r.geometry), 900914))/10000)::numeric, 2)) AS area,
+    bf.id as bushfire_id, r.id as region_id
+    FROM reporting_bushfire bf JOIN reporting_cadastre cad ON ST_Intersects(bf.fire_boundary, cad.shape) JOIN bfrs_region r ON ST_Intersects(bf.fire_boundary, r.geometry)
+    WHERE brc_fms_legend = 'UCL' AND bf.id IN (SELECT id FROM reporting_crossregion_fires) AND r.dbca
+    GROUP BY bf.id, r.id) AS sqry;
+    
+--Private Property (Freehold)   30s OK
+INSERT INTO reporting_areaburnt (area, bushfire_id, tenure_id, region_id, has_fire_boundary)
+SELECT area, bushfire_id, 18, region_id, True
+FROM (
+    SELECT SUM(ROUND((ST_Area(ST_Transform(ST_Intersection(ST_Intersection(bf.fire_boundary, cad.shape), r.geometry), 900914))/10000)::numeric, 2)) AS area,
+    bf.id as bushfire_id, r.id as region_id
+    FROM reporting_bushfire bf JOIN reporting_cadastre cad ON ST_Intersects(bf.fire_boundary, cad.shape) JOIN bfrs_region r ON ST_Intersects(bf.fire_boundary, r.geometry)
+    WHERE brc_fms_legend = 'Freehold' AND bf.id IN (SELECT id FROM reporting_crossregion_fires) and r.dbca
+    GROUP BY bf.id, r.id) AS sqry;
+    
+--State Forest (Hardwood) (4s)
+INSERT INTO reporting_areaburnt (area, bushfire_id, tenure_id, region_id, has_fire_boundary)
+SELECT area, bushfire_id, 26, region_id, True
+FROM (
+    SELECT SUM(ROUND((ST_Area(ST_Transform(ST_Intersection(ST_Intersection(bf.fire_boundary, sf.shape), r.geometry), 900914))/10000)::numeric, 2)) AS area,
+    bf.id as bushfire_id, r.id as region_id
+    FROM reporting_bushfire bf JOIN reporting_state_forest sf ON ST_Intersects(bf.fire_boundary, sf.shape) JOIN bfrs_region r ON ST_Intersects(bf.fire_boundary, r.geometry)
+    WHERE fbr_fire_report_classification = 'Native Hardwood' AND bf.id IN (SELECT id FROM reporting_crossregion_fires) and r.dbca
+    GROUP BY bf.id, r.id) AS sqry;
+
+--State Forest (Softwood) (4s)
+INSERT INTO reporting_areaburnt (area, bushfire_id, tenure_id, region_id, has_fire_boundary)
+SELECT area, bushfire_id, 27, region_id, True
+FROM (
+    SELECT SUM(ROUND((ST_Area(ST_Transform(ST_Intersection(ST_Intersection(bf.fire_boundary, sf.shape), r.geometry), 900914))/10000)::numeric, 2)) AS area,
+    bf.id as bushfire_id, r.id as region_id
+    FROM reporting_bushfire bf JOIN reporting_state_forest sf ON ST_Intersects(bf.fire_boundary, sf.shape) JOIN bfrs_region r ON ST_Intersects(bf.fire_boundary, r.geometry)
+    WHERE fbr_fire_report_classification = 'State - Coniferous' AND bf.id IN (SELECT id FROM reporting_crossregion_fires) and r.dbca
+    GROUP BY bf.id, r.id) AS sqry;
+    
+--insert into reporting_areaburnt the Interest Tenure components of trans-region fires (8s)
+INSERT INTO reporting_areaburnt (area, bushfire_id, tenure_id, region_id)
+    SELECT ROUND((ST_Area(ST_Transform(ST_Intersection(ST_Intersection(bf.fire_boundary, di.geometry), r.geometry), 900914))/10000)::numeric,2),
+    bf.id, t.id, r.id
+    FROM reporting_bushfire bf JOIN reporting_dept_interest di ON ST_Intersects(bf.fire_boundary, di.geometry) JOIN bfrs_region r ON ST_Intersects(bf.fire_boundary, r.geometry) JOIN bfrs_tenure t ON di.category = t.name
+    WHERE bf.id IN (SELECT id FROM reporting_crossregion_fires);
+
+--insert into reporting_areaburnt the Managed Tenure components of trans-region fires (1:19)
+INSERT INTO reporting_areaburnt (area, bushfire_id, tenure_id, region_id)
+    SELECT ROUND((ST_Area(ST_Transform(ST_Intersection(ST_Intersection(bf.fire_boundary, dm.geometry), r.geometry), 900914))/10000)::numeric,2),
+    bf.id, t.id, r.id
+    FROM reporting_bushfire bf JOIN reporting_dept_managed dm ON ST_Intersects(bf.fire_boundary, dm.geometry) JOIN bfrs_region r ON ST_Intersects(bf.fire_boundary, r.geometry) JOIN bfrs_tenure t ON dm.category = t.name
+    WHERE dm.category <> 'State Forest'  AND bf.id IN (SELECT id FROM reporting_crossregion_fires);
+    """)
+    
+    return HttpResponseRedirect(url)

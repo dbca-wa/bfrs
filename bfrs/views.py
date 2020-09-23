@@ -46,7 +46,7 @@ from bfrs.utils import (breadcrumbs_li,
         is_external_user, can_maintain_data, refresh_gokart,
         get_missing_mandatory_fields,get_bushfire_url,
     )
-from bfrs.reports import BushfireReport, MinisterialReport, export_outstanding_fires 
+from bfrs.reports import BushfireReport, MinisterialReport, export_outstanding_fires, calculate_report_tables
 from django.db import IntegrityError, transaction
 from django.forms import ValidationError
 from datetime import datetime
@@ -221,8 +221,16 @@ class BushfireView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin, filter_views.
                 reporting_year = int(self.request.GET.get('reporting_year')) if self.request.GET.has_key('reporting_year') else None
             except:
                 reporting_year = None
-
             return BushfireReport(reporting_year).export()
+            
+        elif action == 'calculate_report_tables':
+            if not self.request.user.groups.filter(name = 'Fire Information Management').exists():
+                messages.info(request, 'Only members of the Fire Information Management group in the database can use Calculate Report Tables.')
+                return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+            else:
+                messages.info(self.request, 'Complete.')
+                return calculate_report_tables(self.request)
+            
         elif action == 'snapshot_history':
             bushfire = Bushfire.objects.get(id=self.request.GET.get('bushfire_id'))
             context = {
@@ -603,7 +611,6 @@ class BushfireUpdateView(ExceptionMixin,FormRequestMixin,NextUrlMixin,LoginRequi
     def form_valid(self, request, form, action,area_burnt_formset=None, injury_formset=None, damage_formset=None):
         #save the report first
         self.object = form.save()
-
         refresh_gokart(self.request, fire_number=self.object.fire_number, region=self.object.region.id, district=self.object.district.id)
         if action in ["submit","authorise","save_final","save_reviewed"]:
             #show confirm page
@@ -621,6 +628,8 @@ class BushfireUpdateView(ExceptionMixin,FormRequestMixin,NextUrlMixin,LoginRequi
                 #skip confirm step when submit a initial report
                 process_update_status_result(request,update_status(self.request, self.object, action))
                 refresh_gokart(self.request, fire_number=self.object.fire_number, region=self.object.region.id, district=self.object.district.id)
+                #import pdb; pdb.set_trace()
+                return HttpResponse("dd")
                 return HttpResponseRedirect(self.get_success_url())
             elif action in ["submit","authorise"]:
                 context["confirm_action"] = action
@@ -639,7 +648,6 @@ class BushfireUpdateView(ExceptionMixin,FormRequestMixin,NextUrlMixin,LoginRequi
             elif action in ["save_final","save_reviewed"]:
                 #create a snapshot
                 serialize_bushfire('final', action, self.object)
-
         return HttpResponseRedirect(self.get_success_url())
 
     def get_context_data(self, **kwargs):
@@ -654,6 +662,7 @@ class BushfireUpdateView(ExceptionMixin,FormRequestMixin,NextUrlMixin,LoginRequi
             'can_maintain_data': can_maintain_data(self.request.user),
             'submit_actions':context['form'].submit_actions,
         })
+        
         if self.object and self.object.id:
             context['link_actions'] = [(reverse("bushfire:bushfire_document_list",kwargs={"bushfireid":self.object.id}),'Documents','btn-info'),(self.get_success_url(),'Cancel','btn-danger')]
         else:
@@ -788,15 +797,16 @@ class BushfireDocumentUploadView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin,
 
     def get(self,request,bushfireid,*args,**kwargs):
         self.bushfire = Bushfire.objects.get(id = int(bushfireid))
-        if self.bushfire.is_final_authorised and not can_maintain_data(request.user):
-            raise PermissionDenied("Only group '{}' can create new document title.".format(settings.FSSDRS_GROUP))
+        #if self.bushfire.is_final_authorised and not can_maintain_data(request.user):
+        #if not can_maintain_data(request.user):
+        #    raise PermissionDenied("Only group '{}' can create new document title.".format(settings.FSSDRS_GROUP))
 
         return super(BushfireDocumentUploadView,self).get(request,*args,**kwargs)
 
     def post(self,request,bushfireid,*args,**kwargs):
         self.bushfire = Bushfire.objects.get(id = bushfireid)
-        if self.bushfire.is_final_authorised and not can_maintain_data(request.user):
-            raise PermissionDenied("Only group '{}' can create new document title.".format(settings.FSSDRS_GROUP))
+        #if self.bushfire.is_final_authorised and not can_maintain_data(request.user):
+        #    raise PermissionDenied("Only group '{}' can create new document title.".format(settings.FSSDRS_GROUP))
 
         return super(BushfireDocumentUploadView,self).post(request,*args,**kwargs)
 

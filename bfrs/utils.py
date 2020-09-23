@@ -1271,7 +1271,6 @@ def support_email(subject, body,user_email):
     if not ret:
         logger.error('Failed to send Support Email<br>subject: {}<br>body: {}'.format(subject, body))
 
-
 def create_other_user():
     user, created = User.objects.get_or_create(username='other', first_name='Other', last_name='Contact')
     users_group, users_group_created = Group.objects.get_or_create(name='Users')
@@ -1355,7 +1354,6 @@ def _delete_duplicate_users():
                     else:
                         logger.info('Cannot Delete Duplicate User. User {} has Bushfire(s) associated'.format(user))
                         
-
 def update_users():
     resp=requests.get(url=settings.URL_SSO, auth=HTTPBasicAuth(settings.USER_SSO, settings.PASS_SSO))
 
@@ -1414,7 +1412,6 @@ def refresh_gokart(request, fire_number=None, region=None, district=None, action
     }
     request.session.modified = True
 
-
 def get_pbs_bushfires(fire_ids=None):
     """ 
         fire_ids: string --> BF_2017_SWC_001, BF_2017_SWC_002, BF_2017_SWC_003", OR
@@ -1427,6 +1424,7 @@ def get_pbs_bushfires(fire_ids=None):
         ]
     """
     try:
+        logger.info("fire_ids: " + str(fire_ids))
         if fire_ids:
             if isinstance(fire_ids, list):
                 params = {"fire_id__in": ','.join(fire_ids)}
@@ -1439,6 +1437,7 @@ def get_pbs_bushfires(fire_ids=None):
             params = None
         pbs_url = settings.PBS_URL if settings.PBS_URL.endswith('/') else settings.PBS_URL + os.sep
         url = pbs_url + 'api/v1/prescribedburn/?format=json'
+        logger.info("r.url: " + requests.get(url=url, params=params, auth=requests.auth.HTTPBasicAuth(settings.USER_SSO, settings.PASS_SSO)).url)
         return requests.get(url=url, params=params, auth=requests.auth.HTTPBasicAuth(settings.USER_SSO, settings.PASS_SSO)).json()
     except Exception as e:
         logger.error('REST API error connecting to PBS 268b bushfires:  {}\n{}\n'.format(url, e))
@@ -1715,5 +1714,4 @@ def generate_pdf(tex_template_file,context,request=None,check_output=True):
         subprocess.call(cmd)
 
     return (foldername,pdf_filename)
-
 
