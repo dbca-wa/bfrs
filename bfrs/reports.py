@@ -1355,7 +1355,7 @@ class BushfireByTenureReport():
         GROUP BY b.report_name,b.report_order
         ORDER BY b.report_order
         """.format(
-            report_statuses="({})".format(",".join([str(i) for i in [Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED]])),
+            report_statuses="({})".format(",".join([str(i) for i in [Bushfire.STATUS_FINAL_AUTHORISED, Bushfire.STATUS_REVIEWED]])),
             status_merged = Bushfire.STATUS_MERGED
         )
 
@@ -1848,7 +1848,7 @@ class BushfireByRegionByTenureReport():
         GROUP BY a.region_id,b.report_name, b.report_order
         ORDER BY a.region_id, b.report_name
         """.format(
-            report_statuses="({})".format(",".join([str(i) for i in [Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED]])),
+            report_statuses="({})".format(",".join([str(i) for i in [Bushfire.STATUS_FINAL_AUTHORISED, Bushfire.STATUS_REVIEWED]])),
             status_merged = Bushfire.STATUS_MERGED
         )
         

@@ -629,7 +629,7 @@ class BushfireUpdateView(ExceptionMixin,FormRequestMixin,NextUrlMixin,LoginRequi
                 process_update_status_result(request,update_status(self.request, self.object, action))
                 refresh_gokart(self.request, fire_number=self.object.fire_number, region=self.object.region.id, district=self.object.district.id)
                 #import pdb; pdb.set_trace()
-                return HttpResponse("dd")
+                #return HttpResponse("dd")
                 return HttpResponseRedirect(self.get_success_url())
             elif action in ["submit","authorise"]:
                 context["confirm_action"] = action
