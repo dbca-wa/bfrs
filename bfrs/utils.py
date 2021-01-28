@@ -645,6 +645,20 @@ def update_status(request, bushfire, action,action_name="",update_fields=None,ac
             notification.append(('RDO', 'Send RDO email for the bushfire({0}) successfully.{1}'.format(bushfire.fire_number,resp[1])))
         else:
             errors.append(('RDO', 'Faild to send RDO email for the bushfire({0}).{1}'.format(bushfire.fire_number,resp[1])))
+            
+        resp = send_email({
+            "bushfire":bushfire, 
+            "user_email":user_email,
+            "external_email":False,
+            "to_email":settings.STATE_SITUATION_EMAIL,
+            "request":request,
+            "subject":'State Situation Officer Email - {}, Initial Bushfire submitted - {}'.format(bushfire.region.name.upper(), bushfire.fire_number),
+            "template":"bfrs/email/sso_email.html"
+        })
+        if resp[0]:
+            notification.append(('State Situation Officer', 'Send SSO email for the bushfire({0}) successfully.{1}'.format(bushfire.fire_number,resp[1])))
+        else:
+            errors.append(('State Situation Officer', 'Faild to send SSO email for the bushfire({0}).{1}'.format(bushfire.fire_number,resp[1])))
 
         resp = send_email({
             "bushfire":bushfire, 
@@ -981,7 +995,7 @@ def send_fire_bombing_req_email(context):
         folder,pdf_file = generate_pdf("latex/fire_bombing_request_form.tex",context={"bushfire":bushfire,"graphic_folder":settings.LATEX_GRAPHIC_FOLDER})
         context["attachments"] = [(pdf_file,"fire_bombing_request.pdf","application/pdf")]
         return send_email(context)
-    except Exceptin as ex:
+    except Exception as ex:
         return (False, str(ex))
     finally:
         if folder:
@@ -1211,7 +1225,9 @@ def rdo_email_addresses(bushfire,related_bushfires=None):
             for address in getattr(settings, region_name.replace(' ', '_') + '_EMAIL') or []:
                 if address not in to_email:
                     to_email.append(address)
-
+    # append state_situation email
+    #state_situation_email = settings.STATE_SITUATON_EMAIL
+    #to_email.append(state_situation_email)
     return to_email
 
 def send_sms(context):
