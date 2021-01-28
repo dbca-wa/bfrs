@@ -1,6 +1,7 @@
 import json
 
 from django import forms
+from django.http import HttpResponse    #remove after  testing for document upload
 from bfrs.models import (Bushfire, AreaBurnt, Damage, Injury,BushfireSnapshot,DamageSnapshot,InjurySnapshot,AreaBurntSnapshot,
         Region, District, Profile,
         current_finyear,get_finyear,Tenure,Cause,
@@ -1229,14 +1230,20 @@ class DocumentViewForm(baseforms.ModelForm):
 
 class DocumentUpdateForm(DocumentViewForm):
     def clean_custom_tag(self):
-        if DocumentTag.check_other_tag(self.cleaned_data["tag"]):
-            value = self.cleaned_data.get("custom_tag")
-            if value:
-                return value
+        try:
+            if DocumentTag.check_other_tag(self.cleaned_data["tag"]):
+                value = self.cleaned_data.get("custom_tag")
+                if value:
+                    return value
+                else:
+                    raise forms.ValidationError("Required.")
             else:
-                raise forms.ValidationError("Required.")
-        else:
-            return None
+                return None
+        except KeyError:    # Added by P Maslen 15-Jan-2021 to remove KeyError when uploading document
+            try:
+                return self.cleaned_data.get("custom_tag")
+            except:
+                return None
 
     class Meta:
         model = Document
