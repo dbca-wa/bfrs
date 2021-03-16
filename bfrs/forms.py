@@ -1082,6 +1082,7 @@ class BaseDamageFormSet(BaseInlineFormSet):
         """
         duplicates = False
         damages = []
+        other_damages_descrs = []
 
         for form in self.forms:
             if form.cleaned_data:
@@ -1107,6 +1108,14 @@ class BaseDamageFormSet(BaseInlineFormSet):
 
                     if duplicates:
                         form.add_error('damage_type', 'Duplicate: Damage type must be unique (except for \'OTHER\'')
+                        
+                    # Check that if there are multiple records with damage_type = 'OTHER', they have different descr
+                    if damage_type.name == 'OTHER':
+                        if descr not in other_damages_descrs:
+                            other_damages_descrs.append(descr)
+                        else:
+                             form.add_error('damage_type', '\'OTHER\' damage rows must have different descriptions')
+                    
         return
 
     def is_valid(self, damage_unknown):

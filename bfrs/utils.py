@@ -109,7 +109,8 @@ def serialize_bushfire(auth_type, action, obj):
 
     for i in obj.damages.all():
         damage_obj = DamageSnapshot.objects.create(
-            snapshot_id=s.id, snapshot_type=snapshot_type, damage_type=i.damage_type, number=i.number, creator=obj.modifier, modifier=obj.modifier
+            #snapshot_id=s.id, snapshot_type=snapshot_type, damage_type=i.damage_type, number=i.number, creator=obj.modifier, modifier=obj.modifier
+            snapshot_id=s.id, snapshot_type=snapshot_type, damage_type=i.damage_type, number=i.number, descr=i.descr, creator=obj.modifier, modifier=obj.modifier
         )
 
     for i in obj.injuries.all():
@@ -557,7 +558,6 @@ def save_model(instance,update_fields=None,extra_update_fields=None):
         instance.save(update_fields=extra_update_fields + update_fields)
 
 def update_status(request, bushfire, action,action_name="",update_fields=None,action_desc=None):
-
     action_desc = action_desc or action
     message = None
     notification = []
