@@ -495,7 +495,6 @@ class BaseBushfireEditForm(BushfireViewForm):
                 is_valid = self.injury_formset.is_valid(self.cleaned_data['injury_unknown']) and is_valid
             if self.damage_formset:
                 is_valid = self.damage_formset.is_valid(self.cleaned_data['damage_unknown']) and is_valid
-
         return is_valid
 
     def clean(self):
@@ -1083,6 +1082,7 @@ class BaseDamageFormSet(BaseInlineFormSet):
         """
         duplicates = False
         damages = []
+        other_damages_descrs = []
 
         for form in self.forms:
             if form.cleaned_data:
@@ -1093,9 +1093,12 @@ class BaseDamageFormSet(BaseInlineFormSet):
 
                 duplicates = False
                 if not remove:
-                    if not damage_type or not number:
+                    if not damage_type: #or not number:
                         form.cleaned_data['DELETE'] = True
                         continue
+                        
+                    if not number:
+                        form.add_error('number', 'You must select a number from the dropdown for each damage line.')
 
                     # Check that no two records have the same damage_type (unless of damage_type = 'OTHER')
                     if damage_type.name in damages and damage_type.name != 'OTHER':
@@ -1105,7 +1108,14 @@ class BaseDamageFormSet(BaseInlineFormSet):
 
                     if duplicates:
                         form.add_error('damage_type', 'Duplicate: Damage type must be unique (except for \'OTHER\'')
-
+                        
+                    # Check that if there are multiple records with damage_type = 'OTHER', they have different descr
+                    if damage_type.name == 'OTHER':
+                        if descr not in other_damages_descrs:
+                            other_damages_descrs.append(descr)
+                        else:
+                             form.add_error('damage_type', '\'OTHER\' damage rows must have different descriptions')
+                    
         return
 
     def is_valid(self, damage_unknown):

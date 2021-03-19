@@ -109,7 +109,8 @@ def serialize_bushfire(auth_type, action, obj):
 
     for i in obj.damages.all():
         damage_obj = DamageSnapshot.objects.create(
-            snapshot_id=s.id, snapshot_type=snapshot_type, damage_type=i.damage_type, number=i.number, creator=obj.modifier, modifier=obj.modifier
+            #snapshot_id=s.id, snapshot_type=snapshot_type, damage_type=i.damage_type, number=i.number, creator=obj.modifier, modifier=obj.modifier
+            snapshot_id=s.id, snapshot_type=snapshot_type, damage_type=i.damage_type, number=i.number, descr=i.descr, creator=obj.modifier, modifier=obj.modifier
         )
 
     for i in obj.injuries.all():
@@ -460,10 +461,11 @@ def update_damage_fs(bushfire, damage_formset):
             continue
         damage_type = form.cleaned_data.get('damage_type')
         number = form.cleaned_data.get('number')
+        descr = form.cleaned_data.get('descr')
         remove = form.cleaned_data.get('DELETE')
         obj = form.cleaned_data.get('id')
 
-        #if either damage_type or number is null, remove will be set tp True in BaseDamageFormSet
+        #if either damage_type or number is null, remove will be set to True in BaseDamageFormSet
         if remove:
             if obj:
                 #this object exists in database, removed by user
@@ -475,17 +477,18 @@ def update_damage_fs(bushfire, damage_formset):
             #this is a valid object
             if obj:
                 #the object exists in database
-                if obj.damage_type != damage_type or obj.number != number:
+                if obj.damage_type != damage_type or obj.number != number or obj.descr != descr:
                     #existing object has been changed
                     obj.damage_type = damage_type
                     obj.number = number
+                    obj.descr = descr
                     updated_fs_object.append(obj)
                 else:
                     #existing object is not changed,ignore 
                     pass
             else:
                 #this is a new object, add it
-                new_fs_object.append(Damage(bushfire=bushfire, damage_type=damage_type, number=number))
+                new_fs_object.append(Damage(bushfire=bushfire, damage_type=damage_type, number=number, descr=descr))
 
     try:
         with transaction.atomic():
@@ -555,7 +558,6 @@ def save_model(instance,update_fields=None,extra_update_fields=None):
         instance.save(update_fields=extra_update_fields + update_fields)
 
 def update_status(request, bushfire, action,action_name="",update_fields=None,action_desc=None):
-
     action_desc = action_desc or action
     message = None
     notification = []
