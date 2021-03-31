@@ -19,7 +19,7 @@ django-reversion-compare==0.7.5
 django-smart-selects==1.3.4
 unicodecsv==0.14.1
 LatLon==1.0.2
-lxml==3.8.0
+lxml==4.6.3
 pytz==2016.10
 xlwt==1.2.0
 pandas==0.19.2
