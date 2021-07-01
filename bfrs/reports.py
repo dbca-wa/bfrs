@@ -2668,6 +2668,7 @@ def outstanding_fires(book, region, queryset, rpt_date):
 export_outstanding_fires.short_description = u"Outstanding Fires"
 
 def calculate_report_tables(request):
+    print "starting calculate report tables"
     url = request.META.get('HTTP_REFERER')
     with connection.cursor() as csr:
         csr.execute("""
@@ -2701,11 +2702,11 @@ UPDATE reporting_areaburnt ab SET region_id = (SELECT bf.region_id FROM reportin
 UPDATE reporting_areaburnt SET has_fire_boundary = False;
 
 --make valid geometries (NB checked cadastre_for_bfrs and no invalid geometries
-UPDATE reporting_bushfire SET fire_boundary = ST_MakeValid(fire_boundary) WHERE NOT ST_IsValid(fire_boundary);
-UPDATE reporting_state_forest SET shape = ST_MakeValid(shape) WHERE NOT ST_IsValid(shape);
-UPDATE reporting_cadastre SET shape = ST_MakeValid(shape) WHERE NOT ST_IsValid(shape);
-UPDATE reporting_dept_managed SET geometry = ST_MakeValid(geometry) WHERE NOT ST_IsValid(geometry);
-UPDATE reporting_dept_interest SET geometry = ST_MakeValid(geometry) WHERE NOT ST_IsValid(geometry);
+UPDATE reporting_bushfire SET fire_boundary = ST_CollectionExtract(ST_MakeValid(fire_boundary), 3) WHERE NOT ST_IsValid(fire_boundary);
+UPDATE reporting_state_forest SET shape = ST_CollectionExtract(ST_MakeValid(shape), 3) WHERE NOT ST_IsValid(shape);
+UPDATE reporting_cadastre SET shape = ST_CollectionExtract(ST_MakeValid(shape), 3) WHERE NOT ST_IsValid(shape);
+UPDATE reporting_dept_managed SET geometry = ST_CollectionExtract(ST_MakeValid(geometry), 3) WHERE NOT ST_IsValid(geometry);
+UPDATE reporting_dept_interest SET geometry = ST_CollectionExtract(ST_MakeValid(geometry), 3) WHERE NOT ST_IsValid(geometry);
 
 ----------------------------------------
 --GET REGION-CROSSING FIRES
@@ -2889,5 +2890,5 @@ INSERT INTO reporting_areaburnt (area, bushfire_id, tenure_id, region_id)
     FROM reporting_bushfire bf JOIN reporting_dept_managed dm ON ST_Intersects(bf.fire_boundary, dm.geometry) JOIN bfrs_region r ON ST_Intersects(bf.fire_boundary, r.geometry) JOIN bfrs_tenure t ON dm.category = t.name
     WHERE dm.category <> 'State Forest'  AND bf.id IN (SELECT id FROM reporting_crossregion_fires);
     """)
-    
+    print "finished calculate report tables"
     return HttpResponseRedirect(url)
