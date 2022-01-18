@@ -49,7 +49,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'reversion.middleware.RevisionMiddleware',
-    'dbca_utils.middleware.SSOLoginMiddleware',
+    'bfrs.middleware.SSOLoginMiddleware',
 ]
 TEMPLATES = [
     {
