@@ -3,6 +3,15 @@
 FROM dbcawa/ubuntu:18.04-latexmk as builder_base_bfrs
 MAINTAINER asi@dbca.wa.gov.au
 ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Australia/Perth
+ENV PRODUCTION_EMAIL=True
+ENV SECRET_KEY="ThisisNotRealKey"
+ENV USER_SSO="Docker Build"
+ENV PASS_SSO="ThisIsNotReal"
+ENV EMAIL_HOST="localhost"
+ENV FROM_EMAIL="no-reply@dbca.wa.gov.au"
+ENV SMS_POSTFIX="sms.url.endpoint"
+
 RUN apt-get update -y \
   && apt-get install --no-install-recommends -y wget git libmagic-dev gcc binutils libproj-dev gdal-bin \
   python python-setuptools python-dev python-pip tzdata \
