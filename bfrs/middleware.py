@@ -31,7 +31,7 @@ class SSOLoginMiddleware(MiddlewareMixin):
                 if value in request.META:
                     attributemap[key] = request.META[value]
 
-            # clean username to fix issues in SSS
+            # username update to fix issues in SSS
             email = attributemap['email']
             email_split = email.split("@")
             domain_name = email_split[1]
@@ -40,7 +40,7 @@ class SSOLoginMiddleware(MiddlewareMixin):
             username = email_split[0]+"."+domain_host
             username = username[0:30]          
             attributemap['username'] = username
-            # clean username to fix issues in SSS
+            # username update to fix issues in SSS
             
             if hasattr(settings, 'ALLOWED_EMAIL_SUFFIXES') and settings.ALLOWED_EMAIL_SUFFIXES:
                 allowed = settings.ALLOWED_EMAIL_SUFFIXES
