@@ -13,7 +13,18 @@ class Command(BaseCommand):
         '
 
     def handle(self, *args, **options):
+        self.copy_email_to_username()
+        self.replace_at_by_dot()
+
+    def replace_at_by_dot(self):
         users_with_at = User.objects.filter(username__contains='@')
         for user in users_with_at:
             user.username = user.username.replace('@', '.')
             user.save()
+
+    def copy_email_to_username(self):
+        users = User.objects.all()
+        for user in users:
+            user.username = user.email
+            user.save()
+
