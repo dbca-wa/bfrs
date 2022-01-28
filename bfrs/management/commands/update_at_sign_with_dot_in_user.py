@@ -15,7 +15,7 @@ class Command(BaseCommand):
         '
 
     def handle(self, *args, **options):
-        self.copy_email_to_username()
+        #self.copy_email_to_username()
         self.correct_username()
         # self.replace_at_by_dot()
 
@@ -34,14 +34,15 @@ class Command(BaseCommand):
     def correct_username(self):
         users = User.objects.all()
         for user in users:
-            username_split_at = user.username.split('@')  # username_split_at[0]: email_address_before_at, username_split_at[1]: dbca.wa.gov.au
+            username_split_at = user.email.split('@')  # username_split_at[0]: email_address_before_at, username_split_at[1]: dbca.wa.gov.au
             if len(username_split_at) == 2:
-                domain_split_dot = username_split_at[1].split('.')  # domain_split_dot[0]: dbca,  domain_split_dot[1]:wa.gov.au
-                full_username = username_split_at[0] + '.' + domain_split_dot[0]
-                user.username = full_username[0:30]  # Take first 30 characters
-                user.save()
-
-
-
-
-
+                try:
+                    domain_split_dot = username_split_at[1].split('.')  # domain_split_dot[0]: dbca,  domain_split_dot[1]:wa.gov.au
+                    full_username = username_split_at[0] + '.' + domain_split_dot[0]
+                    user.username = full_username[0:30]  # Take first 30 characters
+                    print (user.username)
+                    user.save()
+                except Exception as e:
+                    print (e)
+                    
+                    
