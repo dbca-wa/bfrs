@@ -10,7 +10,7 @@ django-crispy-forms==1.6.1
 webtemplate-dbca==0.6.0
 django-tastypie==0.13.3
 django-model-utils==2.0.3
-django-filter==1.0.1
+django-filter==2.4.0
 python-dateutil==2.6.0
 python-magic==0.4.10
 Unidecode==0.4.18
