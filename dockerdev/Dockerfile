@@ -1,5 +1,5 @@
 # Prepare the base environment.
-FROM dbcawa/boranga:latest as builder_base_borangadev
+FROM dbcawa/bfrs:latest as builder_base_bfrsdev
 
 RUN apt-get update
 RUN apt-get install --no-install-recommends -y patch
