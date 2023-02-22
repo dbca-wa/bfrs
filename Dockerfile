@@ -37,6 +37,7 @@ COPY bfrs_project ./bfrs_project
 COPY templates ./templates
 # NOTE: we can't currently run the collectstatic step due to how BFRS is written.
 # Always be sure to run collectstatic locally prior to building the image.
+COPY .git ./.git
 COPY .env ./.env
 RUN python manage.py collectstatic --noinput
 RUN rm .env
