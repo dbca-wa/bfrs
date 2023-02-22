@@ -47,3 +47,6 @@ To obtain coverage reports:
 
     coverage run --source='.' manage.py test -k -v2
     coverage report -m
+
+
+# Test CHANGE
