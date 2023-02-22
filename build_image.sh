@@ -4,11 +4,17 @@ action="$1"
 env="$2"
 debug="False"
 
+if [[ ( $@ == "--help") ||  $@ == "-h" ]]; then
+    echo "$0 all prod"
+    exit 1
+fi
+
 if [[ "$env" = "prod" ]]; then
     tag="$3"
 	if [[ "$tag" = "" ]]; then
 		echo "Version tag is missing"
-    	exit 1
+                tag=$(date +%Y.%m.%d.%H.%M%S)
+    	#exit 1
 	fi
     disttype="release"
     debug="False"
@@ -28,11 +34,12 @@ else
     exit 1
 fi
 
-echo "Begin to build bfrs with tag '${tag}' for '$env' environment"
+BUILD_TAG=dbcawa/bfrs:$tag
+echo "Begin to build bfrs with tag '${BUILD_TAG}' for '$env' environment"
 
 
 if [[ "$action" = "all" ]] || [[ "$action" = "build"  ]]; then
-  	docker image build -t dbcawa/bfrs:${tag} -f Dockerfile .
+  	docker image build -t ${BUILD_TAG} -f Dockerfile .
     if [[ $? -ne 0 ]]; then
     	echo "Build docker image failed"
     	exit 1
@@ -58,6 +65,7 @@ if [[ "$action" = "all_ignore" ]] || [[ "$action" = "test_ignore"  ]]; then
     fi
 fi
 
+echo $BUILD_TAG
 if [[ "$action" = "all" ]] || [[ "$action" = "push"  ]]; then
     pass show docker-credential-helpers/docker-pass-initialized-check
     docker login
