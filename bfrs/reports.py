@@ -759,7 +759,7 @@ class MinisterialReportAuth():
             )) as r
         group by r.region_id
         """.format(
-            report_statuses="({})".format(",".join([str(i) for i in [Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED]])),
+            report_statuses="({})".format(",".join([str(i) for i in [Bushfire.STATUS_INITIAL_AUTHORISED, Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED]])),
             reporting_year = self.reporting_year,
             status_merged = Bushfire.STATUS_MERGED
         )
@@ -770,7 +770,7 @@ class MinisterialReportAuth():
         WHERE bf.report_status IN {report_statuses} AND bf.reporting_year={reporting_year} AND bf.fire_not_found=false AND t.report_group='ALL REGIONS'  {{agency_condition}} 
         GROUP BY bf.region_id
         """.format(
-            report_statuses="({})".format(",".join([str(i) for i in [Bushfire.STATUS_FINAL_AUTHORISED, Bushfire.STATUS_REVIEWED]])),
+            report_statuses="({})".format(",".join([str(i) for i in [Bushfire.STATUS_INITIAL_AUTHORISED, Bushfire.STATUS_FINAL_AUTHORISED, Bushfire.STATUS_REVIEWED]])),
             reporting_year = self.reporting_year
         )
 
