@@ -185,6 +185,13 @@ MEDIA_URL = '/media/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_URL = '/static/'
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': os.path.join(BASE_DIR, 'bfrs', 'cache'),
+    }
+}
+
 
 # Logging settings - log to stdout/stderr
 LOGGING = {
