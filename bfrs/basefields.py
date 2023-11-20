@@ -485,39 +485,51 @@ class FileField(forms.FileField):
                 raise ValidationError(self.error_messages["max_size"], code='max_size', params={'file_size':value.size,'max_size':self.max_size})
 
 def ChainedModelChoiceFieldFactory(model,field_name,chained_field,chained_model_field,archived=None,**kwargs):
-    kwargs["chained_field"] = chained_field
-    kwargs["chained_model_field"] = chained_model_field
-    field_model = model._meta.get_field(field_name).related_model
-    chained_field_model = model._meta.get_field(chained_field).related_model
-    js_name = "{}_map".format(field_model.__name__.lower())
-    kwargs["field_model"] = field_model
-    kwargs["chained_field_model"] = chained_field_model
-    kwargs["js_name"] = js_name
-    if archived is not None:
-        kwargs["archived"] = archived
-    kwargs["archive_supported"] = True if (hasattr(chained_field_model,"archived") or hasattr(field_model,"archived"))  else False
+    factory = None
+    try:
+        kwargs["chained_field"] = chained_field
+        kwargs["chained_model_field"] = chained_model_field
+        field_model = model._meta.get_field(field_name).related_model
+        chained_field_model = model._meta.get_field(chained_field).related_model
+        js_name = "{}_map".format(field_model.__name__.lower())
+        kwargs["field_model"] = field_model
+        kwargs["chained_field_model"] = chained_field_model
+        kwargs["js_name"] = js_name
+        if archived is not None:
+            kwargs["archived"] = archived
+        kwargs["archive_supported"] = True if (hasattr(chained_field_model,"archived") or hasattr(field_model,"archived"))  else False
 
-    return CompoundFieldFactory(ChainedModelChoiceField,model,field_name,set(),forms.ModelChoiceField,**kwargs)
+        #return CompoundFieldFactory(ChainedModelChoiceField,model,field_name,set(),forms.ModelChoiceField,**kwargs)
+        factory = CompoundFieldFactory(ChainedModelChoiceField,model,field_name,set(),forms.ModelChoiceField,**kwargs)
+    except Exception as e:
+        print('ChainedModelChoiceFieldFactory: {}'.format(str(e)))
+    return factory
 
 def ChainedOtherOptionFieldFactory(model,field_name,related_field_names,chained_field,chained_model_field,archived=None,other_option_name=None,field_class=None,**kwargs):
-    kwargs["chained_field"] = chained_field
-    kwargs["chained_model_field"] = chained_model_field
-    field_model = model._meta.get_field(field_name).related_model
-    chained_field_model = model._meta.get_field(chained_field).related_model
-    js_name = "{}_map".format(field_model.__name__.lower())
-    kwargs["field_model"] = field_model
-    kwargs["chained_field_model"] = chained_field_model
-    kwargs["js_name"] = js_name
-    if archived is not None:
-        kwargs["archived"] = archived
-    if other_option_name:
-        if isinstance(other_option_name,(list,tuple)):
-            kwargs["other_option_names"] = other_option_name
-        else:
-            kwargs["other_option_names"] = [other_option_name]
+    factory = None
+    try:
+        kwargs["chained_field"] = chained_field
+        kwargs["chained_model_field"] = chained_model_field
+        field_model = model._meta.get_field(field_name).related_model
+        chained_field_model = model._meta.get_field(chained_field).related_model
+        js_name = "{}_map".format(field_model.__name__.lower())
+        kwargs["field_model"] = field_model
+        kwargs["chained_field_model"] = chained_field_model
+        kwargs["js_name"] = js_name
+        if archived is not None:
+            kwargs["archived"] = archived
+        if other_option_name:
+            if isinstance(other_option_name,(list,tuple)):
+                kwargs["other_option_names"] = other_option_name
+            else:
+                kwargs["other_option_names"] = [other_option_name]
 
-    kwargs["archive_supported"] = True if (hasattr(chained_field_model,"archived") or hasattr(field_model,"archived"))  else False
-    return CompoundFieldFactory(OtherOptionField,model,field_name,related_field_names,field_class,mixins=(ChainedModelChoiceFieldMixin,),**kwargs)
+        kwargs["archive_supported"] = True if (hasattr(chained_field_model,"archived") or hasattr(field_model,"archived"))  else False
+        #return CompoundFieldFactory(OtherOptionField,model,field_name,related_field_names,field_class,mixins=(ChainedModelChoiceFieldMixin,),**kwargs)
+        factory =  CompoundFieldFactory(OtherOptionField,model,field_name,related_field_names,field_class,mixins=(ChainedModelChoiceFieldMixin,),**kwargs)
+    except Exception as e:
+        print('ChainedOtherOptionFieldFactory: {}'.format(str(e)))
+    return factory
 
 class ChainedModelChoiceFieldMixin(object):
     """
