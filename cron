@@ -1,2 +1,2 @@
-# 18:00PM - (6PM) every day - calculate_report_tables
+# 18:15PM - (6:15PM) every evening - calculate_report_tables
 15 18 * * * root eval $(grep -v '^#' /container-config/.cronenv | xargs -d "\n" -I {} echo export \"{}\" ) && cd /app && ./manage.py calculate_report_tables >> logs/cronjob.log 2>&1
