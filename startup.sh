@@ -16,14 +16,14 @@ else
         fi
 fi
 
+echo $ENABLE_CRON
 
-if [ $ENABLE_CRON == "True" ];
-then
-      echo "Starting Cron"
-      service cron start &
-      status=$?
-      if [ $status -ne 0 ]; then
+if ["$ENABLE_CRON" = "True"]; then
+        echo "Starting Cron"
+        service cron start &
+        status=$?
+        if [ $status -ne 0 ]; then
         echo "Failed to start cron: $status"
         exit $status
-      fi
+        fi
 fi
