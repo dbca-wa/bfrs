@@ -32,7 +32,7 @@ RUN chmod 0644 /etc/cron.d/dockercron && \
     chmod 755 /startup.sh && \
     chmod +s /startup.sh && \
     chmod 755 /pre_startup.sh && \
-    chmod +s /pre_startup.sh && \
+    chmod +s /pre_startup.sh
 
 # Install Python libs from requirements.txt.
 FROM builder_base_bfrs as python_libs_bfrs
