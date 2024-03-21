@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 env > /container-config/.cronenv
 sed -i 's/\"/\\"/g' /container-config/.cronenv
