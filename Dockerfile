@@ -27,8 +27,7 @@ RUN chmod 0644 /etc/cron.d/dockercron && \
     crontab /etc/cron.d/dockercron && \
     touch /var/log/cron.log && \
     service cron start && \
-    mkdir /container-config/ && \
-    env > /container-config/.cronenv
+    mkdir /container-config/
 
 # Install Python libs from requirements.txt.
 FROM builder_base_bfrs as python_libs_bfrs
@@ -51,6 +50,9 @@ COPY templates ./templates
 RUN touch /app/.env
 COPY .git ./.git
 RUN python manage.py collectstatic --noinput
+
+# Populate .cronenv file with environment variables.
+RUN  /app/cronenv.sh
 
 EXPOSE 8080
 HEALTHCHECK --interval=1m --timeout=5s --start-period=10s --retries=3 CMD ["wget", "-q", "-O", "-", "http://localhost:8080/"]
