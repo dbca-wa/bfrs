@@ -26,7 +26,6 @@ COPY cron /etc/cron.d/dockercron
 RUN chmod 0644 /etc/cron.d/dockercron && \
     crontab /etc/cron.d/dockercron && \
     touch /var/log/cron.log && \
-    service cron start && \
     mkdir /container-config/
 
 # Install Python libs from requirements.txt.
@@ -51,9 +50,6 @@ RUN touch /app/.env
 COPY .git ./.git
 RUN python manage.py collectstatic --noinput
 
-# Populate .cronenv file with environment variables.
-RUN  /app/cronenv.sh
-
 EXPOSE 8080
 HEALTHCHECK --interval=1m --timeout=5s --start-period=10s --retries=3 CMD ["wget", "-q", "-O", "-", "http://localhost:8080/"]
-CMD ["gunicorn", "bfrs_project.wsgi", "--bind", ":8080", "--config", "gunicorn.ini"]
+CMD ["/pre_startup.sh"]
