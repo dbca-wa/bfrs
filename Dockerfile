@@ -7,13 +7,13 @@ LABEL maintainer="asi@dbca.wa.gov.au"
 
 ENV DEBIAN_FRONTEND=noninteractive \
     TZ=Australia/Perth \
-	PRODUCTION_EMAIL=True \
-	SECRET_KEY="ThisisNotRealKey" \
-	USER_SSO="Docker Build" \
-	PASS_SSO="ThisIsNotReal" \
-	EMAIL_HOST="localhost" \
-	FROM_EMAIL="no-reply@dbca.wa.gov.au" \
-	SMS_POSTFIX="sms.url.endpoint"
+    PRODUCTION_EMAIL=True \
+    SECRET_KEY="ThisisNotRealKey" \
+    USER_SSO="Docker Build" \
+    PASS_SSO="ThisIsNotReal" \
+    EMAIL_HOST="localhost" \
+    FROM_EMAIL="no-reply@dbca.wa.gov.au" \
+    SMS_POSTFIX="sms.url.endpoint"
 
 # Use Australian Mirrors
 RUN sed 's/archive.ubuntu.com/au.archive.ubuntu.com/g' /etc/apt/sources.list > /etc/apt/sourcesau.list && \
