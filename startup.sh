@@ -18,7 +18,7 @@ fi
 
 echo $ENABLE_CRON
 
-if [ $ENABLE_CRON == "True" ]; then
+if ["$ENABLE_CRON" = "True"]; then
         echo "Starting Cron"
         service cron start &
         status=$?
