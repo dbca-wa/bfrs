@@ -23,10 +23,16 @@ ENV TZ=Australia/Perth
 
 # Setup cron
 COPY cron /etc/cron.d/dockercron
+COPY startup.sh pre_startup.sh /
+
 RUN chmod 0644 /etc/cron.d/dockercron && \
     crontab /etc/cron.d/dockercron && \
     touch /var/log/cron.log && \
-    mkdir /container-config/
+    mkdir /container-config/ && \
+    chmod 755 /startup.sh && \
+    chmod +s /startup.sh && \
+    chmod 755 /pre_startup.sh && \
+    chmod +s /pre_startup.sh && \
 
 # Install Python libs from requirements.txt.
 FROM builder_base_bfrs as python_libs_bfrs
