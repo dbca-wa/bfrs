@@ -39,7 +39,8 @@ RUN --mount=type=cache,target=/var/cache/apt apt-get update && \
     wget && \
     rm -rf /var/lib/apt/lists/*
 
-RUN pip2 install --upgrade pip==20.3
+RUN ln -s /usr/bin/python2 /usr/bin/python && \
+    pip2 install --upgrade pip==20.3
 
 # Setup cron
 COPY cron /etc/cron.d/dockercron
