@@ -79,6 +79,8 @@ COPY bfrs ./bfrs
 COPY bfrs_project ./bfrs_project
 COPY templates ./templates
 
+COPY md4byte_generate.py /bin/md4byte_generate.py
+RUN chmod 755 /bin/md4byte_generate.py 
 COPY compute_hash_patch.diff /tmp/compute_hash_patch.diff
 RUN patch -p1 /usr/local/lib/python2.7/dist-packages/ntlm_auth/compute_hash.py < /tmp/compute_hash_patch.diff
 RUN rm /tmp/compute_hash_patch.diff
