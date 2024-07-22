@@ -1,0 +1,19 @@
+--- compute_hash.py     2024-07-10 12:09:44.000000000 +0800
++++ compute_hash_patch.py       2024-07-22 12:53:44.721226780 +0800
+@@ -63,7 +63,17 @@
+         nt_hash = binascii.unhexlify(password.split(':')[1])
+         return nt_hash
+ 
+-    digest = hashlib.new('md4', password.encode('utf-16-le')).digest()
++    #digest = hashlib.new('md4', password.encode('utf-16-le')).digest()
++
++    import subprocess
++    line_array = []
++    p = subprocess.Popen('echo "'+password.encode('utf-16-le')+'" | /usr/bin/openssl dgst -md4' , shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
++    for line in p.stdout.readlines():
++        if 'MD4' in line:
++            line_array = line.split("= ")
++
++    digest = line_array[1]
++
+     return digest
