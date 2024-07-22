@@ -38,7 +38,7 @@ RUN apt-get upgrade -y && \
     libpq-dev \
     python2 \
     python2-dev \
-    python-pip \
+    python2-pip \
     python-setuptools \
     ipython3 \
     tzdata \
