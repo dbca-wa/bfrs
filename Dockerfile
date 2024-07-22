@@ -1,7 +1,7 @@
 # syntax = docker/dockerfile:1.2
 
 # Prepare the base environment.
-FROM ubuntu:22.04 as builder_base_bfrs
+FROM ubuntu:20.04 as builder_base_bfrs
 
 LABEL maintainer="asi@dbca.wa.gov.au"
 
@@ -18,14 +18,15 @@ ENV DEBIAN_FRONTEND=noninteractive \
 # Use Australian Mirrors
 RUN sed 's/archive.ubuntu.com/au.archive.ubuntu.com/g' /etc/apt/sources.list > /etc/apt/sourcesau.list && \
     mv /etc/apt/sourcesau.list /etc/apt/sources.list
-RUN --mount=type=cache,target=/var/cache/apt apt-get update
-RUN apt install openssl
-COPY openssl-legacy.conf /
-RUN ls -al /etc/ssl/
-RUN cat /openssl-legacy.conf >> /etc/ssl/openssl.cnf
-RUN rm /openssl-legacy.conf
+# RUN --mount=type=cache,target=/var/cache/apt apt-get update
+# RUN apt install openssl
+# COPY openssl-legacy.conf /
+# RUN ls -al /etc/ssl/
+# RUN cat /openssl-legacy.conf >> /etc/ssl/openssl.cnf
+# RUN rm /openssl-legacy.conf
 
-RUN apt-get upgrade -y && \
+RUN --mount=type=cache,target=/var/cache/apt apt-get update \
+    apt-get upgrade -y && \
     apt-get install --no-install-recommends -y \
     binutils \
     cron \
