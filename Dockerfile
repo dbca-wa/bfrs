@@ -19,7 +19,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
 RUN sed 's/archive.ubuntu.com/au.archive.ubuntu.com/g' /etc/apt/sources.list > /etc/apt/sourcesau.list && \
     mv /etc/apt/sourcesau.list /etc/apt/sources.list
 COPY openssl-legacy.conf /
-RUN cat openssl-legacy.conf >> /etc/ssl/openssl.cnf
+RUN ls -al /etc/ssl/
+RUN cat /openssl-legacy.conf >> /etc/ssl/openssl.cnf
 RUN rm /openssl-legacy.conf
 
 RUN --mount=type=cache,target=/var/cache/apt apt-get update && \
