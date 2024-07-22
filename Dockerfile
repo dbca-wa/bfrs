@@ -25,8 +25,8 @@ RUN sed 's/archive.ubuntu.com/au.archive.ubuntu.com/g' /etc/apt/sources.list > /
 # RUN cat /openssl-legacy.conf >> /etc/ssl/openssl.cnf
 # RUN rm /openssl-legacy.conf
 
-RUN --mount=type=cache,target=/var/cache/apt apt-get update \
-    apt-get upgrade -y && \
+RUN --mount=type=cache,target=/var/cache/apt apt-get update
+RUN apt-get upgrade -y && \
     apt-get install --no-install-recommends -y \
     binutils \
     cron \
