@@ -9,7 +9,7 @@
 +
 +    import subprocess
 +    line_array = []
-+    p = subprocess.Popen('pyton /bin/md4byte_generate.py "'+password+'"' , shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
++    p = subprocess.Popen('python3 /bin/md4byte_generate.py "'+password+'"' , shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 +    for line in p.stdout.readlines():
 +        if 'MD4' in line:
 +            line_array = line.split("= ")
