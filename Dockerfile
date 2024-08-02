@@ -111,6 +111,7 @@ COPY gunicorn.ini manage.py ./
 COPY bfrs ./bfrs
 COPY bfrs_project ./bfrs_project
 COPY templates ./templates
+COPY python-cron ./
 
 # COPY md4byte_generate.py /bin/md4byte_generate.py
 # RUN chmod 755 /bin/md4byte_generate.py 
