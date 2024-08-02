@@ -1,5 +1,5 @@
 # Prepare the base environment.
-FROM dbcawa/bfrs:bfrs_dfes_wrapper_dev as builder_base_bfrsdev
+FROM dbcawa/bfrs:bfrs_dfes_wrapper_latest as builder_base_bfrsdev
 
 RUN apt-get update
 RUN apt-get install --no-install-recommends -y patch
