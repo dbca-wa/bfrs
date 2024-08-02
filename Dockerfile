@@ -42,35 +42,68 @@ RUN apt-get upgrade -y && \
     python-setuptools \
     ipython3 \
     tzdata \
-    wget 
+    wget \
+    curl 
+RUN apt-get install virtualenv -y
 #    rm -rf /var/lib/apt/lists/*
 #COPY get-pip.py /tmp/get-pip.py
 #RUN python2 /tmp/get-pip.py
 RUN apt-get install patch
-RUN ln -s /usr/bin/python2 /usr/bin/python && \
-    pip2 install --upgrade pip==20.3
+# RUN ln -s /usr/bin/python2 /usr/bin/python && \
+    # pip install --upgrade pip==20.3
 
 # Setup cron
-COPY cron /etc/cron.d/dockercron
-COPY startup.sh pre_startup.sh /
+# COPY cron /etc/cron.d/dockercron
+COPY startup.sh /
+# COPY pre_startup.sh /
 
-RUN chmod 0644 /etc/cron.d/dockercron && \
-    crontab /etc/cron.d/dockercron && \
-    touch /var/log/cron.log && \
-    mkdir /container-config/ && \
-    chmod 755 /startup.sh && \
-    chmod +s /startup.sh && \
-    chmod 755 /pre_startup.sh && \
-    chmod +s /pre_startup.sh
+# RUN chmod 0644 /etc/cron.d/dockercron && \
+#     crontab /etc/cron.d/dockercron && \
+#     touch /var/log/cron.log && \
+#     mkdir /container-config/ && \
+RUN chmod 755 /startup.sh
+# RUN chmod +s /startup.sh 
+# RUN    chmod 755 /pre_startup.sh && \
+# RUN    chmod +s /pre_startup.sh
+
+RUN groupadd -g 5000 oim 
+RUN useradd -g 5000 -u 5000 oim -s /bin/bash -d /app 
+RUN usermod -a -G sudo oim 
+# RUN echo "oim  ALL=(ALL)  NOPASSWD: /startup.sh" > /etc/sudoers.d/oim && \
+RUN mkdir /app
+RUN chown -R oim.oim /app  
+
+# kubernetes health checks script
+RUN wget https://raw.githubusercontent.com/dbca-wa/wagov_utils/main/wagov_utils/bin/health_check.sh -O /bin/health_check.sh
+RUN chmod 755 /bin/health_check.sh
+
+# python scheduler
+RUN wget https://raw.githubusercontent.com/dbca-wa/wagov_utils/main/wagov_utils/bin-python/scheduler/scheduler.py -O /bin/scheduler.py
+RUN chmod 755 /bin/scheduler.py
+
+# Add azcopy to container
+RUN mkdir /tmp/azcopy/
+RUN wget https://aka.ms/downloadazcopy-v10-linux -O /tmp/azcopy/azcopy.tar.gz
+RUN cd /tmp/azcopy/ ; tar -xzvf azcopy.tar.gz
+RUN cp /tmp/azcopy/azcopy_linux_amd64_10.26.0/azcopy /bin/azcopy
+RUN chmod 755 /bin/azcopy
 
 # Install Python libs from requirements.txt.
 FROM builder_base_bfrs as python_libs_bfrs
 WORKDIR /app
+USER oim
+RUN virtualenv -p python2.7 /app/venv
+ENV PATH=/app/venv/bin:$PATH
 COPY requirements.txt ./
-RUN pip2 install -r requirements.txt 
+RUN ls -al /app/venv/bin/
+RUN whereis pip
+RUN pip install -r requirements.txt 
     # Update the Django <1.11 bug in django/contrib/gis/geos/libgeos.py
     # Reference: https://stackoverflow.com/questions/18643998/geodjango-geosexception-error
-RUN sed -i -e "s/ver = geos_version().decode()/ver = geos_version().decode().split(' ')[0]/" /usr/local/lib/python2.7/dist-packages/django/contrib/gis/geos/libgeos.py
+RUN find /app/venv | grep libgeos
+RUN sed -i -e "s/ver = geos_version().decode()/ver = geos_version().decode().split(' ')[0]/" /app/venv/lib/python2.7/site-packages/django/contrib/gis/geos/libgeos.py
+
+
 
 # Install the project (ensure that frontend projects have been built prior to this step).
 FROM python_libs_bfrs as collect_static_bfrs
@@ -79,11 +112,11 @@ COPY bfrs ./bfrs
 COPY bfrs_project ./bfrs_project
 COPY templates ./templates
 
-COPY md4byte_generate.py /bin/md4byte_generate.py
-RUN chmod 755 /bin/md4byte_generate.py 
-COPY compute_hash_patch.diff /tmp/compute_hash_patch.diff
-RUN patch -p1 /usr/local/lib/python2.7/dist-packages/ntlm_auth/compute_hash.py < /tmp/compute_hash_patch.diff
-RUN rm /tmp/compute_hash_patch.diff
+# COPY md4byte_generate.py /bin/md4byte_generate.py
+# RUN chmod 755 /bin/md4byte_generate.py 
+# COPY compute_hash_patch.diff /tmp/compute_hash_patch.diff
+# RUN patch -p1 /usr/local/lib/python2.7/dist-packages/ntlm_auth/compute_hash.py < /tmp/compute_hash_patch.diff
+# RUN rm /tmp/compute_hash_patch.diff
 
 # NOTE: we can't currently run the collectstatic step due to how BFRS is written.
 # Always be sure to run collectstatic locally prior to building the image.
@@ -92,10 +125,24 @@ RUN touch /app/.env && \
 
 FROM collect_static_bfrs as launch_bfrs
 
-# kubernetes health checks script
-RUN wget https://raw.githubusercontent.com/dbca-wa/wagov_utils/main/wagov_utils/bin/health_check.sh -O /bin/health_check.sh
-RUN chmod 755 /bin/health_check.sh
 
+
+# RUN curl -fsSL -o /tmp/install.sh https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh
+# RUN chmod 755 /tmp/install.sh
+# RUN /tmp/install.sh
+
+RUN git clone https://github.com/Homebrew/brew ~/.linuxbrew/Homebrew \
+&& mkdir ~/.linuxbrew/bin \
+&& ln -s ../Homebrew/bin/brew ~/.linuxbrew/bin \
+&& eval $(~/.linuxbrew/bin/brew shellenv)
+ENV PATH=/app/.linuxbrew/bin/:$PATH
+RUN ls -al /app/.linuxbrew/bin
+RUN whereis brew
+# RUN ln -s ../Homebrew/bin/brew ~/venv/bin/brew
+RUN brew install openssl@1.1
+RUN ls -al /app/.linuxbrew/opt/openssl\@1.1/bin/openssl
+RUN ln -s /app/.linuxbrew/opt/openssl\@1.1/bin/openssl /app/venv/bin/openssl 
+RUN openssl version
 EXPOSE 8080
 HEALTHCHECK --interval=1m --timeout=5s --start-period=10s --retries=3 CMD ["wget", "-q", "-O", "-", "http://localhost:8080/"]
-CMD ["/pre_startup.sh"]
+CMD ["/startup.sh"]
