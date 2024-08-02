@@ -1,0 +1,2 @@
+# 18:15PM - (6:15PM) every evening - calculate_report_tables
+15 18 * * * python /app/manage.py calculate_report_tables >> logs/cronjob.log 2>&1
