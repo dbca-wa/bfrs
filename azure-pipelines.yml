@@ -3,7 +3,7 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/docker
 
 trigger:
-- main
+- bfrs_dfes_wrapper
 
 resources:
 - repo: self
@@ -27,8 +27,8 @@ stages:
         command: buildAndPush
         dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
         tags: | 
-              latest
-              $(tagDate)
+              bfrs_dfes_wrapper_latest
+              bfrs_dfes_wrapper_$(tagDate)
         containerRegistry: DockerHub
         repository: dbcawa/bfrs
     - task: Docker@2
@@ -37,7 +37,7 @@ stages:
         command: buildAndPush
         dockerfile: '$(Build.SourcesDirectory)/dockerdev/Dockerfile'
         tags: | 
-              bfrs_dev_latest
-              bfrs_dev_$(tagDate)              
+              bfrs_dfes_wrapper_dev_latest
+              bfrs_dfes_wrapper_dev_$(tagDate)              
         containerRegistry: DockerHub
         repository: dbcawa/docker_app_dev    
