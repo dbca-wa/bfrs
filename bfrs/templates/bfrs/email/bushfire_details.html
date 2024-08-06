@@ -1,9 +1,0 @@
-{% load email_tags %}
-<table style="border:1px solid black; border-collapse: collapse;">
-{% for name in bushfire_fields %}
-    <tr>
-        <th style="border:1px solid black;padding:2px 10px 2px 10px;text-align: left;">{{ name|field_label:cur_bushfire }}</th> 
-        <td style="border:1px solid black;padding:2px 10px 2px 10px;{{ name | field_style:bushfire}}">{% field_value name cur_bushfire request external_email=external_email %}</td> 
-    </tr>
-{% endfor %}
-</table>
