@@ -1,6 +1,6 @@
 # Prepare the base environment.
 FROM dbcawa/bfrs:bfrs_dfes_wrapper_latest as builder_base_bfrsdev
-
+USER root
 RUN apt-get update
 RUN apt-get install --no-install-recommends -y patch
 RUN apt-get install --no-install-recommends -y libpq-dev git ssh sudo 
