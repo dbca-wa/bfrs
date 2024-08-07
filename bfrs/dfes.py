@@ -49,7 +49,7 @@ class P1CAD(object):
             headers = {'Content-Type':'application/xml'}
 
             if settings.DFES_API_WRAPPER_URL:
-                resp = requests.post(url,json={'payload': payload, 'headers': headers,'api_key': settings.PLEASE_PROVIDE_A_KEY},verify=False)
+                resp = requests.post(settings.DFES_API_WRAPPER_URL,json={'payload': payload, 'headers': headers,'api_key': settings.PLEASE_PROVIDE_A_KEY},verify=False)
             else:
                 url = "{}/api/v1/incidents".format(settings.P1CAD_ENDPOINT)
                 if settings.P1CAD_USER:
