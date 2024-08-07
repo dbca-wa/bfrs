@@ -135,3 +135,6 @@ P1CAD_SSL_VERIFY = decouple.config("P1CAD_SSL_VERIFY", default=False, cast=bool)
 P1CAD_USER = decouple.config("P1CAD_USER", default="")
 PASS_SSO = decouple.config("PASS_SSO", default="")
 
+
+DFES_WRAPPER_KEY = decouple.config("DFES_WRAPPER_KEY", default="NOKEYPROVIDED")
+
