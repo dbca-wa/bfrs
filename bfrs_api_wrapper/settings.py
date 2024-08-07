@@ -20,8 +20,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
-SECRET_KEY = decouple.config("SECRET_KEY")
-
 # SECURITY WARNING: don't run with debug turned on in production!
 SECRET_KEY = decouple.config("SECRET_KEY")
 DEBUG = decouple.config("DEBUG", default=False, cast=bool)
@@ -128,3 +126,12 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+P1CAD_ENDPOINT = decouple.config("P1CAD_ENDPOINT", default="")
+P1CAD_NOTIFY_EMAIL = decouple.config("P1CAD_NOTIFY_EMAIL", default="")
+P1CAD_PASSWORD = decouple.config("P1CAD_PASSWORD", default="")
+P1CAD_SSL_VERIFY = decouple.config("P1CAD_SSL_VERIFY", default=False, cast=bool)
+P1CAD_USER = decouple.config("P1CAD_USER", default="")
+PASS_SSO = decouple.config("PASS_SSO", default="")
+

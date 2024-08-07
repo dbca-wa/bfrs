@@ -1,5 +1,5 @@
 {
-	"name": "BFRS Development",
+	"name": "BFRS DFES Wrapper Development",
 	"image": "dbcawa/docker_app_dev:bfrs_dfes_wrapper_dev_latest",
 	"remoteUser": "container",
 	"workspaceFolder": "/data/data/projects/bfrs_dfes_wrapper",
@@ -8,7 +8,7 @@
 	          ],	
 	"appPort": [ "7025:8080","5176:5176","5177:9177","5178:9178","5179:9179","5180:5180"],
 	"runArgs": ["--env-file","${localEnv:HOME}/vscode-env/bfrs-dfes.env",
-		   "--hostname","pbs-dev"
+		   "--hostname","bfrs-dfes-dev"
 		   ],
 	"forwardPorts": [5176,5177,5178,5179,5180],
 	"initializeCommand" : "${localEnv:HOME}/docker-scripts-dev/windows_vbox/postgres_docker_load.sh"
