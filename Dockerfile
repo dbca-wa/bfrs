@@ -133,18 +133,18 @@ FROM collect_static_bfrs as launch_bfrs
 # RUN chmod 755 /tmp/install.sh
 # RUN /tmp/install.sh
 
-RUN git clone https://github.com/Homebrew/brew ~/.linuxbrew/Homebrew \
-&& mkdir ~/.linuxbrew/bin \
-&& ln -s ../Homebrew/bin/brew ~/.linuxbrew/bin \
-&& eval $(~/.linuxbrew/bin/brew shellenv)
-ENV PATH=/app/.linuxbrew/bin/:$PATH
-RUN ls -al /app/.linuxbrew/bin
-RUN whereis brew
+# RUN git clone https://github.com/Homebrew/brew ~/.linuxbrew/Homebrew \
+# && mkdir ~/.linuxbrew/bin \
+# && ln -s ../Homebrew/bin/brew ~/.linuxbrew/bin \
+# && eval $(~/.linuxbrew/bin/brew shellenv)
+# ENV PATH=/app/.linuxbrew/bin/:$PATH
+# RUN ls -al /app/.linuxbrew/bin
+# RUN whereis brew
 # RUN ln -s ../Homebrew/bin/brew ~/venv/bin/brew
-RUN brew install openssl@1.1
-RUN ls -al /app/.linuxbrew/opt/openssl\@1.1/bin/openssl
-RUN ln -s /app/.linuxbrew/opt/openssl\@1.1/bin/openssl /app/venv/bin/openssl 
-RUN openssl version
+# RUN brew install openssl@1.1
+# RUN ls -al /app/.linuxbrew/opt/openssl\@1.1/bin/openssl
+# RUN ln -s /app/.linuxbrew/opt/openssl\@1.1/bin/openssl /app/venv/bin/openssl 
+# RUN openssl version
 EXPOSE 8080
 HEALTHCHECK --interval=1m --timeout=5s --start-period=10s --retries=3 CMD ["wget", "-q", "-O", "-", "http://localhost:8080/"]
 CMD ["/startup.sh"]
