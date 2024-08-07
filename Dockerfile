@@ -14,14 +14,22 @@ ENV SMS_POSTFIX="sms.url.endpoint"
 
 RUN apt-get update -y \
   && apt-get install --no-install-recommends -y wget git libmagic-dev gcc binutils libproj-dev gdal-bin \
-  python python-setuptools python-dev python-pip tzdata \
+  python python-setuptools python-dev python-pip tzdata virtualenv \
   && pip install --upgrade pip
+
+RUN groupadd -g 5000 oim 
+RUN useradd -g 5000 -u 5000 oim -s /bin/bash -d /app
+RUN mkdir /app 
+RUN chown -R oim.oim /app 
 
 ENV TZ=Australia/Perth
 
 # Install Python libs from requirements.txt.
 FROM builder_base_bfrs as python_libs_bfrs
 WORKDIR /app
+USER oim
+RUN virtualenv -p python3 /app/venv
+ENV PATH=/app/venv/bin:$PATH
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
   # Update the Django <1.11 bug in django/contrib/gis/geos/libgeos.py
@@ -41,4 +49,4 @@ RUN python manage.py collectstatic --noinput
 
 EXPOSE 8080
 HEALTHCHECK --interval=1m --timeout=5s --start-period=10s --retries=3 CMD ["wget", "-q", "-O", "-", "http://localhost:8080/"]
-CMD ["gunicorn", "bfrs_project.wsgi", "--bind", ":8080", "--config", "gunicorn.ini"]
+CMD ["gunicorn", "bfrs_api_wrapper.wsgi", "--bind", ":8080", "--config", "gunicorn.ini"]
