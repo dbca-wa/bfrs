@@ -48,11 +48,14 @@ class P1CAD(object):
 
             headers = {'Content-Type':'application/xml'}
 
-            url = "{}/api/v1/incidents".format(settings.P1CAD_ENDPOINT)
-            if settings.P1CAD_USER:
-                resp = requests.post(url,data=payload,auth=HttpNtlmAuth(settings.P1CAD_USER,settings.P1CAD_PASSWORD),verify=settings.P1CAD_SSL_VERIFY,headers=headers)
+            if settings.DFES_API_WRAPPER_URL:
+                resp = requests.post(url,json={'payload': payload, 'headers': headers,'api_key': settings.PLEASE_PROVIDE_A_KEY},verify=False)
             else:
-                resp = requests.post(url,data=payload,verify=settings.P1CAD_SSL_VERIFY,headers=headers)
+                url = "{}/api/v1/incidents".format(settings.P1CAD_ENDPOINT)
+                if settings.P1CAD_USER:
+                    resp = requests.post(url,data=payload,auth=HttpNtlmAuth(settings.P1CAD_USER,settings.P1CAD_PASSWORD),verify=settings.P1CAD_SSL_VERIFY,headers=headers)
+                else:
+                    resp = requests.post(url,data=payload,verify=settings.P1CAD_SSL_VERIFY,headers=headers)
     
             resp.raise_for_status()
             result = resp.json()

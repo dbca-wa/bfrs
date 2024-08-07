@@ -43,7 +43,8 @@ RUN apt-get upgrade -y && \
     ipython3 \
     tzdata \
     wget \
-    curl 
+    curl \
+    vim
 RUN apt-get install virtualenv -y
 #    rm -rf /var/lib/apt/lists/*
 #COPY get-pip.py /tmp/get-pip.py
