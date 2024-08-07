@@ -6,7 +6,7 @@
 	"mounts": ["type=bind,source=/data/,target=/data/",
 	           "type=bind,source=/data/data/containerhome/,target=/home/container/"
 	          ],	
-	"appPort": [ "7025:8080","9191:9191","9192:9192","9193:9193","9194:9194","9195:9195"],
+	"appPort": [ "7028:8080","9191:9191","9192:9192","9193:9193","9194:9194","9195:9195"],
 	"runArgs": ["--env-file","${localEnv:HOME}/vscode-env/bfrs.env",
 		   "--hostname","bfrs-dev"
 		   ],
