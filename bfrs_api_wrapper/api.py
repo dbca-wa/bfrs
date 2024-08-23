@@ -22,6 +22,7 @@ def create_dfes_incident(request):
         print ("Key Verified")
         url = "{}/api/v1/incidents".format(settings.P1CAD_ENDPOINT)
         print (url)
+        print (payload)
         if settings.P1CAD_USER:
             resp = requests.post(url,data=payload,auth=HttpNtlmAuth(settings.P1CAD_USER,settings.P1CAD_PASSWORD),verify=settings.P1CAD_SSL_VERIFY,headers=headers)
         else:
