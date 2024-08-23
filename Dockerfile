@@ -1,6 +1,6 @@
 # Dockerfile to build BFRS application images.
 # Prepare the base environment.
-FROM dbcawa/ubuntu:18.04-latexmk as builder_base_bfrs
+FROM ubuntu:24.04 as builder_base_bfrs
 MAINTAINER asi@dbca.wa.gov.au
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Australia/Perth
@@ -12,10 +12,12 @@ ENV EMAIL_HOST="localhost"
 ENV FROM_EMAIL="no-reply@dbca.wa.gov.au"
 ENV SMS_POSTFIX="sms.url.endpoint"
 
-RUN apt-get update -y \
-  && apt-get install --no-install-recommends -y wget git libmagic-dev gcc binutils libproj-dev gdal-bin \
-  python python-setuptools python-dev python-pip tzdata virtualenv \
-  && pip install --upgrade pip
+RUN apt-get update -y
+RUN apt-get install --no-install-recommends -y wget git libmagic-dev gcc binutils libproj-dev gdal-bin
+RUN apt-get install --no-install-recommends -y python3 python3-setuptools python3-dev python3-pip tzdata virtualenv
+RUN apt-get install --no-install-recommends -y gcc bzip2 build-essential libpq-dev
+
+# RUN pip install --upgrade pip
 
 RUN groupadd -g 5000 oim 
 RUN useradd -g 5000 -u 5000 oim -s /bin/bash -d /app
@@ -30,6 +32,7 @@ WORKDIR /app
 USER oim
 RUN virtualenv -p python3 /app/venv
 ENV PATH=/app/venv/bin:$PATH
+RUN ls -la /app/venv/bin
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
   # Update the Django <1.11 bug in django/contrib/gis/geos/libgeos.py
