@@ -32,7 +32,6 @@ WORKDIR /app
 USER oim
 RUN virtualenv -p python3 /app/venv
 ENV PATH=/app/venv/bin:$PATH
-RUN ls -la /app/venv/bin
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
   # Update the Django <1.11 bug in django/contrib/gis/geos/libgeos.py

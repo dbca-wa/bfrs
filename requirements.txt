@@ -5,7 +5,7 @@ Django==3.2.25
 django-extensions==1.7.6
 django-dotenv==1.4.2
 dj-database-url==0.5.0
-gunicorn==19.9.0
+gunicorn==23.0.0
 requests==2.20.0
 requests-ntlm==1.1.0
 python-decouple==3.8
