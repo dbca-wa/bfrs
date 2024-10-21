@@ -487,6 +487,9 @@ class BaseBushfireEditForm(BushfireViewForm):
         if self.instance and self.instance.pk:
             if self.instance.dfes_incident_no and not self.can_maintain_data and self.is_editable("dfes_incident_no"):
                self.fields["dfes_incident_no"].widget.attrs["disabled"] = True
+        self.fields['dfes_incident_no'].widget.attrs['autocomplete'] = 'off'
+        self.fields['job_code'].widget.attrs['autocomplete'] = 'off'
+        
 
     def is_valid(self):
         is_valid = super(BaseBushfireEditForm,self).is_valid()
