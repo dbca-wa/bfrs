@@ -44,7 +44,9 @@ RUN apt-get upgrade -y && \
     tzdata \
     wget \
     curl \
-    vim
+    vim  \
+    texlive-full
+    
 RUN apt-get install virtualenv -y
 #    rm -rf /var/lib/apt/lists/*
 #COPY get-pip.py /tmp/get-pip.py
