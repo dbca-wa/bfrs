@@ -25,7 +25,8 @@ COPY openssl-legacy.conf /
 RUN cat /openssl-legacy.conf >> /etc/ssl/openssl.cnf
 RUN rm /openssl-legacy.conf
 
-RUN --mount=type=cache,target=/var/cache/apt apt-get update
+# RUN --mount=type=cache,target=/var/cache/apt apt-get update
+RUN apt-get update
 RUN apt-get upgrade -y && \
     apt-get install --no-install-recommends -y \
     binutils \
