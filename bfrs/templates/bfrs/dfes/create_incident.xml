@@ -15,6 +15,9 @@
             <ext:DataItemID>
                 <nc:IdentificationID>{{bushfire.fire_number_slug}}</nc:IdentificationID>
             </ext:DataItemID>
+            <ext:FireInformation>
+                <nc:FireName>{{bushfire.name}}</nc:FireName>
+            </ext:FireInformation>
             <nc:OrganizationIdentification>
                 <nc:IdentificationID>FE</nc:IdentificationID>
             </nc:OrganizationIdentification>
