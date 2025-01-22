@@ -6,10 +6,10 @@
 	"mounts": ["type=bind,source=/data/,target=/data/",
 	           "type=bind,source=/data/data/containerhome/,target=/home/container/"
 	          ],	
-	"appPort": [ "7025:8080","5176:5176","5177:9177","5178:9178","5179:9179","5180:5180"],
+	"appPort": [ "7030:8080","9201:9201","9202:9202","9203:9203","9204:9204","9205:9205"],
 	"runArgs": ["--env-file","${localEnv:HOME}/vscode-env/bfrs-dfes.env",
 		   "--hostname","bfrs-dfes-dev"
 		   ],
-	"forwardPorts": [5176,5177,5178,5179,5180],
+	"forwardPorts": [9201,9202,9203,9204,9205],
 	"initializeCommand" : "${localEnv:HOME}/docker-scripts-dev/windows_vbox/postgres_docker_load.sh"
 }
