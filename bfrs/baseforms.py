@@ -1,7 +1,7 @@
 from collections import OrderedDict
 import datetime
 
-from django.utils.encoding import python_2_unicode_compatible
+#from django.utils.encoding import python_2_unicode_compatible
 from django.utils.html import html_safe
 from django.db import transaction
 from django.utils import six
@@ -248,7 +248,6 @@ class BoundField(forms.boundfield.BoundField):
             return self.field.prepare_value(data)
 
 @html_safe
-@python_2_unicode_compatible
 class CompoundBoundField(BoundField):
     "A Field plus data"
     def __init__(self, form, field, name):

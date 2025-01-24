@@ -8,7 +8,7 @@ import pytz
 from django.contrib.gis.db import models
 from django.utils import timezone
 from django.contrib.auth.models import User
-from django.utils.encoding import python_2_unicode_compatible
+#from django.utils.encoding import python_2_unicode_compatible
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.core.exceptions import (ValidationError)
 from django.conf import settings
@@ -19,7 +19,8 @@ from django.db.models.signals import post_delete
 from django.dispatch import receiver
 
 from smart_selects.db_fields import ChainedForeignKey
-import LatLon
+# import LatLon
+from latloncalc import latlon as LatLon
 import reversion
 
 from classproperty import (classproperty,cachedclassproperty)
@@ -232,7 +233,7 @@ class Profile(models.Model):
     def __str__(self):
         return 'username: {}, region: {}, district: {}'.format(self.user.username, self.region, self.district)
 
-@python_2_unicode_compatible
+
 class CaptureMethod(models.Model):
     OTHER_CODE = "999"
     code = models.CharField(max_length=32,unique=True)
@@ -251,7 +252,7 @@ class CaptureMethod(models.Model):
         return self.code
 
 
-@python_2_unicode_compatible
+
 class Region(models.Model):
     name = models.CharField(max_length=64, unique=True)
     forest_region = models.BooleanField(default=False)
@@ -279,7 +280,7 @@ class Region(models.Model):
         return self.name
 
 
-@python_2_unicode_compatible
+
 class District(models.Model):
     region = models.ForeignKey(Region)
     name = models.CharField(max_length=200, unique=True)
@@ -831,7 +832,7 @@ class Bushfire(BushfireBase):
             )
         return l
 
-@python_2_unicode_compatible
+
 class Tenure(models.Model):
     name = models.CharField(verbose_name='Tenure category', max_length=200)
     report_name = models.CharField(verbose_name='Tenure category report name', max_length=200,default="")
@@ -859,7 +860,7 @@ class Tenure(models.Model):
     def __str__(self):
         return self.name
 
-@python_2_unicode_compatible
+
 class TenureMapping(models.Model):
     tenure = models.ForeignKey(Tenure)
     name = models.CharField(verbose_name='Tenure sub category', max_length=200,unique=True)
@@ -870,7 +871,7 @@ class TenureMapping(models.Model):
     def __str__(self):
         return "{}.{}".format(self.tenure.name,self.name)
 
-@python_2_unicode_compatible
+
 class FuelType(models.Model):
     name = models.CharField(max_length=200)
 
@@ -881,7 +882,7 @@ class FuelType(models.Model):
         return self.name
 
 
-@python_2_unicode_compatible
+
 class Cause(models.Model):
     name = models.CharField(max_length=50)
     report_name = models.CharField(max_length=50,default="")
@@ -901,7 +902,7 @@ class Cause(models.Model):
     def __str__(self):
         return self.name
 
-@python_2_unicode_compatible
+
 class Agency(models.Model):
 
     name = models.CharField(max_length=50, verbose_name="Agency Name")
@@ -922,7 +923,7 @@ class Agency(models.Model):
     def __str__(self):
         return self.name
 
-@python_2_unicode_compatible
+
 class InjuryType(models.Model):
     name = models.CharField(max_length=25, verbose_name="Injury/Fatality Type")
 
@@ -933,7 +934,7 @@ class InjuryType(models.Model):
         return self.name
 
 
-@python_2_unicode_compatible
+
 class DamageType(models.Model):
     name = models.CharField(max_length=50, verbose_name="Damage Type")
 
@@ -944,7 +945,7 @@ class DamageType(models.Model):
         return self.name
 
 
-@python_2_unicode_compatible
+
 class AreaBurntBase(models.Model):
     tenure = models.ForeignKey(Tenure, related_name='%(class)s_tenures')
     area = models.DecimalField(verbose_name="Area (ha)", max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], null=True, blank=True)
@@ -976,7 +977,7 @@ class AreaBurntSnapshot(AreaBurntBase, Audit):
         unique_together = ('tenure', 'snapshot')
 
 
-@python_2_unicode_compatible
+
 class InjuryBase(models.Model):
     injury_type = models.ForeignKey(InjuryType)
     number = models.PositiveSmallIntegerField(validators=[MinValueValidator(0)])
@@ -1064,7 +1065,7 @@ class BushfirePropertySnapshot(BushfirePropertyBase):
     class Meta:
         unique_together = ('snapshot','name')
 
-@python_2_unicode_compatible
+
 class DocumentCategory(DictMixin,Audit):
     name = models.CharField(max_length=200,null=False,editable=True,unique=True, verbose_name="Document Category")
     archived = models.BooleanField(default=False,editable=True)
@@ -1093,7 +1094,7 @@ class DocumentCategory(DictMixin,Audit):
     class Meta:
         ordering =  ['name']
 
-@python_2_unicode_compatible
+
 class DocumentTag(DictMixin,Audit):
     name = models.CharField(verbose_name="Document Tag", max_length=200)
     category = models.ForeignKey(DocumentCategory, on_delete=models.PROTECT)

@@ -10,6 +10,7 @@
 	"runArgs": ["--env-file","${localEnv:HOME}/vscode-env/bfrs.env",
 		   "--hostname","bfrs-dev"
 		   ],
-	"forwardPorts": [5176,5177,5178,5179,5180],
-	"initializeCommand" : "${localEnv:HOME}/docker-scripts-dev/windows_vbox/postgres_docker_load.sh"
+	"forwardPorts": [9191,9192,9193,9194,9195],
+	"initializeCommand" : "${localEnv:HOME}/docker-scripts-dev/windows_vbox/postgres_docker_load.sh && ${localEnv:HOME}/docker-scripts-dev/windows_vbox/bfrs_dfes_wrapper_docker_load.sh
+"
 }

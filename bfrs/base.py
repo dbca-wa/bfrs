@@ -12,13 +12,13 @@ from django.contrib.auth import get_user_model
 from django.contrib.gis.db import models
 from django.core.urlresolvers import reverse
 from django.utils import timezone
-from django.utils.encoding import python_2_unicode_compatible
+#from django.utils.encoding import python_2_unicode_compatible
 
 logger = logging.getLogger("log." + __name__)
 INITIAL_COMMENT = 'Initial version.'
 
 
-@python_2_unicode_compatible
+
 class Audit(models.Model):
 
     class Meta:
