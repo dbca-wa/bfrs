@@ -40,7 +40,8 @@ class FireCauseField(basefields.CompoundField):
 
     def _edit_layout(self,f):
         cause = f.value()
-        if isinstance(cause,basestring):
+        # if isinstance(cause,basestring):
+        if isinstance(cause,str):
             cause = int(cause) if cause else None
 
         attrs = {}

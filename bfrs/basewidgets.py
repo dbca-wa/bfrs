@@ -9,7 +9,7 @@ from django.contrib.auth.models import User
 from django.utils import safestring
 import hashlib
 
-import utils
+from bfrs import utils
 
 to_str = lambda o: "" if o is None else str(o)
 
@@ -370,7 +370,9 @@ class SelectableSelect(forms.Select):
         </script>
         """.format(html,html_id))
 
-def ChoiceFieldRendererFactory(outer_html = None,inner_html = None,layout = None,renderer_class=forms.widgets.CheckboxFieldRenderer):
+from django.forms.widgets import CheckboxSelectMultiple
+# def ChoiceFieldRendererFactory(outer_html = None,inner_html = None,layout = None,renderer_class=forms.widgets.CheckboxFieldRenderer):
+def ChoiceFieldRendererFactory(outer_html = None,inner_html = None,layout = None,renderer_class=CheckboxSelectMultiple):
     """
     layout: none, horizontal,vertical
     outer_html: used if layout is None
@@ -385,7 +387,7 @@ def ChoiceFieldRendererFactory(outer_html = None,inner_html = None,layout = None
         outer_html = '<ul{id_attr} style="padding:0px;margin:0px">{content}</ul>'
         inner_html = '<li style="list-style-type:none;padding:0px 15px 0px 0px;display:inline;">{choice_value}{sub_widgets}</li>'
 
-    key = hashlib.md5("ChoiceFieldRenderer<{}.{}{}{}>".format(renderer_class.__module__,renderer_class.__name__,outer_html,inner_html)).hexdigest()
+    key = hashlib.md5("ChoiceFieldRenderer<{}.{}{}{}>".format(renderer_class.__module__,renderer_class.__name__,outer_html,inner_html).encode('utf-8')).hexdigest()
     cls = widget_classes.get(key)
     if not cls:
         widget_class_id += 1
@@ -401,7 +403,7 @@ def DisplayWidgetFactory(widget_class):
     """
     global widget_class_id
 
-    key = hashlib.md5("DisplayWidget<{}>".format(widget_class.__module__,widget_class.__name__)).hexdigest()
+    key = hashlib.md5("DisplayWidget<{}>".format(widget_class.__module__,widget_class.__name__).encode('utf-8')).hexdigest()
     cls = widget_classes.get(key)
     if not cls:
         widget_class_id += 1
@@ -426,14 +428,14 @@ class NullBooleanSelect(forms.widgets.NullBooleanSelect):
         forms.widgets.Select.__init__(self,attrs, choices)
 
 class ChainedSelect(forms.Select):
-    def render(self,name,value,attrs=None):
+    def render(self,name,value,attrs=None,renderer=None):
         if value is not None and value != "":
             if attrs is None:
                 attrs = {"data-initial":str(value)}
             else:
                 attrs["data-initial"] = str(value)
 
-        return super(ChainedSelect,self).render(name,value,attrs=attrs)
+        return super(ChainedSelect,self).render(name,value,attrs=attrs, renderer=None)
 
 def ChainedSelectFactory(model,field_name,chained_field,archived=None,other_options=None,casesensitive=True):
     field_model = model._meta.get_field(field_name).related_model
@@ -455,7 +457,7 @@ def ChainedSelectFactory(model,field_name,chained_field,archived=None,other_opti
             
     global widget_class_id
 
-    key = hashlib.md5("ChainedSelect<{}>".format(js_url)).hexdigest()
+    key = hashlib.md5("ChainedSelect<{}>".format(js_url).encode('utf-8')).hexdigest()
     cls = widget_classes.get(key)
     if not cls:
         widget_class_id += 1

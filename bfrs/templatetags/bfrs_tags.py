@@ -1,15 +1,18 @@
 import json
 from django import template
-from django.core.urlresolvers import reverse
+# from django.core.urlresolvers import reverse
+from django.urls import reverse
 from bfrs.models import Bushfire, Region, District, current_finyear
 from django.contrib.gis.geos import Point, GEOSGeometry
 from django.conf import settings
 from django.utils.html import mark_safe
-import LatLon
+# import LatLon
+from latloncalc import latlon as LatLon
 
 register = template.Library()
 
-@register.assignment_tag(takes_context=True)
+# @register.assignment_tag(takes_context=True)
+@register.simple_tag(takes_context=True)
 def is_init_authorised(context, bushfire_id):
     """
     Usage::
@@ -343,7 +346,8 @@ def refresh_gokart(context):
         {% refresh_gokart %}
     """
     request = context['request']
-    if request.session.has_key('refreshGokart'):
+    # if request.session.has_key('refreshGokart'):
+    if 'refreshGokart' in request.session:
         gokart = request.session.pop('refreshGokart')
         request.session.modified = True
         return mark_safe('gokart.call("open", {0}, {1});'.format(json.dumps(gokart["data"]),gokart["ignoreIfNotOpen"]));
@@ -357,7 +361,8 @@ def main_url(context):
         {% main_url %}
     """
     request = context['request']
-    if request.session.has_key('lastMainUrl'):
+    # if request.session.has_key('lastMainUrl'):
+    if 'lastMainUrl' in request.session:
         return mark_safe(request.session.get("lastMainUrl"));
     else:
         return reverse('main')

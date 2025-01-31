@@ -8,7 +8,8 @@ django-dotenv==1.4.2
 dj-database-url==0.5.0
 gunicorn==19.9.0
 dj-static==0.0.6
-django-crispy-forms==1.6.1
+# django-crispy-forms==1.6.1
+django-crispy-forms==1.13.0
 webtemplate-dbca==0.6.0
 # django-tastypie==0.13.3
 django-tastypie==0.14.6

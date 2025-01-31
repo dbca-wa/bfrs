@@ -23,7 +23,8 @@ from smart_selects.db_fields import ChainedForeignKey
 from latloncalc import latlon as LatLon
 import reversion
 
-from classproperty import (classproperty,cachedclassproperty)
+from bfrs.classproperty import classproperty
+from bfrs.classproperty import cachedclassproperty
 
 from bfrs.base import Audit,DictMixin
 
@@ -129,7 +130,7 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
         #dep_fields = {}
         formsets = []
 
-    for field, dep_sets in dep_fields.iteritems():
+    for field, dep_sets in dep_fields.items():
         for dep_set in dep_sets:
             # next line checks for normal Field or Enumerated list field (i.e. '.name')
             is_active_f = None
@@ -214,8 +215,8 @@ def check_mandatory_fields(obj, fields, dep_fields, formsets):
 class Profile(models.Model):
     DEFAULT_GROUP = "Users"
 
-    user = models.OneToOneField(User, related_name='profile')
-    region = models.ForeignKey('Region', blank=True, null=True)
+    user = models.OneToOneField(User, related_name='profile', on_delete=models.PROTECT)
+    region = models.ForeignKey('Region', blank=True, null=True, on_delete=models.SET_NULL)
     district = ChainedForeignKey('District',
         chained_field="region", chained_model_field="region",
         show_all=False, auto_choose=True, blank=True, null=True)
@@ -282,7 +283,7 @@ class Region(models.Model):
 
 
 class District(models.Model):
-    region = models.ForeignKey(Region)
+    region = models.ForeignKey(Region, on_delete=models.PROTECT)
     name = models.CharField(max_length=200, unique=True)
     code = models.CharField(max_length=3)
     archive_date = models.DateField(null=True, blank=True)
@@ -384,7 +385,7 @@ class BushfireBase(Audit,DictMixin):
     ]
 
     # Common Fields
-    region = models.ForeignKey(Region, verbose_name="Region")
+    region = models.ForeignKey(Region, verbose_name="Region", on_delete=models.PROTECT)
     district = ChainedForeignKey(
         District, chained_field="region", chained_model_field="region",
         show_all=False, auto_choose=True, verbose_name="District")
@@ -397,11 +398,11 @@ class BushfireBase(Audit,DictMixin):
     max_fire_level = models.PositiveSmallIntegerField(verbose_name='Maximum fire level', choices=FIRE_LEVEL_CHOICES, null=True, blank=True)
     media_alert_req = models.NullBooleanField(verbose_name="Media Alert Required", null=True)
     park_trail_impacted = models.NullBooleanField(verbose_name="Park and/or trail potentially impacted", null=True)
-    cause = models.ForeignKey('Cause', verbose_name="Fire Cause", null=True, blank=True)
+    cause = models.ForeignKey('Cause', verbose_name="Fire Cause", null=True, blank=True, on_delete=models.SET_NULL)
     cause_state = models.PositiveSmallIntegerField(verbose_name="Fire Cause State (Known/Possible)", choices=CAUSE_STATE_CHOICES, null=True, blank=True)
     other_cause = models.CharField(verbose_name='Other Fire Cause', max_length=64, null=True, blank=True)
     prescribed_burn_id = models.CharField(verbose_name='Prescribed Burn ID', max_length=7, null=True, blank=True)
-    tenure = models.ForeignKey('Tenure', verbose_name="Tenure of Ignition Point", null=True, blank=True)
+    tenure = models.ForeignKey('Tenure', verbose_name="Tenure of Ignition Point", null=True, blank=True, on_delete=models.SET_NULL)
 
     dfes_incident_no = models.CharField(verbose_name='DFES Fire Number', max_length=32, null=True, blank=True)
     job_code = models.CharField(verbose_name="Job Code", max_length=12, null=True, blank=True)
@@ -419,13 +420,13 @@ class BushfireBase(Audit,DictMixin):
     fb_validation_req = models.NullBooleanField(verbose_name="Fire Boundary Validation Required?", null=True)
     other_info = models.CharField(verbose_name='Other Information', max_length=250, null=True, blank=True)
 
-    field_officer = models.ForeignKey(User, verbose_name="Field Officer", null=True, blank=True, related_name='%(class)s_init_field_officer')
+    field_officer = models.ForeignKey(User, verbose_name="Field Officer", null=True, blank=True, related_name='%(class)s_init_field_officer', on_delete=models.SET_NULL)
     other_field_officer = models.CharField(verbose_name="Other Field Officer Name", max_length=75, null=True, blank=True)
     other_field_officer_agency = models.CharField(verbose_name="Other Field Officer Agency", max_length=36, null=True, blank=True)
     other_field_officer_phone = models.CharField(verbose_name="Other Field Officer Phone", max_length=24, null=True, blank=True)
 
-    duty_officer = models.ForeignKey(User, verbose_name="Duty Officer", null=True, blank=True, related_name='%(class)s_init_duty_officer')
-    init_authorised_by = models.ForeignKey(User, verbose_name="Initial Authorised By", null=True, blank=True, related_name='%(class)s_init_authorised_by')
+    duty_officer = models.ForeignKey(User, verbose_name="Duty Officer", null=True, blank=True, related_name='%(class)s_init_duty_officer', on_delete=models.SET_NULL)
+    init_authorised_by = models.ForeignKey(User, verbose_name="Initial Authorised By", null=True, blank=True, related_name='%(class)s_init_authorised_by', on_delete=models.SET_NULL)
     init_authorised_date = models.DateTimeField(verbose_name='Initial Authorised Date', null=True, blank=True)
 
     dispatch_pw = models.PositiveSmallIntegerField(verbose_name="P&W Resource dispatched", choices=DISPATCH_PW_CHOICES, null=True, blank=True)
@@ -439,11 +440,11 @@ class BushfireBase(Audit,DictMixin):
     fire_controlled_date = models.DateTimeField(verbose_name='Date fire Controlled', null=True, blank=True)
     fire_safe_date = models.DateTimeField(verbose_name='Date fire inactive', null=True, blank=True)
 
-    first_attack = models.ForeignKey('Agency', verbose_name="Initial Attack Agency", null=True, blank=True, related_name='%(class)s_first_attack')
+    first_attack = models.ForeignKey('Agency', verbose_name="Initial Attack Agency", null=True, blank=True, related_name='%(class)s_first_attack', on_delete=models.SET_NULL)
     other_first_attack = models.CharField(verbose_name="Other Initial Attack Agency", max_length=50, null=True, blank=True)
-    initial_control = models.ForeignKey('Agency', verbose_name="Initial Controlling Agency", null=True, blank=True, related_name='%(class)s_initial_control')
+    initial_control = models.ForeignKey('Agency', verbose_name="Initial Controlling Agency", null=True, blank=True, related_name='%(class)s_initial_control', on_delete=models.SET_NULL)
     other_initial_control = models.CharField(verbose_name="Other Initial Control Agency", max_length=50, null=True, blank=True)
-    final_control = models.ForeignKey('Agency', verbose_name="Final Controlling Agency", null=True, blank=True, related_name='%(class)s_final_control')
+    final_control = models.ForeignKey('Agency', verbose_name="Final Controlling Agency", null=True, blank=True, related_name='%(class)s_final_control', on_delete=models.SET_NULL)
     other_final_control = models.CharField(verbose_name="Other Final Control Agency", max_length=50, null=True, blank=True)
 
     arson_squad_notified = models.NullBooleanField(verbose_name="Arson Squad Notified", null=True)
@@ -457,10 +458,10 @@ class BushfireBase(Audit,DictMixin):
     damage_unknown = models.BooleanField(verbose_name="Damages to report?", default=False)
     injury_unknown = models.BooleanField(verbose_name="Injuries to report?", default=False)
 
-    authorised_by = models.ForeignKey(User, verbose_name="Authorised By", null=True, blank=True, related_name='%(class)s_authorised_by')
+    authorised_by = models.ForeignKey(User, verbose_name="Authorised By", null=True, blank=True, related_name='%(class)s_authorised_by', on_delete=models.SET_NULL)
     authorised_date = models.DateTimeField(verbose_name="Authorised Date", null=True, blank=True)
 
-    reviewed_by = models.ForeignKey(User, verbose_name="Reviewed By", null=True, blank=True, related_name='%(class)s_reviewed_by')
+    reviewed_by = models.ForeignKey(User, verbose_name="Reviewed By", null=True, blank=True, related_name='%(class)s_reviewed_by', on_delete=models.SET_NULL)
     reviewed_date = models.DateTimeField(verbose_name="Reviewed Date", null=True, blank=True)
 
     report_status = models.PositiveSmallIntegerField(choices=REPORT_STATUS_CHOICES, editable=False, default=1)
@@ -470,12 +471,12 @@ class BushfireBase(Audit,DictMixin):
     invalid_details = models.CharField(verbose_name="Reason for invalidating", max_length=64, null=True, blank=True)
 
     # recursive relationship - an object that has a many-to-many relationship with itself
-    valid_bushfire = models.ForeignKey('self', null=True, related_name='%(class)s_invalidated')
+    valid_bushfire = models.ForeignKey('self', null=True, related_name='%(class)s_invalidated', on_delete=models.SET_NULL)
 
-    fireboundary_uploaded_by = models.ForeignKey(User,editable=False,null=True,blank=True)
+    fireboundary_uploaded_by = models.ForeignKey(User,editable=False,null=True,blank=True, on_delete=models.SET_NULL)
     fireboundary_uploaded_date = models.DateTimeField(verbose_name='Date fireboundary uploaded', null=True, blank=True,editable=False)
 
-    capturemethod = models.ForeignKey(CaptureMethod,editable=True,null=True,blank=True)
+    capturemethod = models.ForeignKey(CaptureMethod,editable=True,null=True,blank=True, on_delete=models.SET_NULL)
     other_capturemethod = models.CharField(verbose_name="Other Capture Methdod", max_length=128, editable=True, null=True, blank=True)
 
     class Meta:
@@ -626,7 +627,7 @@ class BushfireSnapshot(BushfireBase):
 
     snapshot_type = models.PositiveSmallIntegerField(choices=SNAPSHOT_TYPE_CHOICES)
     action = models.CharField(verbose_name="Action Type", max_length=100)
-    bushfire = models.ForeignKey('Bushfire', related_name='snapshots')
+    bushfire = models.ForeignKey('Bushfire', related_name='snapshots', on_delete=models.PROTECT)
 
     @property
     def fire_bombing(self):
@@ -862,7 +863,7 @@ class Tenure(models.Model):
 
 
 class TenureMapping(models.Model):
-    tenure = models.ForeignKey(Tenure)
+    tenure = models.ForeignKey(Tenure, on_delete=models.PROTECT)
     name = models.CharField(verbose_name='Tenure sub category', max_length=200,unique=True)
 
     class Meta:
@@ -947,7 +948,7 @@ class DamageType(models.Model):
 
 
 class AreaBurntBase(models.Model):
-    tenure = models.ForeignKey(Tenure, related_name='%(class)s_tenures')
+    tenure = models.ForeignKey(Tenure, related_name='%(class)s_tenures', on_delete=models.PROTECT)
     area = models.DecimalField(verbose_name="Area (ha)", max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], null=True, blank=True)
 
     def to_json(self):
@@ -963,7 +964,7 @@ class AreaBurntBase(models.Model):
         abstract = True
 
 class AreaBurnt(AreaBurntBase):
-    bushfire = models.ForeignKey(Bushfire, related_name='tenures_burnt')
+    bushfire = models.ForeignKey(Bushfire, related_name='tenures_burnt', on_delete=models.PROTECT)
 
     class Meta:
         unique_together = ('bushfire', 'tenure',)
@@ -971,7 +972,7 @@ class AreaBurnt(AreaBurntBase):
 
 class AreaBurntSnapshot(AreaBurntBase, Audit):
     snapshot_type = models.PositiveSmallIntegerField(choices=SNAPSHOT_TYPE_CHOICES)
-    snapshot = models.ForeignKey(BushfireSnapshot, related_name='tenures_burnt_snapshot')
+    snapshot = models.ForeignKey(BushfireSnapshot, related_name='tenures_burnt_snapshot', on_delete=models.PROTECT)
 
     class Meta:
         unique_together = ('tenure', 'snapshot')
@@ -979,7 +980,7 @@ class AreaBurntSnapshot(AreaBurntBase, Audit):
 
 
 class InjuryBase(models.Model):
-    injury_type = models.ForeignKey(InjuryType)
+    injury_type = models.ForeignKey(InjuryType, on_delete=models.PROTECT)
     number = models.PositiveSmallIntegerField(validators=[MinValueValidator(0)])
 
     def __str__(self):
@@ -990,7 +991,7 @@ class InjuryBase(models.Model):
 
 
 class Injury(InjuryBase):
-    bushfire = models.ForeignKey(Bushfire, related_name='injuries')
+    bushfire = models.ForeignKey(Bushfire, related_name='injuries', on_delete=models.PROTECT)
 
     class Meta:
         unique_together = ('bushfire', 'injury_type',)
@@ -998,14 +999,14 @@ class Injury(InjuryBase):
 
 class InjurySnapshot(InjuryBase, Audit):
     snapshot_type = models.PositiveSmallIntegerField(choices=SNAPSHOT_TYPE_CHOICES)
-    snapshot = models.ForeignKey(BushfireSnapshot, related_name='injury_snapshot')
+    snapshot = models.ForeignKey(BushfireSnapshot, related_name='injury_snapshot', on_delete=models.PROTECT)
 
     class Meta:
         unique_together = ('injury_type', 'snapshot')
 
 
 class DamageBase(models.Model):
-    damage_type = models.ForeignKey(DamageType)
+    damage_type = models.ForeignKey(DamageType, on_delete=models.PROTECT)
     number = models.PositiveSmallIntegerField(validators=[MinValueValidator(0)])
     descr = models.CharField(max_length=255,blank=True, verbose_name="Description")
 
@@ -1017,7 +1018,7 @@ class DamageBase(models.Model):
 
 
 class Damage(DamageBase):
-    bushfire = models.ForeignKey(Bushfire, related_name='damages')
+    bushfire = models.ForeignKey(Bushfire, related_name='damages', on_delete=models.PROTECT)
 
     class Meta:
         unique_together = ('bushfire', 'damage_type', 'descr')
@@ -1025,7 +1026,7 @@ class Damage(DamageBase):
 
 class DamageSnapshot(DamageBase, Audit):
     snapshot_type = models.PositiveSmallIntegerField(choices=SNAPSHOT_TYPE_CHOICES)
-    snapshot = models.ForeignKey(BushfireSnapshot, related_name='damage_snapshot')
+    snapshot = models.ForeignKey(BushfireSnapshot, related_name='damage_snapshot', on_delete=models.PROTECT)
 
     class Meta:
         unique_together = ('damage_type', 'descr', 'snapshot')
@@ -1053,14 +1054,14 @@ class BushfirePropertyBase(models.Model):
 
 
 class BushfireProperty(BushfirePropertyBase):
-    bushfire = models.ForeignKey(Bushfire, related_name='properties')
+    bushfire = models.ForeignKey(Bushfire, related_name='properties', on_delete=models.PROTECT)
 
     class Meta:
         unique_together = ('bushfire', 'name',)
 
 class BushfirePropertySnapshot(BushfirePropertyBase):
     snapshot_type = models.PositiveSmallIntegerField(choices=SNAPSHOT_TYPE_CHOICES)
-    snapshot = models.ForeignKey(BushfireSnapshot, related_name='properties_snapshot')
+    snapshot = models.ForeignKey(BushfireSnapshot, related_name='properties_snapshot', on_delete=models.PROTECT)
 
     class Meta:
         unique_together = ('snapshot','name')
@@ -1069,7 +1070,7 @@ class BushfirePropertySnapshot(BushfirePropertyBase):
 class DocumentCategory(DictMixin,Audit):
     name = models.CharField(max_length=200,null=False,editable=True,unique=True, verbose_name="Document Category")
     archived = models.BooleanField(default=False,editable=True)
-    archivedby = models.ForeignKey(settings.AUTH_USER_MODEL,null=True, editable=False,blank=True,verbose_name="Archived By")
+    archivedby = models.ForeignKey(settings.AUTH_USER_MODEL,null=True, editable=False,blank=True,verbose_name="Archived By", on_delete=models.SET_NULL)
     archivedon = models.DateTimeField(null=True,editable=False,verbose_name="Archived on")
 
     OTHER_TAGS = {}
@@ -1099,7 +1100,7 @@ class DocumentTag(DictMixin,Audit):
     name = models.CharField(verbose_name="Document Tag", max_length=200)
     category = models.ForeignKey(DocumentCategory, on_delete=models.PROTECT)
     archived = models.BooleanField(default=False,editable=True)
-    archivedby = models.ForeignKey(settings.AUTH_USER_MODEL,null=True, editable=False,blank=True,verbose_name="Archived By")
+    archivedby = models.ForeignKey(settings.AUTH_USER_MODEL,null=True, editable=False,blank=True,verbose_name="Archived By", on_delete=models.SET_NULL)
     archivedon = models.DateTimeField(null=True,editable=False,verbose_name="Archived on")
 
     def __str__(self):
@@ -1176,14 +1177,14 @@ def document_path(instance,filename):
 
 
 class DocumentBase(DictMixin,models.Model):
-    upload_bushfire = models.ForeignKey(Bushfire, verbose_name='Upload Bushfire',editable=False,related_name="uploaded_documents")
+    upload_bushfire = models.ForeignKey(Bushfire, verbose_name='Upload Bushfire',editable=False,related_name="uploaded_documents", on_delete=models.PROTECT)
     category = models.ForeignKey(DocumentCategory, verbose_name='Document Category',on_delete=models.PROTECT)
     tag = models.ForeignKey(DocumentTag,verbose_name="Document Tag",on_delete=models.PROTECT)
     custom_tag = models.CharField(max_length=64, blank=True,null=True, verbose_name="Custom Descriptor")
     document = models.FileField(upload_to=document_path,null=False,verbose_name="Document")
     document_created = models.DateTimeField(editable=True,verbose_name="Created on")
     archived = models.BooleanField(default=False,editable=True)
-    archivedby = models.ForeignKey(settings.AUTH_USER_MODEL,null=True, editable=False,verbose_name="Archived By")
+    archivedby = models.ForeignKey(settings.AUTH_USER_MODEL,null=True, editable=False,verbose_name="Archived By", on_delete=models.SET_NULL)
     archivedon = models.DateTimeField(null=True,editable=False,verbose_name="Archived on")
 
     @property
@@ -1212,7 +1213,7 @@ class DocumentBase(DictMixin,models.Model):
         abstract = True
 
 class Document(DocumentBase,Audit):
-    bushfire = models.ForeignKey(Bushfire, verbose_name='Bushfire',related_name="documents",editable=False)
+    bushfire = models.ForeignKey(Bushfire, verbose_name='Bushfire',related_name="documents",editable=False, on_delete=models.PROTECT)
 
     class Meta:
         pass

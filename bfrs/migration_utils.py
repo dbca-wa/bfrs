@@ -957,7 +957,7 @@ def refresh_burnt_area(bushfire,is_snapshot,layersuffix="",debug=False):
                         total_area += data["area"]
             
                 area_unknown = 0.0
-                for tenure, area in aggregated_sums.iteritems():
+                for tenure, area in aggregated_sums.items():
                     area = round(area,2)
                     if area > 0:
                         if is_snapshot:

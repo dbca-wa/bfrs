@@ -52,7 +52,7 @@ A breakdown of the records to date by DBCA regions for bushfires since 1 July {{
 \hline
 \endhead
 {% for row in rpt_map %}
-  {% for region, data in row.iteritems %}
+  {% for region, data in row.items %}
     {% if 'Total' in region or 'TOTAL' in region %}
       \textbf{ {{ region }} } & \textbf{ {{ data.pw_tenure|floatformat:0|intcomma }} } & \textbf{ {{ data.area_pw_tenure|floatformat:2|intcomma }} } & \textbf{ {{ data.total_all_tenure|floatformat:0|intcomma }} } & \textbf{ {{ data.total_area|floatformat:2|intcomma }} } \\
     {% else %}

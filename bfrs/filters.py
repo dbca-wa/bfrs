@@ -7,7 +7,7 @@ from django.utils import timezone
 from django import forms
 
 from .models import (Bushfire,Document)
-import basefilters
+from bfrs import basefilters
 
 class BooleanFilter(django_filters.filters.BooleanFilter):
     field_class = forms.BooleanField
@@ -31,16 +31,16 @@ class BushfireFilter(django_filters.FilterSet):
 
     # try/except block hack added here to allow initial migration before the model exists - else migration fails
     try:
-        region = django_filters.Filter(name="region",label='Region',lookup_expr="exact")
-        district = django_filters.Filter(name="district",label='District',lookup_expr="exact")
-        year = django_filters.Filter(name="year",label='Year',lookup_expr="exact")
-        reporting_year = django_filters.Filter(name="reporting_year",label='Reporting Year',lookup_expr="exact")
-        report_status = django_filters.Filter(label='Report Status', name='report_status', method='filter_report_status')
-        fire_number = django_filters.CharFilter(name='fire_number', label='Search', method='filter_fire_number')
-        include_archived = BooleanFilter(name='include_archived',label='Include archived', method='filter_include_archived')
-        exclude_missing_final_fire_boundary = BooleanFilter(name='exclude_missing_final_fire_boundary',label='Exclude missing final fire boundary', method='filter_exclude_missing_final_fire_boundary')
+        region = django_filters.Filter(field_name="region",label='Region',lookup_expr="exact")
+        district = django_filters.Filter(field_name="district",label='District',lookup_expr="exact")
+        year = django_filters.Filter(field_name="year",label='Year',lookup_expr="exact")
+        reporting_year = django_filters.Filter(field_name="reporting_year",label='Reporting Year',lookup_expr="exact")
+        report_status = django_filters.Filter(label='Report Status', field_name='report_status', method='filter_report_status')
+        fire_number = django_filters.CharFilter(field_name='fire_number', label='Search', method='filter_fire_number')
+        include_archived = BooleanFilter(field_name='include_archived',label='Include archived', method='filter_include_archived')
+        exclude_missing_final_fire_boundary = BooleanFilter(field_name='exclude_missing_final_fire_boundary',label='Exclude missing final fire boundary', method='filter_exclude_missing_final_fire_boundary')
 
-        order_by = django_filters.Filter(name="order_by",label="Order by",method="filter_order_by")
+        order_by = django_filters.Filter(field_name="order_by",label="Order by",method="filter_order_by")
     except:
         pass
 
@@ -132,12 +132,12 @@ class BushfireDocumentFilter(django_filters.FilterSet):
 
     # try/except block hack added here to allow initial migration before the model exists - else migration fails
     try:
-        category = django_filters.Filter(name="category",label='category',lookup_expr="exact")
-        upload_bushfire = django_filters.Filter(name="upload_bushfire",label='Upload Bushfire',lookup_expr="exact")
-        bushfire = django_filters.Filter(name="bushfire",label='Bushfire',lookup_expr="exact")
-        archived = NullBooleanFilter(name='archived',label='archived', lookup_expr="exact")
-        order_by = django_filters.Filter(name="order_by",label="Order by",method="filter_order_by")
-        last_modified = django_filters.Filter(name="modified",label="Modified",method="filter_last_modified")
+        category = django_filters.Filter(field_name="category",label='category',lookup_expr="exact")
+        upload_bushfire = django_filters.Filter(field_name="upload_bushfire",label='Upload Bushfire',lookup_expr="exact")
+        bushfire = django_filters.Filter(field_name="bushfire",label='Bushfire',lookup_expr="exact")
+        archived = NullBooleanFilter(field_name='archived',label='archived', lookup_expr="exact")
+        order_by = django_filters.Filter(field_name="order_by",label="Order by",method="filter_order_by")
+        last_modified = django_filters.Filter(field_name="modified",label="Modified",method="filter_last_modified")
         search = basefilters.QFilter(fields=(("tag__name","icontains"),("custom_tag","icontains"),("creator__username","icontains")))
     except:
         pass

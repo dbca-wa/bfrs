@@ -1,4 +1,5 @@
-import LatLon
+#import LatLon
+from latloncalc import latlon as LatLon
 import tempfile
 import subprocess
 import shutil
@@ -18,7 +19,8 @@ from bfrs.models import (Bushfire, BushfireSnapshot, District, Region,BushfirePr
 from django.db import IntegrityError, transaction
 from django.http import HttpResponse
 from django.core.mail import send_mail
-from cStringIO import StringIO
+# from cStringIO import StringIO
+from io import StringIO
 from django.core.mail import EmailMessage
 from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
@@ -36,12 +38,12 @@ from itertools import count
 from django.forms.models import inlineformset_factory
 from collections import defaultdict, OrderedDict
 from copy import deepcopy
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.db.models import Q
 import requests
 from requests.auth import HTTPBasicAuth
 from dateutil import tz
-from dfes import P1CAD
+from bfrs.dfes import P1CAD
 import os
 
 import logging
@@ -299,7 +301,7 @@ def update_areas_burnt(bushfire, burning_area):
 
     other_area = 0
     new_area_burnt_object = []
-    for tenure, area in aggregated_sums.iteritems():
+    for tenure, area in aggregated_sums.items():
         area = round(area,2)
         if area > 0:
             new_area_burnt_object.append(AreaBurnt(bushfire=bushfire, tenure=tenure, area=area))
@@ -1031,7 +1033,7 @@ def notifications_to_html(bushfire, url):
     ordered_dict = OrderedDict(d)
 
     msg = '<table style="border:1px solid black;">'
-    for k,v in ordered_dict.iteritems():
+    for k,v in ordered_dict.items():
         if k == bushfire._meta.get_field('dfes_incident_no').verbose_name:
             v = '<font color="red">Not available</font>' if not v else v
         elif v == 'None' or not v:
@@ -1517,7 +1519,7 @@ def export_final_csv(request, queryset):
     ]
 	)
     for obj in queryset:
-		writer.writerow([
+        writer.writerow([
 			smart_str( obj.id),
 			smart_str( obj.region.name),
 			smart_str( obj.district.name),
@@ -1698,7 +1700,8 @@ def dms_coordinate(point):
     if not point:
         return None
 
-    c=LatLon.LatLon(LatLon.Longitude(point.get_x()), LatLon.Latitude(point.get_y()))
+    # c=LatLon.LatLon(LatLon.Longitude(point.get_x()), LatLon.Latitude(point.get_y()))
+    c=LatLon.LatLon(LatLon.Longitude(point.x), LatLon.Latitude(point.y))
     latlon = c.to_string('d% %m% %S% %H')
     lon = latlon[0].split(' ')
     lat = latlon[1].split(' ')

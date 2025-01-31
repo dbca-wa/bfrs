@@ -1,5 +1,6 @@
 import datetime
-import LatLon
+# import LatLon
+from latloncalc import latlon as LatLon
 from dateutil import tz
 
 from django.contrib.auth.models import User

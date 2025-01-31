@@ -1,4 +1,5 @@
-from django.conf.urls import include, url
+from django.conf.urls import url
+from django.urls import include, path
 from django.views.generic import TemplateView
 from django.contrib import admin
 from bfrs import views
@@ -19,7 +20,8 @@ def sss_selection_view(request):
 
 
 def home_view_selection_view(request):
-    if request.user.is_authenticated():
+    # if request.user.is_authenticated():
+    if request.user.is_authenticated:
         return redirect('main')
     else:
         return redirect('login')
@@ -37,11 +39,14 @@ def admin_view_selection_view(request):
 urlpatterns = [
     # Authentication URLs
     url(r'^', include('django.contrib.auth.urls')),
-    url(r'^logout/$', auth_views.logout, {'next_page': '/login/'}, name='logout'),
+    path('logout/', auth_views.LogoutView.as_view(next_page='/login/'), name='logout'),
+    #url(r'^logout/$', auth_views.logout, {'next_page': '/login/'}, name='logout'),
     url(r'^main/$', login_required(views.BushfireView.as_view()), name='main'),
     url(r'^admin/$', admin_view_selection_view),
-    url(r'^bfrs/', include('bfrs.urls', namespace='bushfire')),
-    url(r'^admin/', include(admin.site.urls)),
+    #url(r'^bfrs/', include('bfrs.urls', namespace='bushfire')),
+    url(r'^bfrs/', include(('bfrs.urls', 'bfrs'), namespace='bushfire')),
+    #url(r'^admin/', include(admin.site.urls)),
+    path('admin/', admin.site.urls),
     url(r'^about/', TemplateView.as_view(template_name='about.html'), name='about'),
     url(r'^api/', include(v1_api.urls)),
     url(r'^profile/$', views.ProfileView.as_view(), name='profile'),

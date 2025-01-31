@@ -113,12 +113,31 @@ new_fire_detected_date_widget = basewidgets.TemplateWidgetFactory(DatetimeInCurr
 
 REPORTING_YEAR_CHOICES = ( reporting_years() )
 
-class HorizontalRadioRenderer(forms.RadioSelect.renderer):
+# class HorizontalRadioRenderer(forms.RadioSelect.renderer):
+class HorizontalRadioRenderer(forms.RadioSelect):
     def render(self):
         return mark_safe(u'&nbsp;&nbsp;&nbsp;&nbsp;\n'.join([u'%s&nbsp;&nbsp;&nbsp;&nbsp;\n' % w for w in self]))
 
 
-class VerticalRadioRenderer(forms.RadioSelect.renderer):
+# class VerticalRadioRenderer(forms.RadioSelect.renderer):
+class VerticalRadioRenderer(forms.RadioSelect):
+    def render(self):
+        return mark_safe(u'<br />'.join([u'%s<br />' % w for w in self]))
+    
+# class HorizontalRadioRenderer(forms.RadioSelect.renderer):
+class HorizontalRadioSelect(forms.RadioSelect):
+    # def render(self):
+    #     return mark_safe(u'&nbsp;&nbsp;&nbsp;&nbsp;\n'.join([u'%s&nbsp;&nbsp;&nbsp;&nbsp;\n' % w for w in self]))
+    def render(self, name, value, attrs=None, renderer=None):
+        context = self.get_context(name, value, attrs)
+        output = []
+        for w in context['widget']['optgroups']:
+            for option in w[1]:
+                output.append(u'%s&nbsp;&nbsp;&nbsp;&nbsp;\n' % option['template_name'])
+        return mark_safe(u'&nbsp;&nbsp;&nbsp;&nbsp;\n'.join(output))
+
+# class VerticalRadioRenderer(forms.RadioSelect.renderer):
+class VerticalRadioSelect(forms.RadioSelect):
     def render(self):
         return mark_safe(u'<br />'.join([u'%s<br />' % w for w in self]))
 
@@ -437,9 +456,18 @@ class BaseBushfireViewForm(baseforms.ModelForm):
             "dispatch_pw":basewidgets.BooleanDisplay(true_value=1),
             "dispatch_aerial":basewidgets.BooleanDisplay(),
             "report_status":basewidgets.ChoiceWidgetFactory("reportstatus",Bushfire.REPORT_STATUS_CHOICES)(),
-            "fire_bombing.prefered_resources":basewidgets.DisplayWidgetFactory(forms.CheckboxSelectMultiple)(renderer = basewidgets.ChoiceFieldRendererFactory(layout="horizontal"),attrs={"disabled":True}),
-            "fire_bombing.activation_criterias":basewidgets.DisplayWidgetFactory(forms.CheckboxSelectMultiple)(renderer = basewidgets.ChoiceFieldRendererFactory(layout="vertical"),attrs={"disabled":True}),
-            "fire_bombing.response":basewidgets.DisplayWidgetFactory(forms.RadioSelect)(renderer = basewidgets.ChoiceFieldRendererFactory(layout="horizontal",renderer_class=forms.widgets.RadioFieldRenderer),attrs={"disabled":True}),
+            # "fire_bombing.prefered_resources":basewidgets.DisplayWidgetFactory(forms.CheckboxSelectMultiple)(renderer = basewidgets.ChoiceFieldRendererFactory(layout="horizontal"),attrs={"disabled":True}),
+            # "fire_bombing.activation_criterias":basewidgets.DisplayWidgetFactory(forms.CheckboxSelectMultiple)(renderer = basewidgets.ChoiceFieldRendererFactory(layout="vertical"),attrs={"disabled":True}),
+            # "fire_bombing.response":basewidgets.DisplayWidgetFactory(forms.RadioSelect)(renderer = basewidgets.ChoiceFieldRendererFactory(layout="horizontal",renderer_class=forms.widgets.RadioFieldRenderer),attrs={"disabled":True}),
+            "fire_bombing.prefered_resources":basewidgets.DisplayWidgetFactory(
+                basewidgets.ChoiceFieldRendererFactory(layout="horizontal")
+                )(attrs={"disabled":True}),
+            "fire_bombing.activation_criterias":basewidgets.DisplayWidgetFactory(
+                basewidgets.ChoiceFieldRendererFactory(layout="vertical")
+                )(attrs={"disabled":True}),
+            "fire_bombing.response":basewidgets.DisplayWidgetFactory(
+                basewidgets.ChoiceFieldRendererFactory(layout="horizontal")
+            )(attrs={"disabled":True}),
         }
 
 
@@ -691,10 +719,12 @@ class MergedBushfireForm(BaseBushfireEditForm):
             "cause_state":basefields.ChoiceFieldFactory(Bushfire.CAUSE_STATE_CHOICES),
         }
         widgets = {
-            "arson_squad_notified":forms.RadioSelect(renderer=HorizontalRadioRenderer),
+            # "arson_squad_notified":forms.RadioSelect(renderer=HorizontalRadioRenderer),
+            "arson_squad_notified":HorizontalRadioSelect(),
             "offence_no":forms.widgets.TextInput(attrs={"placeholder":"Police Offence No","title":"Police Offence No","style":"width:100%"}),
             "cause":None,
-            "cause_state":forms.RadioSelect(renderer=HorizontalRadioRenderer),
+            # "cause_state":forms.RadioSelect(renderer=HorizontalRadioRenderer),
+            "cause_state":HorizontalRadioSelect(),
             "other_cause":None,
             "prescribed_burn_id":forms.widgets.TextInput(attrs={"placeholder":"Burn ID","title":"Burn ID","style":"width:100%"}),
         }
@@ -753,7 +783,8 @@ class SubmittedBushfireForm(MergedBushfireForm):
             "fire_not_found":forms.CheckboxInput,
             "final_control":None,
             "other_final_control":None,
-            "max_fire_level":forms.RadioSelect(renderer=HorizontalRadioRenderer),
+            # "max_fire_level":forms.RadioSelect(renderer=HorizontalRadioRenderer),
+            "max_fire_level":HorizontalRadioSelect(),
             "area":basewidgets.FloatInput(attrs={"step":0.01,"min":0,"max":settings.AREA_THRESHOLD},precision=2),
             "area_limit":None,
             "invalid_details":None,
@@ -782,7 +813,8 @@ class SubmittedBushfireFSSGForm(SubmittedBushfireForm):
             "district":None,
             "reporting_year":None,
             "fire_detected_date":fire_detected_date_widget,
-            "dispatch_pw":forms.RadioSelect(renderer=HorizontalRadioRenderer),
+            # "dispatch_pw":forms.RadioSelect(renderer=HorizontalRadioRenderer),
+            "dispatch_pw":HorizontalRadioSelect(),
             "dispatch_pw_date":basewidgets.DatetimeInput(),
         }
 
@@ -803,7 +835,8 @@ class AuthorisedBushfireFSSGForm(AuthorisedBushfireForm):
             "district":None,
             "reporting_year":None,
             "fire_detected_date":fire_detected_date_widget,
-            "dispatch_pw":forms.RadioSelect(renderer=HorizontalRadioRenderer),
+            # "dispatch_pw":forms.RadioSelect(renderer=HorizontalRadioRenderer),
+            "dispatch_pw":HorizontalRadioSelect(),
             "dispatch_pw_date":basewidgets.DatetimeInput(),
         }
 
@@ -823,7 +856,8 @@ class ReviewedBushfireFSSGForm(ReviewedBushfireForm):
             "region":None,
             "district":None,
             "reporting_year":None,
-            "dispatch_pw":forms.RadioSelect(renderer=HorizontalRadioRenderer),
+            # "dispatch_pw":forms.RadioSelect(renderer=HorizontalRadioRenderer),
+            "dispatch_pw":HorizontalRadioSelect(),
             "dispatch_pw_date":basewidgets.DatetimeInput(),
         }
 
@@ -841,31 +875,40 @@ class InitialBushfireForm(SubmittedBushfireForm):
             "name":None,
             "fire_detected_date":fire_detected_date_widget,
             "duty_officer":basewidgets.SelectableSelect(),
-            "dispatch_pw":forms.RadioSelect(renderer=HorizontalRadioRenderer),
+            # "dispatch_pw":forms.RadioSelect(renderer=HorizontalRadioRenderer),
+            "dispatch_pw":HorizontalRadioSelect(),
             "dispatch_pw_date":basewidgets.DatetimeInput(),
             "fire_position_override":None,
             "fire_position":None,
             "other_info":None,
-            "investigation_req":forms.RadioSelect(renderer=HorizontalRadioRenderer),
-            "prob_fire_level":forms.RadioSelect(renderer=HorizontalRadioRenderer),
+            # "investigation_req":forms.RadioSelect(renderer=HorizontalRadioRenderer),
+            # "prob_fire_level":forms.RadioSelect(renderer=HorizontalRadioRenderer),
+            "investigation_req":HorizontalRadioSelect(),
+            "prob_fire_level":HorizontalRadioSelect(),
             "initial_area_unknown":basewidgets.TemplateWidgetFactory(widget_class=forms.CheckboxInput,template="{} Unknown")(),
             "initial_area":basewidgets.FloatInput(attrs={"step":0.01,"min":0},precision=2),
             "initial_control":None,
             "other_initial_control":None,
             #"tenure":None,
-            "media_alert_req":basewidgets.SwitchWidgetFactory(forms.RadioSelect,true_value=True,html="<span>call PICA on 9219 9999</span>")(renderer=HorizontalRadioRenderer),
-            "park_trail_impacted":basewidgets.SwitchWidgetFactory(forms.RadioSelect,true_value=True,html="<span>PVS will be notified by email</span>")(renderer=HorizontalRadioRenderer),
-            "dispatch_aerial":forms.RadioSelect(renderer=HorizontalRadioRenderer),
+            # "media_alert_req":basewidgets.SwitchWidgetFactory(forms.RadioSelect,true_value=True,html="<span>call PICA on 9219 9999</span>")(renderer=HorizontalRadioRenderer),
+            "media_alert_req":basewidgets.SwitchWidgetFactory(HorizontalRadioSelect,true_value=True,html="<span>call PICA on 9219 9999</span>"),
+            # "park_trail_impacted":basewidgets.SwitchWidgetFactory(forms.RadioSelect,true_value=True,html="<span>PVS will be notified by email</span>")(renderer=HorizontalRadioRenderer),
+            "park_trail_impacted":basewidgets.SwitchWidgetFactory(HorizontalRadioSelect,true_value=True,html="<span>PVS will be notified by email</span>"),
+            # "dispatch_aerial":forms.RadioSelect(renderer=HorizontalRadioRenderer),
+            "dispatch_aerial":HorizontalRadioSelect(),
             "dispatch_aerial_date":basewidgets.DatetimeInput(),
             "fire_bombing.ground_controller.username":forms.TextInput(attrs={"style":"width:100%;"}),
             "fire_bombing.ground_controller.callsign":forms.TextInput(attrs={"style":"width:100%;"}),
             "fire_bombing.radio_channel":forms.TextInput(attrs={"style":"width:100%;"}),
             "fire_bombing.sar_arrangements":forms.TextInput(attrs={"style":"width:100%;"}),
-            "fire_bombing.prefered_resources":forms.CheckboxSelectMultiple(renderer = basewidgets.ChoiceFieldRendererFactory(layout="horizontal")),
-            "fire_bombing.activation_criterias":forms.CheckboxSelectMultiple(renderer = basewidgets.ChoiceFieldRendererFactory(layout="vertical")),
+            # "fire_bombing.prefered_resources":forms.CheckboxSelectMultiple(renderer = basewidgets.ChoiceFieldRendererFactory(layout="horizontal")),
+            "fire_bombing.prefered_resources":basewidgets.ChoiceFieldRendererFactory(layout="horizontal"),
+            # "fire_bombing.activation_criterias":forms.CheckboxSelectMultiple(renderer = basewidgets.ChoiceFieldRendererFactory(layout="vertical")),
+            "fire_bombing.activation_criterias":basewidgets.ChoiceFieldRendererFactory(layout="vertical"),
             "fire_bombing.flight_hazards":forms.TextInput(attrs={"style":"width:100%;"}),
             "fire_bombing.operational_base_established":forms.TextInput(attrs={"style":"width:100%;"}),
-            "fire_bombing.response":forms.RadioSelect(renderer=HorizontalRadioRenderer),
+            # "fire_bombing.response":forms.RadioSelect(renderer=HorizontalRadioRenderer),
+            "fire_bombing.response":HorizontalRadioSelect(),
         }
 
 
@@ -904,13 +947,16 @@ class BushfireCreateForm(InitialBushfireForm):
         if sss.get('fire_boundary') and isinstance(sss['fire_boundary'], list):
             self.initial["fire_boundary"] = MultiPolygon([Polygon(*p) for p in sss['fire_boundary']])
 
-        if sss.has_key('origin_point_mga'):
+        # if sss.has_key('origin_point_mga'):
+        if 'origin_point_mga' in sss:
             self.initial['origin_point_mga'] = sss['origin_point_mga']
 
-        if sss.has_key('origin_point_grid'):
+        # if sss.has_key('origin_point_grid'):
+        if 'origin_point_grid' in sss:
             self.initial['origin_point_grid'] = sss['origin_point_grid']
 
-        if sss.has_key('fire_position'):
+        # if sss.has_key('fire_position'):
+        if 'fire_position' in sss:
             self.initial['fire_position'] = sss['fire_position']
 
         if sss.get('tenure_ignition_point') and sss['tenure_ignition_point'].get('category'):
@@ -974,17 +1020,19 @@ class BushfireCreateForm(InitialBushfireForm):
         else:
             self.instance.tenure = Tenure.OTHER
 
-        if sss.has_key('fire_position'):
+        # if sss.has_key('fire_position'):
+        if 'fire_position' in sss:
             if not self.instance.fire_position_override:
                 self.instance.fire_position = sss['fire_position']
 
         if sss.get('origin_point') and isinstance(sss['origin_point'], list):
             self.instance.origin_point = Point(sss['origin_point'])
 
-        if sss.has_key('origin_point_mga'):
+        # if sss.has_key('origin_point_mga'):
+        if 'origin_point_mga' in sss:
             self.instance.origin_point_mga = sss['origin_point_mga']
 
-        if sss.has_key('origin_point_grid'):
+        if 'origin_point_grid' in sss:
             self.instance.origin_point_grid = sss['origin_point_grid']
 
         if sss.get('sss_id') :
@@ -994,7 +1042,8 @@ class BushfireCreateForm(InitialBushfireForm):
             self.instance.fire_boundary = MultiPolygon([Polygon(*p) for p in sss['fire_boundary']])
             sss.pop('fire_boundary')
 
-        if sss.has_key('fb_validation_req'):
+        # if sss.has_key('fb_validation_req'):
+        if 'fb_validation_req' in sss:
             self.instance.fb_validation_req = sss['fb_validation_req']
 
         if self.instance.fire_boundary:
@@ -1003,7 +1052,8 @@ class BushfireCreateForm(InitialBushfireForm):
 
         self.plantations = None
         #get plantations data from sss_data, and remove it from sss_data because it is too big sometimes
-        if sss.has_key("plantations"):
+        # if sss.has_key("plantations"):
+        if "plantations" in sss:
             self.plantations = sss.pop("plantations")
                 
         self.instance.reporting_year = current_finyear()
@@ -1045,9 +1095,12 @@ class BaseInjuryFormSet(BaseInlineFormSet):
         injuries = []
         for form in self.forms:
             if form.cleaned_data:
-                injury_type = form.cleaned_data['injury_type'] if form.cleaned_data.has_key('injury_type') else None
-                number = form.cleaned_data['number'] if form.cleaned_data.has_key('number') else None
-                remove = form.cleaned_data['DELETE'] if form.cleaned_data.has_key('DELETE') else False
+                # injury_type = form.cleaned_data['injury_type'] if form.cleaned_data.has_key('injury_type') else None
+                injury_type = form.cleaned_data['injury_type'] if 'injury_type' in form.cleaned_data else None
+                # number = form.cleaned_data['number'] if form.cleaned_data.has_key('number') else None
+                # remove = form.cleaned_data['DELETE'] if form.cleaned_data.has_key('DELETE') else False
+                number = form.cleaned_data['number'] if 'number' in form.cleaned_data else None
+                remove = form.cleaned_data['DELETE'] if 'DELETE' in form.cleaned_data else False
 
                 duplicates = False
                 if not remove:
@@ -1089,10 +1142,14 @@ class BaseDamageFormSet(BaseInlineFormSet):
 
         for form in self.forms:
             if form.cleaned_data:
-                damage_type = form.cleaned_data['damage_type'] if form.cleaned_data.has_key('damage_type') else None
-                number = form.cleaned_data['number'] if form.cleaned_data.has_key('number') else None
-                descr = form.cleaned_data['descr'] if form.cleaned_data.has_key('descr') else None
-                remove = form.cleaned_data['DELETE'] if form.cleaned_data.has_key('DELETE') else False
+                # damage_type = form.cleaned_data['damage_type'] if form.cleaned_data.has_key('damage_type') else None
+                # number = form.cleaned_data['number'] if form.cleaned_data.has_key('number') else None
+                # descr = form.cleaned_data['descr'] if form.cleaned_data.has_key('descr') else None
+                # remove = form.cleaned_data['DELETE'] if form.cleaned_data.has_key('DELETE') else False
+                damage_type = form.cleaned_data['damage_type'] if 'damage_type' in form.cleaned_data else None
+                number = form.cleaned_data['number'] if 'number' in form.cleaned_data else None
+                descr = form.cleaned_data['descr'] if 'descr' in form.cleaned_data else None
+                remove = form.cleaned_data['DELETE'] if 'DELETE' in form.cleaned_data else False
 
                 duplicates = False
                 if not remove:
@@ -1419,8 +1476,10 @@ class BaseDocumentTagFormSet(BaseInlineFormSet):
         tags = []
         for form in self.forms:
             if form.cleaned_data:
-                name = form.cleaned_data['name'] if form.cleaned_data.has_key('name') else None
-                remove = form.cleaned_data['DELETE'] if form.cleaned_data.has_key('DELETE') else False
+                # name = form.cleaned_data['name'] if form.cleaned_data.has_key('name') else None
+                # remove = form.cleaned_data['DELETE'] if form.cleaned_data.has_key('DELETE') else False
+                name = form.cleaned_data['name'] if 'name' in form.cleaned_data else None
+                remove = form.cleaned_data['DELETE'] if 'DELETE' in form.cleaned_data else False
 
                 duplicates = False
                 if not remove:

@@ -3,7 +3,7 @@ from django.conf import settings
 from django.contrib.auth import login, logout, get_user_model
 from django.db.models import signals
 from django.utils.deprecation import MiddlewareMixin
-from django.utils.functional import curry
+#from django.utils.functional import curry
 
 class SSOLoginMiddleware(MiddlewareMixin):
 
