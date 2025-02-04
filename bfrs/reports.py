@@ -252,16 +252,20 @@ class MinisterialReport():
         rpt_map.append({
             key: dict(
                 pw_tenure=map_auth[key]['pw_tenure'] + map_268[key]['pw_tenure'],
-                area_pw_tenure=map_auth[key]['area_pw_tenure'] + map_268[key]['area_pw_tenure'],
+                # area_pw_tenure=map_auth[key]['area_pw_tenure'] + map_268[key]['area_pw_tenure'],
+                area_pw_tenure=Decimal(map_auth[key]['area_pw_tenure']) + Decimal(map_268[key]['area_pw_tenure']),
                 total_all_tenure=map_auth[key]['total_all_tenure'] + map_268[key]['total_all_tenure'],
-                total_area=map_auth[key]['total_area'] + map_268[key]['total_area']
+                # total_area=map_auth[key]['total_area'] + map_268[key]['total_area']
+                total_area=Decimal(map_auth[key]['total_area']) + Decimal(map_268[key]['total_area'])
             )
         })
 
         item_map['forest_pw_tenure'] = item_map_auth['forest_pw_tenure'] + item_map_268['forest_pw_tenure']
-        item_map['forest_area_pw_tenure'] = item_map_auth['forest_area_pw_tenure'] + item_map_268['forest_area_pw_tenure']
+        # item_map['forest_area_pw_tenure'] = item_map_auth['forest_area_pw_tenure'] + item_map_268['forest_area_pw_tenure']
+        item_map['forest_area_pw_tenure'] = Decimal(item_map_auth['forest_area_pw_tenure']) + Decimal(item_map_268['forest_area_pw_tenure'])
         item_map['forest_total_all_tenure'] = item_map_auth['forest_total_all_tenure'] + item_map_268['forest_total_all_tenure'] 
-        item_map['forest_total_area'] = item_map_auth['forest_total_area'] + item_map_268['forest_total_area']
+        # item_map['forest_total_area'] = item_map_auth['forest_total_area'] + item_map_268['forest_total_area']
+        item_map['forest_total_area'] = Decimal(item_map_auth['forest_total_area']) + Decimal(item_map_268['forest_total_area'])
 
         rpt_map.append(
             {'': ''}
@@ -275,9 +279,11 @@ class MinisterialReport():
             rpt_map.append({
                 region.name: dict(
                     pw_tenure=map_auth[region.name]['pw_tenure'] + map_268[region.name]['pw_tenure'],
-                    area_pw_tenure=map_auth[region.name]['area_pw_tenure'] + map_268[region.name]['area_pw_tenure'],
+                    # area_pw_tenure=map_auth[region.name]['area_pw_tenure'] + map_268[region.name]['area_pw_tenure'],
+                    area_pw_tenure=Decimal(map_auth[region.name]['area_pw_tenure']) + Decimal(map_268[region.name]['area_pw_tenure']),
                     total_all_tenure=map_auth[region.name]['total_all_tenure'] + map_268[region.name]['total_all_tenure'],
-                    total_area=map_auth[region.name]['total_area'] + map_268[region.name]['total_area']
+                    # total_area=map_auth[region.name]['total_area'] + map_268[region.name]['total_area']
+                    total_area=Decimal(map_auth[region.name]['total_area']) + Decimal(map_268[region.name]['total_area'])
                 )
             })
 
@@ -289,14 +295,17 @@ class MinisterialReport():
         rpt_map.append({
             key: dict(
                 pw_tenure=map_auth[key]['pw_tenure'] + map_268[key]['pw_tenure'],
-                area_pw_tenure=map_auth[key]['area_pw_tenure'] + map_268[key]['area_pw_tenure'],
+                # area_pw_tenure=map_auth[key]['area_pw_tenure'] + map_268[key]['area_pw_tenure'],
+                area_pw_tenure=Decimal(map_auth[key]['area_pw_tenure']) + Decimal(map_268[key]['area_pw_tenure']),
                 total_all_tenure=map_auth[key]['total_all_tenure'] + map_268[key]['total_all_tenure'],
-                total_area=map_auth[key]['total_area'] + map_268[key]['total_area']
+                # total_area=map_auth[key]['total_area'] + map_268[key]['total_area']
+                total_area=Decimal(map_auth[key]['total_area']) + Decimal(map_268[key]['total_area'])
             )
         })
 
         item_map['nonforest_total_all_tenure'] = item_map_auth['nonforest_total_all_tenure'] + item_map_268['nonforest_total_all_tenure']
-        item_map['nonforest_total_area'] = item_map_auth['nonforest_total_area'] + item_map_268['nonforest_total_area']
+        # item_map['nonforest_total_area'] = item_map_auth['nonforest_total_area'] + item_map_268['nonforest_total_area']
+        item_map['nonforest_total_area'] = Decimal(item_map_auth['nonforest_total_area']) + Decimal(item_map_268['nonforest_total_area'])
                 
         key = 'GRAND TOTAL'
         # map_auth = [i for i in rpt_map_auth if i.has_key(key)][0]
@@ -306,9 +315,11 @@ class MinisterialReport():
         rpt_map.append({
             key: dict(
                 pw_tenure=map_auth[key]['pw_tenure'] + map_268[key]['pw_tenure'],
-                area_pw_tenure=map_auth[key]['area_pw_tenure'] + map_268[key]['area_pw_tenure'],
+                # area_pw_tenure=map_auth[key]['area_pw_tenure'] + map_268[key]['area_pw_tenure'],
+                area_pw_tenure=Decimal(map_auth[key]['area_pw_tenure']) + Decimal(map_268[key]['area_pw_tenure']),
                 total_all_tenure=map_auth[key]['total_all_tenure'] + map_268[key]['total_all_tenure'],
-                total_area=map_auth[key]['total_area'] + map_268[key]['total_area']
+                # total_area=map_auth[key]['total_area'] + map_268[key]['total_area']
+                total_area=Decimal(map_auth[key]['total_area']) + Decimal(map_268[key]['total_area'])
             )
         })
 
