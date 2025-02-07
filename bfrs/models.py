@@ -557,7 +557,8 @@ class BushfireBase(Audit,DictMixin):
 
     @property
     def origin_coords(self):
-        return 'Lon/Lat ({}, {})'.format(round(self.origin_point.get_x(), 2), round(self.origin_point.get_y(), 2)) if self.origin_point else None
+        # return 'Lon/Lat ({}, {})'.format(round(self.origin_point.get_x(), 2), round(self.origin_point.get_y(), 2)) if self.origin_point else None
+        return 'Lon/Lat ({}, {})'.format(round(self.origin_point.x, 2), round(self.origin_point.y, 2)) if self.origin_point else None
 
     @property
     def origin_latlon(self):
@@ -565,7 +566,9 @@ class BushfireBase(Audit,DictMixin):
             return None
         
         if not hasattr(self,"_origin_latlon"):
-            self._origin_latlon = LatLon.LatLon(LatLon.Latitude(self.origin_point.get_y()),LatLon.Longitude(self.origin_point.get_x()))
+            #self._origin_latlon = LatLon.LatLon(LatLon.Latitude(self.origin_point.get_y()),LatLon.Longitude(self.origin_point.get_x()))
+            self._origin_latlon = LatLon.LatLon(LatLon.Latitude(self.origin_point.y),LatLon.Longitude(self.origin_point.x))
+
         
         return self._origin_latlon
 

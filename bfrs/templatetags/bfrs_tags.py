@@ -62,8 +62,10 @@ def deg_min_sec(value):
 
     try:
         point = GEOSGeometry(value)
-        x = point.get_x()
-        y = point.get_y()
+        # x = point.get_x()
+        # y = point.get_y()
+        x = point.x
+        y = point.y
         c=LatLon.LatLon(LatLon.Longitude(x), LatLon.Latitude(y))
         latlon = c.to_string('d% %m% %S% %H')
         lon = latlon[0].split(' ')
@@ -92,8 +94,10 @@ def latlon(value):
 
     try:
         point = GEOSGeometry(value)
-        x = round(point.get_x(), 2)
-        y = round(point.get_y(), 2)
+        # x = round(point.get_x(), 2)
+        # y = round(point.get_y(), 2)
+        x = round(point.x, 2)
+        y = round(point.y, 2)
         return '(Lon/Lat) {}/{}'.format(x, y)
     except:
         return None
