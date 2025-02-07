@@ -15,7 +15,7 @@ from bfrs import utils
 def test_fire_bombing(bushfire=None):
     if isinstance(bushfire,int):
         bushfire = Bushfire.objects.get(id = bushfire)
-    elif isinstance(bushfire,basestring):
+    elif isinstance(bushfire,str):
         bushfire = Bushfire.objects.get(fire_number = bushfire)
     else:
         bushfire = Bushfire.objects.all().first()
@@ -26,7 +26,7 @@ def test_fire_bombing(bushfire=None):
 def test_send_fire_bomging_req_email(bushfire=None,user_email=None):
     if isinstance(bushfire,int):
         bushfire = Bushfire.objects.get(id = bushfire)
-    elif isinstance(bushfire,basestring):
+    elif isinstance(bushfire,str):
         bushfire = Bushfire.objects.get(fire_number = bushfire)
     else:
         bushfire = Bushfire.objects.all().first()

@@ -129,12 +129,19 @@ class HorizontalRadioSelect(forms.RadioSelect):
     # def render(self):
     #     return mark_safe(u'&nbsp;&nbsp;&nbsp;&nbsp;\n'.join([u'%s&nbsp;&nbsp;&nbsp;&nbsp;\n' % w for w in self]))
     def render(self, name, value, attrs=None, renderer=None):
+        output = []
         context = self.get_context(name, value, attrs)
         output = []
         for w in context['widget']['optgroups']:
             for option in w[1]:
-                output.append(u'%s&nbsp;&nbsp;&nbsp;&nbsp;\n' % option['template_name'])
-        return mark_safe(u'&nbsp;&nbsp;&nbsp;&nbsp;\n'.join(output))
+                radio_html = f'<input type="{option["type"]}" name="{option["name"]}" value="{option["value"]}"'
+                # Add attributes like ID, onclick, etc.
+                for attr_name, attr_value in option['attrs'].items():
+                    radio_html += f' {attr_name}="{attr_value}"'
+                radio_html += '>'
+                # Append the radio button with the label
+                output.append(f"{radio_html}&nbsp;&nbsp;{option['label']}&nbsp;&nbsp;&nbsp;&nbsp;\n")
+        return mark_safe("".join(output))
 
 # class VerticalRadioRenderer(forms.RadioSelect.renderer):
 class VerticalRadioSelect(forms.RadioSelect):
@@ -274,7 +281,8 @@ class BushfireFilterForm(forms.ModelForm):
 def coerce_YESNO(value):
     if value is None or value == '':
         return None
-    if isinstance(value,basestring):
+    # if isinstance(value,basestring):
+    if isinstance(value,str):
         return value == "True"
     return value
 
@@ -927,7 +935,8 @@ class BushfireCreateForm(InitialBushfireForm):
     def __init__(self,*args,**kwargs):
         super(BushfireCreateForm,self).__init__(*args,**kwargs)
         self.plantations = None
-        if not self.initial.get("sss_data") or not isinstance(self.initial.get("sss_data"),basestring):
+        # if not self.initial.get("sss_data") or not isinstance(self.initial.get("sss_data"),basestring):
+        if not self.initial.get("sss_data") or not isinstance(self.initial.get("sss_data"),str):
             return
         self.is_bound = False
         self.initial['fire_number'] = "Generated on Create/Submit"

@@ -171,8 +171,12 @@ class BoundField(forms.boundfield.BoundField):
     Extend django's BoundField to support the following features
     1. Get extra css_classes from field's attribute 'css_classes'
     """
+    UNSET = object()
+
     def __init__(self, form, field, name):
         self.form_field_name = name
+        self._initial_value = BoundField.UNSET  # Initialize _initial_value
+        #self._initial_value = None
         if isinstance(field,basefields.AliasFieldMixin) and name != field.field_name:
             super(BoundField,self).__init__(form,field,field.field_name)
             self.html_name = form.add_prefix(name)
@@ -204,7 +208,8 @@ class BoundField(forms.boundfield.BoundField):
 
         data = self.form.initial.get(self.name, self.field.initial)
         if callable(data):
-            if self._initial_value is not forms.boundfield.UNSET:
+            # if self._initial_value is not forms.boundfield.UNSET:
+            if self._initial_value is not BoundField.UNSET:
                 data = self._initial_value
             else:
                 data = data()

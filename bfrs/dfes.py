@@ -29,7 +29,7 @@ class P1CAD(object):
 
         if isinstance(bushfire,int):
             bushfire = Bushfire.objects.get(id=bushfire)
-        elif isinstance(bushfire,basestring):
+        elif isinstance(bushfire,str):
             bushfire = Bushfire.objects.get(fire_number=bushfire)
         elif not isinstance(bushfire,Bushfire):
             raise Exception("Must pass in bushfire report id or bushfire report fire number or bushfire report object.")
@@ -105,7 +105,7 @@ class P1CAD(object):
             bushfire.dfes_incident_no = None
         elif isinstance(bushfire,int):
             bushfire = Bushfire.objects.get(id=bushfire)
-        elif isinstance(bushfire,basestring):
+        elif isinstance(bushfire,str):
             bushfire = Bushfire.objects.get(fire_number=bushfire)
         elif not isinstance(bushfire,Bushfire):
             raise Exception("Must pass in bushfire report id or bushfire report fire number or bushfire report object.")
