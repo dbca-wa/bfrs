@@ -497,7 +497,8 @@ class MinisterialReport():
         folder = None
         try:
             folder,pdf_file = generate_pdf("latex/{}.tex".format(template),context=context,request=request,check_output=False)
-            with open(pdf_file) as f:
+            # with open(pdf_file) as f:
+            with open(pdf_file, 'rb') as f:
                 response.write(f.read())
             logger.debug("Finally: returning PDF response.")
             return response

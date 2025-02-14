@@ -1,8 +1,10 @@
 # git+https://github.com/dbca-wa/dbca-utils@1.0.2
 git+https://github.com/dbca-wa/dbca-utils.git@1.1.1#egg=dbca-utils
-psycopg2-binary==2.8.2
+# psycopg2-binary==2.8.2
+psycopg2-binary==2.9.9
 # Django==1.10.7
-Django==3.2.25
+#Django==3.2.25
+Django==5.0.11
 # django-extensions==1.7.6
 django-extensions==3.2.3
 django-dotenv==1.4.2
@@ -13,7 +15,8 @@ dj-static==0.0.6
 django-crispy-forms==1.13.0
 webtemplate-dbca==0.6.0
 # django-tastypie==0.13.3
-django-tastypie==0.14.6
+# django-tastypie==0.14.6
+django-tastypie==0.14.7
 django-model-utils==2.0.3
 # django-filter==1.0.1
 django-filter==23.5
@@ -22,7 +25,8 @@ python-dateutil==2.8.2
 python-magic==0.4.10
 Unidecode==0.4.18
 # django-reversion==2.0.8
-django-reversion==4.0.0
+# django-reversion==4.0.0
+django-reversion==5.1.0
 # django-reversion-compare==0.7.5
 django-reversion-compare==0.17.0
 # django-smart-selects==1.3.4

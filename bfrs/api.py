@@ -1,5 +1,6 @@
 import traceback
-from django.conf.urls import url
+# from django.conf.urls import url
+from django.urls import include, path, re_path
 from django.conf import settings
 from django.utils import timezone
 from django.http import JsonResponse
@@ -88,7 +89,10 @@ class APIResource(ModelResource):
 
     def prepend_urls(self):
         return [
-            url(
+            # url(
+            #     r"^(?P<resource_name>{})/fields/(?P<field_name>[\w\d_.-]+)/$".format(self._meta.resource_name),
+            #     self.wrap_view('field_values'), name="api_field_values"),
+            re_path(
                 r"^(?P<resource_name>{})/fields/(?P<field_name>[\w\d_.-]+)/$".format(self._meta.resource_name),
                 self.wrap_view('field_values'), name="api_field_values"),
         ]
@@ -126,7 +130,10 @@ class ProfileResource(APIResource):
     @property
     def urls(self):
         return [
-            url(
+            # url(
+            #     r"^(?P<resource_name>{})/$".format(self._meta.resource_name),
+            #     self.wrap_view('field_values'), name="api_field_values"),
+            re_path(
                 r"^(?P<resource_name>{})/$".format(self._meta.resource_name),
                 self.wrap_view('field_values'), name="api_field_values"),
         ]
@@ -153,7 +160,10 @@ class CaptureMethodResource(APIResource):
     @property
     def urls(self):
         return [
-            url(
+            # url(
+            #     r"^(?P<resource_name>{})/$".format(self._meta.resource_name),
+            #     self.wrap_view('field_values'), name="api_field_values"),
+            re_path(
                 r"^(?P<resource_name>{})/$".format(self._meta.resource_name),
                 self.wrap_view('field_values'), name="api_field_values"),
         ]
@@ -176,7 +186,10 @@ class RegionResource(APIResource):
     @property
     def urls(self):
         return [
-            url(
+            # url(
+            #     r"^(?P<resource_name>{})/$".format(self._meta.resource_name),
+            #     self.wrap_view('field_values'), name="api_field_values"),
+            re_path(
                 r"^(?P<resource_name>{})/$".format(self._meta.resource_name),
                 self.wrap_view('field_values'), name="api_field_values"),
         ]
