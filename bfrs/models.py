@@ -733,11 +733,14 @@ class Bushfire(BushfireBase):
     def fire_bombing(self):
         if not hasattr(self,"_fire_bombing"):
             try:
-                fire_bombing = BushfireProperty.objects.get(bushfire=self,name="fire_bombing").value
-                if fire_bombing is None:
+                if not self.pk:
                     fire_bombing = {}
                 else:
-                    fire_bombing = json.loads(fire_bombing)
+                    fire_bombing = BushfireProperty.objects.get(bushfire=self,name="fire_bombing").value
+                    if fire_bombing is None:
+                        fire_bombing = {}
+                    else:
+                        fire_bombing = json.loads(fire_bombing)
             except BushfireProperty.DoesNotExist:
                 fire_bombing = {}
 
