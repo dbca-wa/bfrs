@@ -548,15 +548,16 @@ class BaseModelFormMetaclass(forms.models.ModelFormMetaclass):
         
         return new_class
 
-# class ModelForm(six.with_metaclass(BaseModelFormMetaclass, forms.models.BaseModelForm)):
 class ModelForm(forms.models.BaseModelForm, metaclass=BaseModelFormMetaclass):
     def __init__(self, *args,**kwargs):
+        super(ModelForm,self).__init__(*args,**kwargs)
         instance = None
         if "instance" in kwargs:
             instance = kwargs["instance"]
             kwargs["instance"] = None
 
-        super(ModelForm,self).__init__(*args,**kwargs)
+        # super(ModelForm,self).__init__(*args,**kwargs)
+        # super().__init__(*args,**kwargs)
         if instance:
             self.instance = instance
             if self.initial:
@@ -646,11 +647,15 @@ class ModelForm(forms.models.BaseModelForm, metaclass=BaseModelFormMetaclass):
         finally:
             self._meta.fields = opt_fields
             self.fields = fields
+            
 
     def __getitem__(self, name):
         """Return a BoundField with the given name."""
         try:
-            field = self.fields[name]
+            if name in self.fields:
+                field = self.fields[name]
+            else:
+                return
         except KeyError:
             raise KeyError(
                 "Key '%s' not found in '%s'. Choices are: %s." % (

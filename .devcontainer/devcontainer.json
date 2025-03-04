@@ -11,6 +11,6 @@
 		   "--hostname","bfrs-dev"
 		   ],
 	"forwardPorts": [9191,9192,9193,9194,9195],
-	"initializeCommand" : "${localEnv:HOME}/docker-scripts-dev/windows_vbox/postgres_docker_load.sh && ${localEnv:HOME}/docker-scripts-dev/windows_vbox/bfrs_dfes_wrapper_docker_load.sh
+	"initializeCommand" : "${localEnv:HOME}/docker-scripts-dev/windows_vbox/postgres_docker_load_2404_16.sh && ${localEnv:HOME}/docker-scripts-dev/windows_vbox/bfrs_dfes_wrapper_docker_load.sh
 "
 }

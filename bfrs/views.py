@@ -481,6 +481,7 @@ class BushfireUpdateView(ExceptionMixin,FormRequestMixin,NextUrlMixin,LoginRequi
         Initial value for BufirefireUpdateForm
         """
         initial = {}
+        #initial=super(BushfireUpdateView, self).get_initial()  
         if self.get_object():
             return initial
 
@@ -488,7 +489,6 @@ class BushfireUpdateView(ExceptionMixin,FormRequestMixin,NextUrlMixin,LoginRequi
         # if self.request.POST.has_key('sss_create'):
         if 'sss_create' in self.request.POST:
             initial['sss_data'] = self.request.POST.get('sss_create')
-
         return initial
 
     def get(self, request, *args, **kwargs):
@@ -662,9 +662,11 @@ class BushfireUpdateView(ExceptionMixin,FormRequestMixin,NextUrlMixin,LoginRequi
         return HttpResponseRedirect(self.get_success_url())
 
     def get_context_data(self, **kwargs):
+        #context = super(BushfireUpdateView, self).get_context_data(**kwargs)
         bushfire = self.get_object()
         self.object = bushfire
         context = super(BushfireUpdateView, self).get_context_data(**kwargs)
+        #context = super().get_context_data(**kwargs)
 
         submit_actions = None
         context.update({

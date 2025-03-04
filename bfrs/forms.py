@@ -480,11 +480,19 @@ class BaseBushfireViewForm(baseforms.ModelForm):
 
 
 class BushfireViewForm(BaseBushfireViewForm):
+    # def __init__(self,*args,**kwargs):
+    #     super(BushfireViewForm,self).__init__(*args,**kwargs)
+    #     self.damages          = Damage.objects.filter(bushfire = self.instance)
+    #     self.injuries         = Injury.objects.filter(bushfire = self.instance)
+    #     self.tenures_burnt    = AreaBurnt.objects.filter(bushfire = self.instance)
+    
     def __init__(self,*args,**kwargs):
         super(BushfireViewForm,self).__init__(*args,**kwargs)
-        self.damages          = Damage.objects.filter(bushfire = self.instance)
-        self.injuries         = Injury.objects.filter(bushfire = self.instance)
-        self.tenures_burnt    = AreaBurnt.objects.filter(bushfire = self.instance)
+        if hasattr(self, 'instance') and self.instance and self.instance.pk:
+            # super(BushfireViewForm,self).__init__(*args,**kwargs)
+            self.damages          = Damage.objects.filter(bushfire = self.instance)
+            self.injuries         = Injury.objects.filter(bushfire = self.instance)
+            self.tenures_burnt    = AreaBurnt.objects.filter(bushfire = self.instance)
 
     class Meta:
         model = Bushfire
@@ -717,6 +725,9 @@ class MergedBushfireForm(BaseBushfireEditForm):
     def _post_clean(self):
         super(MergedBushfireForm,self)._post_clean()
         self.instance.modifier = self.request.user
+    
+    def __init__(self,*args,**kwargs):
+        super(MergedBushfireForm,self).__init__(*args,**kwargs)
 
 
     class Meta:
@@ -741,6 +752,7 @@ class MergedBushfireForm(BaseBushfireEditForm):
 class SubmittedBushfireForm(MergedBushfireForm):
     def __init__(self,*args,**kwargs):
         super(SubmittedBushfireForm,self).__init__(*args,**kwargs)
+        #super().__init__(*args,**kwargs)
         if self.request and self.request.POST and "sss_create" not in self.request.POST and self.is_editable("damage_unknown"):
             self.damage_formset          = DamageFormSet(self.request.POST, prefix='damage_fs')
         else:
@@ -870,6 +882,7 @@ class ReviewedBushfireFSSGForm(ReviewedBushfireForm):
         }
 
 
+
 class InitialBushfireForm(SubmittedBushfireForm):
     submit_actions = [('save_draft','Save draft','btn-success'),('submit','Save and Submit','btn-warning')]
     class Meta:
@@ -919,6 +932,9 @@ class InitialBushfireForm(SubmittedBushfireForm):
             "fire_bombing.response":HorizontalRadioSelect(),
         }
 
+    def __init__(self,*args,**kwargs):
+        super(InitialBushfireForm,self).__init__(*args,**kwargs)
+
 
 class InitialBushfireFSSGForm(InitialBushfireForm):
     class Meta:
@@ -928,7 +944,6 @@ class InitialBushfireFSSGForm(InitialBushfireForm):
             "district":None,
             "reporting_year":None,
         }
-
 
 class BushfireCreateForm(InitialBushfireForm):
     submit_actions = [('create','Create','btn-success'),('submit','Create and Submit','btn-warning')]
@@ -1087,6 +1102,7 @@ class BushfireCreateForm(InitialBushfireForm):
             "sss_data":forms.widgets.HiddenInput(),
             "fire_detected_date":new_fire_detected_date_widget,
         }
+        
 
 
 class BaseInjuryFormSet(BaseInlineFormSet):
