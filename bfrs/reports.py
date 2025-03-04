@@ -15,7 +15,8 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.core.mail import send_mail
 from django.db import connection
-from cStringIO import StringIO
+# from cStringIO import StringIO
+from io import StringIO
 from django.core.mail import EmailMessage
 from django.conf import settings
 from django.utils import timezone
@@ -51,10 +52,18 @@ def get_sorted_regions(forest_region=None):
     if key not in sorted_regions:
         if forest_region is None:
             #sorted_regions[key] = sorted(Region.objects.all(),cmp=lambda r1,r2: cmp(region_order.get(r1.name,r1.id),region_order.get(r2.name,r2.id)))
-            sorted_regions[key] = sorted(Region.objects.filter(dbca=True) ,cmp=lambda r1,r2: cmp(region_order.get(r1.name,r1.id),region_order.get(r2.name,r2.id)))
+            # sorted_regions[key] = sorted(Region.objects.filter(dbca=True) ,cmp=lambda r1,r2: cmp(region_order.get(r1.name,r1.id),region_order.get(r2.name,r2.id)))
+            sorted_regions[key] = sorted(
+                Region.objects.filter(dbca=True),
+                key=lambda r: region_order.get(r.name, r.id)
+            )
         else:
             #sorted_regions[key] = sorted(Region.objects.filter(forest_region=forest_region),cmp=lambda r1,r2: cmp(region_order.get(r1.name,r1.id),region_order.get(r2.name,r2.id)))
-            sorted_regions[key] = sorted(Region.objects.filter(dbca=True).filter(forest_region=forest_region),cmp=lambda r1,r2: cmp(region_order.get(r1.name,r1.id),region_order.get(r2.name,r2.id)))
+            # sorted_regions[key] = sorted(Region.objects.filter(dbca=True).filter(forest_region=forest_region),cmp=lambda r1,r2: cmp(region_order.get(r1.name,r1.id),region_order.get(r2.name,r2.id)))
+            sorted_regions[key] = sorted(
+                Region.objects.filter(dbca=True).filter(forest_region=forest_region),
+                key=lambda r: region_order.get(r.name, r.id)
+            )
 
     return sorted_regions[key]
 
@@ -121,7 +130,8 @@ def read_col(fin_year, col_type):
                 if cause:
                     cause_id = cause[0].id
                 else:
-                    if not [j for j in MISSING_MAP if not j.has_key(i[0])]:
+                    # if not [j for j in MISSING_MAP if not j.has_key(i[0])]:
+                    if not [j for j in MISSING_MAP if not i[0] in j]:                    
                         MISSING_MAP.append( dict(name=i[0], error='Cause {0}, Missing from BFRS Enum list. Please Request OIM to add Cause={0}'.format(i[0])))
                     continue
                 count_list.append( dict(cause_id=cause_id, count=int(i[idx])) )
@@ -131,16 +141,16 @@ def read_col(fin_year, col_type):
 
         return count_list, perc_list
 
-    except ValueError, e:
+    except ValueError as e:
         logger.error("Cannot find fin_year in CSV header: {}, {}, {}".format(fin_year, hdr, e))
 
-    except IndexError, e:
+    except IndexError as e:
         logger.error("Cannot find 2nd fin_year (percentage column) in CSV header: {}, {}, {}".format(fin_year, hdr, e))
 
-    except IOError, e:
+    except IOError as e:
         logger.error("Cannot Open CSV file: {}, {}".format(settings.HISTORICAL_CAUSE_CSV_FILE, e))
 
-    except Exception, e:
+    except Exception as e:
         logger.error("Error reading column from CSV file: {}, {}, {}".format(fin_year, settings.HISTORICAL_CAUSE_CSV_FILE, e))
 
     return [], []
@@ -217,75 +227,99 @@ class MinisterialReport():
 
         rpt_map = []
         item_map = {}
+        from decimal import Decimal
         for region in get_sorted_regions(True):
-            map_auth = [i for i in rpt_map_auth if i.has_key(region.name)][0]
-            map_268  = [i for i in rpt_map_268 if i.has_key(region.name)][0]
+            # map_auth = [i for i in rpt_map_auth if i.has_key(region.name)][0]
+            # map_268  = [i for i in rpt_map_268 if i.has_key(region.name)][0]
+            map_auth = [i for i in rpt_map_auth if region.name in i][0]
+            map_268  = [i for i in rpt_map_268 if region.name in i][0]
             rpt_map.append({
                 region.name: dict(
                     pw_tenure=map_auth[region.name]['pw_tenure'] + map_268[region.name]['pw_tenure'],
-                    area_pw_tenure=map_auth[region.name]['area_pw_tenure'] + map_268[region.name]['area_pw_tenure'],
+                    # area_pw_tenure=map_auth[region.name]['area_pw_tenure'] + map_268[region.name]['area_pw_tenure'],
+                    area_pw_tenure=Decimal(map_auth[region.name]['area_pw_tenure']) + Decimal(map_268[region.name]['area_pw_tenure']),
                     total_all_tenure=map_auth[region.name]['total_all_tenure'] + map_268[region.name]['total_all_tenure'],
-                    total_area=map_auth[region.name]['total_area'] + map_268[region.name]['total_area']
+                    # total_area=map_auth[region.name]['total_area'] + map_268[region.name]['total_area']
+                    total_area=Decimal(map_auth[region.name]['total_area']) + Decimal(map_268[region.name]['total_area'])
                 )
             })
 
         key = 'Sub Total (Forest)'
-        map_auth = [i for i in rpt_map_auth if i.has_key(key)][0]
-        map_268  = [i for i in rpt_map_268 if i.has_key(key)][0]
+        # map_auth = [i for i in rpt_map_auth if i.has_key(key)][0]
+        # map_268  = [i for i in rpt_map_268 if i.has_key(key)][0]
+        map_auth = [i for i in rpt_map_auth if key in i][0]
+        map_268  = [i for i in rpt_map_268 if key in i][0]
         rpt_map.append({
             key: dict(
                 pw_tenure=map_auth[key]['pw_tenure'] + map_268[key]['pw_tenure'],
-                area_pw_tenure=map_auth[key]['area_pw_tenure'] + map_268[key]['area_pw_tenure'],
+                # area_pw_tenure=map_auth[key]['area_pw_tenure'] + map_268[key]['area_pw_tenure'],
+                area_pw_tenure=Decimal(map_auth[key]['area_pw_tenure']) + Decimal(map_268[key]['area_pw_tenure']),
                 total_all_tenure=map_auth[key]['total_all_tenure'] + map_268[key]['total_all_tenure'],
-                total_area=map_auth[key]['total_area'] + map_268[key]['total_area']
+                # total_area=map_auth[key]['total_area'] + map_268[key]['total_area']
+                total_area=Decimal(map_auth[key]['total_area']) + Decimal(map_268[key]['total_area'])
             )
         })
 
         item_map['forest_pw_tenure'] = item_map_auth['forest_pw_tenure'] + item_map_268['forest_pw_tenure']
-        item_map['forest_area_pw_tenure'] = item_map_auth['forest_area_pw_tenure'] + item_map_268['forest_area_pw_tenure']
+        # item_map['forest_area_pw_tenure'] = item_map_auth['forest_area_pw_tenure'] + item_map_268['forest_area_pw_tenure']
+        item_map['forest_area_pw_tenure'] = Decimal(item_map_auth['forest_area_pw_tenure']) + Decimal(item_map_268['forest_area_pw_tenure'])
         item_map['forest_total_all_tenure'] = item_map_auth['forest_total_all_tenure'] + item_map_268['forest_total_all_tenure'] 
-        item_map['forest_total_area'] = item_map_auth['forest_total_area'] + item_map_268['forest_total_area']
+        # item_map['forest_total_area'] = item_map_auth['forest_total_area'] + item_map_268['forest_total_area']
+        item_map['forest_total_area'] = Decimal(item_map_auth['forest_total_area']) + Decimal(item_map_268['forest_total_area'])
 
         rpt_map.append(
             {'': ''}
         )
 
         for region in get_sorted_regions(False):
-            map_auth = [i for i in rpt_map_auth if i.has_key(region.name)][0]
-            map_268  = [i for i in rpt_map_268 if i.has_key(region.name)][0]
+            # map_auth = [i for i in rpt_map_auth if i.has_key(region.name)][0]
+            # map_268  = [i for i in rpt_map_268 if i.has_key(region.name)][0]
+            map_auth = [i for i in rpt_map_auth if region.name in i][0]
+            map_268  = [i for i in rpt_map_268 if region.name in i][0]
             rpt_map.append({
                 region.name: dict(
                     pw_tenure=map_auth[region.name]['pw_tenure'] + map_268[region.name]['pw_tenure'],
-                    area_pw_tenure=map_auth[region.name]['area_pw_tenure'] + map_268[region.name]['area_pw_tenure'],
+                    # area_pw_tenure=map_auth[region.name]['area_pw_tenure'] + map_268[region.name]['area_pw_tenure'],
+                    area_pw_tenure=Decimal(map_auth[region.name]['area_pw_tenure']) + Decimal(map_268[region.name]['area_pw_tenure']),
                     total_all_tenure=map_auth[region.name]['total_all_tenure'] + map_268[region.name]['total_all_tenure'],
-                    total_area=map_auth[region.name]['total_area'] + map_268[region.name]['total_area']
+                    # total_area=map_auth[region.name]['total_area'] + map_268[region.name]['total_area']
+                    total_area=Decimal(map_auth[region.name]['total_area']) + Decimal(map_268[region.name]['total_area'])
                 )
             })
 
         key = 'Sub Total (Non Forest)'
-        map_auth = [i for i in rpt_map_auth if i.has_key(key)][0]
-        map_268  = [i for i in rpt_map_268 if i.has_key(key)][0]
+        # map_auth = [i for i in rpt_map_auth if i.has_key(key)][0]
+        # map_268  = [i for i in rpt_map_268 if i.has_key(key)][0]
+        map_auth = [i for i in rpt_map_auth if key in i][0]
+        map_268  = [i for i in rpt_map_268 if key in i][0]
         rpt_map.append({
             key: dict(
                 pw_tenure=map_auth[key]['pw_tenure'] + map_268[key]['pw_tenure'],
-                area_pw_tenure=map_auth[key]['area_pw_tenure'] + map_268[key]['area_pw_tenure'],
+                # area_pw_tenure=map_auth[key]['area_pw_tenure'] + map_268[key]['area_pw_tenure'],
+                area_pw_tenure=Decimal(map_auth[key]['area_pw_tenure']) + Decimal(map_268[key]['area_pw_tenure']),
                 total_all_tenure=map_auth[key]['total_all_tenure'] + map_268[key]['total_all_tenure'],
-                total_area=map_auth[key]['total_area'] + map_268[key]['total_area']
+                # total_area=map_auth[key]['total_area'] + map_268[key]['total_area']
+                total_area=Decimal(map_auth[key]['total_area']) + Decimal(map_268[key]['total_area'])
             )
         })
 
         item_map['nonforest_total_all_tenure'] = item_map_auth['nonforest_total_all_tenure'] + item_map_268['nonforest_total_all_tenure']
-        item_map['nonforest_total_area'] = item_map_auth['nonforest_total_area'] + item_map_268['nonforest_total_area']
+        # item_map['nonforest_total_area'] = item_map_auth['nonforest_total_area'] + item_map_268['nonforest_total_area']
+        item_map['nonforest_total_area'] = Decimal(item_map_auth['nonforest_total_area']) + Decimal(item_map_268['nonforest_total_area'])
                 
         key = 'GRAND TOTAL'
-        map_auth = [i for i in rpt_map_auth if i.has_key(key)][0]
-        map_268  = [i for i in rpt_map_268 if i.has_key(key)][0]
+        # map_auth = [i for i in rpt_map_auth if i.has_key(key)][0]
+        # map_268  = [i for i in rpt_map_268 if i.has_key(key)][0]
+        map_auth = [i for i in rpt_map_auth if key in i][0]
+        map_268  = [i for i in rpt_map_268 if key in i][0]
         rpt_map.append({
             key: dict(
                 pw_tenure=map_auth[key]['pw_tenure'] + map_268[key]['pw_tenure'],
-                area_pw_tenure=map_auth[key]['area_pw_tenure'] + map_268[key]['area_pw_tenure'],
+                # area_pw_tenure=map_auth[key]['area_pw_tenure'] + map_268[key]['area_pw_tenure'],
+                area_pw_tenure=Decimal(map_auth[key]['area_pw_tenure']) + Decimal(map_268[key]['area_pw_tenure']),
                 total_all_tenure=map_auth[key]['total_all_tenure'] + map_268[key]['total_all_tenure'],
-                total_area=map_auth[key]['total_area'] + map_268[key]['total_area']
+                # total_area=map_auth[key]['total_area'] + map_268[key]['total_area']
+                total_area=Decimal(map_auth[key]['total_area']) + Decimal(map_268[key]['total_area'])
             )
         })
 
@@ -303,7 +337,7 @@ class MinisterialReport():
         ])
 
         for row in self.rpt_map:
-            for region, data in row.iteritems():
+            for region, data in row.items():
                 writer.writerow([
                     region,
                     data['pw_tenure'],
@@ -346,7 +380,7 @@ class MinisterialReport():
         hdr.write(col_no(), "Total Area", style=style_bold_gen)
 
         for row in self.rpt_map:
-            for region, data in row.iteritems():
+            for region, data in row.items():
 
                 row = sheet1.row(row_no())
                 col_no = lambda c=count(): next(c)
@@ -404,10 +438,10 @@ class MinisterialReport():
         return response
 
     def display(self):
-        print '{}\t{}\t{}\t{}\t{}'.format('Region', 'DBCA Interest', 'Area DBCA Interest', 'Total All Area', 'Total Area').expandtabs(20)
+        print('{}\t{}\t{}\t{}\t{}'.format('Region', 'DBCA Interest', 'Area DBCA Interest', 'Total All Area', 'Total Area').expandtabs(20))
         for row in self.rpt_map:
-            for region, data in row.iteritems():
-                print '{}\t{}\t{}\t{}\t{}'.format(region, data['pw_tenure'], data['area_pw_tenure'], data['total_all_tenure'], data['total_area']).expandtabs(20)
+            for region, data in row.items():
+                print('{}\t{}\t{}\t{}\t{}'.format(region, data['pw_tenure'], data['area_pw_tenure'], data['total_all_tenure'], data['total_area']).expandtabs(20))
 
     def pdflatex(self, request, form_data):
 
@@ -463,7 +497,8 @@ class MinisterialReport():
         folder = None
         try:
             folder,pdf_file = generate_pdf("latex/{}.tex".format(template),context=context,request=request,check_output=False)
-            with open(pdf_file) as f:
+            # with open(pdf_file) as f:
+            with open(pdf_file, 'rb') as f:
                 response.write(f.read())
             logger.debug("Finally: returning PDF response.")
             return response
@@ -504,7 +539,8 @@ class MinisterialReport268():
 
             exists = [i for r in qs_regions if r.id==region_id]
             if exists:
-                if rpt_map.has_key(region_id):
+                # if rpt_map.has_key(region_id):
+                if region_id in rpt_map:
                     rpt_map[region_id]['area'] = rpt_map[region_id]['area'] + float(i['area'])
                     rpt_map[region_id]['number'] = rpt_map[region_id]['number'] + 1
                             
@@ -533,14 +569,16 @@ class MinisterialReport268():
         net_forest_total_area     = 0
 
         for region in get_sorted_regions(True):
-            if data_268_pw.has_key(region.id):
+            # if data_268_pw.has_key(region.id):
+            if region.id in data_268_pw:
                 pw_tenure      = data_268_pw[region.id]['number']
                 area_pw_tenure = data_268_pw[region.id]['area']
             else:
                 pw_tenure      = 0
                 area_pw_tenure = 0.0
 
-            if data_268.has_key(region.id):
+            # if data_268.has_key(region.id):
+            if region.id in data_268:
                 total_all_tenure = data_268[region.id]['number']
                 total_area       = data_268[region.id]['area']
             else:
@@ -576,14 +614,16 @@ class MinisterialReport268():
         net_nonforest_total_area     = 0
 
         for region in get_sorted_regions(False):
-            if data_268_pw.has_key(region.id):
+            # if data_268_pw.has_key(region.id):
+            if region.id in data_268_pw:
                 pw_tenure      = data_268_pw[region.id]['number']
                 area_pw_tenure = data_268_pw[region.id]['area']
             else:
                 pw_tenure      = 0
                 area_pw_tenure = 0.0
 
-            if data_268.has_key(region.id):
+            # if data_268.has_key(region.id):
+            if region.id in data_268:
                 total_all_tenure = data_268[region.id]['number']
                 total_area       = data_268[region.id]['area']
             else:
@@ -651,7 +691,7 @@ class MinisterialReport268():
         hdr.write(col_no(), "Total Area", style=style_bold_gen)
 
         for row in self.rpt_map:
-            for region, data in row.iteritems():
+            for region, data in row.items():
 
                 row = sheet1.row(row_no())
                 col_no = lambda c=count(): next(c)
@@ -888,7 +928,7 @@ class MinisterialReportAuth():
         ])
 
         for row in self.rpt_map:
-            for region, data in row.iteritems():
+            for region, data in row.items():
                 writer.writerow([
                     region,
                     data['pw_tenure'],
@@ -932,7 +972,7 @@ class MinisterialReportAuth():
         hdr.write(col_no(), "Total Area", style=style_bold_gen)
 
         for row in self.rpt_map:
-            for region, data in row.iteritems():
+            for region, data in row.items():
 
                 row = sheet1.row(row_no())
                 col_no = lambda c=count(): next(c)
@@ -984,10 +1024,10 @@ class MinisterialReportAuth():
         return response
 
     def display(self):
-        print '{}\t{}\t{}\t{}\t{}'.format('Region', 'DBCA Interest', 'Area DBCA Interest', 'Total All Area', 'Total Area').expandtabs(20)
+        print('{}\t{}\t{}\t{}\t{}'.format('Region', 'DBCA Interest', 'Area DBCA Interest', 'Total All Area', 'Total Area').expandtabs(20))
         for row in self.rpt_map:
-            for region, data in row.iteritems():
-                print '{}\t{}\t{}\t{}\t{}'.format(region, data['pw_tenure'], data['area_pw_tenure'], data['total_all_tenure'], data['total_area']).expandtabs(20)
+            for region, data in row.items():
+                print('{}\t{}\t{}\t{}\t{}'.format(region, data['pw_tenure'], data['area_pw_tenure'], data['total_all_tenure'], data['total_area']).expandtabs(20))
 
     def pdflatex(self, request, form_data):
         now = timezone.localtime(timezone.now())
@@ -1234,7 +1274,7 @@ class QuarterlyReport():
         hdr.write(col_no(), "Total Area", style=style_bold_gen)
 
         for row in self.rpt_map:
-            for region, data in row.iteritems():
+            for region, data in row.items():
 
                 row = sheet1.row(row_no())
                 col_no = lambda c=count(): next(c)
@@ -1309,11 +1349,11 @@ class QuarterlyReport():
         return response
 
     def display(self):
-        print '{}\t{}\t{}\t{}\t{}\t{}\t{}'.format('Region', 'DBCA Interest', 'Area DBCA Interest', 'Non DBCA Interest', 'Area Non DBCA Interest', 'Total All Area', 'Total Area').expandtabs(20)
+        print('{}\t{}\t{}\t{}\t{}\t{}\t{}'.format('Region', 'DBCA Interest', 'Area DBCA Interest', 'Non DBCA Interest', 'Area Non DBCA Interest', 'Total All Area', 'Total Area').expandtabs(20))
         for row in self.rpt_map:
-            for region, data in row.iteritems():
+            for region, data in row.items():
                 if region and data:
-                    print '{}\t{}\t{}\t{}\t{}\t{}\t{}'.format(region, data['pw_tenure'], data['area_pw_tenure'], data['non_pw_tenure'], data['area_non_pw_tenure'], data['total_all_tenure'], data['total_area']).expandtabs(20)
+                    print('{}\t{}\t{}\t{}\t{}\t{}\t{}'.format(region, data['pw_tenure'], data['area_pw_tenure'], data['non_pw_tenure'], data['area_non_pw_tenure'], data['total_all_tenure'], data['total_area']).expandtabs(20))
                 else:
                     print
 
@@ -1497,7 +1537,7 @@ class BushfireByTenureReport():
             hdr.write(col_no(), year0, style=style_bold_gen)
 
             for row in rpt_group_map:
-                for tenure, data in row.iteritems():
+                for tenure, data in row.items():
 
                     row = sheet1.row(row_no())
                     col_no = lambda c=count(): next(c)
@@ -1576,13 +1616,13 @@ class BushfireByTenureReport():
         year0 = str(self.reporting_year-1) + '/' + str(self.reporting_year)
         year1 = str(self.reporting_year-2) + '/' + str(self.reporting_year-1)
         year2 = str(self.reporting_year-3) + '/' + str(self.reporting_year-2)
-        print '{}\t{}\t{}\t{}\t{}\t{}\t{}'.format('Tenure', year2, year1, year0,  year2, year1, year0).expandtabs(20)
+        print('{}\t{}\t{}\t{}\t{}\t{}\t{}'.format('Tenure', year2, year1, year0,  year2, year1, year0).expandtabs(20))
         for row in self.rpt_map:
-            for tenure, data in row.iteritems():
+            for tenure, data in row.items():
                 if tenure and data:
-                    print '{}\t{}\t{}\t{}\t{}\t{}\t{}'.format(tenure, data['count2'], data['count1'], data['count0'], data['area2'], data['area1'], data['area0']).expandtabs(20)
+                    print( '{}\t{}\t{}\t{}\t{}\t{}\t{}'.format(tenure, data['count2'], data['count1'], data['count0'], data['area2'], data['area1'], data['area0']).expandtabs(20))
                 else:
-                    print
+                    print()
 
 
 class BushfireByCauseReport():
@@ -1740,7 +1780,7 @@ class BushfireByCauseReport():
         hdr.write(col_no(), year1, style=style)
         hdr.write(col_no(), year0, style=style)
         for row in self.rpt_map:
-            for tenure, data in row.iteritems():
+            for tenure, data in row.items():
 
                 row = sheet1.row(row_no())
                 col_no = lambda c=count(): next(c)
@@ -1809,13 +1849,13 @@ class BushfireByCauseReport():
         year0 = str(self.reporting_year-1) + '/' + str(self.reporting_year)
         year1 = str(self.reporting_year-2) + '/' + str(self.reporting_year-1)
         year2 = str(self.reporting_year-3) + '/' + str(self.reporting_year-2)
-        print '{}\t{}\t{}\t{}\t{}\t{}\t{}'.format('Cause', year2, year1, year0,  year2, year1, year0).expandtabs(20)
+        print('{}\t{}\t{}\t{}\t{}\t{}\t{}'.format('Cause', year2, year1, year0,  year2, year1, year0).expandtabs(20))
         for row in self.rpt_map:
-            for cause, data in row.iteritems():
+            for cause, data in row.items():
                 if cause and data:
-                    print '{}\t{}\t{}\t{}\t{}\t{}\t{}'.format(cause, data['count2'], data['count1'], data['count0'], data['perc2'], data['perc1'], data['perc0']).expandtabs(25)
+                    print('{}\t{}\t{}\t{}\t{}\t{}\t{}'.format(cause, data['count2'], data['count1'], data['count0'], data['perc2'], data['perc1'], data['perc0']).expandtabs(25))
                 else:
-                    print
+                    print()
 
 
 class BushfireByRegionByTenureReport():
@@ -2057,9 +2097,9 @@ class BushfireByRegionByTenureReport():
 
     def display(self):
         for data in self.rpt_map:
-            print ', '.join([str(i['count']) for i in data])
-            print ', '.join([str(i['area']) for i in data])
-            print
+            print(', '.join([str(i['count']) for i in data]))
+            print(', '.join([str(i['area']) for i in data]))
+            print()
 
 
 class Bushfire10YrAverageReport():
@@ -2260,7 +2300,7 @@ class Bushfire10YrAverageReport():
         hdr.write(col_no(), year0, style=style)
 
         for row in self.rpt_map:
-            for cause, data in row.iteritems():
+            for cause, data in row.items():
 
                 row = sheet1.row(row_no())
                 col_no = lambda c=count(): next(c)
@@ -2336,7 +2376,7 @@ class Bushfire10YrAverageReport():
         hdr.write(col_no(), "Percent (%)", style=style)
 
         for row in self.rpt_map:
-            for cause, data in row.iteritems():
+            for cause, data in row.items():
 
                 row = sheet1.row(row_no())
                 col_no = lambda c=count(): next(c)
@@ -2387,13 +2427,13 @@ class Bushfire10YrAverageReport():
         year0 = str(self.reporting_year-1) + '/' + str(self.reporting_year)
         year1 = str(self.reporting_year-2) + '/' + str(self.reporting_year-1)
         year2 = str(self.reporting_year-3) + '/' + str(self.reporting_year-2)
-        print '{}\t{}\t{}\t{}\t{}\t{}\t{}'.format('Cause', year2, year1, year0,  year2, year1, year0).expandtabs(20)
+        print('{}\t{}\t{}\t{}\t{}\t{}\t{}'.format('Cause', year2, year1, year0,  year2, year1, year0).expandtabs(20))
         for row in self.rpt_map:
-            for cause, data in row.iteritems():
+            for cause, data in row.items():
                 if cause and data:
-                    print '{}\t{}\t{}\t{}\t{}\t{}\t{}'.format(cause, data['count2'], data['count1'], data['count0'], data['perc2'], data['perc1'], data['perc0']).expandtabs(25)
+                    print('{}\t{}\t{}\t{}\t{}\t{}\t{}'.format(cause, data['count2'], data['count1'], data['count0'], data['perc2'], data['perc1'], data['perc0']).expandtabs(25))
                 else:
-                    print
+                    print()
 
 
 class BushfireIndicator():
@@ -2506,7 +2546,7 @@ class BushfireIndicator():
         hdr = sheet1.row(row_no())
 
         for row in self.rpt_map:
-            for key, data in row.iteritems():
+            for key, data in row.items():
 
                 sheet_row = sheet1.row(row_no())
                 col_no = lambda c=count(): next(c)
@@ -2555,13 +2595,13 @@ class BushfireIndicator():
         return response
 
     def display(self):
-        print '{}\t{}'.format('', 'Number').expandtabs(20)
+        print('{}\t{}'.format('', 'Number').expandtabs(20))
         for row in self.rpt_map:
-            for key, data in row.iteritems():
+            for key, data in row.items():
                 if key and data:
-                    print '{}\t{}'.format(key, data['count']).expandtabs(25)
+                    print('{}\t{}'.format(key, data['count']).expandtabs(25))
                 else:
-                    print
+                    print()
 
 
 def export_outstanding_fires(request, region_id, queryset):
@@ -2590,7 +2630,7 @@ def email_outstanding_fires(region_id=None):
     rpt_date = datetime.now()
 
     for row in settings.OUTSTANDING_FIRES_EMAIL:
-        for region_name,email_to in row.iteritems():
+        for region_name,email_to in row.items():
 
             try:
                 region = Region.objects.get(name=region_name)
@@ -2668,7 +2708,7 @@ def outstanding_fires(book, region, queryset, rpt_date):
 export_outstanding_fires.short_description = u"Outstanding Fires"
 
 def calculate_report_tables(request):
-    print "starting calculate report tables"
+    print("starting calculate report tables")
     url = request.META.get('HTTP_REFERER')
     with connection.cursor() as csr:
         csr.execute("""
@@ -2890,5 +2930,5 @@ INSERT INTO reporting_areaburnt (area, bushfire_id, tenure_id, region_id)
     FROM reporting_bushfire bf JOIN reporting_dept_managed dm ON ST_Intersects(bf.fire_boundary, dm.geometry) JOIN bfrs_region r ON ST_Intersects(bf.fire_boundary, r.geometry) JOIN bfrs_tenure t ON dm.category = t.name
     WHERE dm.category <> 'State Forest'  AND bf.id IN (SELECT id FROM reporting_crossregion_fires);
     """)
-    print "finished calculate report tables"
+    print("finished calculate report tables")
     return HttpResponseRedirect(url)

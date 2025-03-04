@@ -40,7 +40,8 @@ class FireCauseField(basefields.CompoundField):
 
     def _edit_layout(self,f):
         cause = f.value()
-        if isinstance(cause,basestring):
+        # if isinstance(cause,basestring):
+        if isinstance(cause,str):
             cause = int(cause) if cause else None
 
         attrs = {}
@@ -75,7 +76,8 @@ class InitialAreaField(basefields.CompoundField):
                 return ("",None)
 
     def _edit_layout(self,f):
-        initial_boundary = True if f.related_fields[0].value() else False
+        # initial_boundary = True if f.related_fields[0].value() else False
+        initial_boundary = True if f.related_fields and f.related_fields[0] and f.related_fields[0].value() else False
         attrs = {}
         if initial_boundary:
             attrs["disabled"] = True
@@ -106,7 +108,8 @@ class FinalAreaField(basefields.CompoundField):
         return ("{0}",None)
 
     def _edit_layout(self,f):
-        final_boundary = f.related_fields[0].value()
+        #final_boundary = f.related_fields[0].value()
+        final_boundary = f.related_fields[0].value() if f.related_fields and f.related_fields[0] else None
         attrs = {}
         if final_boundary:
             attrs["disabled"] = True

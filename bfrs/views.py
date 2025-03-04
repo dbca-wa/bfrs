@@ -5,7 +5,8 @@ import sys
 
 from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpResponseNotAllowed,FileResponse
 from django.template.response import TemplateResponse
-from django.core.urlresolvers import reverse
+# from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.views import generic
 from django.views.generic.edit import CreateView, UpdateView, FormView,DeleteView
 from django.views.generic.list import ListView
@@ -101,7 +102,8 @@ class NextUrlMixin(object):
     """
     next_url = "lastMainUrl"
     def get_success_url(self):
-        if self.request and self.request.session.has_key(self.next_url):
+        # if self.request and self.request.session.has_key(self.next_url):
+        if self.request and self.next_url in self.request.session:
             return self.request.session[self.next_url]
         else:
             return self._get_success_url()
@@ -167,22 +169,25 @@ class BushfireView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin, filter_views.
         if (self.request.method == "POST"):
             #get the filter data from post
             kwargs["data"] = self.request.POST
-        data = dict(kwargs["data"].iteritems()) if kwargs["data"] else {}
+        data = dict(kwargs["data"].items()) if kwargs["data"] else {}
         kwargs["data"] = data
-        filters = "&".join(["{}={}".format(k,v) for k,v in data.iteritems() if k in BushfireFilter.Meta.fields])
+        # filters = "&".join(["{}={}".format(k,v) for k,v in data.iteritems() if k in BushfireFilter.Meta.fields])
+        filters = "&".join(["{}={}".format(k,v) for k,v in data.items() if k in BushfireFilter.Meta.fields])
         if filters:
             self._filters = "?{}&".format(filters)
         else:
             self._filters = "?"
 
-        filters_without_order = "&".join(["{}={}".format(k,v) for k,v in data.iteritems() if k in BushfireFilter.Meta.fields and k != "order_by"])
+        # filters_without_order = "&".join(["{}={}".format(k,v) for k,v in data.iteritems() if k in BushfireFilter.Meta.fields and k != "order_by"])
+        filters_without_order = "&".join(["{}={}".format(k,v) for k,v in data.items() if k in BushfireFilter.Meta.fields and k != "order_by"])
         if filters_without_order:
             self._filters_without_order = "?{}&".format(filters_without_order)
         else:
             self._filters_without_order = "?"
 
         profile = self.get_initial() # Additional profile Filters must also be added to the JS in bushfire.html- profile_field_list
-        if not data.has_key('region'):
+        # if not data.has_key('region'):
+        if 'region' not in data:
             data['region'] = profile['region'].id if profile['region'] else None
             data['district'] = profile['district'].id if profile['district'] else None
 
@@ -204,7 +209,8 @@ class BushfireView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin, filter_views.
     def get(self, request, *args, **kwargs):
         template_confirm = 'bfrs/confirm.html'
         template_snapshot_history = 'bfrs/snapshot_history.html'
-        action = self.request.GET.get('action') if self.request.GET.has_key('action') else None
+        # action = self.request.GET.get('action') if self.request.GET.has_key('action') else None
+        action = self.request.GET.get('action') if 'action' in self.request.GET else None
         if action == 'export_to_csv':
             qs = self.get_filterset(self.filterset_class).qs
             return export_final_csv(self.request, qs)
@@ -218,7 +224,8 @@ class BushfireView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin, filter_views.
         elif action == 'export_excel_ministerial_report':
             #return MinisterialReport().export()
             try:
-                reporting_year = int(self.request.GET.get('reporting_year')) if self.request.GET.has_key('reporting_year') else None
+                #reporting_year = int(self.request.GET.get('reporting_year')) if self.request.GET.has_key('reporting_year') else None
+                reporting_year = int(self.request.GET.get('reporting_year')) if 'reporting_year' in self.request.GET else None
             except:
                 reporting_year = None
             return BushfireReport(reporting_year).export()
@@ -474,13 +481,14 @@ class BushfireUpdateView(ExceptionMixin,FormRequestMixin,NextUrlMixin,LoginRequi
         Initial value for BufirefireUpdateForm
         """
         initial = {}
+        #initial=super(BushfireUpdateView, self).get_initial()  
         if self.get_object():
             return initial
 
         # creating object ...
-        if self.request.POST.has_key('sss_create'):
+        # if self.request.POST.has_key('sss_create'):
+        if 'sss_create' in self.request.POST:
             initial['sss_data'] = self.request.POST.get('sss_create')
-
         return initial
 
     def get(self, request, *args, **kwargs):
@@ -496,7 +504,8 @@ class BushfireUpdateView(ExceptionMixin,FormRequestMixin,NextUrlMixin,LoginRequi
         if not obj:
             if self.kwargs.get(self.pk_url_kwarg):
                 obj = super(BushfireUpdateView, self).get_object(queryset)
-            elif self.request.POST.has_key('bushfire_id') and self.request.POST.get('bushfire_id'):
+            # elif self.request.POST.has_key('bushfire_id') and self.request.POST.get('bushfire_id'):
+            elif 'bushfire_id' in self.request.POST and self.request.POST.get('bushfire_id'):
                 obj = Bushfire.objects.get(id=self.request.POST.get('bushfire_id'))
             if obj:
                 setattr(self,"object",obj)
@@ -506,7 +515,8 @@ class BushfireUpdateView(ExceptionMixin,FormRequestMixin,NextUrlMixin,LoginRequi
         if is_external_user(request.user):
             return TemplateResponse(request, self.template_error, context={'is_external_user': True, 'status':401}, status=401)
 
-        if self.request.POST.has_key('sss_create'):
+        # if self.request.POST.has_key('sss_create'):
+        if 'sss_create' in self.request.POST:
             #posted from sss, display the bushfire create page
             return self.render_to_response(self.get_context_data())
 
@@ -530,7 +540,8 @@ class BushfireUpdateView(ExceptionMixin,FormRequestMixin,NextUrlMixin,LoginRequi
                 raise Exception("Confirm action is missing")
 
             if confirm_action == "invalidate":
-                if self.request.POST.has_key('district') and not self.request.POST.get('district'):
+                # if self.request.POST.has_key('district') and not self.request.POST.get('district'):
+                if 'district' in self.request.POST and not self.request.POST.get('district'):
                     #district is missing, throw exception
                     raise Exception("District is missing.")
                 elif not self.object:
@@ -651,9 +662,11 @@ class BushfireUpdateView(ExceptionMixin,FormRequestMixin,NextUrlMixin,LoginRequi
         return HttpResponseRedirect(self.get_success_url())
 
     def get_context_data(self, **kwargs):
+        #context = super(BushfireUpdateView, self).get_context_data(**kwargs)
         bushfire = self.get_object()
         self.object = bushfire
         context = super(BushfireUpdateView, self).get_context_data(**kwargs)
+        #context = super().get_context_data(**kwargs)
 
         submit_actions = None
         context.update({
@@ -724,7 +737,7 @@ class BushfireDocumentListView(ExceptionMixin,LoginRequiredMixin,filter_views.Fi
             #get the filter data from post
             kwargs["data"] = self.request.POST
 
-        data = dict(kwargs["data"].iteritems()) if kwargs["data"] else {}
+        data = dict(kwargs["data"].items()) if kwargs["data"] else {}
         kwargs["data"] = data
         if self.bushfire.is_invalidated:
             data["upload_bushfire"] = self.bushfire
@@ -738,13 +751,13 @@ class BushfireDocumentListView(ExceptionMixin,LoginRequiredMixin,filter_views.Fi
         if "order_by" not in data:
             data["order_by"] = "-created"
 
-        filters = "&".join(["{}={}".format(k,v) for k,v in data.iteritems() if k in BushfireDocumentFilter.Meta.fields and v])
+        filters = "&".join(["{}={}".format(k,v) for k,v in data.items() if k in BushfireDocumentFilter.Meta.fields and v])
         if filters:
             self._filters = "?{}&".format(filters)
         else:
             self._filters = "?"
 
-        filters_without_order = "&".join(["{}={}".format(k,v) for k,v in data.iteritems() if k in BushfireDocumentFilter.Meta.fields and k != "order_by" and v])
+        filters_without_order = "&".join(["{}={}".format(k,v) for k,v in data.items() if k in BushfireDocumentFilter.Meta.fields and k != "order_by" and v])
         if filters_without_order:
             self._filters_without_order = "?{}&".format(filters_without_order)
         else:

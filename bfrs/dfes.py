@@ -1,11 +1,12 @@
 import requests
 import traceback
-import HTMLParser
+# import HTMLParser
+import html.parser as HTMLParser
 
 from requests_ntlm import HttpNtlmAuth
 
 from django.conf import settings
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.html import escape
@@ -28,7 +29,7 @@ class P1CAD(object):
 
         if isinstance(bushfire,int):
             bushfire = Bushfire.objects.get(id=bushfire)
-        elif isinstance(bushfire,basestring):
+        elif isinstance(bushfire,str):
             bushfire = Bushfire.objects.get(fire_number=bushfire)
         elif not isinstance(bushfire,Bushfire):
             raise Exception("Must pass in bushfire report id or bushfire report fire number or bushfire report object.")
@@ -104,7 +105,7 @@ class P1CAD(object):
             bushfire.dfes_incident_no = None
         elif isinstance(bushfire,int):
             bushfire = Bushfire.objects.get(id=bushfire)
-        elif isinstance(bushfire,basestring):
+        elif isinstance(bushfire,str):
             bushfire = Bushfire.objects.get(fire_number=bushfire)
         elif not isinstance(bushfire,Bushfire):
             raise Exception("Must pass in bushfire report id or bushfire report fire number or bushfire report object.")

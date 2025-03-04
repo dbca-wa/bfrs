@@ -3,7 +3,7 @@ from django.conf import settings
 from django.contrib.auth import login, logout, get_user_model
 from django.db.models import signals
 from django.utils.deprecation import MiddlewareMixin
-from django.utils.functional import curry
+#from django.utils.functional import curry
 
 class SSOLoginMiddleware(MiddlewareMixin):
 
@@ -44,7 +44,7 @@ class SSOLoginMiddleware(MiddlewareMixin):
             
             if hasattr(settings, 'ALLOWED_EMAIL_SUFFIXES') and settings.ALLOWED_EMAIL_SUFFIXES:
                 allowed = settings.ALLOWED_EMAIL_SUFFIXES
-                if isinstance(settings.ALLOWED_EMAIL_SUFFIXES, basestring):
+                if isinstance(settings.ALLOWED_EMAIL_SUFFIXES, str):
                     allowed = [settings.ALLOWED_EMAIL_SUFFIXES]
                 if not any([attributemap['email'].lower().endswith(x) for x in allowed]):
                     return http.HttpResponseForbidden()

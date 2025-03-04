@@ -1,5 +1,6 @@
 import traceback
-from django.conf.urls import url
+# from django.conf.urls import url
+from django.urls import include, path, re_path
 from django.conf import settings
 from django.utils import timezone
 from django.http import JsonResponse
@@ -83,11 +84,15 @@ def generate_meta(klass):
 
 class APIResource(ModelResource):
     class Meta:
-        pass
+        abstract = True
+        # pass
 
     def prepend_urls(self):
         return [
-            url(
+            # url(
+            #     r"^(?P<resource_name>{})/fields/(?P<field_name>[\w\d_.-]+)/$".format(self._meta.resource_name),
+            #     self.wrap_view('field_values'), name="api_field_values"),
+            re_path(
                 r"^(?P<resource_name>{})/fields/(?P<field_name>[\w\d_.-]+)/$".format(self._meta.resource_name),
                 self.wrap_view('field_values'), name="api_field_values"),
         ]
@@ -125,7 +130,10 @@ class ProfileResource(APIResource):
     @property
     def urls(self):
         return [
-            url(
+            # url(
+            #     r"^(?P<resource_name>{})/$".format(self._meta.resource_name),
+            #     self.wrap_view('field_values'), name="api_field_values"),
+            re_path(
                 r"^(?P<resource_name>{})/$".format(self._meta.resource_name),
                 self.wrap_view('field_values'), name="api_field_values"),
         ]
@@ -152,7 +160,10 @@ class CaptureMethodResource(APIResource):
     @property
     def urls(self):
         return [
-            url(
+            # url(
+            #     r"^(?P<resource_name>{})/$".format(self._meta.resource_name),
+            #     self.wrap_view('field_values'), name="api_field_values"),
+            re_path(
                 r"^(?P<resource_name>{})/$".format(self._meta.resource_name),
                 self.wrap_view('field_values'), name="api_field_values"),
         ]
@@ -175,7 +186,10 @@ class RegionResource(APIResource):
     @property
     def urls(self):
         return [
-            url(
+            # url(
+            #     r"^(?P<resource_name>{})/$".format(self._meta.resource_name),
+            #     self.wrap_view('field_values'), name="api_field_values"),
+            re_path(
                 r"^(?P<resource_name>{})/$".format(self._meta.resource_name),
                 self.wrap_view('field_values'), name="api_field_values"),
         ]
@@ -264,14 +278,15 @@ class BushfireSpatialResource(ModelResource):
         Converts the json string format to the one required by tastypie's full_hydrate() method
         converts the string: [11,-12] --> POINT (11 -12)
         """
-        if bundle.data.has_key('origin_point') and isinstance(bundle.data['origin_point'], list):
+        # if bundle.data.has_key('origin_point') and isinstance(bundle.data['origin_point'], list):
+        if 'origin_point' in bundle.data and isinstance(bundle.data['origin_point'], list):
             bundle.data['origin_point'] = Point(bundle.data['origin_point'])
 
         #print("processing origin point,set origin_point to {}".format(bundle.data["origin_point"]))
         return bundle
 
     def hydrate_fire_boundary(self, bundle):
-        if not bundle.data.has_key('fire_boundary'):
+        if not 'fire_boundary' in bundle.data:
             #fire_boundary is not passed in
             return
 
@@ -299,7 +314,8 @@ class BushfireSpatialResource(ModelResource):
         return bundle
 
     def hydrate_tenure_ignition_point(self,bundle):
-        if not bundle.data.has_key('tenure_ignition_point'):
+        # if not bundle.data.has_key('tenure_ignition_point'):
+        if not 'tenure_ignition_point' in bundle.data:
             #tenure_ignition_point is not passed in
             return
 
@@ -316,7 +332,8 @@ class BushfireSpatialResource(ModelResource):
 
 
     def hydrate_area(self,bundle):
-        if not bundle.data.has_key('area'):
+        # if not bundle.data.has_key('area'):
+        if not 'area' in bundle.data:
             #area is not passed in
             return
         #print("processing area")
@@ -358,7 +375,8 @@ class BushfireSpatialResource(ModelResource):
                 #print("processing area, set area_limit to false, area to {},other_area to {} for submitted report".format(bundle.obj.area,bundle.obj.other_area))
 
     def hydrate_capturemethod(self,bundle):
-        if not bundle.data.has_key('capturemethod'):
+        # if not bundle.data.has_key('capturemethod'):
+        if not 'capturemethod' in bundle.data:
             #capturemethod is not passed in
             return
         if bundle.data.get('capturemethod'):
@@ -374,7 +392,8 @@ class BushfireSpatialResource(ModelResource):
             bundle.obj.other_capturemethod = None
 
     def hydrate_fire_position(self,bundle):
-        if not bundle.data.has_key('fire_position'):
+        # if not bundle.data.has_key('fire_position'):
+        if not 'fire_position' in bundle.data:
             #fire_position is not passed in
             return
         if bundle.obj.fire_position_override:
@@ -406,7 +425,8 @@ class BushfireSpatialResource(ModelResource):
         
         datas = []
         for key in ["fire_boundary","plantations"]:
-            if sss_data.has_key(key):
+            # if sss_data.has_key(key):
+            if key in sss_data:
                 datas.append((key,sss_data.pop(key)))
 
         bundle.obj.sss_data = json.dumps(sss_data)
@@ -423,7 +443,8 @@ class BushfireSpatialResource(ModelResource):
             if not can_maintain_data(bundle.request.user) and bundle.obj.report_status >= Bushfire.STATUS_FINAL_AUTHORISED:
                 raise ImmediateHttpResponse(response=HttpUnauthorized())
     
-            if bundle.request.GET.has_key('checkpermission') and bundle.request.GET['checkpermission'] == 'true':
+            # if bundle.request.GET.has_key('checkpermission') and bundle.request.GET['checkpermission'] == 'true':
+            if 'checkpermission' in bundle.request.GET and bundle.request.GET['checkpermission'] == 'true':
                 #this is a permission checking request,return directly.
                 raise ImmediateHttpResponse(response=HttpAccepted())
     
@@ -434,7 +455,8 @@ class BushfireSpatialResource(ModelResource):
             if not invalidated:
                 bundle.obj.save()
     
-            if bundle.data.has_key('area'):
+            # if bundle.data.has_key('area'):
+            if 'area' in bundle.data:
                 if (bundle.data.get('area') or {}).get('total_area') == None:
                     #no burning area,
                     bundle.obj.tenures_burnt.all().delete()
@@ -450,7 +472,7 @@ class BushfireSpatialResource(ModelResource):
                         bundle.obj.tenures_burnt.all().delete()
     
             #save plantations
-            if bundle.data.has_key("plantations"):
+            if "plantations" in bundle.data:
                 #need to update plantations
                 if bundle.data.get("plantations"):
                     #has plantation data
@@ -477,7 +499,8 @@ class BushfireSpatialResource(ModelResource):
             else:
                 return bundle
         except:
-            if bundle.request.GET.has_key('checkpermission') and bundle.request.GET['checkpermission'] == 'true':
+            # if bundle.request.GET.has_key('checkpermission') and bundle.request.GET['checkpermission'] == 'true':
+            if 'checkpermission' in bundle.request.GET and bundle.request.GET['checkpermission'] == 'true':
                 #for permission checking purpose, don't log the exception in log file.
                 pass
             else:

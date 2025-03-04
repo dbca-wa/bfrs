@@ -1,10 +1,10 @@
 from collections import OrderedDict
 import datetime
 
-from django.utils.encoding import python_2_unicode_compatible
+#from django.utils.encoding import python_2_unicode_compatible
 from django.utils.html import html_safe
 from django.db import transaction
-from django.utils import six
+# from django.utils import six
 from django import forms
 from django.db import models
 from django.template.defaultfilters import safe
@@ -171,8 +171,12 @@ class BoundField(forms.boundfield.BoundField):
     Extend django's BoundField to support the following features
     1. Get extra css_classes from field's attribute 'css_classes'
     """
+    UNSET = object()
+
     def __init__(self, form, field, name):
         self.form_field_name = name
+        self._initial_value = BoundField.UNSET  # Initialize _initial_value
+        #self._initial_value = None
         if isinstance(field,basefields.AliasFieldMixin) and name != field.field_name:
             super(BoundField,self).__init__(form,field,field.field_name)
             self.html_name = form.add_prefix(name)
@@ -204,7 +208,8 @@ class BoundField(forms.boundfield.BoundField):
 
         data = self.form.initial.get(self.name, self.field.initial)
         if callable(data):
-            if self._initial_value is not forms.boundfield.UNSET:
+            # if self._initial_value is not forms.boundfield.UNSET:
+            if self._initial_value is not BoundField.UNSET:
                 data = self._initial_value
             else:
                 data = data()
@@ -248,7 +253,6 @@ class BoundField(forms.boundfield.BoundField):
             return self.field.prepare_value(data)
 
 @html_safe
-@python_2_unicode_compatible
 class CompoundBoundField(BoundField):
     "A Field plus data"
     def __init__(self, form, field, name):
@@ -280,7 +284,8 @@ class CompoundBoundField(BoundField):
     def __getitem__(self, idx):
         # Prevent unnecessary reevaluation when accessing BoundField's attrs
         # from templates.
-        if not isinstance(idx, six.integer_types + (slice,)):
+        # if not isinstance(idx, six.integer_types + (slice,)):
+        if not isinstance(idx, (int, slice)):
             raise TypeError
         return list(self.__iter__())[idx]
 
@@ -292,10 +297,12 @@ class CompoundBoundField(BoundField):
         """
         html_layout,field_names = self.field.get_layout(self)
         if isinstance(html_layout,(tuple,list)):
-            html = super(CompoundBoundField,self).as_widget(attrs=html_layout[1],only_initial=only_initial)
+            #html = super(CompoundBoundField,self).as_widget(attrs=html_layout[1],only_initial=only_initial)
+            html = super(CompoundBoundField, self).as_widget(widget=widget, attrs=html_layout[1], only_initial=only_initial)
             html_layout = html_layout[0]
         else:
-            html = super(CompoundBoundField,self).as_widget(only_initial=only_initial)
+            #html = super(CompoundBoundField,self).as_widget(only_initial=only_initial)
+            html = super(CompoundBoundField, self).as_widget(widget=widget, attrs=attrs, only_initial=only_initial)
 
         if field_names:
             index0 = 0
@@ -516,12 +523,12 @@ class BaseModelFormMetaclass(forms.models.ModelFormMetaclass):
                 if field in all_fields:
                     new_class.base_fields[field] = all_fields[field]
 
-        editable_fields = [name for name,field in new_class.base_fields.iteritems() if not isinstance(field.widget,basewidgets.DisplayMixin)]
+        editable_fields = [name for name,field in new_class.base_fields.items() if not isinstance(field.widget,basewidgets.DisplayMixin)]
         setattr(opts,'editable_fields',editable_fields)
         update_db_fields = list(getattr(opts,"extra_update_fields") or [])
         update_model_properties = []
 
-        for name,field in new_class.base_fields.iteritems():
+        for name,field in new_class.base_fields.items():
             if isinstance(field.widget,basewidgets.DisplayMixin):
                 continue
             if "." in name:
@@ -541,14 +548,16 @@ class BaseModelFormMetaclass(forms.models.ModelFormMetaclass):
         
         return new_class
 
-class ModelForm(six.with_metaclass(BaseModelFormMetaclass, forms.models.BaseModelForm)):
+class ModelForm(forms.models.BaseModelForm, metaclass=BaseModelFormMetaclass):
     def __init__(self, *args,**kwargs):
+        super(ModelForm,self).__init__(*args,**kwargs)
         instance = None
         if "instance" in kwargs:
             instance = kwargs["instance"]
             kwargs["instance"] = None
 
-        super(ModelForm,self).__init__(*args,**kwargs)
+        # super(ModelForm,self).__init__(*args,**kwargs)
+        # super().__init__(*args,**kwargs)
         if instance:
             self.instance = instance
             if self.initial:
@@ -638,11 +647,15 @@ class ModelForm(six.with_metaclass(BaseModelFormMetaclass, forms.models.BaseMode
         finally:
             self._meta.fields = opt_fields
             self.fields = fields
+            
 
     def __getitem__(self, name):
         """Return a BoundField with the given name."""
         try:
-            field = self.fields[name]
+            if name in self.fields:
+                field = self.fields[name]
+            else:
+                return
         except KeyError:
             raise KeyError(
                 "Key '%s' not found in '%s'. Choices are: %s." % (

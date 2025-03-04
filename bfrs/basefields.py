@@ -1,4 +1,4 @@
-import md5
+from hashlib import md5
 import json
 import inspect
 
@@ -14,7 +14,7 @@ from bfrs_project.signals import webserver_ready
 class_id = 0
 field_classes = {}
 
-def getallargs(func):
+def getallargs_orig(func):
     func_name = func.__name__
     if hasattr(func,"im_class") and getattr(func,"im_class"):
         #is a class method
@@ -38,8 +38,34 @@ def getallargs(func):
                                 func_args.append(k)
 
         return func_args
-
     return inspect.getargspec(func).args
+
+def getallargs(func):
+    func_name = func.__name__
+    if hasattr(func, "im_class") and getattr(func, "im_class"):
+        # is a class method
+        cls = func.im_class
+        # it is a class method
+        sig = inspect.signature(func)
+        func_args = []
+        # get the args introduced by current method
+        if sig.parameters and func_name in cls.__dict__:
+            for k in sig.parameters if type(cls.__dict__[func_name]) == staticmethod else list(sig.parameters.keys())[1:]:
+                func_args.append(k)
+
+        # get the args and kwargs introduced by parent class
+        if any(param.kind in (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD) for param in sig.parameters.values()):
+            for base_cls in cls.__bases__:
+                if base_cls != object and hasattr(base_cls, func_name):
+                    base_args = getallargs(getattr(base_cls, func_name))
+                    if base_args:
+                        for k in base_args:
+                            if k not in func_args:
+                                func_args.append(k)
+
+        return func_args
+
+    return list(inspect.signature(func).parameters.keys())
 
 class _JSONEncoder(json.JSONEncoder):
     def default(self,obj):
@@ -57,7 +83,7 @@ class FieldParametersMixin(object):
 
     def __init__(self,*args,**kwargs):
         if self.field_params:
-            for k,v in self.field_params.iteritems():
+            for k,v in self.field_params.items():
                 kwargs[k] = v
         super(FieldParametersMixin,self).__init__(*args,**kwargs)
 
@@ -69,9 +95,11 @@ def AliasFieldFactory(model,field_name,field_class=None,field_params=None):
     global class_id
     field_class = field_class or model._meta.get_field(field_name).formfield().__class__
     if field_params:
-        class_key = md5.new("AliasField<{}.{}{}{}{}>".format(model.__module__,model.__name__,field_name,field_class,json.dumps(field_params,cls=_JSONEncoder))).hexdigest()
+        # class_key = md5.new("AliasField<{}.{}{}{}{}>".format(model.__module__,model.__name__,field_name,field_class,json.dumps(field_params,cls=_JSONEncoder))).hexdigest()
+        class_key = md5("AliasField<{}.{}{}{}{}>".format(model.__module__,model.__name__,field_name,field_class,json.dumps(field_params,cls=_JSONEncoder))).hexdigest()
     else:
-        class_key = md5.new("AliasField<{}.{}{}{}>".format(model.__module__,model.__name__,field_name,field_class)).hexdigest()
+        # class_key = md5.new("AliasField<{}.{}{}{}>".format(model.__module__,model.__name__,field_name,field_class)).hexdigest()
+        class_key = md5("AliasField<{}.{}{}{}>".format(model.__module__,model.__name__,field_name,field_class)).hexdigest()
 
     if class_key not in field_classes:
         class_id += 1
@@ -90,7 +118,9 @@ def OverrideFieldFactory(model,field_name,field_class=None,**field_params):
 
     field_params = field_params or {}
     field_class = field_class or model._meta.get_field(field_name).formfield().__class__
-    class_key = md5.new("OverrideField<{}.{}.{}.{}.{}.{}>".format(model.__module__,model.__name__,field_name,field_class.__module__,field_class.__name__,json.dumps(field_params,cls=_JSONEncoder))).hexdigest()
+    # class_key = md5.new("OverrideField<{}.{}.{}.{}.{}.{}>".format(model.__module__,model.__name__,field_name,field_class.__module__,field_class.__name__,json.dumps(field_params,cls=_JSONEncoder))).hexdigest()
+    # class_key = md5("OverrideField<{}.{}.{}.{}.{}.{}>".format(model.__module__,model.__name__,field_name,field_class.__module__,field_class.__name__,json.dumps(field_params,cls=_JSONEncoder))).hexdigest()
+    class_key = md5("OverrideField<{}.{}.{}.{}.{}.{}>".format(model.__module__,model.__name__,field_name,field_class.__module__,field_class.__name__,json.dumps(field_params,cls=_JSONEncoder)).encode('utf-8')).hexdigest()
     if class_key not in field_classes:
         class_id += 1
         class_name = "{}_{}".format(field_class.__name__,class_id)
@@ -159,7 +189,8 @@ def CompoundFieldFactory(compoundfield_class,model,field_name,related_field_name
 
     hidden_layout="{}" * (len(related_field_names) + 1)
     field_class = field_class or model._meta.get_field(field_name).formfield().__class__
-    class_key = md5.new("CompoundField<{}.{}.{}{}{}{}>".format(compoundfield_class.__name__,field_class.__module__,field_class.__name__,field_name,json.dumps(related_field_names),json.dumps(kwargs,cls=_JSONEncoder))).hexdigest()
+    # class_key = md5.new("CompoundField<{}.{}.{}{}{}{}>".format(compoundfield_class.__name__,field_class.__module__,field_class.__name__,field_name,json.dumps(related_field_names),json.dumps(kwargs,cls=_JSONEncoder))).hexdigest()
+    class_key = md5("CompoundField<{}.{}.{}{}{}{}>".format(compoundfield_class.__name__,field_class.__module__,field_class.__name__,field_name,json.dumps(related_field_names),json.dumps(kwargs,cls=_JSONEncoder)).encode('utf-8')).hexdigest()    
     if class_key not in field_classes:
         class_id += 1
         class_name = "{}_{}".format(field_class.__name__,class_id)
@@ -187,7 +218,9 @@ class ChoiceFieldMixin(object):
 
 def ChoiceFieldFactory(choices,choice_class=forms.TypedChoiceField,field_params=None):
     global class_id
-    class_key = md5.new("ChoiceField<{}.{}{}{}>".format(choice_class.__module__,choice_class.__name__,json.dumps(choices),json.dumps(field_params,cls=_JSONEncoder))).hexdigest()
+    # class_key = md5.new("ChoiceField<{}.{}{}{}>".format(choice_class.__module__,choice_class.__name__,json.dumps(choices),json.dumps(field_params,cls=_JSONEncoder))).hexdigest()
+    #class_key = md5("ChoiceField<{}.{}{}{}>".format(choice_class.__module__,choice_class.__name__,json.dumps(choices),json.dumps(field_params,cls=_JSONEncoder))).hexdigest()
+    class_key = md5("ChoiceField<{}.{}{}{}>".format(choice_class.__module__,choice_class.__name__,json.dumps(choices),json.dumps(field_params,cls=_JSONEncoder)).encode('utf-8')).hexdigest()
     if class_key not in field_classes:
         class_id += 1
         class_name = "{}_{}".format(choice_class.__name__,class_id)
@@ -408,7 +441,8 @@ class OtherOptionField(CompoundField):
         return a tuple(layout,enable related field list) for edit
         """
         val1 = f.value()
-        if isinstance(val1,basestring):
+        # if isinstance(val1,basestring):
+        if isinstance(val1, str):
             val1 = int(val1) if val1 else None
         #if f.name == "field_officer":
         #    import ipdb;ipdb.set_trace()

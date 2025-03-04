@@ -1,5 +1,6 @@
 import datetime
-import LatLon
+# import LatLon
+from latloncalc import latlon as LatLon
 from dateutil import tz
 
 from django.contrib.auth.models import User
@@ -88,17 +89,23 @@ def field_value(field_name, bushfire=None, request=None, url_type="auto",is_uppe
             elif field_name == "report_status":
                 return bushfire.report_status_name
             elif field_name == "latitude_degree":
-                return LatLon.Latitude(bushfire.origin_point.get_y()).degree
+                # return LatLon.Latitude(bushfire.origin_point.get_y()).degree
+                return LatLon.Latitude(bushfire.origin_point.y).degree
             elif field_name == "latitude_minute":
-                return LatLon.Latitude(bushfire.origin_point.get_y()).minute
+                # return LatLon.Latitude(bushfire.origin_point.get_y()).minute
+                return LatLon.Latitude(bushfire.origin_point.y).minute
             elif field_name == "latitude_second":
-                return LatLon.Latitude(bushfire.origin_point.get_y()).second
+                # return LatLon.Latitude(bushfire.origin_point.get_y()).second
+                return LatLon.Latitude(bushfire.origin_point.y).second
             elif field_name == "longitude_degree":
-                return LatLon.Longitude(bushfire.origin_point.get_x()).degree
+                # return LatLon.Longitude(bushfire.origin_point.get_x()).degree
+                return LatLon.Longitude(bushfire.origin_point.x).degree
             elif field_name == "longitude_minute":
-                return LatLon.Longitude(bushfire.origin_point.get_x()).minute
+                # return LatLon.Longitude(bushfire.origin_point.get_x()).minute
+                return LatLon.Longitude(bushfire.origin_point.x).minute
             elif field_name == "longitude_second":
-                return LatLon.Longitude(bushfire.origin_point.get_x()).second
+                # return LatLon.Longitude(bushfire.origin_point.get_x()).second
+                return LatLon.Longitude(bushfire.origin_point.x).second
                 
 
             value = getattr(bushfire, FIELD_MAPPING.get(field_name) or field_name)

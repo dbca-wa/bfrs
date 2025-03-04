@@ -409,7 +409,7 @@ def _refresh_bushfire(bushfire,scope=BUSHFIRE,datatypes=0,layersuffix="",debug=F
 def get_bushfire(bushfire):
     if isinstance(bushfire,int):
         return Bushfire.objects.get(id = bushfire)
-    elif isinstance(bushfire,basestring):
+    elif isinstance(bushfire,str):
         return Bushfire.objects.get(fire_number=bushfire)
     elif isinstance(bushfire,(list,tuple)):
         return [get_bushfire(bf) for bf in bushfire]
@@ -422,7 +422,7 @@ def get_bushfire(bushfire):
 def refresh_bushfire(bushfire,scope=BUSHFIRE,datatypes=0,layersuffix="",debug=False):
     if isinstance(bushfire,int):
         bushfire = Bushfire.objects.get(id = bushfire)
-    elif isinstance(bushfire,basestring):
+    elif isinstance(bushfire,str):
         bushfire = Bushfire.objects.get(fire_number=bushfire)
     elif not isinstance(bushfire,Bushfire):
         raise Exception("Bushfire should be bushfire id or fire number or Bushfire instance")
@@ -957,7 +957,7 @@ def refresh_burnt_area(bushfire,is_snapshot,layersuffix="",debug=False):
                         total_area += data["area"]
             
                 area_unknown = 0.0
-                for tenure, area in aggregated_sums.iteritems():
+                for tenure, area in aggregated_sums.items():
                     area = round(area,2)
                     if area > 0:
                         if is_snapshot:
