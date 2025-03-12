@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'crispy_forms',
     'django_filters',
     'bfrs',
+    'appmonitor_client',
 ]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -157,7 +158,9 @@ OUTSTANDING_FIRES_EMAIL = [
     {"Warren": WARREN_EMAIL},
     {"Wheatbelt": WHEATBELT_EMAIL},
 ]
-
+CRON_CLASSES = [
+    'appmonitor_client.cron.CronJobAppMonitorClient',
+]
 DFES_CLOSE_BUSHFIRE_NOTIFICATION_EMAIL=env('DFES_CLOSE_BUSHFIRE_NOTIFICATION_EMAIL',[])
 
 #Others

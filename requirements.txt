@@ -1,10 +1,11 @@
 # git+https://github.com/dbca-wa/dbca-utils@1.0.2
 git+https://github.com/dbca-wa/dbca-utils.git@1.1.1#egg=dbca-utils
+git+https://github.com/dbca-wa/appmonitor_client.git#egg=appmonitor_client
 # psycopg2-binary==2.8.2
 psycopg2-binary==2.9.9
 # Django==1.10.7
 #Django==3.2.25
-Django==5.0.12
+Django==5.0.13
 # django-extensions==1.7.6
 django-extensions==3.2.3
 django-dotenv==1.4.2
