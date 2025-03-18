@@ -14,12 +14,12 @@ RUN echo "export PS1='\e[0;31mdev:\e[m \e[0;32m\${debian_chroot:+(\$debian_chroo
 RUN echo "fi" >> /etc/bash.bashrc
 
 # For windows 
-RUN groupadd -g 1000 docker
-RUN useradd -g 1000 -u 10000 docker -s /bin/bash
-RUN mkdir /home/docker
-RUN chown docker.docker /home/docker
-RUN cp /root/.bashrc /home/docker
-RUN cp /root/.profile /home/docker
+# RUN groupadd -g 1000 docker
+# RUN useradd -g 1000 -u 10000 docker -s /bin/bash
+# RUN mkdir /home/docker
+# RUN chown docker.docker /home/docker
+# RUN cp /root/.bashrc /home/docker
+# RUN cp /root/.profile /home/docker
 
 # For Linux
 RUN groupadd -g 20000 container
