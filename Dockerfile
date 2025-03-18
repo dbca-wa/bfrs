@@ -1,7 +1,8 @@
 # syntax = docker/dockerfile:1.2
 
 # Prepare the base environment.
-FROM ubuntu:22.04 as builder_base_bfrs
+# FROM ubuntu:22.04 as builder_base_bfrs
+FROM ubuntu:24.04 as builder_base_bfrs
 
 LABEL maintainer="asi@dbca.wa.gov.au"
 
