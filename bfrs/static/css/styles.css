@@ -684,3 +684,22 @@ ul.stat-list {
   background-position: center right;
   padding-right: 16px !important;
 }
+li, dt, dd {
+  font-size: 13px;
+  line-height: 20px;
+}
+td, th {
+  font-size: 11px !important;
+  line-height: 16px !important;
+  border-bottom: 1px solid #eee;
+  vertical-align: top;
+  padding: 8px;
+  font-family: "Roboto", "Lucida Grande", Verdana, Arial, sans-serif;
+}
+thead th, tfoot td {
+  font-size: 11px;
+  font-weight: 600 !important;
+}
+select {
+  height: 30px;
+}
