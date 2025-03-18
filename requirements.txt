@@ -43,7 +43,8 @@ pytz==2023.3
 xlwt==1.2.0
 # pandas==0.19.2
 pandas==2.2.3
-requests==2.20.0
+# requests==2.20.0
+requests==2.32.3
 requests-ntlm==1.1.0
 #New packages
 ipython==7.31.1
