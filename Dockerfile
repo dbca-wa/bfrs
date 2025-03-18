@@ -19,8 +19,9 @@ ENV DEBIAN_FRONTEND=noninteractive \
 # Use Australian Mirrors
 RUN sed 's/archive.ubuntu.com/au.archive.ubuntu.com/g' /etc/apt/sources.list > /etc/apt/sourcesau.list && \
     mv /etc/apt/sourcesau.list /etc/apt/sources.list
-RUN --mount=type=cache,target=/var/cache/apt apt-get update
-RUN apt install openssl
+# RUN --mount=type=cache,target=/var/cache/apt apt-get update
+RUN apt-get update
+RUN apt install openssl -y
 COPY openssl-legacy.conf /
 # RUN ls -al /etc/ssl/
 RUN cat /openssl-legacy.conf >> /etc/ssl/openssl.cnf
@@ -38,10 +39,10 @@ RUN apt-get upgrade -y && \
     libmagic-dev \
     libproj-dev \
     libpq-dev \
-    python2 \
-    python2-dev \
-    python-pip \
-    python-setuptools \
+    # python2 \
+    # python2-dev \
+    python3-pip \
+    python3-setuptools \
     ipython3 \
     tzdata \
     wget \
@@ -87,7 +88,8 @@ RUN /tmp/default_script_installer.sh
 FROM builder_base_bfrs as python_libs_bfrs
 WORKDIR /app
 USER oim
-RUN virtualenv -p python2.7 /app/venv
+# RUN virtualenv -p python2.7 /app/venv
+RUN virtualenv /app/venv
 ENV PATH=/app/venv/bin:$PATH
 COPY requirements.txt ./
 RUN ls -al /app/venv/bin/
@@ -95,8 +97,8 @@ RUN whereis pip
 RUN pip install -r requirements.txt 
     # Update the Django <1.11 bug in django/contrib/gis/geos/libgeos.py
     # Reference: https://stackoverflow.com/questions/18643998/geodjango-geosexception-error
-RUN find /app/venv | grep libgeos
-RUN sed -i -e "s/ver = geos_version().decode()/ver = geos_version().decode().split(' ')[0]/" /app/venv/lib/python2.7/site-packages/django/contrib/gis/geos/libgeos.py
+#RUN find /app/venv | grep libgeos
+#RUN sed -i -e "s/ver = geos_version().decode()/ver = geos_version().decode().split(' ')[0]/" /app/venv/lib/python2.7/site-packages/django/contrib/gis/geos/libgeos.py
 
 
 
@@ -117,7 +119,7 @@ COPY python-cron ./
 # NOTE: we can't currently run the collectstatic step due to how BFRS is written.
 # Always be sure to run collectstatic locally prior to building the image.
 RUN touch /app/.env && \
-    python2 manage.py collectstatic --noinput
+    python manage.py collectstatic --noinput
 
 FROM collect_static_bfrs as launch_bfrs
 
