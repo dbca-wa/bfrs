@@ -4,7 +4,7 @@ Django==1.10.7
 django-extensions==1.7.6
 django-dotenv==1.4.2
 dj-database-url==0.5.0
-gunicorn==19.9.0
+gunicorn==23.0.0
 dj-static==0.0.6
 django-crispy-forms==1.6.1
 webtemplate-dbca==0.6.0
