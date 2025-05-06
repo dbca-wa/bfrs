@@ -50,6 +50,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'reversion.middleware.RevisionMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'bfrs.middleware.SSOLoginMiddleware',
 ]
 TEMPLATES = [
