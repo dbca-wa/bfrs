@@ -16,8 +16,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
     SMS_POSTFIX="sms.url.endpoint"
 
 # Use Australian Mirrors
-RUN sed 's/archive.ubuntu.com/au.archive.ubuntu.com/g' /etc/apt/sources.list > /etc/apt/sourcesau.list && \
-    mv /etc/apt/sourcesau.list /etc/apt/sources.list
+#RUN sed 's/archive.ubuntu.com/au.archive.ubuntu.com/g' /etc/apt/sources.list > /etc/apt/sourcesau.list && \
+#    mv /etc/apt/sourcesau.list /etc/apt/sources.list
 RUN --mount=type=cache,target=/var/cache/apt apt-get update
 RUN apt install openssl
 COPY openssl-legacy.conf /
