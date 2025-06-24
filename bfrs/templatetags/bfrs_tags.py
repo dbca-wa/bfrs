@@ -300,7 +300,9 @@ def check_errors(error_list):
     return any(error_list) if error_list else False
 
 def get_order_by(filters):
-    sort_by = filters.get("order_by")
+    sort_by = None
+    if filters:
+        sort_by = filters.get("order_by")
     if not sort_by:
         return (None,None)
 
@@ -331,6 +333,8 @@ def sort_class(column,filters):
 
 @register.filter()
 def toggle_sort(column,filters):
+    print('---------------')
+    print(column, filters)
     sort_column,direction = get_order_by(filters)
 
     if sort_column is None:
