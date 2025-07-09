@@ -15,10 +15,10 @@ logger = logging.getLogger(__name__)
 class CadastreTableUpdate:
     """Class to handle cadastre table updates."""
 
-    def __init__(self, settings):
+    def __init__(self, settings, clean_up=False):
         self.geojson_dir = settings.LAYER_DOWNLOAD_DIR
         self.table_name = "reporting_cadastre"
-        self.clean_up = settings.clean_up if hasattr(settings, "clean_up") else False
+        self.clean_up = clean_up
 
     def run_sync(self):
         """Run the cadastre table update."""
