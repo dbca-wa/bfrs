@@ -6,7 +6,7 @@ import logging
 from django.core.management import base
 # Local
 from bfrs.cadastre_layer_sync import ReportingCadastreExtractGeojson
-from bfrs.cadastre_table_update import CadastreTableUpdate
+from cadastre_table_update import CadastreTableUpdate
 logger = logging.getLogger(__name__)
 
 
