@@ -52,3 +52,4 @@ uwsgi.ini
 localtest.*
 
 fireboundaries/
+geojson_dir/

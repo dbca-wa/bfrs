@@ -182,12 +182,15 @@ class CadastreTableUpdate:
 def main():
     import django
     from django.conf import settings as django_settings
+    import sys
+    sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
     # Initialize Django settings
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "bfrs_project.settings")
     django.setup()
-    # Ensure the settings are loaded
+    
     if not django_settings.configured:
         raise RuntimeError("Django settings are not configured.")
+
     settings = {
         "LAYER_DOWNLOAD_DIR": str(
             os.environ.get("LAYER_DOWNLOAD_DIR", "./geojson_dir")
