@@ -104,7 +104,7 @@ COPY bfrs ./bfrs
 COPY bfrs_project ./bfrs_project
 COPY templates ./templates
 COPY python-cron ./
-COPY cadastre_table_update ./
+COPY cadastre_table_update ./cadastre_table_update
 
 RUN virtualenv -p python3 /app/venv3
 RUN /app/venv3/bin/pip3 install -r /app/cadastre_table_update/requirements.txt
