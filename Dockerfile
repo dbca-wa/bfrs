@@ -47,9 +47,11 @@ RUN apt-get upgrade -y && \
     tzdata \
     wget \
     curl \
-    vim  \
-    texlive-full
-    
+    vim
+
+#    texlive-full
+RUN apt-get install -y latexmk texlive-lang-english texlive-latex-recommended texlive-base texlive-latex-base texlive-fonts-recommended texlive-latex-extra
+
 RUN apt-get install virtualenv -y
 #    rm -rf /var/lib/apt/lists/*
 #COPY get-pip.py /tmp/get-pip.py
