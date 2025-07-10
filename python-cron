@@ -1,2 +1,5 @@
 # 18:15PM - (6:15PM) every evening - calculate_report_tables
 15 18 * * * python /app/manage.py calculate_report_tables >> logs/cronjob.log 2>&1
+
+# 01 09 1 7 * /app/venv3/bin/python3 /app/cadastre_table_update/cadastre_layer_sync.py >> logs/cadastre_layer_sync.log 2>&1
+# 01 11 1 7 * python /app/cadastre_table_update/cadastre_table_update.py >> logs/cadastre_table_update.log 2>&1

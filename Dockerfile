@@ -97,8 +97,6 @@ RUN pip install -r requirements.txt
 RUN find /app/venv | grep libgeos
 RUN sed -i -e "s/ver = geos_version().decode()/ver = geos_version().decode().split(' ')[0]/" /app/venv/lib/python2.7/site-packages/django/contrib/gis/geos/libgeos.py
 
-
-
 # Install the project (ensure that frontend projects have been built prior to this step).
 FROM python_libs_bfrs as collect_static_bfrs
 COPY gunicorn.ini manage.py ./
@@ -106,6 +104,10 @@ COPY bfrs ./bfrs
 COPY bfrs_project ./bfrs_project
 COPY templates ./templates
 COPY python-cron ./
+COPY cadastre_table_update ./
+
+RUN virtualenv -p python3 /app/venv3
+RUN /app/venv3/bin/pip3 install -r /app/cadastre_table_update/requirements.txt
 
 # COPY md4byte_generate.py /bin/md4byte_generate.py
 # RUN chmod 755 /bin/md4byte_generate.py 
