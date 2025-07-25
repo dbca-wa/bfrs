@@ -13,6 +13,16 @@ class Command(BaseCommand):
         print ('Started calculate report tables')
         csr = connection.cursor()
         try:
+
+            print("Checking reporting_cadastre for invalid shapes")
+            csr.execute("select count(*) as invalid_shape_count from reporting_cadastre WHERE NOT ST_IsValid(shape);")
+
+            print (csr)
+            rows = csr.fetchone()
+            if rows[0] > 0:
+                print("There are {} invalid shapes in reporting_cadastre. Please contact the GIS Team to fix these shape errors.  Unable to continue with reporting build until resolved.".format(rows[0]))
+                sys.exit(1)
+                
             print("Dropping table calculate_report_tables_monitor")
             csr.execute("DROP TABLE IF EXISTS calculate_report_tables_monitor;")
 
@@ -63,9 +73,11 @@ class Command(BaseCommand):
             csr.execute("UPDATE reporting_bushfire SET fire_boundary = ST_CollectionExtract(ST_MakeValid(fire_boundary), 3) WHERE NOT ST_IsValid(fire_boundary);")
             print ("UPDATE reporting_bushfire SET fire_boundary = ST_CollectionExtract(ST_MakeValid(fire_boundary), 3) WHERE NOT ST_IsValid(fire_boundary);")
             csr.execute("UPDATE reporting_state_forest SET shape = ST_CollectionExtract(ST_MakeValid(shape), 3) WHERE NOT ST_IsValid(shape);")
-            print ("UPDATE reporting_state_forest SET shape = ST_CollectionExtract(ST_MakeValid(shape), 3) WHERE NOT ST_IsValid(shape);")
-            csr.execute("UPDATE reporting_cadastre SET shape = ST_CollectionExtract(ST_MakeValid(shape), 3) WHERE NOT ST_IsValid(shape);")
-            print ("UPDATE reporting_cadastre SET shape = ST_CollectionExtract(ST_MakeValid(shape), 3) WHERE NOT ST_IsValid(shape);")
+            print ("UPDATE reporting_state_forest SET shape = ST_CollectionExtract(ST_MakeValid(shape), 3) WHERE NOT ST_IsValid(shape);")            
+            # START - Remove due this taking up much time and resources to complete.   The GIS team will need to fix the shapes in and then republish them to KB and the KB import script run to import the updated data.
+            # csr.execute("UPDATE reporting_cadastre SET shape = ST_CollectionExtract(ST_MakeValid(shape), 3) WHERE NOT ST_IsValid(shape);")
+            # print ("UPDATE reporting_cadastre SET shape = ST_CollectionExtract(ST_MakeValid(shape), 3) WHERE NOT ST_IsValid(shape);")
+            # END                                     
             csr.execute("UPDATE reporting_dept_managed SET geometry = ST_CollectionExtract(ST_MakeValid(geometry), 3) WHERE NOT ST_IsValid(geometry);")
             print ("UPDATE reporting_dept_managed SET geometry = ST_CollectionExtract(ST_MakeValid(geometry), 3) WHERE NOT ST_IsValid(geometry);")
             csr.execute("UPDATE reporting_dept_interest SET geometry = ST_CollectionExtract(ST_MakeValid(geometry), 3) WHERE NOT ST_IsValid(geometry);")
