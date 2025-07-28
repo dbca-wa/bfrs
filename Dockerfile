@@ -47,7 +47,8 @@ RUN apt-get upgrade -y && \
     tzdata \
     wget \
     curl \
-    vim
+    vim \
+    postgresql-client
 
 #    texlive-full
 RUN apt-get install -y latexmk texlive-lang-english texlive-latex-recommended texlive-base texlive-latex-base texlive-fonts-recommended texlive-latex-extra
