@@ -47,10 +47,9 @@ RUN apt-get upgrade -y && \
     wget \
     curl \
     vim  \
-    texlive-full \
-    postgresql-client
+    texlive-full 
     
-RUN apt-get install virtualenv -y
+RUN apt-get install virtualenv postgresql-client -y
 #    rm -rf /var/lib/apt/lists/*
 #COPY get-pip.py /tmp/get-pip.py
 #RUN python2 /tmp/get-pip.py
