@@ -53,6 +53,7 @@ class CadastreTableUpdate:
         current_datetime = datetime.now()
         seen_datetime = datetime.strftime(current_datetime, "%Y-%m-%d %H:%M:%S")
         logger.info("Running reporting cadastre table update " + seen_datetime)
+        current_datetime_for_db= datetime.strftime(current_datetime, "%Y_%m_%d__%H_%M_%S")
         csr = connection.cursor()
         try:
             table_name = self.table_name
@@ -78,6 +79,11 @@ class CadastreTableUpdate:
             csr.execute(
                 "ALTER TABLE ONLY public.reporting_cadastre ALTER COLUMN objectid SET DEFAULT nextval('public.reporting_cadastre_objectid_seq2'::regclass);"
             )
+            
+            csr.execute("CREATE INDEX idx_reporting_cadastre_type_"+current_datetime_for_db+" ON public.reporting_cadastre USING btree (brc_fms_legend);");
+            csr.execute("CREATE INDEX reporting_cadastre_shape_geom_idx_"+current_datetime_for_db+" ON public.reporting_cadastre USING gist (shape);");
+            csr.execute("CREATE INDEX idx_reporting_cadastre_objectid_"+current_datetime_for_db+" ON public.reporting_cadastre USING btree (objectid);");
+            
             logger.info(
                 "Created new table {} with structure from {}".format(
                     table_name, new_table_name
