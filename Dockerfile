@@ -47,7 +47,8 @@ RUN apt-get upgrade -y && \
     wget \
     curl \
     vim  \
-    texlive-full
+    texlive-full \
+    postgresql-client
     
 RUN apt-get install virtualenv -y
 #    rm -rf /var/lib/apt/lists/*
