@@ -347,6 +347,24 @@ class CompoundBoundField(BoundField):
         html = super(CompoundBoundField,self).as_widget(self.field.hidden_widget(), attrs, **kwargs)
         return self.field.hidden_layout.format(html,*[f.as_widget(f.field.hidden_widget(),None,**kwargs) for f in self.related_fields])
 
+    from django.forms import Media
+
+    @property
+    def media(self):
+        from django.forms import Media
+        media = Media()
+        
+        # Include media from the main widget
+        if self.field.widget:
+            media += getattr(self.field.widget, 'media', Media())
+
+        # Include media from related fields
+        for related in getattr(self, 'related_fields', []):
+            widget = related.field.widget
+            media += getattr(widget, 'media', Media())
+
+        return media
+
 class BaseModelFormMetaclass(forms.models.ModelFormMetaclass):
     """
     Extend django's ModelFormMetaclass to support the following features

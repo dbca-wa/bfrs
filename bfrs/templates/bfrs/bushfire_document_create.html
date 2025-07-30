@@ -9,8 +9,13 @@
 
 {% block extra_js %}
   {{ block.super }}
+  {% for field in form %}
+    {{ field.media }}
+  {% endfor %}
   <script src="{% static 'js/jquery.datetimepicker.full.min.js' %}"></script>
   {{ form.media }}
+  
+
 {% endblock %}
 
 {% block breadcrumbs %}
