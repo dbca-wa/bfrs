@@ -16,7 +16,7 @@ class CadastreTableUpdate:
     """Class to handle cadastre table updates."""
 
     def __init__(self, settings, clean_up=False):
-        self.geojson_dir = settings.LAYER_DOWNLOAD_DIR
+        self.geojson_dir = settings.LAYER_DOWNLOAD_DIR+"/cadastre/"
         self.table_name = "reporting_cadastre"
         self.clean_up = clean_up
 
