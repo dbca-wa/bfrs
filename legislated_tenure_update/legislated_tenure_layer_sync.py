@@ -15,23 +15,24 @@ from geojsplit import cli as geojsplit_cli
 logger = logging.getLogger(__name__)
 
 
-class ReportingCadastreExtractGeojson:
+class ReportingLegislatedTenureExtractGeojson:
 
     def __init__(self, settings):
         self.auth_user = settings.KB_AUTH_USER
         self.auth_pass = settings.KB_AUTH_PASS
-        self.KB_LAYER_URL = settings.KB_LAYER_URL
+        self.KB_LAYER_URL = settings.KB_LEGISLATED_TENURE_LAYER_URL
         self.geojson_split_geometry_count = settings.GEOJSON_SPLIT_GEOMETRY_COUNT
-        self.download_dir = settings.LAYER_DOWNLOAD_DIR+"/cadastre/"
+        self.download_dir = settings.LAYER_DOWNLOAD_DIR+"/legislated_tenure/"
         self.max_geojson_split_size = settings.MAX_GEOJSPLIT_SIZE
 
     def run_sync(self):
 
         current_datetime = datetime.now().astimezone()
         seen_datetime = datetime.strftime(current_datetime, "%Y-%m-%d %H:%M:%S")
-        logger.info(f"Syncing KB Layer for BFRS {seen_datetime}")
+        logger.info(f"Syncing Legislated enure KB Layer for BFRS {seen_datetime}")
         try:
             layers = [self.KB_LAYER_URL]
+            print (layers)
             logger.info(f"Layers to be processed: {len(layers)}")
             for layer_url in layers:
                 layer_filename, error = self.download_layer(
@@ -48,6 +49,7 @@ class ReportingCadastreExtractGeojson:
 
     def download_layer(self, url: str, auth: tuple = None, stream: bool = False):
         authentication = HTTPBasicAuth(auth[0], auth[1]) if auth else None
+        print (self.download_dir)
         try:
             if not Path(self.download_dir).exists():
                 Path(self.download_dir).mkdir(parents=True, exist_ok=True)
@@ -57,7 +59,7 @@ class ReportingCadastreExtractGeojson:
 
             with requests.get(url, auth=authentication, stream=stream) as r:
                 r.raise_for_status()
-                filename = f"{self.download_dir}/cadastre_layer_{datetime.now().strftime('%Y%m%d_%H%M%S')}.geojson"
+                filename = f"{self.download_dir}/legislatedtenure_layer_{datetime.now().strftime('%Y%m%d_%H%M%S')}.geojson"
                 with open(filename, "wb") as f:
                     f.write(r.content)
 
@@ -158,7 +160,7 @@ def main():
     }
 
     settings = Namespace(**settings)  # Convert dict to Namespace for compatibility
-    ReportingCadastreExtractGeojson(
+    ReportingLegislatedTenureExtractGeojson(
         settings=settings,
     ).run_sync()
 
