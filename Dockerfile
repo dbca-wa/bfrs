@@ -114,7 +114,8 @@ COPY templates ./templates
 COPY python-cron ./
 COPY cadastre_table_update ./cadastre_table_update
 COPY legislated_tenure_update ./legislated_tenure_update
-
+COPY dept_interest_update ./dept_interest_update
+COPY state_forest_update ./state_forest_update
 # COPY md4byte_generate.py /bin/md4byte_generate.py
 # RUN chmod 755 /bin/md4byte_generate.py 
 # COPY compute_hash_patch.diff /tmp/compute_hash_patch.diff
