@@ -80,7 +80,7 @@ class StateForestTenureTableUpdate:
             
             csr.execute("CREATE SEQUENCE public.reporting_state_forest_objectid_seq_"+db_suffix+" AS integer START WITH 1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;")
                          
-            csr.execute("ALTER TABLE ONLY public.reporting_state_forest ALTER COLUMN objectid SET DEFAULT nextval('public.reporting_state_forest_objectid_seq1"+db_suffix+"'::regclass);")
+            csr.execute("ALTER TABLE ONLY public.reporting_state_forest ALTER COLUMN objectid SET DEFAULT nextval('public.reporting_state_forest_objectid_seq_"+db_suffix+"'::regclass);")
                          
             csr.execute("ALTER TABLE ONLY public.reporting_state_forest ADD CONSTRAINT reporting_state_forest_pkey1_"+db_suffix+" PRIMARY KEY (objectid);")
                          
@@ -148,8 +148,8 @@ class StateForestTenureTableUpdate:
 
                 csr.execute(
                     """
-                    INSERT INTO {} (fbr_plantation_classification, fbr_tenure_category, fbr_fire_report_classification, shape_length, shape_area, geometry)
-                    VALUES (%s, %s, %s, %s,%s, %s, %s, %s,%s, %s, %s, %s,%s, %s, %s, %s,%s, %s, ST_SetSRID(ST_GeomFromGeoJSON(%s), 4326));
+                    INSERT INTO {} (fbr_plantation_classification, fbr_tenure_category, fbr_fire_report_classification, shape_length, shape_area, shape)
+                    VALUES (%s, %s, %s,%s, %s, ST_SetSRID(ST_GeomFromGeoJSON(%s), 4326));
                 """.format(
                         self.table_name
                     ),

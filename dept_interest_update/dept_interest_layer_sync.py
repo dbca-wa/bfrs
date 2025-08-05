@@ -59,8 +59,8 @@ class ReportingDeptInterestExtractGeojson:
 
             with requests.get(url, auth=authentication, stream=stream) as r:
                 r.raise_for_status()
-                filename = f"{self.download_dir}/stateforest_layer_{datetime.now().strftime('%Y%m%d_%H%M%S')}.geojson"
-                with open(filename, "wb") as f:
+                filename = f"{self.download_dir}/dept_interest_{datetime.now().strftime('%Y%m%d_%H%M%S')}.geojson"
+                with open(filename, "wb") as f:                    
                     f.write(r.content)
 
                 logger.info(f"Layer downloaded and saved as {filename}")

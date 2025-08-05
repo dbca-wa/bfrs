@@ -162,7 +162,7 @@ class DeptInterestTableUpdate:
                 csr.execute(
                     """
                     INSERT INTO {} (loi_pin, loi_poly_area, loi_identifier, loi_regno, loi_tenure,loi_act, category, loi_notes, loi_prprietor, shape_length, shape_area, geometry)
-                    VALUES (%s, %s, %s, %s,%s, %s, %s, %s,%s, %s, %s, %s,%s, %s, %s, %s,%s, %s, ST_SetSRID(ST_GeomFromGeoJSON(%s), 4326));
+                    VALUES (%s, %s, %s, %s,%s, %s, %s, %s,%s, %s, %s, ST_SetSRID(ST_GeomFromGeoJSON(%s), 4326));
                 """.format(
                         self.table_name
                     ),
