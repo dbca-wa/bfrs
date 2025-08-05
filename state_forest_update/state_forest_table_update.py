@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class StateForestTenureTableUpdate:
-    """Class to handle cadastre table updates."""
+    """Class to handle reporting_state_forest table updates."""
 
     def __init__(self, settings, clean_up=False):
         self.geojson_dir = settings.LAYER_DOWNLOAD_DIR+"/state_forest/"

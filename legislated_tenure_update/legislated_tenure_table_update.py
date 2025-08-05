@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class LegislatedTenureTableUpdate:
-    """Class to handle cadastre table updates."""
+    """Class to handle reporting_dept_managed table updates."""
 
     def __init__(self, settings, clean_up=False):
         self.geojson_dir = settings.LAYER_DOWNLOAD_DIR+"/legislated_tenure/"
@@ -40,7 +40,7 @@ class LegislatedTenureTableUpdate:
             success_populate = self.populate_from_directory()
 
         if not success_populate:
-            logger.error("Failed to populate cadastre table from directory.")
+            logger.error("Failed to populate reporting_dept_managed table from directory.")
             return
         else:
             logger.info("reporting_dept_managed table populated successfully from directory.")
@@ -216,7 +216,7 @@ class LegislatedTenureTableUpdate:
             )
         except Exception as e:
             logger.error(
-                "Error populating cadastre table from GeoJSON file {}: {}".format(
+                "Error populating reporting_dept_managed table from GeoJSON file {}: {}".format(
                     geojson_file, e
                 )
             )
