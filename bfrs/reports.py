@@ -1128,7 +1128,7 @@ class QuarterlyReport():
 
         area_sql = """
         SELECT SUM(ab.area) AS total_all_regions_area, SUM(bf.area) AS total_area 
-        FROM reporting_bushfire bf JOIN bfrs_region r ON bf.region_id = r.id JOIN reporting_areaburnt ab ON bf.id = ab.bushfire_id JOIN bfrs_tenure t ON ab.tenure_id = t.id
+        FROM reporting_bushfire bf JOIN reporting_areaburnt ab ON bf.id = ab.bushfire_id JOIN bfrs_tenure t ON ab.tenure_id = t.id JOIN bfrs_region r ON ab.region_id = r.id
         WHERE bf.report_status IN {report_statuses} AND bf.reporting_year = {reporting_year} AND bf.fire_not_found=False AND r.forest_region = {{forest_region}} {{agency_condition}} AND t.report_group = 'ALL REGIONS'
         """.format(
             report_statuses="({})".format(",".join([str(i) for i in [Bushfire.STATUS_FINAL_AUTHORISED,Bushfire.STATUS_REVIEWED]])),
