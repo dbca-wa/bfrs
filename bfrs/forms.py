@@ -950,6 +950,8 @@ class BushfireCreateForm(InitialBushfireForm):
     def __init__(self,*args,**kwargs):
         super(BushfireCreateForm,self).__init__(*args,**kwargs)
         self.plantations = None
+        self.fields['duty_officer'].label_from_instance = lambda obj: obj.get_full_name() or obj
+        self.fields['field_officer'].label_from_instance = lambda obj: obj.get_full_name() or obj
         # if not self.initial.get("sss_data") or not isinstance(self.initial.get("sss_data"),basestring):
         if not self.initial.get("sss_data") or not isinstance(self.initial.get("sss_data"),str):
             return
