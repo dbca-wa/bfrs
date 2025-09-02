@@ -2,6 +2,7 @@ from dbca_utils.utils import env
 import dj_database_url
 import os
 import sys
+import json
 
 
 # Project paths
@@ -195,6 +196,8 @@ CACHES = {
         'LOCATION': os.path.join(BASE_DIR, 'bfrs', 'cache'),
     }
 }
+CSRF_TRUSTED_ORIGINS_STRING = env("CSRF_TRUSTED_ORIGINS", default='[]')
+CSRF_TRUSTED_ORIGINS = json.loads(str(CSRF_TRUSTED_ORIGINS_STRING))
 
 
 # Logging settings - log to stdout/stderr
