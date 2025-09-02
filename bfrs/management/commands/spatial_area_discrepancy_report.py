@@ -8,7 +8,6 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 
 from datetime import datetime
-from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 import pandas as pd
 
@@ -153,6 +152,7 @@ class Command(BaseCommand):
             success = self.send_notification_email(
                 subject=self.EMAIL_SUBJECT.format(financial_year=financial_year),
                 content=self.EMAIL_CONTENT.format(financial_year=financial_year),
+                financial_year=financial_year,
                 attachments=[file],
             )
 
@@ -182,6 +182,7 @@ class Command(BaseCommand):
         self,
         subject="Financial Year Report",
         content="Discrepancy Report EOFY",
+        financial_year="N/A",
         attachments=[],
     ):
         template = "bfrs/email/discrepancy_report_eofy.html"
@@ -199,6 +200,7 @@ class Command(BaseCommand):
             "user_email": user_email,
             "external_email": False,
             "to_email": to_email,
+            "financial_year": financial_year,
         }
 
         body = render_to_string(template, context=context)
