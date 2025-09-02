@@ -133,6 +133,7 @@ class Command(BaseCommand):
             logger.info(df_discrepancy)
             logger.info(f"All data report for financial year {financial_year}:")
             logger.info(df_all_data)
+            success = 1
         else:
             filename = self.FILENAME.format(financial_year=financial_year)
             output = BytesIO()
