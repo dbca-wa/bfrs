@@ -17,12 +17,13 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-    help = "Generate a financial year report"
+    help = "Generates a discrepancy report for a financial year"
 
-    FILENAME = "financial_year_report"
+    FILENAME = "Discrepancy EOFY {financial_year}.xlsx"
     DISCREPANCY_SHEET_NAME = "Discrepancy Report"
     ALL_DATA_SHEET_NAME = "All Data"
-    EMAIL_SUBJECT = "Financial Year Report for {financial_year}"
+    EMAIL_SUBJECT = "Spatial Area Discrepancy Report {financial_year}"
+    EMAIL_CONTENT = "Discrepancy Report EOFY {financial_year}"
     SHEET_DISCREPANCY_SQL = """
         SELECT
                 *,
@@ -86,7 +87,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--dry-run",
             action="store_true",
-            help="Run the command in dry run mode.",
+            help="Run the command in dry run mode without sending out emails.",
         )
         parser.add_argument(
             "--financial-year",
@@ -98,11 +99,14 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def handle(self, *args, **options):
-        logger.info("Generating financial year report...")
-
         dry_run = options["dry_run"]
         financial_year = options.get("financial_year", self.get_financial_year())
         params = [financial_year]
+
+        logger.info(
+            f"Generating discrepancy reports for financial year {financial_year} ..."
+        )
+        success = 0
 
         # Execute SQL queries
         with connection.cursor() as cursor:
@@ -116,6 +120,8 @@ class Command(BaseCommand):
             # Get all data column names
             columns_all_data = [col[0] for col in cursor.description]
 
+        logger.info("Discrepancy reports generated successfully.")
+
         # Convert rows to pandas DataFrames
         df_discrepancy = pd.DataFrame(rows_discrepancy, columns=columns_discrepancy)
         df_all_data = pd.DataFrame(rows_all_data, columns=columns_all_data)
@@ -128,29 +134,35 @@ class Command(BaseCommand):
             logger.info(f"All data report for financial year {financial_year}:")
             logger.info(df_all_data)
         else:
-            filename = f"{self.FILENAME}-{financial_year}.xlsx"
+            filename = self.FILENAME.format(financial_year=financial_year)
             output = BytesIO()
             # Create Excel file
             with pd.ExcelWriter(output, engine="openpyxl") as writer:
                 df_discrepancy.to_excel(
                     writer, sheet_name=self.DISCREPANCY_SHEET_NAME, index=False
                 )
-                df_all_data.to_excel(writer, sheet_name=self.ALL_DATA_SHEET_NAME, index=False)
+                df_all_data.to_excel(
+                    writer, sheet_name=self.ALL_DATA_SHEET_NAME, index=False
+                )
             output.seek(0)  # Reset the pointer to the beginning of the BytesIO object
             file = MIMEApplication(output.read(), name=filename)
             file["Content-Disposition"] = f'attachment; filename="{filename}"'
 
             # Send report via email
-            self.send_notification_email(
+            success = self.send_notification_email(
                 subject=self.EMAIL_SUBJECT.format(financial_year=financial_year),
+                content=self.EMAIL_CONTENT.format(financial_year=financial_year),
                 attachments=[file],
             )
-            logger.info("Financial year report generated successfully.")
 
         # Done
         self.stdout.write(
             self.style.SUCCESS(
-                f"\nReport for financial year {financial_year} generated successfully."
+                f"\nDiscrepancy Report for financial year {financial_year} generated successfully."
+            )
+            if success == 1
+            else self.style.ERROR(
+                f"\nFailed to generate Discrepancy Report for financial year {financial_year}."
             )
         )
 
@@ -165,11 +177,21 @@ class Command(BaseCommand):
         else:  # From January to June
             return today.year - 1
 
-    def send_notification_email(self, subject="Financial Year Report", attachments=[]):
+    def send_notification_email(
+        self,
+        subject="Financial Year Report",
+        content="Discrepancy Report EOFY",
+        attachments=[],
+    ):
         template = "bfrs/email/financial_year_report.html"
         user_email = "karsten.prehn@dbca.wa.gov.au"
-        to_email = settings.FPC_EMAIL
-        content = f"Financial Year Report for {'TODO'}"
+        to_email = settings.DISCREPANCY_REPORT_EMAIL
+
+        logger.info(f"Sending discrepancy report to {', '.join(to_email)} ...")
+
+        if len(to_email) == 0:
+            logger.warning("No discrepancy report recipient email address found.")
+            return 0
 
         context = {
             "content": content,
@@ -194,3 +216,5 @@ class Command(BaseCommand):
         logger.info(
             f"Email sent to {to_email} with subject '{content}' and return code {ret}"
         )
+
+        return ret
