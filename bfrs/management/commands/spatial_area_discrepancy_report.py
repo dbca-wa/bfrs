@@ -8,6 +8,7 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 
 from datetime import datetime
+from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 import pandas as pd
 
@@ -183,7 +184,7 @@ class Command(BaseCommand):
         content="Discrepancy Report EOFY",
         attachments=[],
     ):
-        template = "bfrs/email/financial_year_report.html"
+        template = "bfrs/email/discrepancy_report_eofy.html"
         user_email = "karsten.prehn@dbca.wa.gov.au"
         to_email = settings.DISCREPANCY_REPORT_EMAIL
 
