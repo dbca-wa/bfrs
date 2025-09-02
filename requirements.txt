@@ -10,6 +10,7 @@ Django==5.0.13
 django-extensions==3.2.3
 django-dotenv==1.4.2
 dj-database-url==0.5.0
+python-decouple==3.8
 # gunicorn==19.9.0
 gunicorn==23.0.0
 # dj-static==0.0.6

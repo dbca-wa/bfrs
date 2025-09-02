@@ -3,6 +3,7 @@ import dj_database_url
 import os
 import sys
 import json
+import decouple
 
 
 # Project paths
@@ -196,7 +197,7 @@ CACHES = {
         'LOCATION': os.path.join(BASE_DIR, 'bfrs', 'cache'),
     }
 }
-CSRF_TRUSTED_ORIGINS_STRING = env("CSRF_TRUSTED_ORIGINS", default='[]')
+CSRF_TRUSTED_ORIGINS_STRING = decouple.config("CSRF_TRUSTED_ORIGINS", default='[]')
 CSRF_TRUSTED_ORIGINS = json.loads(str(CSRF_TRUSTED_ORIGINS_STRING))
 
 
