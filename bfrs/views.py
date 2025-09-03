@@ -593,7 +593,7 @@ class BushfireUpdateView(ExceptionMixin,FormRequestMixin,NextUrlMixin,LoginRequi
         origin_district = self.object.district if self.object else None
         origin_fire_number = self.object.fire_number if self.object else None
         new_district = None
-        if form.is_valid():
+        if not form.errors:
             new_district = form.instance.district
             if origin_district is None or form.instance.district == origin_district:
                 #district is not changed

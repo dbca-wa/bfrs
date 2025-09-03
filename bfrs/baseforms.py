@@ -569,6 +569,12 @@ class BaseModelFormMetaclass(forms.models.ModelFormMetaclass):
 class ModelForm(forms.models.BaseModelForm, metaclass=BaseModelFormMetaclass):
     def __init__(self, *args,**kwargs):
         super(ModelForm,self).__init__(*args,**kwargs)
+        if 'duty_officer' in self.fields:
+            self.fields['duty_officer'].label_from_instance = lambda obj: getattr(obj, 'get_full_name', lambda: str(obj))() or str(obj)
+
+        if 'field_officer' in self.fields:
+            self.fields['field_officer'].label_from_instance = lambda obj: getattr(obj, 'get_full_name', lambda: str(obj))() or str(obj)
+            
         instance = None
         if "instance" in kwargs:
             instance = kwargs["instance"]
