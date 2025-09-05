@@ -256,8 +256,16 @@ class BoundField(forms.boundfield.BoundField):
 class CompoundBoundField(BoundField):
     "A Field plus data"
     def __init__(self, form, field, name):
-        super(CompoundBoundField,self).__init__(form,field,name)
-        self.related_fields = [self.form[name] for name in field.related_field_names]
+        super(CompoundBoundField, self).__init__(form, field, name)
+
+        self.related_fields = []
+        for related_name in field.related_field_names:
+            try:
+                self.related_fields.append(self.form[related_name])
+            except KeyError as e:
+                # Skip missing related fields
+                continue
+
 
     def __str__(self):
         """Renders this field as an HTML widget."""
@@ -674,26 +682,36 @@ class ModelForm(forms.models.BaseModelForm, metaclass=BaseModelFormMetaclass):
             
 
     def __getitem__(self, name):
-        """Return a BoundField with the given name."""
-        try:
-            if name in self.fields:
-                field = self.fields[name]
+        """Return a BoundField with the given name, or handle formsets and compound fields."""
+        if name in self._bound_fields_cache:
+            return self._bound_fields_cache[name]
+
+        # First, try regular fields
+        if name in self.fields:
+            field = self.fields[name]
+            if isinstance(field, basefields.CompoundField):
+                try:
+                    bound_field = CompoundBoundField(self, field, name)
+                except KeyError as e:
+                    raise KeyError(
+                        f"Compound field '{name}' failed due to missing related fields: {e}"
+                    )
             else:
-                return
-        except KeyError:
-            raise KeyError(
-                "Key '%s' not found in '%s'. Choices are: %s." % (
-                    name,
-                    self.__class__.__name__,
-                    ', '.join(sorted(f for f in self.fields)),
-                )
-            )
-        if name not in self._bound_fields_cache:
-            if isinstance(field,basefields.CompoundField):
-                self._bound_fields_cache[name] = CompoundBoundField(self,field,name)
-            else:
-                self._bound_fields_cache[name] = BoundField(self,field,name)
-        return self._bound_fields_cache[name]
+                bound_field = BoundField(self, field, name)
+
+            self._bound_fields_cache[name] = bound_field
+            return bound_field
+
+        # Then, check for formsets or other attributes
+        if hasattr(self, name):
+            return getattr(self, name)
+
+        # If not found, raise an error
+        raise KeyError(
+            f"Key '{name}' not found in '{self.__class__.__name__}'. "
+            f"Choices are: {', '.join(sorted(self.fields.keys()))}."
+        )
+
     
     class Meta:
         @staticmethod
