@@ -60,7 +60,11 @@ class FireCauseField(basefields.CompoundField):
             $("#{3}").hide()
             $("#{3}").prop("disabled",true);
         }}
-        """.format(Cause.OTHER.id,f.related_fields[1].auto_id,Cause.ESCAPE_DPAW_BURNING.id,f.related_fields[2].auto_id)
+        """.format(
+        Cause.OTHER.id,
+        f.related_fields[1].auto_id if len(f.related_fields) > 1 and f.related_fields[1] else "",
+        Cause.ESCAPE_DPAW_BURNING.id,
+        f.related_fields[2].auto_id if len(f.related_fields) > 2 and f.related_fields[2] else "")
         return (("{{1}}<br>{{0}}<br>{{2}}{{3}}<script type='text/javascript'>$('#{}').change()</script>".format(f.auto_id),attrs),self.related_field_names)
 
 class InitialAreaField(basefields.CompoundField):
@@ -69,7 +73,7 @@ class InitialAreaField(basefields.CompoundField):
         if f.value():
             return ("{0}",None)
         else:
-            area_unknown = f.related_fields[1].value()
+            area_unknown = f.related_fields[1].value() if len(f.related_fields) > 1 and f.related_fields[1] else None
             if area_unknown:
                 return ("{1}",("initial_area_unknown",))
             else:
@@ -83,7 +87,7 @@ class InitialAreaField(basefields.CompoundField):
             attrs["disabled"] = True
             return (("{0}",attrs),None)
         else:
-            area_unknown = f.related_fields[1].value()
+            area_unknown = f.related_fields[1].value() if len(f.related_fields) > 1 and f.related_fields[1] else None
 
             attrs = {}
             if area_unknown:
@@ -115,7 +119,7 @@ class FinalAreaField(basefields.CompoundField):
             attrs["disabled"] = True
             return (("{0}",attrs),None)
         else:
-            area_limit = f.related_fields[1].value()
+            area_limit = f.related_fields[1].value() if len(f.related_fields) > 1 and f.related_fields[1] else None
             f.field.widget.attrs = f.field.widget.attrs or {}
             attrs = {}
             if not area_limit:
@@ -139,8 +143,8 @@ class FirePositionField(basefields.CompoundField):
     def _view_layout(self,f):
         return ("{0}<br>SSS override - {1}",self.related_field_names)
 
-    def _edit_layout(self,f):
-        override = f.related_fields[0].value()
+    def _edit_layout(self, f):
+        override = f.related_fields[0].value() if f.related_fields and f.related_fields[0] else None
         attrs = {}
         if not override:
             attrs["disabled"] = True
