@@ -533,6 +533,9 @@ class BaseBushfireEditForm(BushfireViewForm):
                self.fields["dfes_incident_no"].widget.attrs["disabled"] = True
         self.fields['dfes_incident_no'].widget.attrs['autocomplete'] = 'off'
         self.fields['job_code'].widget.attrs['autocomplete'] = 'off'
+        self.fields['fire_detected_date'].widget.attrs['autocomplete'] = 'off'
+        self.fields['dispatch_pw_date'].widget.attrs['autocomplete'] = 'off'
+        
         
 
     def is_valid(self):
