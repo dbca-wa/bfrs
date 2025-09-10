@@ -789,7 +789,13 @@ class Bushfire(BushfireBase):
         return self.snapshots.all().order_by('created')
 
     def next_id(self, district):
-        ids = map(int, [i.fire_number.split(' ')[-1] for i in Bushfire.objects.filter(district=district, year=self.year)])
+        queryset = Bushfire.objects.filter(district=district, year=self.year)
+        ids = []
+
+        for obj in queryset:
+            fire_id = int(obj.fire_number.split(' ')[-1])
+            ids.append(fire_id)
+
         return max(ids) + 1 if ids else 1
 
     @property
