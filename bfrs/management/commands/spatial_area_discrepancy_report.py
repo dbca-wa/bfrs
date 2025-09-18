@@ -28,31 +28,43 @@ class Command(BaseCommand):
         SELECT
                 *,
                 spatial_geometry_total_area - bfrs_area_yellow AS diff_bfrs_area_yellow,
-                spatial_geometry_total_area - reporting_area_grey AS diff_reporting_area_grey
+                spatial_geometry_total_area - reporting_area_grey AS diff_reporting_area_grey,
+                final_fire_size_sss - reporting_area_grey AS diff_final_fire_size_sss
         FROM (
                 SELECT
                         id,
                         fire_number,
                         ROUND((ST_Area(ST_Transform(fire_boundary, 900914)) / 10000)::numeric, 2) AS spatial_geometry_total_area,
-        (
+                        (
                                 SELECT
-                                        sum(area)
+                                        area
+                                FROM
+                                        bfrs_bushfire
+                                WHERE
+                                        id = bf.id
+                        ) AS final_fire_size_sss,
+                        (
+                                SELECT
+                                        SUM(area)
                                 FROM
                                         bfrs_areaburnt
                                 WHERE
-                                        bushfire_id = bf.id) AS bfrs_area_yellow,
-        (
-                                        SELECT
-                                                sum(area)
-                                        FROM
-                                                reporting_areaburnt
-                                        WHERE
-                                                bushfire_id = bf.id) AS reporting_area_grey
+                                        bushfire_id = bf.id
+                        ) AS bfrs_area_yellow,
+                        (
+                                SELECT
+                                        SUM(area)
                                 FROM
-                                        bfrs_bushfire AS bf
+                                        reporting_areaburnt
                                 WHERE
-                                        bf.reporting_year = %s
-                                        AND bf.report_status IN (3, 4)) AS bfrs_spatial_compare
+                                        bushfire_id = bf.id
+                        ) AS reporting_area_grey
+                FROM
+                        bfrs_bushfire AS bf
+                WHERE
+                        bf.reporting_year = %s
+                        AND bf.report_status IN (3, 4)
+        ) AS bfrs_spatial_compare
         WHERE
                 spatial_geometry_total_area != bfrs_area_yellow
                 OR spatial_geometry_total_area != reporting_area_grey;
@@ -62,20 +74,30 @@ class Command(BaseCommand):
                 id,
                 fire_number,
                 ROUND((ST_Area(ST_Transform(fire_boundary, 900914)) / 10000)::numeric, 2) AS spatial_geometry_total_area,
-        (
+                (
+                        SELECT
+                                area
+                        FROM
+                                bfrs_bushfire
+                        WHERE
+                                id = bf.id
+                ) AS final_fire_size_sss,
+                (
                         SELECT
                                 sum(area)
                         FROM
                                 bfrs_areaburnt
                         WHERE
-                                bushfire_id = bf.id) AS bfrs_area_yellow,
-        (
+                                bushfire_id = bf.id
+                ) AS bfrs_area_yellow,
+                (
                         SELECT
                                 sum(area)
                         FROM
                                 reporting_areaburnt
                         WHERE
-                                bushfire_id = bf.id) AS reporting_area_grey
+                                bushfire_id = bf.id
+                ) AS reporting_area_grey
         FROM
                 bfrs_bushfire AS bf
         WHERE
@@ -187,7 +209,6 @@ class Command(BaseCommand):
         attachments=[],
     ):
         template = "bfrs/email/discrepancy_report_eofy.html"
-        user_email = "karsten.prehn@dbca.wa.gov.au"
         to_email = settings.DISCREPANCY_REPORT_EMAIL
 
         logger.info(f"Sending discrepancy report to {', '.join(to_email)} ...")
@@ -198,7 +219,6 @@ class Command(BaseCommand):
 
         context = {
             "content": content,
-            "user_email": user_email,
             "external_email": False,
             "to_email": to_email,
             "financial_year": financial_year,
