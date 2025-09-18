@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+    </head>
+    <body>
+        {% block greetings %}
+            <p>
+                Dear Sir/Madam,
+            </p>
+            <p>
+                Please find attached the Discrepancy Report for the End of Financial Year {{ financial_year }}.
+            </p>
+        {% endblock %}
+        {% block content %}
+        {% endblock %}
+        {% block signature %}
+            <p>
+                Regards
+            </p>
+            <p>This is a system-generated email, please do not reply.</p>
+        {% endblock %}
+    </body> 
+</html>

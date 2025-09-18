@@ -39,6 +39,7 @@ staticfiles/
 
 # Virtualenv dir
 /venv
+.venv
 
 # Testing coverage
 .coverage
