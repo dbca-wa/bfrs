@@ -53,3 +53,4 @@ uwsgi.ini
 localtest.*
 
 fireboundaries/
+.vscode/launch.json
