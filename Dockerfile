@@ -58,6 +58,7 @@ RUN apt-get install virtualenv -y
 #COPY get-pip.py /tmp/get-pip.py
 #RUN python2 /tmp/get-pip.py
 RUN apt-get install patch
+RUN pip install --upgrade pip
 # RUN ln -s /usr/bin/python2 /usr/bin/python && \
     # pip install --upgrade pip==20.3
 

@@ -5,7 +5,7 @@ git+https://github.com/dbca-wa/appmonitor_client.git#egg=appmonitor_client
 psycopg2-binary==2.9.9
 # Django==1.10.7
 #Django==3.2.25
-Django==5.0.13
+Django==5.2.7
 # django-extensions==1.7.6
 django-extensions==3.2.3
 django-dotenv==1.4.2
@@ -47,9 +47,9 @@ xlwt==1.2.0
 # pandas==0.19.2
 pandas==2.2.3
 # requests==2.20.0
-requests==2.32.3
+requests==2.32.5
 requests-ntlm==1.1.0
 #New packages
-ipython==7.31.1
+ipython==9.6.0
 geojsplit==0.1.2
 openpyxl>=3.0.0
