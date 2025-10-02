@@ -58,7 +58,7 @@ RUN apt-get install virtualenv -y
 #COPY get-pip.py /tmp/get-pip.py
 #RUN python2 /tmp/get-pip.py
 RUN apt-get install patch
-RUN pip install --upgrade pip
+
 # RUN ln -s /usr/bin/python2 /usr/bin/python && \
     # pip install --upgrade pip==20.3
 
@@ -98,6 +98,7 @@ ENV PATH=/app/venv/bin:$PATH
 COPY requirements.txt ./
 RUN ls -al /app/venv/bin/
 RUN whereis pip
+RUN pip install --upgrade pip
 RUN pip install -r requirements.txt 
     # Update the Django <1.11 bug in django/contrib/gis/geos/libgeos.py
     # Reference: https://stackoverflow.com/questions/18643998/geodjango-geosexception-error
@@ -151,3 +152,4 @@ FROM collect_static_bfrs as launch_bfrs
 EXPOSE 8080
 HEALTHCHECK --interval=1m --timeout=5s --start-period=10s --retries=3 CMD ["wget", "-q", "-O", "-", "http://localhost:8080/"]
 CMD ["/startup.sh"]
+
