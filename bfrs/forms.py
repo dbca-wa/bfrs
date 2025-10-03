@@ -242,18 +242,15 @@ class BushfireFilterForm(forms.ModelForm):
     RPT_YEAR_CHOICES = []
     STATUS_CHOICES = []
     REGION_CHOICES = []
-    DISTRICT_CHOICES = []
     try:
         YEAR_CHOICES = [[i['year'], i['year']] for i in Bushfire.objects.all().values('year').distinct()]
         RPT_YEAR_CHOICES = [[i['reporting_year'], i['reporting_year']] for i in Bushfire.objects.all().values('reporting_year').distinct()]
-        DISTRICT_CHOICES = [[i['district'], i['district']] for i in Bushfire.objects.all().values('district').distinct()]
         STATUS_CHOICES = [(u'-1', '---------')] + list(Bushfire.REPORT_STATUS_CHOICES) + [(u'900','Pending to Review')]
         REGION_CHOICES = [[None, '---------']] + [[r['id'], r['name']] for r in Region.objects.filter(dbca=True).values('id', 'name')]
     except:
         pass
 
     region = forms.ChoiceField(choices=REGION_CHOICES, required=False)
-    district = forms.ChoiceField(choices=DISTRICT_CHOICES, required=False)
     year = forms.ChoiceField(choices=YEAR_CHOICES,required=False)
     reporting_year = forms.ChoiceField(choices=RPT_YEAR_CHOICES, required=False)
     include_archived = forms.BooleanField(required=False)
@@ -270,7 +267,6 @@ class BushfireFilterForm(forms.ModelForm):
             self.fields["region"].choices = [[None, '---------']] + [[r['id'], r['name']] for r in Region.objects.filter(dbca=True).values('id', 'name')]
             self.fields["year"].choices = [[None, '---------']] + [[i['year'], str(i['year']) + '/' + str(i['year']+1)] for i in Bushfire.objects.all().values('year').distinct().order_by('year')]
             self.fields["reporting_year"].choices = [[None, '---------']] + [[i['reporting_year'], str(i['reporting_year']) + '/' + str(i['reporting_year']+1)] for i in Bushfire.objects.all().values('reporting_year').distinct().order_by('reporting_year')]
-            self.fields["district"].choices =[[None, '---------']] + [[r['id'], r['name']] for r in District.objects.all().values('id', 'name')]
             # allows dynamic update of the filter set, on page refresh
             if not can_maintain_data(self.request.user):
                 # pop the 'Reviewed' option
