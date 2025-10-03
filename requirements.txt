@@ -52,4 +52,6 @@ requests-ntlm==1.1.0
 #New packages
 ipython==9.6.0
 geojsplit==0.1.2
+
 openpyxl>=3.0.0
+setuptools==80.9.0
