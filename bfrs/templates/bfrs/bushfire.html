@@ -390,4 +390,22 @@ function clicked(e)
     if(!confirm('You must be in the Fire Information Management group in the database to do this.  \nIf you continue it will take ~30 min to complete.  Do you wish to continue?'))e.preventDefault();
 }
 </script>
+
+<script>
+
+(function($) {
+    var chainfield = "#id_region";
+    var url = "/chaining/filter/bfrs/District/region/bfrs/Bushfire/district";
+    var id = "#id_district";
+    var value = undefined;
+    var auto_choose = true;
+    var empty_label = "---------";
+
+    $(document).ready(function() {
+        chainedfk.init(chainfield, url, id, value, empty_label, auto_choose);
+    });
+})(jQuery || django.jQuery);
+
+
+</script>
 {% endblock %}
