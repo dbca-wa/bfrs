@@ -902,8 +902,9 @@ def update_status(request, bushfire, action,action_name="",update_fields=None,ac
                 #move the documents from merged bushfire to primary bushfire
                 for doc in bf.documents.all():
                     primary_bushfire.documents.add(doc)
-
-        message = (True,"Merge the bushfires({1}) into the primary bushfire({0}) successfully".format(primary_bushfire.fire_number,[bf.fire_number for bf in merged_bushfires]))
+                    
+        merged_bushfire_numbers = ", ".join([bf.fire_number for bf in merged_bushfires])
+        message = (True,"Merge the bushfires({1}) into the primary bushfire({0}) successfully".format(primary_bushfire.fire_number, merged_bushfire_numbers))
         #send emails
         resp = send_email({
             "bushfire":primary_bushfire, 
@@ -918,9 +919,9 @@ def update_status(request, bushfire, action,action_name="",update_fields=None,ac
         })
 
         if resp[0]:
-            notification.append((action, 'Send {2} email for the primary bushfire({0}) and duplicated bushfires({1}) successfully.{3}'.format(primary_bushfire.fire_number,[bf.fire_number for bf in merged_bushfires],action_name,resp[1])))
+            notification.append((action, 'Send {2} email for the primary bushfire({0}) and duplicated bushfires({1}) successfully.{3}'.format(primary_bushfire.fire_number,merged_bushfire_numbers,action_name,resp[1])))
         else:
-            notification.append((action, 'Failed to send {2} email for the primary bushfire({0}) and duplicated bushfires({1}) successfully.{3}'.format(primary_bushfire.fire_number,[bf.fire_number for bf in merged_bushfires],action_name,resp[1])))
+            notification.append((action, 'Failed to send {2} email for the primary bushfire({0}) and duplicated bushfires({1}) successfully.{3}'.format(primary_bushfire.fire_number,merged_bushfire_numbers,action_name,resp[1])))
 
     elif action == "invalidate_duplicated_reports":
         #validate the parameters
@@ -962,8 +963,9 @@ def update_status(request, bushfire, action,action_name="",update_fields=None,ac
                 #move the documents from duplicated bushfire to primary bushfire
                 for doc in bf.documents.all():
                     primary_bushfire.documents.add(doc)
-
-        message = (True,"Keep the bushfire({0}) as the primary bushfire and invalidate the other duplicated bushfires({1}) successfully".format(primary_bushfire.fire_number,[bf.fire_number for bf in duplicated_bushfires]))
+                    
+        duplicated_bushfire_numbers = ", ".join([bf.fire_number for bf in duplicated_bushfires])
+        message = (True,"Keep the bushfire({0}) as the primary bushfire and invalidate the other duplicated bushfires({1}) successfully".format(primary_bushfire.fire_number, duplicated_bushfire_numbers))
         #send emails
         resp = send_email({
             "bushfire":primary_bushfire, 
@@ -973,13 +975,13 @@ def update_status(request, bushfire, action,action_name="",update_fields=None,ac
             "external_email":False,
             "request":request,
             "title_4_related_bushfires":"The duplciated bushfires are listed below.",
-            "subject":'{0} Email - Duplicated bushfires({2}) are linked to bushfire ({1})'.format(action_name,primary_bushfire.fire_number,",".join([bf.fire_number for bf in duplicated_bushfires])),
+            "subject":'{0} Email - Duplicated bushfires({2}) are linked to bushfire ({1})'.format(action_name,primary_bushfire.fire_number,duplicated_bushfire_numbers),
             "template":"bfrs/email/invalidate_duplicated_bushfires_email.html"
         })
         if resp[0]:
-            notification.append((action, 'Send {2} email for the primary bushfire({0}) and duplicated bushfires({1}) successfully.{3}'.format(primary_bushfire.fire_number,[bf.fire_number for bf in duplicated_bushfires],action_name,resp[1])))
+            notification.append((action, 'Send {2} email for the primary bushfire({0}) and duplicated bushfires({1}) successfully.{3}'.format(primary_bushfire.fire_number,duplicated_bushfire_numbers,action_name,resp[1])))
         else:
-            notification.append((action, 'Failed to send {2} email for the primary bushfire({0}) and duplicated bushfires({1}) successfully.{3}'.format(primary_bushfire.fire_number,[bf.fire_number for bf in duplicated_bushfires],action_name,resp[1])))
+            notification.append((action, 'Failed to send {2} email for the primary bushfire({0}) and duplicated bushfires({1}) successfully.{3}'.format(primary_bushfire.fire_number,duplicated_bushfire_numbers,action_name,resp[1])))
     else:
         raise Exception("Unknow action({})".format(action))
         
