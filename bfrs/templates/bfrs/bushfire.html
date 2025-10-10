@@ -25,7 +25,7 @@
       <li><a href="javascript: bushfire_filter({action:'export_to_excel'});">Export Excel</a></li>
       <li><a href="javascript: bushfire_filter({action:'export_excel_outstanding_fires'});">Export Outstanding Fires</a></li>
 	  {% for y in bushfire_reports %}
-      <li><a href="javascript: bushfire_filter({action:'export_excel_ministerial_report',reporting_year:{{y.0}} });" onclick='growl({"message": "Creating Bushfire Report (Excel) ...", "type": "info"});'>Export Bushfire Report({{y.1}})</a></li>
+      <li><a href="javascript: bushfire_filter({action:'export_excel_ministerial_report',reporting_year:{{y.0}} });" onclick='growl({"message": "Creating Bushfire Report (Excel) ...", "type": "info"});'>Export Bushfire Report ({{y.1}})</a></li>
       {% endfor %}
 	  <!--li><a href="javascript: bushfire_filter({action:'calculate_report_tables'});" onclick='growl({"message": "Calculating report tables will take about 40min"});'>Calculate Report Tables</a></li-->
 	   
