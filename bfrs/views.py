@@ -379,7 +379,7 @@ class BushfireView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin, filter_views.
         context['is_external_user'] = is_external_user(self.request.user)
         context['selected_ids'] = self.selected_ids if hasattr(self,"selected_ids") else None
         finyear = current_finyear()
-        context['bushfire_reports'] = [(y,"{}/{}".format(y,y+1)) for y in range(finyear,finyear - 2,-1) if y >= 2017]
+        context['bushfire_reports'] = sorted([(y, f"{y}/{y+1}") for y in range(finyear, finyear - 2, -1) if y >= 2017])
         context['actions'] = self.actions
         if hasattr(self,"action"):
             context['action'] = self.action
