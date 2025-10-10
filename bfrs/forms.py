@@ -1282,7 +1282,10 @@ class PDFReportForm(forms.Form):
     cost_implications = forms.CharField(max_length=250, widget=forms.Textarea(), required=False)
     urgency = forms.CharField(max_length=2500, widget=forms.Textarea(), required=False)
     contentious_issues = forms.CharField(max_length=250, widget=forms.Textarea(), required=False)
-    sig_date = forms.CharField(max_length=20, required=True)
+    sig_date = forms.DateField(
+        widget=forms.DateInput(attrs={'autocomplete': 'off', 'readonly': 'readonly'}),
+        required=True
+    )
     recommendation = forms.ChoiceField(choices=RECOMMENDATION_CHOICES, widget=forms.RadioSelect(), initial=1,  required=True)
 
 
