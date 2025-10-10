@@ -891,7 +891,9 @@ def update_status(request, bushfire, action,action_name="",update_fields=None,ac
                     serialize_bushfire("final", "Merge", bf)
                 else:
                     bf.report_status = Bushfire.STATUS_MERGED
-                bf.save(update_fields=["invalid_details","valid_bushfire","report_status"])
+                bf.modified = timezone.now()
+                bf.modifier = request.user
+                bf.save(update_fields=["invalid_details","valid_bushfire","report_status","modified","modifier"])
 
                 #if some bushfires were merged into this bushfire, then relink those merged bushfire to new primary bushfire
                 for mbf in bf.bushfire_invalidated.filter(report_status = Bushfire.STATUS_MERGED):
@@ -952,7 +954,9 @@ def update_status(request, bushfire, action,action_name="",update_fields=None,ac
                     serialize_bushfire("final", "Invalidate_duplicated_reports", bf)
                 else:
                     bf.report_status = Bushfire.STATUS_DUPLICATED
-                bf.save(update_fields=["invalid_details","valid_bushfire","report_status"])
+                bf.modified = timezone.now()
+                bf.modifier = request.user
+                bf.save(update_fields=["invalid_details","valid_bushfire","report_status","modified","modifier"])
                 #if some bushfires were duplicated with this bushfire, then relink those duplicated bushfire to new primary bushfire
                 for dbf in bf.bushfire_invalidated.filter(report_status = Bushfire.STATUS_DUPLICATED):
                     dbf.invalid_details = "Duplicated with bushfire '{}'".format(primary_bushfire.fire_number)
