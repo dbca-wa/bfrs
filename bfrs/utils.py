@@ -590,7 +590,7 @@ def update_status(request, bushfire, action,action_name="",update_fields=None,ac
                     save_model(bushfire,["dfes_incident_no"])
                     notification.append(('create_incident_no',"Create dfes incident no '{1}' for the bushfire({0}) successfully".format(bushfire.fire_number,incident_no)))
                 except Exception as e:
-                    errors.append(('create_incident_no',"Failed to create dfes incident no for the bushfire({0}). {1}".format(bushfire.fire_number,str(e))))
+                    errors.append(('create_incident_no',"Failed to create dfes incident no for the bushfire({0}).".format(bushfire.fire_number)))
             else:
                 #no dfes incident no, send email to dfes
                 resp = send_email({
