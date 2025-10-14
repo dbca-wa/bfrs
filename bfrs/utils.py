@@ -718,7 +718,7 @@ def update_status(request, bushfire, action,action_name="",update_fields=None,ac
                 "template":"bfrs/email/pica_sms.txt"
             })
             if resp[0]:
-                notification.append(('PICA_SMS', 'PICA_SMS sms for bushfire ({0}) sent successfully. {1}'.format(bushfire.fire_number, resp[1])))
+                notification.append(('PICA_SMS', 'PICA sms for bushfire ({0}) sent successfully. {1}'.format(bushfire.fire_number, resp[1])))
             else:
                 errors.append(('PICA_SMS', 'Failed to send PICA sms for the bushfire({0}).{1}'.format(bushfire.fire_number,resp[1])))
 
