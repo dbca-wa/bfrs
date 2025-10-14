@@ -168,20 +168,26 @@ class FloatInput(forms.NumberInput):
         return super(FloatInput,self).render(name,value,attrs=attrs)
 
 class DatetimeInput(forms.TextInput):
-    def render(self,name,value,attrs=None,renderer=None):
-        if isinstance(value,datetime):
+    def render(self, name, value, attrs=None, renderer=None):
+        if isinstance(value, datetime):
             value = value.strftime("%Y-%m-%d %H:%M")
-        html = super(DatetimeInput,self).render(name,value,attrs)
+
+        attrs = attrs or {}
+        attrs["autocomplete"] = "off"
+
+        html = super(DatetimeInput, self).render(name, value, attrs, renderer)
+
         datetime_picker = """
         <script type="text/javascript">
-            $("#{}").datetimepicker({{ 
-                format: "Y-m-d H:i" ,
-                maxDate:true,
-                step: 30,
-            }}); 
+            $("#{id}").datetimepicker({{ 
+                format: "Y-m-d H:i",
+                maxDate: true,
+                step: 30
+            }});
         </script>
-        """.format(attrs["id"])
-        return safestring.SafeText("{}{}".format(html,datetime_picker))
+        """.format(id=attrs.get("id", name))
+
+        return safestring.SafeText(f"{html}{datetime_picker}")
 
 
 class TemplateWidgetMixin(object):
