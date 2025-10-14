@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'smart_selects',
     'django_extensions',
     'crispy_forms',
+    'crispy_bootstrap3',
     'django_filters',
     'bfrs',
     'appmonitor_client',

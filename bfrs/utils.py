@@ -579,7 +579,7 @@ def update_status(request, bushfire, action,action_name="",update_fields=None,ac
 
         save_model(bushfire,update_fields,["init_authorised_by","init_authorised_date","report_status"])
         serialize_bushfire('initial', action_desc, bushfire)
-        message = (True,"Submit the bushfire({0}) successfully".format(bushfire.fire_number))
+        message = (True,"Bushfire({0}) submitted successfully".format(bushfire.fire_number))
 
         if not bushfire.dfes_incident_no:
             if settings.P1CAD_ENDPOINT:
@@ -590,7 +590,7 @@ def update_status(request, bushfire, action,action_name="",update_fields=None,ac
                     save_model(bushfire,["dfes_incident_no"])
                     notification.append(('create_incident_no',"Create dfes incident no '{1}' for the bushfire({0}) successfully".format(bushfire.fire_number,incident_no)))
                 except Exception as e:
-                    errors.append(('create_incident_no',"Failed to create dfes incident no for the bushfire({0}). {1}".format(bushfire.fire_number,str(e))))
+                    errors.append(('create_incident_no',"Failed to create dfes incident no for the bushfire({0}).".format(bushfire.fire_number)))
             else:
                 #no dfes incident no, send email to dfes
                 resp = send_email({
@@ -605,7 +605,7 @@ def update_status(request, bushfire, action,action_name="",update_fields=None,ac
                 if resp[0]:
                     notification.append(('DFES', 'Send DFES email for the bushfire({0}) successfully.{1}'.format(bushfire.fire_number,resp[1])))
                 else:
-                    errors.append(('DFES', 'Faild to send DFES email for the bushfire({0}).{1}'.format(bushfire.fire_number,resp[1])))
+                    errors.append(('DFES', 'Failed to send DFES email for the bushfire({0}).{1}'.format(bushfire.fire_number,resp[1])))
 
         # send emails
         if bushfire.dispatch_aerial:
@@ -618,7 +618,7 @@ def update_status(request, bushfire, action,action_name="",update_fields=None,ac
             if resp[0]:
                 notification.append(('fire_bombing', 'Send Fire Bombing Request email for the bushfire({0}) successfully.{1}'.format(bushfire.fire_number,resp[1])))
             else:
-                errors.append(('fire_bombing', 'Faild to send Fire Bombing Request email for the bushfire({0}).{1}'.format(bushfire.fire_number,resp[1])))
+                errors.append(('fire_bombing', 'Failed to send Fire Bombing Request email for the bushfire({0}).{1}'.format(bushfire.fire_number,resp[1])))
 
         #send a notification email to fpc for all fires from regions except kimberley and pilbara, or bushfire has plantations data
         if bushfire.region not in (Region.kimberley,Region.pilbara) or BushfireProperty.objects.filter(bushfire=bushfire,name="plantations").count() > 0:
@@ -634,7 +634,7 @@ def update_status(request, bushfire, action,action_name="",update_fields=None,ac
             if resp[0]:
                 notification.append(('FPC', 'Send FPC email for the bushfire({0}) successfully.{1}'.format(bushfire.fire_number,resp[1])))
             else:
-                errors.append(('FPC', 'Faild to send FPC email for the bushfire({0}).{1}'.format(bushfire.fire_number,resp[1])))
+                errors.append(('FPC', 'Failed to send FPC email for the bushfire({0}).{1}'.format(bushfire.fire_number,resp[1])))
 
         resp = send_email({
             "bushfire":bushfire, 
@@ -648,7 +648,7 @@ def update_status(request, bushfire, action,action_name="",update_fields=None,ac
         if resp[0]:
             notification.append(('RDO', 'Send RDO email for the bushfire({0}) successfully.{1}'.format(bushfire.fire_number,resp[1])))
         else:
-            errors.append(('RDO', 'Faild to send RDO email for the bushfire({0}).{1}'.format(bushfire.fire_number,resp[1])))
+            errors.append(('RDO', 'Failed to send RDO email for the bushfire({0}).{1}'.format(bushfire.fire_number,resp[1])))
             
         resp = send_email({
             "bushfire":bushfire, 
@@ -662,7 +662,7 @@ def update_status(request, bushfire, action,action_name="",update_fields=None,ac
         if resp[0]:
             notification.append(('State Situation Officer', 'Send SSO email for the bushfire({0}) successfully.{1}'.format(bushfire.fire_number,resp[1])))
         else:
-            errors.append(('State Situation Officer', 'Faild to send SSO email for the bushfire({0}).{1}'.format(bushfire.fire_number,resp[1])))
+            errors.append(('State Situation Officer', 'Failed to send SSO email for the bushfire({0}).{1}'.format(bushfire.fire_number,resp[1])))
 
         resp = send_email({
             "bushfire":bushfire, 
@@ -676,7 +676,7 @@ def update_status(request, bushfire, action,action_name="",update_fields=None,ac
         if resp[0]:
             notification.append(('POLICE', 'Send POLICE email for the bushfire({0}) successfully.{1}'.format(bushfire.fire_number,resp[1])))
         else:
-            errors.append(('POLICE', 'Faild to send POLICE email for the bushfire({0}).{1}'.format(bushfire.fire_number,resp[1])))
+            errors.append(('POLICE', 'Failed to send POLICE email for the bushfire({0}).{1}'.format(bushfire.fire_number,resp[1])))
 
         if bushfire.park_trail_impacted:
             resp = send_email({
@@ -691,7 +691,7 @@ def update_status(request, bushfire, action,action_name="",update_fields=None,ac
             if resp[0]:
                 notification.append(('PVS', 'Send PVS email for the bushfire({0}) successfully.{1}'.format(bushfire.fire_number,resp[1])))
             else:
-                errors.append(('PVS', 'Faild to send PVS email for the bushfire({0}).{1}'.format(bushfire.fire_number,resp[1])))
+                errors.append(('PVS', 'Failed to send PVS email for the bushfire({0}).{1}'.format(bushfire.fire_number,resp[1])))
 
         if bushfire.media_alert_req :
             resp = send_email({
@@ -706,7 +706,7 @@ def update_status(request, bushfire, action,action_name="",update_fields=None,ac
             if resp[0]:
                 notification.append(('PICA', 'Send PICA email for the bushfire({0}) successfully.{1}'.format(bushfire.fire_number,resp[1])))
             else:
-                errors.append(('PICA', 'Faild to send PICA email for the bushfire({0}).{1}'.format(bushfire.fire_number,resp[1])))
+                errors.append(('PICA', 'Failed to send PICA email for the bushfire({0}).{1}'.format(bushfire.fire_number,resp[1])))
 
             resp = send_sms({
                 "bushfire":bushfire, 
@@ -720,7 +720,7 @@ def update_status(request, bushfire, action,action_name="",update_fields=None,ac
             if resp[0]:
                 notification.append(('PICA_SMS', 'Send PICA sms for the bushfire({0}) successfully.{1}'.format(bushfire.fire_number,resp[1])))
             else:
-                errors.append(('PICA_SMS', 'Faild to send PICA sms for the bushfire({0}).{1}'.format(bushfire.fire_number,resp[1])))
+                errors.append(('PICA_SMS', 'Failed to send PICA sms for the bushfire({0}).{1}'.format(bushfire.fire_number,resp[1])))
 
         bushfire.area = None # reset bushfire area
         bushfire.final_fire_boundary = False # used to check if final boundary is updated in Final Report template - allows to toggle show()/hide() area_limit widget via js
@@ -768,7 +768,7 @@ def update_status(request, bushfire, action,action_name="",update_fields=None,ac
         if resp[0]:
             notification.append(('FSSDRS-Auth', 'Send FSSDRS email for the bushfire({0}) successfully.{1}'.format(bushfire.fire_number,resp[1])))
         else:
-            errors.append(('FSSDRS-Auth', 'Faild to send FSSDRS email for the bushfire({0}).{1}'.format(bushfire.fire_number,resp[1])))
+            errors.append(('FSSDRS-Auth', 'Failed to send FSSDRS email for the bushfire({0}).{1}'.format(bushfire.fire_number,resp[1])))
 
     elif action == 'mark_reviewed':
         if not bushfire.can_review:
@@ -800,7 +800,7 @@ def update_status(request, bushfire, action,action_name="",update_fields=None,ac
         if resp[0]:
             notification.append(('FSSDRS-Review', 'Send FSSDRS email for the bushfire({0}) successfully.{1}'.format(bushfire.fire_number,resp[1])))
         else:
-            errors.append(('FSSDRS-Review', 'Faild to send FSSDRS email for the bushfire({0}).{1}'.format(bushfire.fire_number,resp[1])))
+            errors.append(('FSSDRS-Review', 'Failed to send FSSDRS email for the bushfire({0}).{1}'.format(bushfire.fire_number,resp[1])))
 
     elif action in ('delete_final_authorisation' , 'delete_authorisation_(missing_fields_-_FSSDRS)', 'delete_authorisation(merge_bushfires)'):
         if not bushfire.is_final_authorised:
@@ -1194,7 +1194,7 @@ def send_email(context):
             cc=concat_email_addresses(context.get("cc_email",settings.CC_EMAIL),context.get("user_email")), 
             bcc=context.get("bcc_email",settings.BCC_EMAIL))
         for attachment in context.get("attachments") or []:
-            with open(attachment[0]) as f:
+            with open(attachment[0],'rb') as f:
                 message.attach(attachment[1],f.read(),attachment[2])
         message.content_subtype = 'html'
         ret = message.send()
