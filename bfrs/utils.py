@@ -1194,7 +1194,7 @@ def send_email(context):
             cc=concat_email_addresses(context.get("cc_email",settings.CC_EMAIL),context.get("user_email")), 
             bcc=context.get("bcc_email",settings.BCC_EMAIL))
         for attachment in context.get("attachments") or []:
-            with open(attachment[0]) as f:
+            with open(attachment[0],'rb') as f:
                 message.attach(attachment[1],f.read(),attachment[2])
         message.content_subtype = 'html'
         ret = message.send()

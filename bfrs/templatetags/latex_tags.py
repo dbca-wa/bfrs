@@ -21,7 +21,7 @@ def latex(value,args):
     elif not args:
         return mark_safe(value)
     else:
-        args = unicode(args)
+        args = str(args)
         for c in args:
             if c == '&':
                 value = value.replace(c,'\&')

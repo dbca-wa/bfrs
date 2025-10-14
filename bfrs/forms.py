@@ -433,7 +433,7 @@ class BaseBushfireViewForm(baseforms.ModelForm):
                 field_params={"coerce":coerce_YESNO,"empty_value":None}),
             "fire_bombing.prefered_resources":basefields.ChoiceFieldFactory(Bushfire.FIRE_BOMBING_RESOURCES,choice_class=forms.TypedMultipleChoiceField,field_params={"coerce":coerce_int,"empty_value":None}),
             "fire_bombing.activation_criterias":basefields.ChoiceFieldFactory(Bushfire.FIRE_BOMBING_ACTIVATION_CRITERIAS,choice_class=forms.TypedMultipleChoiceField,field_params={"coerce":coerce_int,"empty_value":None}),
-            "fire_bombing.response":basefields.ChoiceFieldFactory(Bushfire.FIRE_BOMBING_RESPONSES,field_params={"coerce":coerce_int,"empty_value":None}),
+            "fire_bombing.response":basefields.ChoiceFieldFactory(Bushfire.FIRE_BOMBING_RESPONSES,field_params={"coerce":coerce_int,"empty_value":None,"widget": forms.RadioSelect(attrs={"class": "inline-radio"}) }),
         }
         widgets = {
             "__all__": basewidgets.TextDisplay(),
