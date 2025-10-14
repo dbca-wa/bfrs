@@ -579,7 +579,7 @@ def update_status(request, bushfire, action,action_name="",update_fields=None,ac
 
         save_model(bushfire,update_fields,["init_authorised_by","init_authorised_date","report_status"])
         serialize_bushfire('initial', action_desc, bushfire)
-        message = (True,"Submit the bushfire({0}) successfully".format(bushfire.fire_number))
+        message = (True,"Bushfire({0}) submitted successfully".format(bushfire.fire_number))
 
         if not bushfire.dfes_incident_no:
             if settings.P1CAD_ENDPOINT:
