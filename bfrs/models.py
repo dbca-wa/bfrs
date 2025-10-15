@@ -28,6 +28,12 @@ from bfrs.classproperty import cachedclassproperty
 
 from bfrs.base import Audit,DictMixin
 
+from django.contrib.auth.models import User
+
+def user_str(self):
+    return f"{self.first_name} {self.last_name}".strip()
+
+User.__str__ = user_str
 
 SNAPSHOT_INITIAL = 1
 SNAPSHOT_FINAL = 2
