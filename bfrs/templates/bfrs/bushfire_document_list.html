@@ -39,52 +39,44 @@
     <div id="filter" class="panel-collapse collapse" role="tabpanel" aria-labelledby="pn_filter">
       <div class="panel-body">
         <!--<form action="" method="get">-->
-	<form id="bushfire_document_filter" action="" method="get">
-        <table class="table table-bordered table-striped table-condensed" style="margin-bottom:0px">
-          <body>
+        <form id="bushfire_document_filter" action="" method="get">
+          <table class="table table-bordered table-striped table-condensed" style="margin-bottom:0px;">
+            <body>
+              <tr>
+                <td class="cbas" style="padding:20px;">
+                  <div class="filter-controls-container" style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 20px;">
+                    <div class="filter-item" style="display: flex; flex-direction: column;">
+                      <label class="nowrap">Category</label> <!-- Removed inline font-weight and margin-bottom -->
+                      <div class="controls ">{{ filterform.category }}</div>
+                    </div>
 
-            <tr>
-              <td class="cbas">
-                <div class="col-sm-2" >
-                  <div class="form-group"> 
-                    <label class="nowrap" >Category</label>
-                    <div class="controls ">{{ filterform.category }}</div><br>
+                    <div class="filter-item" style="display: flex; flex-direction: column;">
+                      <label class="nowrap">Archived</label> <!-- Removed inline font-weight and margin-bottom -->
+                      <div class="controls ">{{ filterform.archived }}</div>
+                    </div>
+
+                    <div class="filter-item" style="display: flex; flex-direction: column;">
+                      <label class="nowrap">Last modified</label> <!-- Removed inline font-weight and margin-bottom -->
+                      <div class="controls ">{{ filterform.last_modified }}</div>
+                    </div>
+
+                    <div class="filter-item filter-search" style="display: flex; flex-direction: column; flex-grow: 1; min-width: 200px;">
+                      <label class="nowrap">Search Tag,Custom Tag and Creator</label> <!-- Removed inline font-weight and margin-bottom -->
+                      <div class="controls ">{{ filterform.search }}</div>
+                    </div>
+
+                    <div class="filter-item filter-button" style="align-self: flex-end; margin-bottom: 4px;">
                       <button type="submit"><i class="icon-refresh icon-white"></i> Update</button>
+                    </div>
                   </div>
-                </div>
-
-                <div class="col-sm-2" >
-                  <div  class="form-group"> 
-                    <label class="nowrap" >Archived</label>
-                    <div class="controls ">{{ filterform.archived }}</div>
-                  </div>
-                </div>
-
-                <div class="col-sm-2" >
-                  <div class="form-group"> 
-                    <label class="nowrap" >Last modified</label>
-                    <div class="controls ">{{ filterform.last_modified }}</div>
-                  </div>
-                </div>
-
-                <div class="col-sm-2" >
-                  <div class="form-group"> 
-                    <label class="nowrap" >Search Tag,Custom Tag and Creator</label>
-                    <div class="controls ">{{ filterform.search }}</div>
-                  </div>
-                </div>
-
-              </td>
-            </tr>
-
-          </body>
-        </table>
+                </td>
+              </tr>
+            </body>
+          </table>
         </form>
-
       </div>
     </div>
   </div>
-
 </div>
 
 <script>
