@@ -969,7 +969,7 @@ def update_status(request, bushfire, action,action_name="",update_fields=None,ac
                     primary_bushfire.documents.add(doc)
                     
         duplicated_bushfire_numbers = ", ".join([bf.fire_number for bf in duplicated_bushfires])
-        message = (True,"Keep the bushfire({0}) as the primary bushfire and invalidate the other duplicated bushfires({1}) successfully".format(primary_bushfire.fire_number, duplicated_bushfire_numbers))
+        message = (True,"Kept the bushfire({0}) as the primary bushfire and invalidated the other duplicated bushfires({1}) successfully.".format(primary_bushfire.fire_number, duplicated_bushfire_numbers))
         #send emails
         resp = send_email({
             "bushfire":primary_bushfire, 

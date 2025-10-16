@@ -1330,6 +1330,19 @@ class DocumentViewForm(baseforms.ModelForm):
 
 
 class DocumentUpdateForm(DocumentViewForm):
+    category = forms.ModelChoiceField(
+        queryset=DocumentCategory.objects.all(),
+        widget=forms.Select(attrs={"class": "form-control"})
+    )
+    tag = forms.ModelChoiceField(
+        queryset=DocumentTag.objects.all(),
+        widget=forms.Select(attrs={"class": "form-control"})
+    )
+    document = forms.FileField(
+        required=False,
+        widget=forms.ClearableFileInput(attrs={"class": "form-control-file"})
+    )
+    
     def clean_custom_tag(self):
         try:
             if DocumentTag.check_other_tag(self.cleaned_data["tag"]):
