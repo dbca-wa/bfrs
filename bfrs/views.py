@@ -843,7 +843,7 @@ class DocumentDownloadView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin,FormVi
     next_url = "lastDocumentUrl"
     def get(self,request,pk,*args,**kwargs):
         self.document = Document.objects.get(id = int(pk))
-        f = open(os.path.join(settings.MEDIA_ROOT,self.document.document.name)) 
+        f = open(os.path.join(settings.MEDIA_ROOT, self.document.document.name), 'rb')
         response = FileResponse(content_type='application/force-download',streaming_content=f)
         response['Content-Disposition'] = 'attachment; filename="{}"'.format(os.path.basename(self.document.document.name))
         return response
