@@ -12,3 +12,16 @@
 <h1>Manage Users</h1>
 {% endblock %}
 
+{% block extrahead %}
+{{ block.super }}
+<style>
+  /* Restrict email column width and remove extra spacing */
+  th.column-first_name, td.field-first_name,th.column-last_name, td.field-last_name {
+    max-width: 120px;
+    width: 120px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+</style>
+{% endblock %}
