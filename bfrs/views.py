@@ -187,9 +187,16 @@ class BushfireView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin, filter_views.
 
         profile = self.get_initial() # Additional profile Filters must also be added to the JS in bushfire.html- profile_field_list
         # if not data.has_key('region'):
-        if 'region' not in data:
-            data['region'] = profile['region'].id if profile['region'] else None
-            data['district'] = profile['district'].id if profile['district'] else None
+        
+        # Only apply profile filters if no other filters are present
+        profile_fields = ['region', 'district']
+        search_fields = [f for f in data.keys() if f in BushfireFilter.Meta.fields and f not in profile_fields]
+
+        if not search_fields:
+            if 'region' not in data:
+                data['region'] = profile['region'].id if profile['region'] else None
+            if 'district' not in data:
+                data['district'] = profile['district'].id if profile['district'] else None
 
         if "include_archived" not in data:
             data["include_archived"] = False
