@@ -906,7 +906,7 @@ def update_status(request, bushfire, action,action_name="",update_fields=None,ac
                     primary_bushfire.documents.add(doc)
                     
         merged_bushfire_numbers = ", ".join([bf.fire_number for bf in merged_bushfires])
-        message = (True,"Merge the bushfires({1}) into the primary bushfire({0}) successfully".format(primary_bushfire.fire_number, merged_bushfire_numbers))
+        message = (True, "Merged the bushfire{0} ({1}) into the primary bushfire ({2}) successfully".format("s" if len(merged_bushfires) > 1 else "", merged_bushfire_numbers, primary_bushfire.fire_number))
         #send emails
         resp = send_email({
             "bushfire":primary_bushfire, 
@@ -969,7 +969,7 @@ def update_status(request, bushfire, action,action_name="",update_fields=None,ac
                     primary_bushfire.documents.add(doc)
                     
         duplicated_bushfire_numbers = ", ".join([bf.fire_number for bf in duplicated_bushfires])
-        message = (True,"Kept the bushfire({0}) as the primary bushfire and invalidated the other duplicated bushfires({1}) successfully.".format(primary_bushfire.fire_number, duplicated_bushfire_numbers))
+        message = (True, "Kept the bushfire ({0}) as the primary bushfire and invalidated the other duplicated bushfire{1} ({2}) successfully.".format(primary_bushfire.fire_number, "s" if len(duplicated_bushfires) > 1 else "", duplicated_bushfire_numbers))
         #send emails
         resp = send_email({
             "bushfire":primary_bushfire, 
