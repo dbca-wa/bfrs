@@ -1324,25 +1324,15 @@ class DocumentViewForm(baseforms.ModelForm):
             "created": basewidgets.DatetimeDisplay("%Y-%m-%d %H:%M:%S"),
             "modifier": basewidgets.TextDisplay(),
             "modified": basewidgets.DatetimeDisplay("%Y-%m-%d %H:%M:%S"),
-            
-
         }
 
 
 class DocumentUpdateForm(DocumentViewForm):
-    category = forms.ModelChoiceField(
-        queryset=DocumentCategory.objects.all(),
-        widget=forms.Select(attrs={"class": "form-control"})
-    )
-    tag = forms.ModelChoiceField(
-        queryset=DocumentTag.objects.all(),
-        widget=forms.Select(attrs={"class": "form-control"})
-    )
     document = forms.FileField(
         required=False,
         widget=forms.ClearableFileInput(attrs={"class": "form-control-file"})
     )
-    
+
     def clean_custom_tag(self):
         try:
             if DocumentTag.check_other_tag(self.cleaned_data["tag"]):
@@ -1366,16 +1356,40 @@ class DocumentUpdateForm(DocumentViewForm):
 
     class Meta:
         model = Document
-        extra_update_fields = ('modified','modifier')
-        fields = ('category','tag',"custom_tag","document_created","document")
-        other_fields = ("archived","archivedby","archivedon","creator","created","document_created","modifier","modified")
-        widgets = {
-            #"category":forms.Select(attrs={"style":"width:auto"}),
-            #"tag":None,
-            #"custom_tag":forms.TextInput(attrs={"style":"width:90%"}),
-            'document_created':basewidgets.DatetimeInput(),
+        fields = ('category', 'tag', 'custom_tag', 'document_created', 'document')
+        extra_update_fields = ('modified', 'modifier')
+        other_fields = (
+            "archived", "archivedby", "archivedon", "creator",
+            "created", "document_created", "modifier", "modified"
+        )
+
+        field_classes = {
+            "document": basefields.OverrideFieldFactory(
+                Document, "document", field_class=basefields.FileField, max_size=0
+            ),
+            "tag": basefields.ChainedOtherOptionFieldFactory(
+                Document,
+                "tag",
+                ("custom_tag",),
+                "category",
+                "category",
+                other_option=lambda: lambda val: list(
+                    DocumentTag.objects.filter(
+                        name__iexact='other',
+                        category_id=getattr(val, 'id', val),
+                        archived=False
+                    )
+                ),
+                archived=False
+            ),
         }
 
+        widgets = {
+            "category": forms.Select(attrs={"style": "width:auto"}),
+            "tag": None,
+            "custom_tag": forms.TextInput(attrs={"style": "width:90%"}),
+            "document_created": basewidgets.DatetimeInput(),
+        }
 
 class DocumentCreateForm(DocumentUpdateForm):
     def __init__(self,*args,**kwargs):
