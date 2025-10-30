@@ -588,7 +588,7 @@ def update_status(request, bushfire, action,action_name="",update_fields=None,ac
                     incident_no = P1CAD.create_incident(bushfire,request)
                     bushfire.dfes_incident_no = incident_no
                     save_model(bushfire,["dfes_incident_no"])
-                    notification.append(('create_incident_no',"Create dfes incident no '{1}' for the bushfire({0}) successfully".format(bushfire.fire_number,incident_no)))
+                    notification.append(('create_incident_no',"Created dfes incident no '{1}' for the bushfire({0}) successfully".format(bushfire.fire_number,incident_no)))
                 except Exception as e:
                     errors.append(('create_incident_no',"Failed to create dfes incident no for the bushfire({0}).".format(bushfire.fire_number)))
             else:

@@ -65,7 +65,7 @@ class P1CAD(object):
                 raise Exception("Can't get the incident no from the response ({})".format(result))
             response = resp.text
 
-            subject = "Create dfes incident no '{1}' for bushfire report '{0}'".format(bushfire.fire_number,incident_no)
+            subject = "Created dfes incident no '{1}' for bushfire report '{0}'".format(bushfire.fire_number,incident_no)
 
             return incident_no
 
