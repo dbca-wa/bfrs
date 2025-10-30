@@ -747,9 +747,9 @@ class BushfireDocumentListView(ExceptionMixin,LoginRequiredMixin,filter_views.Fi
         else:
             data["bushfire"] = self.bushfire
 
-        if "archived" not in data:
-            #default to list unarchived documents
-            data["archived"] = '3'
+        # if "archived" not in data:
+        #     #default to list unarchived documents
+        #     data["archived"] = '3'
 
         if "order_by" not in data:
             data["order_by"] = "-created"
