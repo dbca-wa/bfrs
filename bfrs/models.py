@@ -224,9 +224,17 @@ class Profile(models.Model):
 
     user = models.OneToOneField(User, related_name='profile', on_delete=models.PROTECT)
     region = models.ForeignKey('Region', blank=True, null=True, on_delete=models.SET_NULL)
-    district = ChainedForeignKey('District',
-        chained_field="region", chained_model_field="region",
-        show_all=False, auto_choose=True, blank=True, null=True)
+    district = ChainedForeignKey(
+        'District',
+        chained_field="region",
+        chained_model_field="region",
+        show_all=False,
+        auto_choose=True,
+        blank=True,
+        null=True,
+        limit_choices_to={'archive_date__isnull': True}
+    )
+
 
     def to_dict(self):
         return dict(

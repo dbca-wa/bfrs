@@ -382,8 +382,6 @@ class BushfireView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin, filter_views.
         context['filters'] = "{}{}".format(reverse('main'),self._filters)
         context['filters_without_order'] = "{}{}".format(reverse('main'),self._filters_without_order)
         context['sss_url'] = settings.SSS_URL
-        context['can_maintain_data'] = can_maintain_data(self.request.user)
-        context['is_external_user'] = is_external_user(self.request.user)
         context['selected_ids'] = self.selected_ids if hasattr(self,"selected_ids") else None
         finyear = current_finyear()
         context['bushfire_reports'] = sorted([(y, f"{y}/{y+1}") for y in range(finyear, finyear - 2, -1) if y >= 2017])
@@ -441,7 +439,6 @@ class BushfireFinalSnapshotView(ExceptionMixin,FormRequestMixin,NextUrlMixin,Log
             'damages': self.object.final_snapshot.damage_snapshot.exclude(snapshot_type=SNAPSHOT_INITIAL) if hasattr(self.object.final_snapshot, 'damage_snapshot') else None,
             'injuries': self.object.final_snapshot.injury_snapshot.exclude(snapshot_type=SNAPSHOT_INITIAL) if hasattr(self.object.final_snapshot, 'injury_snapshot') else None,
             'tenures_burnt': self.object.final_snapshot.tenures_burnt_snapshot.exclude(snapshot_type=SNAPSHOT_INITIAL).order_by('id') if hasattr(self.object.final_snapshot, 'tenures_burnt_snapshot') else None,
-            'can_maintain_data': can_maintain_data(self.request.user),
             'link_actions':link_actions,
         })
         return context
@@ -679,7 +676,6 @@ class BushfireUpdateView(ExceptionMixin,FormRequestMixin,NextUrlMixin,LoginRequi
         context.update({
             'initial':'initial' in self.request.get_full_path(),
             'create':False if bushfire else True,
-            'can_maintain_data': can_maintain_data(self.request.user),
             'submit_actions':context['form'].submit_actions,
         })
         
@@ -751,9 +747,9 @@ class BushfireDocumentListView(ExceptionMixin,LoginRequiredMixin,filter_views.Fi
         else:
             data["bushfire"] = self.bushfire
 
-        if "archived" not in data:
-            #default to list unarchived documents
-            data["archived"] = '3'
+        # if "archived" not in data:
+        #     #default to list unarchived documents
+        #     data["archived"] = '3'
 
         if "order_by" not in data:
             data["order_by"] = "-created"
@@ -775,7 +771,6 @@ class BushfireDocumentListView(ExceptionMixin,LoginRequiredMixin,filter_views.Fi
 
     def get_context_data(self, **kwargs):
         context = super(BushfireDocumentListView,self).get_context_data(**kwargs)
-        context['can_maintain_data'] = can_maintain_data(self.request.user)
         context['bushfire'] = self.bushfire
         context['uploadform'] = DocumentCreateForm(instance=Document(upload_bushfire=self.bushfire))
         context['bushfireurl'] = get_bushfire_url(None,self.bushfire,("final","initial"))
@@ -809,7 +804,6 @@ class BushfireDocumentUploadView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin,
 
     def get_context_data(self, **kwargs):
         context = super(BushfireDocumentUploadView,self).get_context_data(**kwargs)
-        context['can_maintain_data'] = can_maintain_data(self.request.user)
         context['bushfire'] = self.bushfire
         context['bushfireurl'] = get_bushfire_url(None,self.bushfire,("final","initial"))
         context['snapshot'] = False
@@ -869,7 +863,6 @@ class DocumentDeleteView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin,FormRequ
 
     def get_context_data(self, **kwargs):
         context = super(DocumentDeleteView,self).get_context_data(**kwargs)
-        context['can_maintain_data'] = can_maintain_data(self.request.user)
         context['bushfire'] = self.object.bushfire
         context['bushfireurl'] = get_bushfire_url(None,self.object.bushfire,("final","initial"))
         context['page_action'] = "Delete"
@@ -902,7 +895,6 @@ class DocumentArchiveView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin,FormReq
 
     def get_context_data(self, **kwargs):
         context = super(DocumentArchiveView,self).get_context_data(**kwargs)
-        context['can_maintain_data'] = can_maintain_data(self.request.user)
         context['bushfire'] = self.object.bushfire
         context['bushfireurl'] = get_bushfire_url(None,self.object.bushfire,("final","initial"))
         context['snapshot'] = False
@@ -939,7 +931,6 @@ class DocumentUnarchiveView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin,FormR
 
     def get_context_data(self, **kwargs):
         context = super(DocumentUnarchiveView,self).get_context_data(**kwargs)
-        context['can_maintain_data'] = can_maintain_data(self.request.user)
         context['bushfire'] = self.object.bushfire
         context['bushfireurl'] = get_bushfire_url(None,self.object.bushfire,("final","initial"))
         context['snapshot'] = False
@@ -1028,7 +1019,6 @@ class DocumentCategoryListView(ExceptionMixin,LoginRequiredMixin,ListView):
 
     def get_context_data(self, **kwargs):
         context = super(DocumentCategoryListView,self).get_context_data(**kwargs)
-        context['can_maintain_data'] = can_maintain_data(self.request.user)
         return context
 
 class DocumentCategoryCreateView(ExceptionMixin,LoginRequiredMixin,FormRequestMixin,CreateView):
@@ -1041,7 +1031,6 @@ class DocumentCategoryCreateView(ExceptionMixin,LoginRequiredMixin,FormRequestMi
 
     def get_context_data(self, **kwargs):
         context = super(DocumentCategoryCreateView,self).get_context_data(**kwargs)
-        context['can_maintain_data'] = can_maintain_data(self.request.user)
         context["title"] = "Add Document Category"
         context["page_action"] = "Create"
         context['link_actions'] =[(self.get_success_url(),'Cancel','btn-danger')]
@@ -1078,7 +1067,6 @@ class DocumentCategoryUpdateView(ExceptionMixin,LoginRequiredMixin,FormRequestMi
 
     def get_context_data(self, **kwargs):
         context = super(DocumentCategoryUpdateView,self).get_context_data(**kwargs)
-        context['can_maintain_data'] = can_maintain_data(self.request.user)
         context["title"] = "Update Document Category"
         context["page_action"] = "Update"
         context['link_actions'] =[(self.get_success_url(),'Cancel','btn-danger')]
@@ -1114,7 +1102,6 @@ class DocumentCategoryDetailView(ExceptionMixin,LoginRequiredMixin,FormRequestMi
 
     def get_context_data(self, **kwargs):
         context = super(DocumentCategoryDetailView,self).get_context_data(**kwargs)
-        context['can_maintain_data'] = can_maintain_data(self.request.user)
         context["title"] = "Document Category Detail"
         context["page_action"] = "Detail"
         context['link_actions'] =[(self.get_success_url(),'Cancel','btn-danger')]

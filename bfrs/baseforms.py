@@ -203,10 +203,11 @@ class BoundField(forms.boundfield.BoundField):
 
     @property
     def initial(self):
-        if self.is_display and hasattr(self.field.widget,"prepare_initial_data"):
-            return self.field.widget.prepare_initial_data(self.form,self.name)
+        if self.is_display and hasattr(self.field.widget, "prepare_initial_data"):
+            return self.field.widget.prepare_initial_data(self.form, self.name)
 
-        data = self.form.initial.get(self.name, self.field.initial)
+        data = getattr(self.form.instance, self.name, None)
+
         if callable(data):
             # if self._initial_value is not forms.boundfield.UNSET:
             if self._initial_value is not BoundField.UNSET:
@@ -219,10 +220,13 @@ class BoundField(forms.boundfield.BoundField):
                         not self.field.widget.supports_microseconds):
                     data = data.replace(microsecond=0)
                 self._initial_value = data
-        elif not self.is_display and isinstance(data,models.Model):
-            return data.pk
-        return data
 
+        if isinstance(data, models.Model):
+            if self.is_display:
+                return str(data)
+            return data.pk
+
+        return data
     @property
     def auto_id(self):
         if self.is_display:
