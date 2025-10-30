@@ -210,6 +210,12 @@ class HelperModelForm(forms.ModelForm):
 
 
 class ProfileForm(HelperModelForm):
+    
+    def __init__(self, *args, **kwargs):
+        super(ProfileForm, self).__init__(*args, **kwargs)
+        self.fields['region'].widget.attrs.update({'class': 'form-control', 'style': 'width:200;'})
+        self.fields['district'].widget.attrs.update({'class': 'form-control', 'style': 'width:200;'})
+
     def clean(self):
         """District must be child of Region.
         """
