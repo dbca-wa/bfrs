@@ -211,10 +211,13 @@ class BoundField(forms.boundfield.BoundField):
             data = self.form.initial.get(self.name, self.field.initial)
 
         if callable(data):
+            # if self._initial_value is not forms.boundfield.UNSET:
             if self._initial_value is not BoundField.UNSET:
                 data = self._initial_value
             else:
                 data = data()
+                # If this is an auto-generated default date, nix the
+                # microseconds for standardized handling. See #22502.
                 if (isinstance(data, (datetime.datetime, datetime.time)) and
                         not self.field.widget.supports_microseconds):
                     data = data.replace(microsecond=0)
