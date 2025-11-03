@@ -207,6 +207,8 @@ class BoundField(forms.boundfield.BoundField):
             return self.field.widget.prepare_initial_data(self.form, self.name)
 
         data = getattr(self.form.instance, self.name, None)
+        if data is None:
+            data = self.form.initial.get(self.name, self.field.initial)
 
         if callable(data):
             # if self._initial_value is not forms.boundfield.UNSET:
@@ -222,9 +224,7 @@ class BoundField(forms.boundfield.BoundField):
                 self._initial_value = data
 
         if isinstance(data, models.Model):
-            if self.is_display:
-                return str(data)
-            return data.pk
+            return str(data) if self.is_display else data.pk
 
         return data
     @property
