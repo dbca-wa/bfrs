@@ -753,6 +753,9 @@ class BushfireDocumentListView(ExceptionMixin,LoginRequiredMixin,filter_views.Fi
 
         if "order_by" not in data:
             data["order_by"] = "-created"
+        
+        if "search" not in data:
+            data["search"] = ""
 
         filters = "&".join(["{}={}".format(k,v) for k,v in data.items() if k in BushfireDocumentFilter.Meta.fields and v])
         if filters:

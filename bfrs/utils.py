@@ -921,7 +921,7 @@ def update_status(request, bushfire, action,action_name="",update_fields=None,ac
         })
 
         if resp[0]:
-            notification.append((action, '{2} email for primary bushfire ({0}) and duplicated bushfires ({1}) sent successfully. {3}'.format(primary_bushfire.fire_number, merged_bushfire_numbers, action_name, resp[1])))
+            notification.append((action, 'Sent  {2} email for the primary bushfire ({0}) and duplicated bushfires ({1}) successfully. {3}'.format(primary_bushfire.fire_number, merged_bushfire_numbers, action_name, resp[1])))
         else:
             notification.append((action, 'Failed to send {2} email for the primary bushfire({0}) and duplicated bushfires({1}).{3}'.format(primary_bushfire.fire_number,merged_bushfire_numbers,action_name,resp[1])))
 
@@ -983,7 +983,7 @@ def update_status(request, bushfire, action,action_name="",update_fields=None,ac
             "template":"bfrs/email/invalidate_duplicated_bushfires_email.html"
         })
         if resp[0]:
-            notification.append((action, '{2} email for primary bushfire ({0}) and duplicated bushfires ({1}) sent successfully. {3}'.format(primary_bushfire.fire_number,duplicated_bushfire_numbers,action_name,resp[1])))
+            notification.append((action, 'Sent {2} email for the primary bushfire ({0}) and duplicated bushfires ({1}) successfully. {3}'.format(primary_bushfire.fire_number,duplicated_bushfire_numbers,action_name,resp[1])))
         else:
             notification.append((action, 'Failed to send {2} email for the primary bushfire({0}) and duplicated bushfires({1}).{3}'.format(primary_bushfire.fire_number,duplicated_bushfire_numbers,action_name,resp[1])))
     else:
