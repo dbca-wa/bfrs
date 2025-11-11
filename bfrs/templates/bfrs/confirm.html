@@ -11,7 +11,11 @@
 {% endblock %}
 
 {% block content_title %}
-      <h1>Please confirm you wish to perform action '{{action|split_capitalize}}' </h1>
+  {% if action == 'mark_reviewed' %}
+    <h1>Please confirm you wish to perform the action 'Mark Report as Reviewed'</h1>
+  {% else %}
+    <h1>Please confirm you wish to perform the action '{{ action|split_capitalize }}'</h1>
+  {% endif %}
 {% endblock %}
 
 {% block content %}

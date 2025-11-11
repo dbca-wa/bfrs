@@ -785,7 +785,7 @@ def update_status(request, bushfire, action,action_name="",update_fields=None,ac
         bushfire.report_status = Bushfire.STATUS_REVIEWED
         save_model(bushfire,update_fields,["report_status","reviewed_by","reviewed_date"])
         serialize_bushfire('review', action_desc, bushfire)
-        message = (True,"Review the bushfire({0}) successfully".format(bushfire.fire_number))
+        message = (True,"Reviewed the bushfire ({0}) successfully".format(bushfire.fire_number))
 
         # send emails
         resp = send_email({
