@@ -14,6 +14,7 @@ from django.conf import settings
 from .views import ChainedModelChoicesView
 
 from .signals import webserver_ready
+from django_media_serv.urls import urlpatterns as media_serv_patterns
 
 def sss_selection_view(request):
     return HttpResponseRedirect(settings.SSS_URL)
@@ -65,6 +66,6 @@ urlpatterns = [
     path('chaining/', include('smart_selects.urls')),
     re_path(r'^options/js/(?P<chained_model_app>[a-zA-Z0-9\_\-]+)/(?P<chained_model_name>[a-zA-Z0-9\_\-]+)/(?P<model_app>[a-zA-Z0-9\_\-]+)/(?P<model_name>[a-zA-Z0-9\_\-]+)', ChainedModelChoicesView.as_view(), name="chained_model_choices"),
     path('', home_view_selection_view, name='home'),
-]
+] + media_serv_patterns
 
 webserver_ready.send(sender="urls")
