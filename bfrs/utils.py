@@ -785,7 +785,7 @@ def update_status(request, bushfire, action,action_name="",update_fields=None,ac
         bushfire.report_status = Bushfire.STATUS_REVIEWED
         save_model(bushfire,update_fields,["report_status","reviewed_by","reviewed_date"])
         serialize_bushfire('review', action_desc, bushfire)
-        message = (True,"Review the bushfire({0}) successfully".format(bushfire.fire_number))
+        message = (True,"Reviewed the bushfire ({0}) successfully".format(bushfire.fire_number))
 
         # send emails
         resp = send_email({
@@ -822,7 +822,7 @@ def update_status(request, bushfire, action,action_name="",update_fields=None,ac
         bushfire.report_status = Bushfire.STATUS_INITIAL_AUTHORISED
         save_model(bushfire,update_fields,["authorised_by","authorised_date","report_status","reviewed_by","reviewed_date","final_fire_boundary","archive"])
         serialize_bushfire('final', action_desc, bushfire)
-        message = (True,"Remove authorisation status for the bushfire({0}) successfully".format(bushfire.fire_number))
+        message = (True,"Removed final authorisation status for the bushfire({0}) successfully".format(bushfire.fire_number))
 
     elif action == 'delete_review':
         if not bushfire.is_reviewed:
@@ -832,7 +832,7 @@ def update_status(request, bushfire, action,action_name="",update_fields=None,ac
         bushfire.report_status = Bushfire.STATUS_FINAL_AUTHORISED
         save_model(bushfire,update_fields,["reviewed_by","reviewed_date","report_status"])
         serialize_bushfire('review', action_desc, bushfire)
-        message = (True,"Remove review status for the bushfire({0}) successfully".format(bushfire.fire_number))
+        message = (True,"Removed review status for the bushfire({0}) successfully".format(bushfire.fire_number))
     elif action == 'archive':
         if bushfire.report_status < Bushfire.STATUS_FINAL_AUTHORISED:
             raise Exception("The report({0}) is not authorised.".format(bushfire.fire_number))
@@ -848,7 +848,7 @@ def update_status(request, bushfire, action,action_name="",update_fields=None,ac
             raise Exception("The report({0}) is not archived".format(bushfire.fire_number))
         bushfire.archive = False
         save_model(bushfire,update_fields,["archive"])
-        message = (True,"Remove archive status for the bushfire({0}) successfully".format(bushfire.fire_number))
+        message = (True,"Removed archive status for the bushfire({0}) successfully".format(bushfire.fire_number))
     elif action == "merge_reports":
         #merge bushfires into another bushfire
         #validate the parameters

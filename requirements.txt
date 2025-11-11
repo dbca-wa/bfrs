@@ -1,6 +1,7 @@
 # git+https://github.com/dbca-wa/dbca-utils@1.0.2
 git+https://github.com/dbca-wa/dbca-utils.git@1.1.1#egg=dbca-utils
 git+https://github.com/dbca-wa/appmonitor_client.git#egg=appmonitor_client
+git+https://github.com/dbca-wa/django-media-serv.git#egg=django_media_serv
 # psycopg2-binary==2.8.2
 psycopg2-binary==2.9.9
 # Django==1.10.7
