@@ -6,7 +6,7 @@ git+https://github.com/dbca-wa/django-media-serv.git#egg=django_media_serv
 psycopg2-binary==2.9.9
 # Django==1.10.7
 #Django==3.2.25
-Django==5.2.7
+Django~=5.2.1
 # django-extensions==1.7.6
 django-extensions==3.2.3
 django-dotenv==1.4.2
@@ -57,3 +57,4 @@ geojsplit==0.1.2
 
 openpyxl>=3.0.0
 setuptools==80.9.0
+
