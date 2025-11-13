@@ -87,6 +87,22 @@ class FieldParametersMixin(object):
                 kwargs[k] = v
         super(FieldParametersMixin,self).__init__(*args,**kwargs)
 
+class CustomNullBooleanField(forms.Field):
+    widget = basewidgets.CustomNullBooleanSelect
+
+    def to_python(self, value):
+        if value == '2':  # Yes
+            return True
+        elif value == '3':  # No
+            return False
+        return None  # --------
+
+    def prepare_value(self, value):
+        if value is True:
+            return '2'
+        elif value is False:
+            return '3'
+        return '1'
 
 class AliasFieldMixin(object):
     field_name = None

@@ -778,7 +778,7 @@ class BushfireDocumentListView(ExceptionMixin,LoginRequiredMixin,filter_views.Fi
         context['uploadform'] = DocumentCreateForm(instance=Document(upload_bushfire=self.bushfire))
         context['bushfireurl'] = get_bushfire_url(None,self.bushfire,("final","initial"))
         context['snapshot'] = False
-        context['filterform'] = DocumentFilterForm(initial=context["filter"].data)
+        context['filterform'] = DocumentFilterForm(data=context["filter"].data)
 
         context['filters'] = self._filters
         context['filters_without_order'] = self._filters_without_order

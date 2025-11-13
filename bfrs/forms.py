@@ -1402,6 +1402,8 @@ class DocumentCreateForm(DocumentUpdateForm):
 
 
 class DocumentFilterForm(baseforms.ModelForm):
+    archived = basefields.CustomNullBooleanField(required=False)
+
     def __init__(self,request=None,*args,**kwargs):
         super(DocumentFilterForm,self).__init__(*args,**kwargs)
         self.request = request
@@ -1412,13 +1414,12 @@ class DocumentFilterForm(baseforms.ModelForm):
         other_fields = ("archived","last_modified","search")
         field_classes = {
             "category":basefields.OverrideFieldFactory(Document,"category",required=False),
-            "archived":forms.NullBooleanField,
             "last_modified":forms.ChoiceField(choices=DOCUMENT_MODIFIED_CHOICES,required=False),
             "search":basefields.OverrideFieldFactory(Document,"search",field_class=forms.CharField,required=False,initial=""),
         }
         widgets = {
             "category":forms.Select(),
-            "archived":basewidgets.NullBooleanSelect(),
+            "archived":basewidgets.CustomNullBooleanSelect(),
             "search":forms.TextInput(attrs={"placeholder":'Search Tag,Custom Tag,creator.',"style":"width:300px"})
 
         }
