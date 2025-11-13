@@ -1339,26 +1339,18 @@ class DocumentUpdateForm(DocumentViewForm):
         widget=forms.ClearableFileInput(attrs={"class": "form-control-file"})
     )
 
-    def clean_custom_tag(self):
-        try:
-            if DocumentTag.check_other_tag(self.cleaned_data["tag"]):
-                value = self.cleaned_data.get("custom_tag")
-                if value:
-                    print('clean_custom_tag 1: {}'.format(value))
-                    return value
-                else:
-                    print('clean_custom_tag 2: {}'.format(self.cleaned_data))
-                    raise forms.ValidationError("Required.")
-            else:
-                print('clean_custom_tag 3a: {}'.format(self.cleaned_data))
-                print('clean_custom_tag 3b: {}'.format(DocumentTag.check_other_tag(self.cleaned_data["tag"])))
-                return None
-        except KeyError:    # Added by P Maslen 15-Jan-2021 to remove KeyError when uploading document
-            try:
-                print('clean_custom_tag 4: {}'.format(self.cleaned_data.get("custom_tag")))
-                return self.cleaned_data.get("custom_tag")
-            except:
-                return None
+
+    def clean(self):
+        cleaned_data = super().clean()
+        tag = cleaned_data.get("tag")
+        custom_tag = cleaned_data.get("custom_tag")
+
+        # Check if tag is "Other"
+        if DocumentTag.check_other_tag(tag) and not custom_tag:
+            self.add_error("custom_tag", "Custom tag is required when 'Other' is selected.")
+
+        return cleaned_data
+
 
     class Meta:
         model = Document
@@ -1373,21 +1365,8 @@ class DocumentUpdateForm(DocumentViewForm):
             "document": basefields.OverrideFieldFactory(
                 Document, "document", field_class=basefields.FileField, max_size=0
             ),
-            "tag": basefields.ChainedOtherOptionFieldFactory(
-                Document,
-                "tag",
-                ("custom_tag",),
-                "category",
-                "category",
-                other_option=lambda: lambda val: list(
-                    DocumentTag.objects.filter(
-                        name__iexact='other',
-                        category_id=getattr(val, 'id', val),
-                        archived=False
-                    )
-                ),
-                archived=False
-            ),
+             "tag":basefields.ChainedOtherOptionFieldFactory(Document,"tag",("custom_tag",),"category","category",other_option=lambda:lambda val:list(DocumentTag.other_tags),archived=False),
+            
         }
 
         widgets = {
