@@ -419,6 +419,19 @@ def DisplayWidgetFactory(widget_class):
     return cls
 
 
+class CustomNullBooleanSelect(forms.Select):
+    """
+    Custom Select Widget for NullBooleanField with choices:
+    --------, Yes, No
+    """
+    def __init__(self, attrs=None):
+        choices = [
+            ('1', '--------'),  # None
+            ('2', 'Yes'),       # True
+            ('3', 'No')         # False
+        ]
+        super().__init__(attrs, choices)
+
 class NullBooleanSelect(forms.widgets.NullBooleanSelect):
     """
     A Select Widget intended to be used with NullBooleanField.
