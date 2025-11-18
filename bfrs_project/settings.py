@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'crispy_forms',
     'crispy_bootstrap3',
     'django_filters',
+    'django_cron',
     'bfrs',
     'appmonitor_client',
 ]
