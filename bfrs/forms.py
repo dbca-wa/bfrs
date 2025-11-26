@@ -1338,7 +1338,11 @@ class DocumentUpdateForm(DocumentViewForm):
         required=False,
         widget=forms.ClearableFileInput(attrs={"class": "form-control-file"})
     )
-
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if "category" in self.fields:
+            self.fields["category"].queryset = DocumentCategory.objects.filter(archived=False)
 
     def clean(self):
         cleaned_data = super().clean()
@@ -1383,6 +1387,8 @@ class DocumentCreateForm(DocumentUpdateForm):
         else:
             kwargs["initial"] = {"document_created":timezone.now()}
         super(DocumentCreateForm,self).__init__(*args,**kwargs)
+        if "category" in self.fields:
+            self.fields["category"].queryset = DocumentCategory.objects.filter(archived=False)
 
     class Meta:
         model = Document
@@ -1407,6 +1413,8 @@ class DocumentFilterForm(baseforms.ModelForm):
     def __init__(self,request=None,*args,**kwargs):
         super(DocumentFilterForm,self).__init__(*args,**kwargs)
         self.request = request
+        if "category" in self.fields:
+            self.fields["category"].queryset = DocumentCategory.objects.filter(archived=False)
 
     class Meta:
         model = Document
@@ -1455,6 +1463,8 @@ class DocumentTagViewForm(baseforms.ModelForm):
     def __init__(self,request=None,*args,**kwargs):
         super(DocumentTagViewForm,self).__init__(*args,**kwargs)
         self.request = request
+        if "category" in self.fields:
+            self.fields["category"].queryset = DocumentCategory.objects.filter(archived=False)
 
 
     class Meta:

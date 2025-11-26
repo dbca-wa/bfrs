@@ -835,20 +835,20 @@ def update_status(request, bushfire, action,action_name="",update_fields=None,ac
         message = (True,"Removed review status for the bushfire({0}) successfully".format(bushfire.fire_number))
     elif action == 'archive':
         if bushfire.report_status < Bushfire.STATUS_FINAL_AUTHORISED:
-            raise Exception("The report({0}) is not authorised.".format(bushfire.fire_number))
+            raise Exception("The report ({0}) is not authorised.".format(bushfire.fire_number))
         elif bushfire.report_status >= Bushfire.STATUS_INVALIDATED:
-            raise Exception("The report({0}) is invalidated.".format(bushfire.fire_number))
+            raise Exception("The report ({0}) is invalidated.".format(bushfire.fire_number))
         elif bushfire.archive:
-            raise Exception("The report({0}) is already archived".format(bushfire.fire_number))
+            raise Exception("The report ({0}) is already archived".format(bushfire.fire_number))
         bushfire.archive = True
         save_model(bushfire,update_fields,["archive"])
-        message = (True,"Archive the bushfire({0}) successfully".format(bushfire.fire_number))
+        message = (True,"Archived the bushfire ({0}) successfully".format(bushfire.fire_number))
     elif action == 'unarchive':
         if not bushfire.archive:
-            raise Exception("The report({0}) is not archived".format(bushfire.fire_number))
+            raise Exception("The report ({0}) is not archived".format(bushfire.fire_number))
         bushfire.archive = False
         save_model(bushfire,update_fields,["archive"])
-        message = (True,"Removed archive status for the bushfire({0}) successfully".format(bushfire.fire_number))
+        message = (True,"Removed archive status for the bushfire ({0}) successfully".format(bushfire.fire_number))
     elif action == "merge_reports":
         #merge bushfires into another bushfire
         #validate the parameters

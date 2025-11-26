@@ -206,9 +206,12 @@ class BoundField(forms.boundfield.BoundField):
         if self.is_display and hasattr(self.field.widget, "prepare_initial_data"):
             return self.field.widget.prepare_initial_data(self.form, self.name)
 
-        data = getattr(self.form.instance, self.name, None)
+        # Prefer form.initial first, then instance, then field.initial
+        data = self.form.initial.get(self.name)
         if data is None:
-            data = self.form.initial.get(self.name, self.field.initial)
+            data = getattr(self.form.instance, self.name, None)
+            if data is None:
+                data = self.field.initial
 
         if callable(data):
             # if self._initial_value is not forms.boundfield.UNSET:
