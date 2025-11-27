@@ -1667,6 +1667,16 @@ class DocumentCategoryUpdateForm(DocumentCategoryBaseForm):
 
 
 class DocumentCategoryCreateForm(DocumentCategoryUpdateForm):
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Force editable tag formset for create
+        if self.request and self.request.method == "POST":
+            self.documenttag_formset = DocumentTagFormSet(data=self.request.POST, prefix='tag_fs')
+        else:
+            self.documenttag_formset = DocumentTagFormSet(instance=self.instance, prefix='tag_fs')
+
+
     class Meta:
         model = DocumentCategory
         fields = ('name',)
@@ -1678,7 +1688,7 @@ class DocumentCategoryCreateForm(DocumentCategoryUpdateForm):
         }
 
 
-class DocumentCategoryCreateForm(DocumentCategoryUpdateForm):
-    pass
+# class DocumentCategoryCreateForm(DocumentCategoryUpdateForm):
+#     pass
 
 
