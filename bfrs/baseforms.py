@@ -207,11 +207,14 @@ class BoundField(forms.boundfield.BoundField):
             return self.field.widget.prepare_initial_data(self.form, self.name)
 
         # Prefer form.initial first, then instance, then field.initial
-        data = self.form.initial.get(self.name)
-        if data is None:
+        if self.form_field_name == 'sss_data':
+            data = self.form.initial
+        if self.form_field_name == 'fire_number':
+            data = self.form.initial.get(self.form_field_name)
+        else:
             data = getattr(self.form.instance, self.name, None)
             if data is None:
-                data = self.field.initial
+                data = self.form.initial.get(self.name, self.field.initial)
 
         if callable(data):
             # if self._initial_value is not forms.boundfield.UNSET:
