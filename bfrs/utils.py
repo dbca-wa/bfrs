@@ -665,6 +665,7 @@ def update_status(request, bushfire, action,action_name="",update_fields=None,ac
         resp = send_email({
             "bushfire":bushfire, 
             "user_email":user_email,
+            "department": "POLICE",
             "to_email":settings.POLICE_EMAIL,
             "external_email":True,
             "request":request,
@@ -675,6 +676,22 @@ def update_status(request, bushfire, action,action_name="",update_fields=None,ac
             notification.append(('POLICE', 'Send POLICE email for the bushfire({0}) successfully.{1}'.format(bushfire.fire_number,resp[1])))
         else:
             errors.append(('POLICE', 'Faild to send POLICE email for the bushfire({0}).{1}'.format(bushfire.fire_number,resp[1])))
+        
+        if bushfire.investigation_req:
+            resp = send_email({
+                "bushfire":bushfire, 
+                "user_email":user_email,
+                "department": "DFES",
+                "to_email":settings.DFES_EMAIL,
+                "external_email":True,
+                "request":request,
+                "subject":'DFES Email - Initial Bushfire submitted {}, and an investigation is required - {}'.format(bushfire.fire_number, 'Yes' if bushfire.investigation_req else 'No'),
+                "template":"bfrs/email/police_email.html"
+            })
+            if resp[0]:
+                notification.append(('DFES', 'Send DFES investigation email for the bushfire({0}) successfully.{1}'.format(bushfire.fire_number,resp[1])))
+            else:
+                errors.append(('DFES', 'Faild to send DFES investigation email for the bushfire({0}).{1}'.format(bushfire.fire_number,resp[1])))
 
         if bushfire.park_trail_impacted:
             resp = send_email({
