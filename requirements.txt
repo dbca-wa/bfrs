@@ -25,7 +25,7 @@ django-reversion-compare==0.17.0
 django-smart-selects==1.7.2
 unicodecsv==0.14.1
 latloncalc==1.5.6
-lxml==5.0.0
+lxml==6.0.2
 pytz==2023.3
 xlwt==1.2.0
 pandas==2.2.3
@@ -37,5 +37,6 @@ geojsplit==0.1.2
 openpyxl>=3.0.0
 setuptools==80.9.0
 urllib3~=2.6.3
+
 
 
