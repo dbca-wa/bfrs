@@ -1334,10 +1334,10 @@ class DocumentViewForm(baseforms.ModelForm):
 
 
 class DocumentUpdateForm(DocumentViewForm):
-    document = forms.FileField(
-        required=False,
-        widget=forms.ClearableFileInput(attrs={"class": "form-control-file"})
-    )
+    # document = forms.FileField(
+    #     required=False,
+    #     #widget=forms.ClearableFileInput(attrs={"class": "form-control-file"})
+    # )
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -1377,6 +1377,7 @@ class DocumentUpdateForm(DocumentViewForm):
             "category": forms.Select(attrs={"style": "width:auto"}),
             "tag": None,
             "custom_tag": forms.TextInput(attrs={"style": "width:90%"}),
+            "document":basewidgets.HyperlinkDisplayFactory("bushfire:document_download",'document',basewidgets.TextDisplay,template='<a href="{0}"><i class="icon-download-alt"></i></a> {1}')(),
             "document_created": basewidgets.DatetimeInput(),
         }
 
