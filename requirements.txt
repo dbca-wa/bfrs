@@ -4,7 +4,7 @@ git+https://github.com/dbca-wa/appmonitor_client.git#egg=appmonitor_client
 git+https://github.com/dbca-wa/django-media-serv.git#egg=django_media_serv
 git+https://github.com/dbca-wa/django-cron#egg=django-cron
 psycopg2-binary==2.9.10
-Django~=5.2.1
+Django~=5.2.0
 django-extensions==3.2.3
 django-dotenv==1.4.2
 dj-database-url==0.5.0
@@ -30,12 +30,13 @@ pytz==2023.3
 xlwt==1.2.0
 pandas==2.2.3
 requests==2.32.5
-requests-ntlm==1.1.0
+requests-ntlm==1.3.0
 #New packages
 ipython==9.6.0
 geojsplit==0.1.2
 openpyxl>=3.0.0
-setuptools==80.9.0
+# setuptools==80.9.0
+setuptools==82.0.0
 urllib3~=2.6.3
 
 

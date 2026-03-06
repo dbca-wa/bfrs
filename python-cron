@@ -1,4 +1,5 @@
 */5 * * * * python /app/manage.py runcrons >> /app/logs/cronjob.log 2>&1
+10 9 * * *     cd /app && python manage.py appmonitor_check >> logs/appmonitor_check.log 2>&1
 
 # 18:15PM - (6:15PM) every evening - calculate_report_tables
 15 18 * * * python /app/manage.py calculate_report_tables >> logs/cronjob.log 2>&1
