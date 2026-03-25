@@ -1429,7 +1429,7 @@ class DocumentFilterForm(baseforms.ModelForm):
         widgets = {
             "category":forms.Select(),
             "archived":basewidgets.CustomNullBooleanSelect(),
-            "search":forms.TextInput(attrs={"placeholder":'Search Tag,Custom Tag,creator.',"style":"width:300px"})
+            "search":forms.TextInput(attrs={"placeholder":'Search Tag, Custom Tag, Creator.',"style":"width:300px"})
 
         }
 
