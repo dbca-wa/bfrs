@@ -62,6 +62,7 @@ COPY bfrs ./bfrs
 COPY bfrs_project ./bfrs_project
 COPY templates ./templates
 COPY python-cron ./
+COPY bfrs_region_update ./bfrs_region_update
 COPY cadastre_table_update ./cadastre_table_update
 COPY legislated_tenure_update ./legislated_tenure_update
 COPY dept_interest_update ./dept_interest_update
