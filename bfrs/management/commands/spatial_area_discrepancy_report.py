@@ -34,10 +34,10 @@ class Command(BaseCommand):
                 SELECT
                         id,
                         fire_number,
-                        ROUND((ST_Area(ST_Transform(fire_boundary, 900914)) / 10000)::numeric, 2) AS spatial_geometry_total_area,
+                        ROUND((ST_Area(ST_Transform(fire_boundary, 900914)) / 10000)::numeric, 2)::float AS spatial_geometry_total_area,
                         (
                                 SELECT
-                                        area
+                                        area::float 
                                 FROM
                                         bfrs_bushfire
                                 WHERE
@@ -45,7 +45,7 @@ class Command(BaseCommand):
                         ) AS final_fire_size_sss,
                         (
                                 SELECT
-                                        SUM(area)
+                                        SUM(area)::float
                                 FROM
                                         bfrs_areaburnt
                                 WHERE
@@ -53,7 +53,7 @@ class Command(BaseCommand):
                         ) AS bfrs_area_yellow,
                         (
                                 SELECT
-                                        SUM(area)
+                                        SUM(area)::float
                                 FROM
                                         reporting_areaburnt
                                 WHERE
@@ -73,10 +73,10 @@ class Command(BaseCommand):
         SELECT
                 id,
                 fire_number,
-                ROUND((ST_Area(ST_Transform(fire_boundary, 900914)) / 10000)::numeric, 2) AS spatial_geometry_total_area,
+                ROUND((ST_Area(ST_Transform(fire_boundary, 900914)) / 10000)::numeric, 2)::float AS spatial_geometry_total_area,
                 (
                         SELECT
-                                area
+                                area::float
                         FROM
                                 bfrs_bushfire
                         WHERE
@@ -84,7 +84,7 @@ class Command(BaseCommand):
                 ) AS final_fire_size_sss,
                 (
                         SELECT
-                                sum(area)
+                                sum(area)::float
                         FROM
                                 bfrs_areaburnt
                         WHERE
@@ -92,7 +92,7 @@ class Command(BaseCommand):
                 ) AS bfrs_area_yellow,
                 (
                         SELECT
-                                sum(area)
+                                sum(area)::float
                         FROM
                                 reporting_areaburnt
                         WHERE
