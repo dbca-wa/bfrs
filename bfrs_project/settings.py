@@ -139,6 +139,7 @@ INTERNAL_EMAIL = env('INTERNAL_EMAIL', ['dbca.wa.gov.au','dpaw.wa.gov.au'])
 STATE_SITUATION_EMAIL = env('STATE_SITUATION_EMAIL',  ['patrick.maslen@dbca.wa.gov.au'])
 
 PRODUCTION_EMAIL= env("PRODUCTION_EMAIL", default=False)
+SYSTEM_ID = env("SYSTEM_ID", default="S039")
 
 HARVEST_EMAIL_HOST = env('HARVEST_EMAIL_HOST', None)
 HARVEST_EMAIL_USER = env('HARVEST_EMAIL_USER', None)
