@@ -186,9 +186,10 @@
            <a href="{% url 'main' %}?bushfire_id={{bushfire.id}}&action=mark_reviewed" title="Mark Report as Reviewed"><span style="display:none">{{bushfire.report_status}}</span><i class="icon-thumbs-up"></i></a>
            {% endif %}
            {% endif %}
-
          {% endif %}
+         {% if is_dbca_user %}
            <a href="{% url "bushfire:bushfire_document_list" bushfire.id %}" title="Documents"><i class="icon-file"></i></a>
+         {% endif %}
          </td>
 
       </tr>

@@ -333,8 +333,6 @@ def sort_class(column,filters):
 
 @register.filter()
 def toggle_sort(column,filters):
-    print('---------------')
-    print(column, filters)
     sort_column,direction = get_order_by(filters)
 
     if sort_column is None:

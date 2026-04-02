@@ -138,6 +138,9 @@ FIRE_BOMBING_REQUEST_CC_EMAIL = env("FIRE_BOMBING_REQUEST_CC_EMAIL", [])
 INTERNAL_EMAIL = env('INTERNAL_EMAIL', ['dbca.wa.gov.au','dpaw.wa.gov.au'])
 STATE_SITUATION_EMAIL = env('STATE_SITUATION_EMAIL',  ['patrick.maslen@dbca.wa.gov.au'])
 
+PRODUCTION_EMAIL= env("PRODUCTION_EMAIL", default=False)
+SYSTEM_ID = env("SYSTEM_ID", default="S039")
+
 HARVEST_EMAIL_HOST = env('HARVEST_EMAIL_HOST', None)
 HARVEST_EMAIL_USER = env('HARVEST_EMAIL_USER', None)
 HARVEST_EMAIL_PASSWORD = env('HARVEST_EMAIL_PASSWORD', None)
@@ -205,7 +208,7 @@ CACHES = {
 CSRF_TRUSTED_ORIGINS_STRING = decouple.config("CSRF_TRUSTED_ORIGINS", default='[]')
 CSRF_TRUSTED_ORIGINS = json.loads(str(CSRF_TRUSTED_ORIGINS_STRING))
 FILE_UPLOAD_PERMISSIONS = None
-
+EMAIL_BACKEND = 'wagov_utils.components.utils.email_backend.EmailBackend'
 
 # Logging settings - log to stdout/stderr
 LOGGING = {

@@ -46,6 +46,7 @@ from bfrs.utils import (breadcrumbs_li,
         update_status, serialize_bushfire,
         is_external_user, can_maintain_data, refresh_gokart,
         get_missing_mandatory_fields,get_bushfire_url,
+        is_dbca_user,
     )
 from bfrs.reports import BushfireReport, MinisterialReport, export_outstanding_fires, calculate_report_tables
 from django.db import IntegrityError, transaction
@@ -128,6 +129,16 @@ class ExceptionMixin(object):
             traceback.print_exc()
 
             return TemplateResponse(request, self.template_exception, context=context)
+
+
+class DBCAUserRequiredMixin(object):
+    """
+    Restrict access to DBCA users only.
+    """
+    def dispatch(self, request, *args, **kwargs):
+        if not is_dbca_user(request.user):
+            raise PermissionDenied("Only DBCA users can access documents.")
+        return super(DBCAUserRequiredMixin, self).dispatch(request, *args, **kwargs)
 
 class ProfileView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin, generic.FormView):
     model = Profile
@@ -408,14 +419,16 @@ class BushfireInitialSnapshotView(ExceptionMixin,FormRequestMixin,NextUrlMixin,L
     def get_context_data(self, **kwargs):
         context = super(BushfireInitialSnapshotView, self).get_context_data(**kwargs)
         self.object = self.get_object()
-
+        link_actions = [(self.get_success_url(),'Return','btn-danger')]
+        if is_dbca_user(self.request.user):
+            link_actions.insert(0,(reverse("bushfire:bushfire_document_list",kwargs={"bushfireid":self.object.id}),'Documents','btn-info'))
         context.update({
             'initial': True,
             'form': BushfireSnapshotViewForm(instance=self.object.initial_snapshot),
             'damages': self.object.initial_snapshot.damage_snapshot.exclude(snapshot_type=SNAPSHOT_FINAL) if hasattr(self.object.initial_snapshot, 'damage_snapshot') else None,
             'injuries': self.object.initial_snapshot.injury_snapshot.exclude(snapshot_type=SNAPSHOT_FINAL) if hasattr(self.object.initial_snapshot, 'injury_snapshot') else None,
             'tenures_burnt': self.object.initial_snapshot.tenures_burnt_snapshot.exclude(snapshot_type=SNAPSHOT_FINAL).order_by('id') if hasattr(self.object.initial_snapshot, 'tenures_burnt_snapshot') else None,
-            'link_actions' : [(reverse("bushfire:bushfire_document_list",kwargs={"bushfireid":self.object.id}),'Documents','btn-info'),(self.get_success_url(),'Return','btn-danger')],
+            'link_actions' : link_actions,
         })
         return context
 
@@ -430,7 +443,9 @@ class BushfireFinalSnapshotView(ExceptionMixin,FormRequestMixin,NextUrlMixin,Log
         context = super(BushfireFinalSnapshotView, self).get_context_data(**kwargs)
         self.object = self.get_object()
 
-        link_actions = [(reverse("bushfire:bushfire_document_list",kwargs={"bushfireid":self.object.id}),'Documents','btn-info'),(self.get_success_url(),'Return','btn-danger')]
+        link_actions = [(self.get_success_url(),'Return','btn-danger')]
+        if is_dbca_user(self.request.user):
+            link_actions.insert(0,(reverse("bushfire:bushfire_document_list",kwargs={"bushfireid":self.object.id}),'Documents','btn-info'))
         if can_maintain_data(self.request.user):
             link_actions.insert(0,(reverse('bushfire:bushfire_final',kwargs={"pk":self.object.id}) ,'Edit Authorised','btn-success'))
         context.update({
@@ -680,7 +695,10 @@ class BushfireUpdateView(ExceptionMixin,FormRequestMixin,NextUrlMixin,LoginRequi
         })
         
         if self.object and self.object.id:
-            context['link_actions'] = [(reverse("bushfire:bushfire_document_list",kwargs={"bushfireid":self.object.id}),'Documents','btn-info'),(self.get_success_url(),'Cancel','btn-danger')]
+            link_actions = [(self.get_success_url(),'Cancel','btn-danger')]
+            if is_dbca_user(self.request.user):
+                link_actions.insert(0,(reverse("bushfire:bushfire_document_list",kwargs={"bushfireid":self.object.id}),'Documents','btn-info'))
+            context['link_actions'] = link_actions
         else:
             context['link_actions'] = [(self.get_success_url(),'Cancel','btn-danger')]
 
@@ -725,7 +743,7 @@ class ReportView(ExceptionMixin,FormView):
         return super(ReportView, self).form_valid(form)
 
 
-class BushfireDocumentListView(ExceptionMixin,LoginRequiredMixin,filter_views.FilterView):
+class BushfireDocumentListView(ExceptionMixin,LoginRequiredMixin,DBCAUserRequiredMixin,filter_views.FilterView):
     """
     View for bushfire's document list
     """
@@ -796,7 +814,7 @@ class BushfireDocumentListView(ExceptionMixin,LoginRequiredMixin,filter_views.Fi
     def get_success_url(self):
         return reverse('bushfire:bushfire_document_list',kwargs={"bushfireid":self.bushfire.id})
 
-class BushfireDocumentUploadView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin,FormRequestMixin,CreateView):
+class BushfireDocumentUploadView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin,DBCAUserRequiredMixin,FormRequestMixin,CreateView):
     """
     View for uploading a document
     """
@@ -840,7 +858,7 @@ class BushfireDocumentUploadView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin,
     def _get_success_url(self):
         return reverse('bushfire:bushfire_document_list',kwargs={"bushfireid":self.bushfire.id})
 
-class DocumentDownloadView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin,FormView):
+class DocumentDownloadView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin,DBCAUserRequiredMixin,FormView):
     """
     View for downloading a document
     """
@@ -855,7 +873,7 @@ class DocumentDownloadView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin,FormVi
     def _get_success_url(self):
         return reverse('bushfire:bushfire_document_list',kwargs={"bushfireid":self.document.bushfire.id})
 
-class DocumentDeleteView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin,FormRequestMixin,UpdateView):
+class DocumentDeleteView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin,DBCAUserRequiredMixin,FormRequestMixin,UpdateView):
     """
     View for deleting a document
     """
@@ -887,7 +905,7 @@ class DocumentDeleteView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin,FormRequ
     def _get_success_url(self):
         return reverse('bushfire:bushfire_document_list',kwargs={"bushfireid":self.object.bushfire.id})
 
-class DocumentArchiveView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin,FormRequestMixin,UpdateView):
+class DocumentArchiveView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin,DBCAUserRequiredMixin,FormRequestMixin,UpdateView):
     """
     View for archiving a document
     """
@@ -923,7 +941,7 @@ class DocumentArchiveView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin,FormReq
     def _get_success_url(self):
         return reverse('bushfire:bushfire_document_list',kwargs={"bushfireid":self.object.bushfire.id})
 
-class DocumentUnarchiveView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin,FormRequestMixin,UpdateView):
+class DocumentUnarchiveView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin,DBCAUserRequiredMixin,FormRequestMixin,UpdateView):
     """
     View for unarchiving a document
     """
@@ -959,7 +977,7 @@ class DocumentUnarchiveView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin,FormR
     def _get_success_url(self):
         return reverse('bushfire:bushfire_document_list',kwargs={"bushfireid":self.object.bushfire.id})
 
-class DocumentUpdateView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin,FormRequestMixin,UpdateView):
+class DocumentUpdateView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin,DBCAUserRequiredMixin,FormRequestMixin,UpdateView):
     """
     View for updating a document
     """
@@ -988,7 +1006,7 @@ class DocumentUpdateView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin,FormRequ
     def _get_success_url(self):
         return reverse('bushfire:bushfire_document_list',kwargs={"bushfireid":self.object.bushfire.id})
 
-class DocumentDetailView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin,FormRequestMixin,UpdateView):
+class DocumentDetailView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin,DBCAUserRequiredMixin,FormRequestMixin,UpdateView):
     """
     View a document
     """
@@ -1013,7 +1031,7 @@ class DocumentDetailView(ExceptionMixin,NextUrlMixin,LoginRequiredMixin,FormRequ
     def _get_success_url(self):
         return reverse('bushfire:bushfire_document_list',kwargs={"bushfireid":self.object.bushfire.id})
 
-class DocumentCategoryListView(ExceptionMixin,LoginRequiredMixin,ListView):
+class DocumentCategoryListView(ExceptionMixin,LoginRequiredMixin,DBCAUserRequiredMixin,ListView):
     """
     View for document category list
     """
@@ -1024,7 +1042,7 @@ class DocumentCategoryListView(ExceptionMixin,LoginRequiredMixin,ListView):
         context = super(DocumentCategoryListView,self).get_context_data(**kwargs)
         return context
 
-class DocumentCategoryCreateView(ExceptionMixin,LoginRequiredMixin,FormRequestMixin,CreateView):
+class DocumentCategoryCreateView(ExceptionMixin,LoginRequiredMixin,DBCAUserRequiredMixin,FormRequestMixin,CreateView):
     """
     View for creating document category
     """
@@ -1060,7 +1078,7 @@ class DocumentCategoryCreateView(ExceptionMixin,LoginRequiredMixin,FormRequestMi
     def get_success_url(self):
         return reverse('bushfire:documentcategory_list')
 
-class DocumentCategoryUpdateView(ExceptionMixin,LoginRequiredMixin,FormRequestMixin,UpdateView):
+class DocumentCategoryUpdateView(ExceptionMixin,LoginRequiredMixin,DBCAUserRequiredMixin,FormRequestMixin,UpdateView):
     """
     View for updating document category
     """
@@ -1095,7 +1113,7 @@ class DocumentCategoryUpdateView(ExceptionMixin,LoginRequiredMixin,FormRequestMi
     def get_success_url(self):
         return reverse('bushfire:documentcategory_list')
 
-class DocumentCategoryDetailView(ExceptionMixin,LoginRequiredMixin,FormRequestMixin,UpdateView):
+class DocumentCategoryDetailView(ExceptionMixin,LoginRequiredMixin,DBCAUserRequiredMixin,FormRequestMixin,UpdateView):
     """
     View for viewing document category
     """
