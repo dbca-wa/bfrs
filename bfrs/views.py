@@ -46,6 +46,7 @@ from bfrs.utils import (breadcrumbs_li,
         update_status, serialize_bushfire,
         is_external_user, can_maintain_data, refresh_gokart,
         get_missing_mandatory_fields,get_bushfire_url,
+        is_dbca_user,
     )
 from bfrs.reports import BushfireReport, MinisterialReport, export_outstanding_fires, calculate_report_tables
 from django.db import IntegrityError, transaction
@@ -408,14 +409,16 @@ class BushfireInitialSnapshotView(ExceptionMixin,FormRequestMixin,NextUrlMixin,L
     def get_context_data(self, **kwargs):
         context = super(BushfireInitialSnapshotView, self).get_context_data(**kwargs)
         self.object = self.get_object()
-
+        link_actions = [(self.get_success_url(),'Return','btn-danger')]
+        if is_dbca_user(self.request.user):
+            link_actions.insert(0,(reverse("bushfire:bushfire_document_list",kwargs={"bushfireid":self.object.id}),'Documents','btn-info'))
         context.update({
             'initial': True,
             'form': BushfireSnapshotViewForm(instance=self.object.initial_snapshot),
             'damages': self.object.initial_snapshot.damage_snapshot.exclude(snapshot_type=SNAPSHOT_FINAL) if hasattr(self.object.initial_snapshot, 'damage_snapshot') else None,
             'injuries': self.object.initial_snapshot.injury_snapshot.exclude(snapshot_type=SNAPSHOT_FINAL) if hasattr(self.object.initial_snapshot, 'injury_snapshot') else None,
             'tenures_burnt': self.object.initial_snapshot.tenures_burnt_snapshot.exclude(snapshot_type=SNAPSHOT_FINAL).order_by('id') if hasattr(self.object.initial_snapshot, 'tenures_burnt_snapshot') else None,
-            'link_actions' : [(reverse("bushfire:bushfire_document_list",kwargs={"bushfireid":self.object.id}),'Documents','btn-info'),(self.get_success_url(),'Return','btn-danger')],
+            'link_actions' : link_actions,
         })
         return context
 
@@ -430,7 +433,9 @@ class BushfireFinalSnapshotView(ExceptionMixin,FormRequestMixin,NextUrlMixin,Log
         context = super(BushfireFinalSnapshotView, self).get_context_data(**kwargs)
         self.object = self.get_object()
 
-        link_actions = [(reverse("bushfire:bushfire_document_list",kwargs={"bushfireid":self.object.id}),'Documents','btn-info'),(self.get_success_url(),'Return','btn-danger')]
+        link_actions = [(self.get_success_url(),'Return','btn-danger')]
+        if is_dbca_user(self.request.user):
+            link_actions.insert(0,(reverse("bushfire:bushfire_document_list",kwargs={"bushfireid":self.object.id}),'Documents','btn-info'))
         if can_maintain_data(self.request.user):
             link_actions.insert(0,(reverse('bushfire:bushfire_final',kwargs={"pk":self.object.id}) ,'Edit Authorised','btn-success'))
         context.update({
@@ -680,7 +685,10 @@ class BushfireUpdateView(ExceptionMixin,FormRequestMixin,NextUrlMixin,LoginRequi
         })
         
         if self.object and self.object.id:
-            context['link_actions'] = [(reverse("bushfire:bushfire_document_list",kwargs={"bushfireid":self.object.id}),'Documents','btn-info'),(self.get_success_url(),'Cancel','btn-danger')]
+            link_actions = [(self.get_success_url(),'Cancel','btn-danger')]
+            if is_dbca_user(self.request.user):
+                link_actions.insert(0,(reverse("bushfire:bushfire_document_list",kwargs={"bushfireid":self.object.id}),'Documents','btn-info'))
+            context['link_actions'] = link_actions
         else:
             context['link_actions'] = [(self.get_success_url(),'Cancel','btn-danger')]
 

@@ -91,6 +91,13 @@ def is_external_user(user):
     except:
         return True
 
+def is_dbca_user(user):
+    """ User group check added to get DBCA users """
+    try:
+        return user.email.split('@')[1].lower() in settings.INTERNAL_EMAIL and user.groups.filter(name__in=['Users']).exists()
+    except:
+        return False
+
 def model_to_dict(instance, include=[], exclude=[]):
     fields = instance._meta.concrete_fields
     if include:
