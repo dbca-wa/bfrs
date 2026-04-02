@@ -213,6 +213,7 @@ class ProfileForm(HelperModelForm):
     
     def __init__(self, *args, **kwargs):
         super(ProfileForm, self).__init__(*args, **kwargs)
+        self.fields['region'].queryset = Region.objects.filter(dbca=True)
         self.fields['region'].widget.attrs.update({'class': 'form-control', 'style': 'width:200;'})
         self.fields['district'].widget.attrs.update({'class': 'form-control', 'style': 'width:200;'})
 
