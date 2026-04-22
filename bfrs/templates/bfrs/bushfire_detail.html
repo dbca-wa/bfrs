@@ -45,7 +45,7 @@
   {% if form.errors %}
       <h1 class="errornote">
         <p>Form Errors</p>
-        <button type="button" class="close" data-dismiss="alert">×</button>
+        <button type="button" class="close" data-bs-dismiss="alert">×</button>
         <ul>
         {% for field in form %} 
             {% if field.errors %}
@@ -64,7 +64,7 @@
   {% if not object.damage_unknown and damage_formset.errors|check_errors %}
       <h1 class="errornote">
         <p>Damage formset Errors</p>
-        <button type="button" class="close" data-dismiss="alert">×</button>
+        <button type="button" class="close" data-bs-dismiss="alert">×</button>
         <ul>
         {% for damage_form in form.damage_formset %} 
           {% for field in damage_form %} 
@@ -85,7 +85,7 @@
   {% if not object.injury_unknown and injury_formset.errors|check_errors %}
       <h1 class="errornote">
         <p>Injury formset Errors</p>
-        <button type="button" class="close" data-dismiss="alert">×</button>
+        <button type="button" class="close" data-bs-dismiss="alert">×</button>
         <ul>
         {% for injury_form in injury_formset %} 
           {% for field in injury_form %} 
@@ -252,7 +252,7 @@
   <div class="panel-default">
     <div role="tab" id="pn_fire_behaviour">
       <h4 class="panel-title">
-        <a role="button" data-toggle="collapse" data-parent="#accordion" href="#fire_behaviour" aria-expanded="true" aria-controls="fire_behaviour">
+        <a role="button" data-bs-toggle="collapse" data-bs-parent="#accordion" href="#fire_behaviour" aria-expanded="true" aria-controls="fire_behaviour">
           <div style="background: black; color: white; text-align: left; font-size: 16px; padding: 12px;" > FIRE REPORT (Click to expand/collapse)</div>
         </a>
       </h4>
