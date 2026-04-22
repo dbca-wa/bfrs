@@ -34,8 +34,8 @@
 
 <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true" style="margin-bottom:10px">
   <div class="card border-primary">
-    <a role="button" data-bs-toggle="collapse" data-bs-parent="#accordion" href="#filter" aria-expanded="true" aria-controls="filter"><button><i class="icon-filter icon-white"></i> Filter tools</button></a>
-    <button class="btn btn-primary btn-info" type="button" style="float:right;margin-right:15px" onclick="window.location='{% url "bushfire:bushfire_document_upload"  bushfireid=bushfire.id %}'"><i class="icon-upload-alt"></i> Add Document</button>
+    <a role="button" data-bs-toggle="collapse" data-bs-parent="#accordion" href="#filter" aria-expanded="true" aria-controls="filter"><button><i class="bi bi-funnel text-white"></i> Filter tools</button></a>
+    <button class="btn btn-primary btn-info" type="button" style="float:right;margin-right:15px" onclick="window.location='{% url "bushfire:bushfire_document_upload"  bushfireid=bushfire.id %}'"><i class="bi bi-upload"></i> Add Document</button>
     <div id="filter" class="collapse show" role="tabpanel" aria-labelledby="pn_filter">
       <div class="card-body">
         <!--<form action="" method="get">-->
@@ -66,7 +66,7 @@
                     </div>
 
                     <div class="filter-item filter-button" style="align-self: flex-end; margin-bottom: 4px;">
-                      <button type="submit"><i class="icon-refresh icon-white"></i> Update</button>
+                      <button type="submit"><i class="bi bi-arrow-clockwise text-white"></i> Update</button>
                     </div>
                   </div>
                 </td>
@@ -122,14 +122,14 @@
           <td>{{doc.created | date:"Y-m-d H:i:s"}}</td>
           <td>
               {% if not doc.archived %}
-              <a style="margin-left:10px" href="{% url "bushfire:document_edit" doc.id %}" title="Edit Document"><i class="icon-edit"></i></a>
-              <a style="margin-left:10px" href="{% url "bushfire:document_archive" doc.id %}" title="Archive Document"><i class="icon-folder-close"></i></a>
+              <a style="margin-left:10px" href="{% url "bushfire:document_edit" doc.id %}" title="Edit Document"><i class="bi bi-pencil"></i></a>
+              <a style="margin-left:10px" href="{% url "bushfire:document_archive" doc.id %}" title="Archive Document"><i class="bi bi-folder"></i></a>
               {% else %}
-              <a style="margin-left:10px" href="{% url "bushfire:document_view" doc.id %}" title="View Document"><i class="icon-eye-open"></i></a>
-              <a style="margin-left:10px" href="{% url "bushfire:document_unarchive" doc.id %}" title="Unarchive Document"><i class="icon-folder-open"></i></a>
+              <a style="margin-left:10px" href="{% url "bushfire:document_view" doc.id %}" title="View Document"><i class="bi bi-eye"></i></a>
+              <a style="margin-left:10px" href="{% url "bushfire:document_unarchive" doc.id %}" title="Unarchive Document"><i class="bi bi-folder2-open"></i></a>
               {% endif %}
-              <a style="margin-left:10px" href="{% url "bushfire:document_download" doc.id  %}" title="Download Document"><i class="icon-download-alt"></i></a>
-              <a style="margin-left:10px" href="{% url "bushfire:document_delete" doc.id %}" title="Delete Document"><i class="icon-trash"></i></a>
+              <a style="margin-left:10px" href="{% url "bushfire:document_download" doc.id  %}" title="Download Document"><i class="bi bi-download"></i></a>
+              <a style="margin-left:10px" href="{% url "bushfire:document_delete" doc.id %}" title="Delete Document"><i class="bi bi-trash"></i></a>
           </td>
       </tr>
     {% empty %}
