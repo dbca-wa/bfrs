@@ -224,14 +224,14 @@ $('#id_arson_squad_notified_1').on('change', function() {
 $('.collapse').collapse()
 
 $('.close-all').click(function(){
-  $('.panel-collapse.in').collapse('hide');
+  $('.panel-collapse.show').collapse('hide');
   // toggle the buttons also
   $(".close-all").hide();
   $(".open-all").show();
 });
 
 $('.open-all').click(function(){
-  $('.panel-collapse:not(".in")').collapse('show');
+  $('.panel-collapse:not(".show")').collapse('show');
   // toggle the buttons also
   $(".close-all").show();
   $(".open-all").hide();
