@@ -34,7 +34,7 @@
     .myCollapse {
             display: none;
     }
-    .myCollapse.in {
+    .myCollapse.show {
             display: table-row;
     }
 
@@ -132,11 +132,9 @@
 
 {% block extrastyle %}
     {{ block.super }}
-    <link rel="stylesheet" href="{% static "twitter-bootstrap/3.4.1/css/bootstrap.min.css" %}">
 {% endblock %}
 
 {% block extra_js %}
-  <script src="{% static 'twitter-bootstrap/3.4.1/js/bootstrap.min.js' %}"></script>
   <script src="{% static 'js/moment.js' %}"></script>
   <script src="{% static 'smart-selects/admin/js/chainedfk.js' %}"></script>
   <script src="{% settings_value "SSS_URL" %}/dist/static/js/gokart.js"></script>
@@ -156,19 +154,31 @@
    /* END - GoKart section */
 
     function growl(response) {
-        $.growl(response.message, {
-            type: response.type,
-            delay: 10000,
-            allow_dismiss: true,
-            animate: {
-                enter: 'animated bounceIn',
-                exit: 'animated bounceOut'
-            },
-            offset: {
-                x: 100,
-                y: 20
-            }
-        });
+        var toastContainer = document.getElementById('bfrs-toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.id = 'bfrs-toast-container';
+            toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+            toastContainer.style.zIndex = '1100';
+            document.body.appendChild(toastContainer);
+        }
+        var typeClass = {
+            'success': 'text-bg-success',
+            'danger':  'text-bg-danger',
+            'warning': 'text-bg-warning',
+            'info':    'text-bg-info'
+        }[response.type] || 'text-bg-secondary';
+        var toastEl = document.createElement('div');
+        toastEl.className = 'toast align-items-center ' + typeClass + ' border-0';
+        toastEl.setAttribute('role', 'alert');
+        toastEl.setAttribute('aria-live', 'assertive');
+        toastEl.setAttribute('aria-atomic', 'true');
+        toastEl.innerHTML = '<div class="d-flex"><div class="toast-body">' + response.message + '</div>' +
+            '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button></div>';
+        toastContainer.appendChild(toastEl);
+        var toast = new bootstrap.Toast(toastEl, { delay: 10000 });
+        toast.show();
+        toastEl.addEventListener('hidden.bs.toast', function () { toastEl.remove(); });
     };
 
 </script>
