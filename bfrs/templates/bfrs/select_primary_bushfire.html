@@ -16,13 +16,13 @@
 {% block content %}
 <script>
     function toggle(target,elementId){
-        if ($(target).hasClass('icon-chevron-down')) {
-            $(target).removeClass('icon-chevron-down')
-            $(target).addClass('icon-chevron-right')
+        if ($(target).hasClass('bi bi-chevron-down')) {
+            $(target).removeClass('bi bi-chevron-down')
+            $(target).addClass('bi bi-chevron-right')
             $("#" + elementId).hide()
         } else {
-            $(target).removeClass('icon-chevron-right')
-            $(target).addClass('icon-chevron-down')
+            $(target).removeClass('bi bi-chevron-right')
+            $(target).addClass('bi bi-chevron-down')
             $("#" + elementId).show()
         }
 
@@ -61,7 +61,7 @@
             </span>
             <div style="float:right">
 
-            {{form.report_status.as_widget}}  <i style="padding-left:30px;cursor:pointer" onclick="toggle(this,'id_body_{{form.instance.id}}')" class="icon-chevron-down" ></i></span>
+            {{form.report_status.as_widget}}  <i style="padding-left:30px;cursor:pointer" onclick="toggle(this,'id_body_{{form.instance.id}}')" class="bi bi-chevron-down" ></i></span>
 
             </div>
           </th>
