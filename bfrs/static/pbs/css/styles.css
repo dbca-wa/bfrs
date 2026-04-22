@@ -245,7 +245,7 @@ h1#site-title, div#site-title {
   box-shadow: none;
 }
 
-.navbar-fixed-top > .navbar-inner a.top-header-active {
+.navbar-fixed-top a.top-header-active {
     background-color: #CCCCCC;
     color: #000000;
     text-shadow: none;
@@ -256,11 +256,10 @@ div.navbar-fixed-bottom {
     height: 36px;
 }
 
-#mainnav .navbar-inner {
+#mainnav .navbar {
   background: none repeat scroll 0 0 #3580CA;
   color: #FFFFFF;
   margin-bottom: 0;
-  filter: none;
 }
 
 #mainnav .navbar .nav > li > a {
@@ -277,16 +276,7 @@ div.navbar-fixed-bottom {
   margin: 0;
 }
 
-.navbar .nav li.dropdown > .dropdown-toggle .caret,
-.navbar .nav li.dropdown > .dropdown-toggle .caret,
-.navbar .nav li.dropdown > a:hover .caret,
-.navbar .nav li.dropdown > a:focus .caret,
-.navbar .nav li.dropdown.open > .dropdown-toggle .caret,
-.navbar .nav li.dropdown.active > .dropdown-toggle .caret,
-.navbar .nav li.dropdown.open.active > .dropdown-toggle .caret {
-  border-bottom-color: #FFFFFF;
-  border-top-color: #FFFFFF;
-}
+/* Bootstrap 5 dropdown carets are handled via CSS; no border overrides needed */
 
 .collapse, .expand {
   margin-left: 5px;
