@@ -52,7 +52,7 @@ a, a:hover, a:active {
   .page-container {
     padding: 0px 20px; }
 
-  #in-nav ul.pull-right {
+  #in-nav ul.float-end {
     top: 0px !important; }
 
   .message-sidebar {
@@ -103,7 +103,7 @@ a, a:hover, a:active {
     #in-sub-nav li a:hover, #in-sub-nav li a.active {
       background-color: #555;
       text-decoration: none; }
-    #in-sub-nav li span.label.pull-right {
+    #in-sub-nav li span.label.float-end {
       position: relative;
       top: 24px;
       right: 14px; }
