@@ -41,7 +41,7 @@
 {% if form.errors %}
     <p>Form Errors</p>
     <div class="alert alert-error">
-        <button type="button" class="close" data-bs-dismiss="alert">×</button>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         {% for field in form %} 
             {% if field.errors %}
             <font color="red"><li>{{ field.label }}: {{ field.errors|striptags }}</li></font>

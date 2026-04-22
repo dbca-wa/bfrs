@@ -47,8 +47,8 @@
 {% include "bfrs/inc/bushfire_filter.html" %}
 
 {% if errors %}
-<div style="margin-bottom:10px" class="alert alert-danger fade in">
-    <a href="#" class="close" data-bs-dismiss="alert">&times;</a>
+<div style="margin-bottom:10px" class="alert alert-danger fade show">
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     <ul>
     {% for error in errors %}
         <li>{{error}}</li>

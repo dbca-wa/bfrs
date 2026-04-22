@@ -45,7 +45,7 @@
   {% if form.errors %}
       <h1 class="errornote">
         <p>Form Errors</p>
-        <button type="button" class="close" data-bs-dismiss="alert">×</button>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         <ul>
         {% for field in form %} 
             {% if field.errors %}
@@ -64,7 +64,7 @@
   {% if not object.damage_unknown and damage_formset.errors|check_errors %}
       <h1 class="errornote">
         <p>Damage formset Errors</p>
-        <button type="button" class="close" data-bs-dismiss="alert">×</button>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         <ul>
         {% for damage_form in form.damage_formset %} 
           {% for field in damage_form %} 
@@ -85,7 +85,7 @@
   {% if not object.injury_unknown and injury_formset.errors|check_errors %}
       <h1 class="errornote">
         <p>Injury formset Errors</p>
-        <button type="button" class="close" data-bs-dismiss="alert">×</button>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         <ul>
         {% for injury_form in injury_formset %} 
           {% for field in injury_form %} 
