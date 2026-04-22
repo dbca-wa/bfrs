@@ -33,11 +33,11 @@
 </table>
 
 <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true" style="margin-bottom:10px">
-  <div class="panel-primary">
+  <div class="card border-primary">
     <a role="button" data-bs-toggle="collapse" data-bs-parent="#accordion" href="#filter" aria-expanded="true" aria-controls="filter"><button><i class="icon-filter icon-white"></i> Filter tools</button></a>
     <button class="btn btn-primary btn-info" type="button" style="float:right;margin-right:15px" onclick="window.location='{% url "bushfire:bushfire_document_upload"  bushfireid=bushfire.id %}'"><i class="icon-upload-alt"></i> Add Document</button>
-    <div id="filter" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pn_filter">
-      <div class="panel-body">
+    <div id="filter" class="collapse show" role="tabpanel" aria-labelledby="pn_filter">
+      <div class="card-body">
         <!--<form action="" method="get">-->
         <form id="bushfire_document_filter" action="" method="get">
           <table class="table table-bordered table-striped table-condensed" style="margin-bottom:0px;">
