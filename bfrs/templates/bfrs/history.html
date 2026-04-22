@@ -30,7 +30,7 @@
 <div class="navbar navbar-fixed-bottom">
   <div class="navbar-inner">
     <div class="container">
-      <p class="pull-right">
+      <p class="float-end">
         {% if object.report_status < object.STATUS_INITIAL_AUTHORISED %}
           <a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" class="btn btn-success">Return</a>
         {% else %}
