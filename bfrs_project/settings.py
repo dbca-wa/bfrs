@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'smart_selects',
     'django_extensions',
     'crispy_forms',
-    'crispy_bootstrap3',
+    'crispy_bootstrap5',
     'django_filters',
     'django_cron',
     'bfrs',
@@ -94,7 +94,8 @@ SSS_CERTIFICATE_VERIFY = env('SSS_CERTIFICATE_VERIFY', True)
 PBS_URL = env('PBS_URL', 'https://pbs.dpaw.wa.gov.au/')
 URL_SSO = env('URL_SSO', 'https://oim.dpaw.wa.gov.au/api/users/')
 DATA_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024 * 20  # 20 MB
-CRISPY_TEMPLATE_PACK = 'bootstrap3'
+CRISPY_ALLOWED_TEMPLATE_PACKS = 'bootstrap5'
+CRISPY_TEMPLATE_PACK = 'bootstrap5'
 HISTORICAL_CAUSE_CSV_FILE = env('HISTORICAL_CAUSE_CSV_FILE', '')
 ADD_REVERSION_ADMIN = True
 LOGIN_URL = '/login/'
