@@ -9,11 +9,13 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/manage.py",
+            "python": "${workspaceFolder}/venv/bin/python",
             "args": [
                 "runserver",
                 "0.0.0.0:9191"
             ],
-            "django": true
+            "django": true,
+            "justMyCode": false
         },
     ]
 }
