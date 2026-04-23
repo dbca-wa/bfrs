@@ -1,9 +1,7 @@
 <div>
     <div id="id_documenttag" class="row g-0 formset documenttag-formset">
         <table class="table_fs" border="0">
-            <tr>
-              <th></th>
-              {% for documenttag_form in form.documenttag_formset %}
+            {% for documenttag_form in form.documenttag_formset %}
               <tr>
                 <td>{{ documenttag_form.name }}</td>
                 <td style="width:0; padding:0; border:0; overflow:hidden;">
