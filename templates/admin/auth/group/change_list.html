@@ -13,9 +13,9 @@
 {% endblock %}
 
 {% block pretitle %}
-<ul class="nav nav-tabs">
-  <li><a href="{% url 'admin:auth_user_changelist' %}"><i class="bi bi-person"></i>Users</a></li>
-  <li class="active"><a href="{% url 'admin:auth_group_changelist' %}"><i class="bi bi-people"></i>Groups</a></li>
+<ul class="nav nav-tabs mb-2">
+  <li class="nav-item"><a class="nav-link" href="{% url 'admin:auth_user_changelist' %}"><i class="bi bi-person"></i> Users</a></li>
+  <li class="nav-item"><a class="nav-link active" href="{% url 'admin:auth_group_changelist' %}"><i class="bi bi-people"></i> Groups</a></li>
 </ul>
 {% endblock %}
 

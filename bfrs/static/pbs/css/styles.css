@@ -1,6 +1,8 @@
 /* Remove bullet markers from Bootstrap 5 navbar list items and pagination */
 .navbar-nav > li,
 .navbar-nav > li.nav-item,
+.nav-tabs > li,
+.nav-tabs > li.nav-item,
 .pagination > li.page-item,
 .breadcrumb > li {
     list-style-type: none;
