@@ -4,6 +4,11 @@
     list-style-type: none;
 }
 
+/* Restore table borders overridden by Django admin CSS */
+.table-bordered > :not(caption) > * > * {
+    border-width: 1px;
+}
+
 /* Match Django admin link color (#417893) for shared buttons */
 .btn-admin-link,
 .btn-admin-link:visited {
@@ -300,11 +305,11 @@ div.navbar-fixed-bottom {
 
 /* Bootstrap 5 dropdown carets are handled via CSS; no border overrides needed */
 
-.collapse, .expand {
+.expand {
   margin-left: 5px;
 }
 
-.collapse:hover, .expand:hover {
+.expand:hover {
   text-decoration: none;
 }
 
