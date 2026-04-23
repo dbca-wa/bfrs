@@ -4,44 +4,24 @@
 
 {% block content %}
 
-<div>
-    <div style="float: left;">
-        <h1>Bushfire Overview</h1>
-    </div>
-    <br>
+<h1>Bushfire Overview</h1>
 
-</div>
-
-<br>
-<br>
-
-<div class="dropdown btn btn-medium" style="float: right">
-  <button id="dropdown_btn" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-    <a href="#">Reports</a>
-  </button>
-
-   <ul class="dropdown-menu" aria-labelledby="dropdown_btn">
-      <li><a href="javascript: bushfire_filter({action:'export_to_excel'});">Export Excel</a></li>
-      <li><a href="javascript: bushfire_filter({action:'export_excel_outstanding_fires'});">Export Outstanding Fires</a></li>
-	  {% for y in bushfire_reports %}
-      <li><a href="javascript: bushfire_filter({action:'export_excel_ministerial_report',reporting_year:{{y.0}} });" onclick='growl({"message": "Creating Bushfire Report (Excel) ...", "type": "info"});'>Export Bushfire Report ({{y.1}})</a></li>
+<div class="d-flex align-items-center mb-1">
+  <a role="button" class="btn btn-light btn-sm border btn-admin-link" data-bs-toggle="collapse" data-bs-parent="#accordion" href="#filter" aria-expanded="true" aria-controls="filter"><i class="bi bi-funnel"></i> Filter tools</a>
+  <div class="dropdown ms-auto">
+    <button id="dropdown_btn" type="button" class="btn btn-light btn-sm border btn-admin-link dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+      Reports
+    </button>
+    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown_btn">
+      <li><a class="dropdown-item" href="javascript: bushfire_filter({action:'export_to_excel'});">Export Excel</a></li>
+      <li><a class="dropdown-item" href="javascript: bushfire_filter({action:'export_excel_outstanding_fires'});">Export Outstanding Fires</a></li>
+      {% for y in bushfire_reports %}
+      <li><a class="dropdown-item" href="javascript: bushfire_filter({action:'export_excel_ministerial_report',reporting_year:{{y.0}} });" onclick='growl({"message": "Creating Bushfire Report (Excel) ...", "type": "info"});'>Export Bushfire Report ({{y.1}})</a></li>
       {% endfor %}
-	  <!--li><a href="javascript: bushfire_filter({action:'calculate_report_tables'});" onclick='growl({"message": "Calculating report tables will take about 40min"});'>Calculate Report Tables</a></li-->
-	   
-	  <!--li><a href="javascript: bushfire_filter({action:'calculate_report_tables'});" onclick='clicked(event)'>Calculate Report Tables</a></li-->
-      <li><a href="{% url 'bushfire:bushfire_report' %}">PDF Ministerial Report</a></li>
-  </ul>
+      <li><a class="dropdown-item" href="{% url 'bushfire:bushfire_report' %}">PDF Ministerial Report</a></li>
+    </ul>
+  </div>
 </div>
-
-{% if messages %}
-    {% for message in messages %}
-        {% if message.tags %}
-            <script>
-                alert("{{ message|escapejs }}");
-            </script>
-        {% endif %}
-    {% endfor %}
-{% endif %}
 
 {% include "bfrs/inc/bushfire_filter.html" %}
 

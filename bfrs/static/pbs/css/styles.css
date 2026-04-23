@@ -4,6 +4,16 @@
     list-style-type: none;
 }
 
+/* Match Django admin link color (#417893) for shared buttons */
+.btn-admin-link,
+.btn-admin-link:visited {
+    color: #417893;
+}
+.btn-admin-link:hover,
+.btn-admin-link:focus {
+    color: #417893;
+}
+
 body #id_objective_modal {
     position: absolute;
     top: 20px;
