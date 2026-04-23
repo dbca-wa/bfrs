@@ -47,8 +47,8 @@
 
 {% if form.errors %}
     <h1 class="errornote">
+      <button type="button" class="btn-close float-end" data-bs-dismiss="alert" aria-label="Close"></button>
       <p>Form Errors</p>
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
       <ul>
       {% for field in form %} 
           {% if field.errors %}

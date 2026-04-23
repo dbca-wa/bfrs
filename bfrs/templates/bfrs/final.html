@@ -40,8 +40,8 @@
 
 {% if form.errors %}
     <p>Form Errors</p>
-    <div class="alert alert-error">
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="alert alert-error d-flex align-items-start">
+        <div class="flex-grow-1">
         {% for field in form %} 
             {% if field.errors %}
             <font color="red"><li>{{ field.label }}: {{ field.errors|striptags }}</li></font>
@@ -52,7 +52,8 @@
         {% if form.non_field_errors %}
             {{ form.non_field_errors  }}
         {% endif %}
-
+        </div>
+        <button type="button" class="btn-close ms-2 flex-shrink-0" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 {% endif %}
 

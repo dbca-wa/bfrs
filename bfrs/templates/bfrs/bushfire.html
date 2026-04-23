@@ -26,13 +26,13 @@
 {% include "bfrs/inc/bushfire_filter.html" %}
 
 {% if errors %}
-<div style="margin-bottom:10px" class="alert alert-danger fade show">
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    <ul>
+<div style="margin-bottom:10px" class="alert alert-danger fade show d-flex align-items-start">
+    <ul class="mb-0 flex-grow-1">
     {% for error in errors %}
         <li>{{error}}</li>
     {% endfor %}
     </ul>
+    <button type="button" class="btn-close ms-2 flex-shrink-0" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>
 {% endif %}
 
@@ -122,23 +122,23 @@
 		<td class="text-center">{% if bushfire.job_code %}{{ bushfire.job_code }}{% else %}  {% endif %}</td>
 		<td align="center">
             {% if bushfire.report_status == bushfire.STATUS_INITIAL %}
-			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="Edit initial fire report"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-pencil text-danger"></i></a>
+			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="Edit initial fire report" class="admin-icon-link"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-pencil text-danger"></i></a>
             {% elif bushfire.report_status == bushfire.STATUS_INVALIDATED %}
-			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="View the invalidated initial fire report"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-slash-circle"></i></a>
+			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="View the invalidated initial fire report" class="admin-icon-link"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-slash-circle"></i></a>
             {% elif bushfire.report_status == bushfire.STATUS_MERGED %}
-			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="View the merged fire report"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-slash-circle"></i></a>
+			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="View the merged fire report" class="admin-icon-link"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-slash-circle"></i></a>
             {% elif bushfire.report_status == bushfire.STATUS_DUPLICATED %}
-			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="View the duplicated fire report"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-slash-circle"></i></a>
+			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="View the duplicated fire report" class="admin-icon-link"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-slash-circle"></i></a>
 		    {% else %}
-			<a href="{% url 'bushfire:initial_snapshot' bushfire.id %}" title="Notifications fire report submitted on {{bushfire.init_authorised_date|date:'Y-m-d H:i'}} by {{bushfire.init_authorised_by}}"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-check-lg text-success"></i></a>
+			<a href="{% url 'bushfire:initial_snapshot' bushfire.id %}" title="Notifications fire report submitted on {{bushfire.init_authorised_date|date:'Y-m-d H:i'}} by {{bushfire.init_authorised_by}}" class="admin-icon-link"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-check-lg text-success"></i></a>
 		    {% endif %}
 		</td>
 
 		<td align="center">
             {% if bushfire.report_status == bushfire.STATUS_INITIAL_AUTHORISED %}
-			<a href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Edit final fire report"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-pencil text-danger"></i></a>
+			<a href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Edit final fire report" class="admin-icon-link"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-pencil text-danger"></i></a>
             {% elif bushfire.report_status >= bushfire.STATUS_FINAL_AUTHORISED and bushfire.report_status < bushfire.STATUS_INVALIDATED%}
-			<a href="{% url 'bushfire:final_snapshot' bushfire.id %}" title="Final fire report authorised on {{bushfire.authorised_date}} by {{bushfire.authorised_by}}"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-check-lg text-success"></i></a>
+			<a href="{% url 'bushfire:final_snapshot' bushfire.id %}" title="Final fire report authorised on {{bushfire.authorised_date}} by {{bushfire.authorised_by}}" class="admin-icon-link"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-check-lg text-success"></i></a>
 		    {% endif %}
 		</td>
 
