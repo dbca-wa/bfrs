@@ -305,8 +305,13 @@ h1#site-title, div#site-title {
     box-shadow: none;
 }
 
-div.navbar-fixed-bottom {
-    height: 36px;
+/* Ensure fixed-bottom is not overridden */
+.fixed-bottom {
+    position: fixed !important;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1030;
 }
 
 #mainnav .navbar {
