@@ -216,7 +216,7 @@ h1#site-title, div#site-title {
 
 .topmast {
   background: url("../img/top-bg.gif") repeat-x scroll center bottom #3580CA;
-  padding-top: 40px;
+  padding-top: 5px;
 }
 
 .masthead {
