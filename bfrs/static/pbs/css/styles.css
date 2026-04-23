@@ -37,6 +37,14 @@
     padding: 0.35rem 0.5rem;
 }
 
+/* Hide empty crispy-forms label above archive/exclude checkboxes in filter */
+#div_id_archive > label,
+#div_id_exclude_missing > label,
+#div_id_include_archived > label,
+#div_id_exclude_missing_final_fire_boundary > label {
+    display: none;
+}
+
 /* Center-align table header cells */
 #table thead th {
     text-align: center;

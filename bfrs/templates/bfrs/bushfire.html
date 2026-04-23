@@ -46,7 +46,7 @@
 <input type="hidden" name="order_by" value={{ order_by }}>
 <input type="hidden" name="page" value={{ page_obj.number }}>
 
-<div style="margin-bottom:10px">
+<div style="margin-bottom:10px" class="mt-3">
     <select id="id_action" name="action">
         {% for k,v in actions.items %}
         <option value="{{k}}" {% if action == k %} selected {% endif %}>{{v}}</option>
