@@ -1,12 +1,15 @@
-/* Remove bullet markers from Bootstrap 5 navbar list items */
+/* Remove bullet markers from Bootstrap 5 navbar list items and pagination */
 .navbar-nav > li,
-.navbar-nav > li.nav-item {
+.navbar-nav > li.nav-item,
+.pagination > li.page-item {
     list-style-type: none;
 }
 
 /* Restore table borders overridden by Django admin CSS */
 .table-bordered > :not(caption) > * > * {
     border-width: 1px;
+    border-style: solid;
+    border-color: #dee2e6;
 }
 
 /* Match Django admin link color (#417893) for shared buttons */

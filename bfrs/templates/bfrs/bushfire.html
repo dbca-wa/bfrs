@@ -122,23 +122,23 @@
 		<td>{% if bushfire.job_code %}{{ bushfire.job_code }}{% else %}  {% endif %}</td>
 		<td align="center">
             {% if bushfire.report_status == bushfire.STATUS_INITIAL %}
-			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="Edit initial fire report"><font color="red"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-pencil text-white"></i></font></a>
+			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="Edit initial fire report"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-pencil text-danger"></i></a>
             {% elif bushfire.report_status == bushfire.STATUS_INVALIDATED %}
-			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="View the invalidated initial fire report"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-slash-circle text-white"></i></a>
+			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="View the invalidated initial fire report"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-slash-circle"></i></a>
             {% elif bushfire.report_status == bushfire.STATUS_MERGED %}
-			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="View the merged fire report"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-slash-circle text-white"></i></a>
+			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="View the merged fire report"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-slash-circle"></i></a>
             {% elif bushfire.report_status == bushfire.STATUS_DUPLICATED %}
-			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="View the duplicated fire report"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-slash-circle text-white"></i></a>
+			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="View the duplicated fire report"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-slash-circle"></i></a>
 		    {% else %}
-			<a href="{% url 'bushfire:initial_snapshot' bushfire.id %}" title="Notifications fire report submitted on {{bushfire.init_authorised_date|date:'Y-m-d H:i'}} by {{bushfire.init_authorised_by}}"><span style="display:none">{{bushfire.report_status}}</span><font color="green"><i class="bi bi-check text-white"></i></font></a>
+			<a href="{% url 'bushfire:initial_snapshot' bushfire.id %}" title="Notifications fire report submitted on {{bushfire.init_authorised_date|date:'Y-m-d H:i'}} by {{bushfire.init_authorised_by}}"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-check-lg text-success"></i></a>
 		    {% endif %}
 		</td>
 
 		<td align="center">
             {% if bushfire.report_status == bushfire.STATUS_INITIAL_AUTHORISED %}
-			<a href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Edit final fire report"><span style="display:none">{{bushfire.report_status}}</span><font color="red"><i class="bi bi-pencil text-white"></i></font></a>
+			<a href="{% url 'bushfire:bushfire_final' bushfire.id %}" title="Edit final fire report"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-pencil text-danger"></i></a>
             {% elif bushfire.report_status >= bushfire.STATUS_FINAL_AUTHORISED and bushfire.report_status < bushfire.STATUS_INVALIDATED%}
-			<a href="{% url 'bushfire:final_snapshot' bushfire.id %}" title="Final fire report authorised on {{bushfire.authorised_date}} by {{bushfire.authorised_by}}"><span style="display:none">{{bushfire.report_status}}</span><font color="green"><i class="bi bi-check text-white"></i></font></a>
+			<a href="{% url 'bushfire:final_snapshot' bushfire.id %}" title="Final fire report authorised on {{bushfire.authorised_date}} by {{bushfire.authorised_by}}"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-check-lg text-success"></i></a>
 		    {% endif %}
 		</td>
 
@@ -147,9 +147,9 @@
            {% if bushfire.report_status < bushfire.STATUS_INVALIDATED %}
            {% if bushfire.report_status >= bushfire.STATUS_FINAL_AUTHORISED %}
              {% if bushfire.is_reviewed %}
-             <a href="{% url 'main' %}?bushfire_id={{bushfire.id}}&action=delete_review" title="Delete review"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-trash text-white"></i></a>
+             <a href="{% url 'main' %}?bushfire_id={{bushfire.id}}&action=delete_review" title="Delete review"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-trash text-danger"></i></a>
              {% else %}
-             <a href="{% url 'main' %}?bushfire_id={{bushfire.id}}&action=delete_final_authorisation" title="Delete authorisation"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-trash text-white"></i></a>
+             <a href="{% url 'main' %}?bushfire_id={{bushfire.id}}&action=delete_final_authorisation" title="Delete authorisation"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-trash text-danger"></i></a>
              {% endif %}
 
              {% if not bushfire.archive %}
@@ -160,14 +160,14 @@
            {% endif %}
 
            {% if bushfire.is_reviewed %}
-			 <a href="#" title="Final fire report reviewed on {{bushfire.reviewed_date}} by {{bushfire.reviewed_by}}"><span style="display:none">{{bushfire.report_status}}</span><div style="float:right;"><font color="green"><i class="bi bi-check text-white"></i></font></div></a>
+			 <a href="#" title="Final fire report reviewed on {{bushfire.reviewed_date}} by {{bushfire.reviewed_by}}"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-check-lg text-success"></i></a>
            {% elif bushfire.can_review %}
            <a href="{% url 'main' %}?bushfire_id={{bushfire.id}}&action=mark_reviewed" title="Mark Report as Reviewed"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-hand-thumbs-up"></i></a>
            {% endif %}
            {% endif %}
 
          {% endif %}
-           <a href="{% url "bushfire:bushfire_document_list" bushfire.id %}" title="Documents"><i class="bi bi-file"></i></a>
+           <a href="{% url "bushfire:bushfire_document_list" bushfire.id %}" title="Documents"><i class="bi bi-file-text"></i></a>
          </td>
 
       </tr>
@@ -257,28 +257,27 @@
 
 <!-- js bushfire_filter() function used below to allow pagination to work with the filters (filter params are combined in the fucntions)-->
 {% if is_paginated %}
-  <ul class="pagination">
-    {% if page_obj.has_previous %}
-      <!--li><a href="javascript: bushfire_filter({page:{{ page_obj.previous_page_number }}});">&laquo;</a></li-->
-      <li><a href="{{filters}}page={{ page_obj.previous_page_number }}">&laquo;</a></li>
-    {% else %}
-      <li class="disabled"><span>&laquo;</span></li>
-    {% endif %}
-    {% for i in paginator.page_range %}
-      {% if page_obj.number == i %}
-        <li class="active"><span>{{ i }} <span class="sr-only">(current)</span></span></li>
+  <nav aria-label="Page navigation">
+    <ul class="pagination flex-wrap">
+      {% if page_obj.has_previous %}
+        <li class="page-item"><a class="page-link" href="{{filters}}page={{ page_obj.previous_page_number }}">&laquo;</a></li>
       {% else %}
-        <!--li><a href="javascript: bushfire_filter({page:{{ i }}});">{{ i }}</a></li-->
-        <li><a href="{{filters}}page={{ i }}">{{ i }}</a></li>
+        <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
       {% endif %}
-    {% endfor %}
-    {% if page_obj.has_next %}
-      <!--li><a href="javascript: bushfire_filter({page:{{ page_obj.next_page_number }}});">&raquo;</a></li-->
-      <li><a href="{{filters}}page={{ page_obj.next_page_number }}">&raquo;</a></li>
-    {% else %}
-      <li class="disabled"><span>&raquo;</span></li>
-    {% endif %}
-  </ul>
+      {% for i in paginator.page_range %}
+        {% if page_obj.number == i %}
+          <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+        {% else %}
+          <li class="page-item"><a class="page-link" href="{{filters}}page={{ i }}">{{ i }}</a></li>
+        {% endif %}
+      {% endfor %}
+      {% if page_obj.has_next %}
+        <li class="page-item"><a class="page-link" href="{{filters}}page={{ page_obj.next_page_number }}">&raquo;</a></li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+      {% endif %}
+    </ul>
+  </nav>
 {% endif %}
 
 <script>
