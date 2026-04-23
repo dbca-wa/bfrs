@@ -1,8 +1,26 @@
 /* Remove bullet markers from Bootstrap 5 navbar list items and pagination */
 .navbar-nav > li,
 .navbar-nav > li.nav-item,
-.pagination > li.page-item {
+.pagination > li.page-item,
+.breadcrumb > li {
     list-style-type: none;
+}
+
+/* Breadcrumb styling */
+.breadcrumb {
+    background-color: #f5f5f5;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0;
+}
+
+.breadcrumb > li + li::before {
+    content: "/";
+    padding: 0 0.5rem;
+    color: #6c757d;
 }
 
 /* Restore table borders overridden by Django admin CSS */
@@ -15,6 +33,12 @@
 /* Slightly more padding than table-sm (0.25rem) but less than default (0.5rem) */
 #table.table-sm > :not(caption) > * > * {
     padding: 0.35rem 0.5rem;
+}
+
+/* Center-align table header cells */
+#table thead th {
+    text-align: center;
+    vertical-align: middle;
 }
 
 /* Match Django admin link color (#417893) for shared buttons */
