@@ -12,6 +12,11 @@
     border-color: #dee2e6;
 }
 
+/* Slightly more padding than table-sm (0.25rem) but less than default (0.5rem) */
+#table.table-sm > :not(caption) > * > * {
+    padding: 0.35rem 0.5rem;
+}
+
 /* Match Django admin link color (#417893) for shared buttons */
 .btn-admin-link,
 .btn-admin-link:visited {
