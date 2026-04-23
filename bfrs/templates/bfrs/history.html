@@ -30,9 +30,9 @@
 <div class="pb-5"></div>
 <div class="fixed-bottom bg-light border-top d-flex justify-content-end gap-2 px-3 py-2">
     {% if object.report_status < object.STATUS_INITIAL_AUTHORISED %}
-        <a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" class="btn btn-success">Return</a>
+        <a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" class="btn btn-success text-white">Return</a>
     {% else %}
-        <a href="{% url 'bushfire:bushfire_final' bushfire.id %}" class="btn btn-success">Return</a>
+        <a href="{% url 'bushfire:bushfire_final' bushfire.id %}" class="btn btn-success text-white">Return</a>
     {% endif %}
 </div>
 

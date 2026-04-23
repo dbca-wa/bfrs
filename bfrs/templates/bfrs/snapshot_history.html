@@ -78,11 +78,11 @@
   <p>Initial Report has not yet been 'Submitted'</p>
 {% endif %}
 {% if object.report_status >= object.STATUS_INITIAL_AUTHORISED %}
-  <a id="id_ok_btn" href="{% url 'bushfire:bushfire_final' object.id %}" class="btn btn-info">Bushfire Details</a>
+  <a id="id_ok_btn" href="{% url 'bushfire:bushfire_final' object.id %}" class="btn btn-info text-white">Bushfire Details</a>
 {% else %}
-  <a id="id_ok_btn" href="{% url 'bushfire:bushfire_initial' object.id %}" class="btn btn-info">Bushfire Details</a>
+  <a id="id_ok_btn" href="{% url 'bushfire:bushfire_initial' object.id %}" class="btn btn-info text-white">Bushfire Details</a>
 {% endif %}
-<a id="id_cancel_btn" href="{% main_url %}" class="btn btn-info">Return</a>
+<a id="id_cancel_btn" href="{% main_url %}" class="btn btn-info text-white">Return</a>
 
 <script>
 
