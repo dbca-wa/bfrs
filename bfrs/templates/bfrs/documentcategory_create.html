@@ -66,15 +66,10 @@
         </tr>
   </tbody>
 </table>
-
-<div class="fixed-bottom bg-light border-top">
-    <div class="container">
-        <p class="float-end">
-            <button type="submit" class="btn btn-primary btn-success"  name="action" value="create"/>Create </button>
-            <button type="button" class="btn btn-primary btn-danger"  onclick="window.location='{% url "bushfire:documentcategory_list" %}'">Cancel </button>
-      </p>
-    </div>
-  </div>
+<div class="pb-5"></div>
+<div class="fixed-bottom bg-light border-top d-flex justify-content-end gap-2 px-3 py-2">
+    <button type="submit" class="btn btn-success" name="action" value="create">Create</button>
+    <button type="button" class="btn btn-danger" onclick="window.location='{% url "bushfire:documentcategory_list" %}'">Cancel</button>
 </div>
 </form>
 

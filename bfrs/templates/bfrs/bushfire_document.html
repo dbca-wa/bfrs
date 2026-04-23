@@ -97,18 +97,14 @@
     <td class="cbas" >{{form.modified}}</td>
 </tr>
 </table>
-<div class="fixed-bottom bg-light border-top">
-    <div class="container">
-        <p class="float-end">
-            {% for submit_action in submit_actions %}
-                <button type="submit" class="btn btn-primary {{submit_action.2}}"  name="action" value="{{submit_action.0}}"/>{{submit_action.1}} </button>
-            {% endfor %}
-            {% for link_action in link_actions %}
-                <button type="button" class="btn btn-primary {{link_action.2}}"  onclick="window.location='{{link_action.0}}'">{{link_action.1}} </button>
-            {% endfor %}
-      </p>
-    </div>
-  </div>
+<div class="pb-5"></div>
+<div class="fixed-bottom bg-light border-top d-flex justify-content-end gap-2 px-3 py-2">
+    {% for submit_action in submit_actions %}
+        <button type="submit" class="btn btn-primary {{submit_action.2}}" name="action" value="{{submit_action.0}}">{{submit_action.1}}</button>
+    {% endfor %}
+    {% for link_action in link_actions %}
+        <button type="button" class="btn btn-primary {{link_action.2}}" onclick="window.location='{{link_action.0}}'">{{link_action.1}}</button>
+    {% endfor %}
 </div>
 </form>
 {% endblock %}
