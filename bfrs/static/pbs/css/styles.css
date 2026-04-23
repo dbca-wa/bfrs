@@ -362,3 +362,20 @@ h1#site-title, div#site-title {
 label {
     font-weight:normal
 }
+
+/* Admin column icon links in bushfire list table */
+td .admin-icon-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px 5px;
+    border-radius: 3px;
+    transition: color 0.15s ease, background-color 0.15s ease;
+    color: inherit;
+    text-decoration: none;
+}
+td .admin-icon-link:hover {
+    background-color: rgba(0, 0, 0, 0.08);
+    color: #000 !important;
+    text-decoration: none;
+}

@@ -75,12 +75,12 @@
 	  <th style="width:15%" onclick="document.location='{{filters_without_order}}{{'name'|toggle_sort:form.initial}}'" class="headerSort {{'name'|sort_class:form.initial}}">
         <font color="dodgerblue">Name </font>
       </th>
-	  <th style="width:5%" onclick="document.location='{{filters_without_order}}{{'job_code'|toggle_sort:form.initial}}'" class="headerSort {{'job_code'|sort_class:form.initial}}">
+	  <th style="width:5%; white-space:nowrap" onclick="document.location='{{filters_without_order}}{{'job_code'|toggle_sort:form.initial}}'" class="headerSort {{'job_code'|sort_class:form.initial}}">
         <font color="dodgerblue">Job Code </font>
       </th>
-	  <th style="width:10%"><font color="dodgerblue">Notifications </th>
-	  <th style="width:10%"><font color="dodgerblue">Report </th>
-	  <th style="width:10%"><font color="dodgerblue">Admin </th>
+	  <th style="width:6%; cursor:default"><font color="dodgerblue">Notifications </th>
+	  <th style="width:6%; cursor:default"><font color="dodgerblue">Report </th>
+	  <th style="width:10%; cursor:default"><font color="dodgerblue">Admin </th>
   </thead>
 {% else %}
 <table id="table" class="tablesorter table table-striped table-bordered table-hover table-sm" style="cursor:pointer;">
@@ -99,12 +99,12 @@
 	  <th style="width:15%" class="{{'name'|sort_class:form.initial}}">
         <font color="dodgerblue">Name </font>
       </th>
-	  <th style="width:5%" class="headerSort" class="{{'job_code'|sort_class:form.initial}}">
+	  <th style="width:5%; white-space:nowrap" class="headerSort" class="{{'job_code'|sort_class:form.initial}}">
         <font color="dodgerblue">Job Code </font>
       </th>
-	  <th style="width:10%"><font color="dodgerblue">Notifications </th>
-	  <th style="width:10%"><font color="dodgerblue">Report </th>
-	  <th style="width:10%"><font color="dodgerblue">Admin </th>
+	  <th style="width:6%; cursor:default"><font color="dodgerblue">Notifications </th>
+	  <th style="width:6%; cursor:default"><font color="dodgerblue">Report </th>
+	  <th style="width:10%; cursor:default"><font color="dodgerblue">Admin </th>
   </thead>
 {% endif %}
   <tbody>
@@ -119,7 +119,7 @@
 		<td><a href="#" onclick='openGokart({"action": "select", "region":{{bushfire.region.id}},"district":{{bushfire.district.id}},"bushfireid":"{{bushfire.fire_number}}" });' title="Open report in SSS">{{ bushfire.fire_number }}</a></td>
 		<td>{% if bushfire.dfes_incident_no %}{{ bushfire.dfes_incident_no }}{% else %}  {% endif %}</td>
         <td>{{ bushfire.name }}</td>
-		<td>{% if bushfire.job_code %}{{ bushfire.job_code }}{% else %}  {% endif %}</td>
+		<td class="text-center">{% if bushfire.job_code %}{{ bushfire.job_code }}{% else %}  {% endif %}</td>
 		<td align="center">
             {% if bushfire.report_status == bushfire.STATUS_INITIAL %}
 			<a href="{% url 'bushfire:bushfire_initial' bushfire.id %}" title="Edit initial fire report"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-pencil text-danger"></i></a>
@@ -142,32 +142,32 @@
 		    {% endif %}
 		</td>
 
-         <td class="text-center align-middle">
+         <td class="align-middle">
          {% if can_maintain_data  %}
            {% if bushfire.report_status < bushfire.STATUS_INVALIDATED %}
            {% if bushfire.report_status >= bushfire.STATUS_FINAL_AUTHORISED %}
              {% if bushfire.is_reviewed %}
-             <a href="{% url 'main' %}?bushfire_id={{bushfire.id}}&action=delete_review" title="Delete review"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-trash text-danger"></i></a>
+             <a href="{% url 'main' %}?bushfire_id={{bushfire.id}}&action=delete_review" title="Delete review" class="admin-icon-link"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-trash text-danger"></i></a>
              {% else %}
-             <a href="{% url 'main' %}?bushfire_id={{bushfire.id}}&action=delete_final_authorisation" title="Delete authorisation"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-trash text-danger"></i></a>
+             <a href="{% url 'main' %}?bushfire_id={{bushfire.id}}&action=delete_final_authorisation" title="Delete authorisation" class="admin-icon-link"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-trash text-danger"></i></a>
              {% endif %}
 
              {% if not bushfire.archive %}
-             <a href="{% url 'main' %}?bushfire_id={{bushfire.id}}&action=archive" title="Archive Report"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-folder"></i></a>
+             <a href="{% url 'main' %}?bushfire_id={{bushfire.id}}&action=archive" title="Archive Report" class="admin-icon-link"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-folder"></i></a>
              {% else %}
-             <a href="{% url 'main' %}?bushfire_id={{bushfire.id}}&action=unarchive" title="Unarchive Report"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-folder2-open"></i></a>
+             <a href="{% url 'main' %}?bushfire_id={{bushfire.id}}&action=unarchive" title="Unarchive Report" class="admin-icon-link"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-folder2-open"></i></a>
              {% endif %}
            {% endif %}
 
            {% if bushfire.is_reviewed %}
-			 <a href="#" title="Final fire report reviewed on {{bushfire.reviewed_date}} by {{bushfire.reviewed_by}}"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-check-lg text-success"></i></a>
+			 <a href="#" title="Final fire report reviewed on {{bushfire.reviewed_date}} by {{bushfire.reviewed_by}}" class="admin-icon-link"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-check-lg text-success"></i></a>
            {% elif bushfire.can_review %}
-           <a href="{% url 'main' %}?bushfire_id={{bushfire.id}}&action=mark_reviewed" title="Mark Report as Reviewed"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-hand-thumbs-up"></i></a>
+           <a href="{% url 'main' %}?bushfire_id={{bushfire.id}}&action=mark_reviewed" title="Mark Report as Reviewed" class="admin-icon-link"><span style="display:none">{{bushfire.report_status}}</span><i class="bi bi-hand-thumbs-up"></i></a>
            {% endif %}
            {% endif %}
 
          {% endif %}
-           <a href="{% url "bushfire:bushfire_document_list" bushfire.id %}" title="Documents"><i class="bi bi-file-text"></i></a>
+           <a href="{% url "bushfire:bushfire_document_list" bushfire.id %}" title="Documents" class="admin-icon-link"><i class="bi bi-file-text"></i></a>
          </td>
 
       </tr>
