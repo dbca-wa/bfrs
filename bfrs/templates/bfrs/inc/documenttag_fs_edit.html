@@ -6,7 +6,7 @@
               {% for documenttag_form in form.documenttag_formset %}
               <tr>
                 <td>{{ documenttag_form.name }}</td>
-                <td>
+                <td style="width:0; padding:0; border:0; overflow:hidden;">
                   {% if documenttag_form.instance.pk %}{{ documenttag_form.DELETE }}{% endif %}
                   {{ documenttag_form.id }}
 
