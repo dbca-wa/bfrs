@@ -220,7 +220,7 @@ h1#site-title, div#site-title {
 }
 
 .masthead {
-  min-height: 115px;
+  min-height: 0;
   padding: 0;
 }
 
