@@ -173,7 +173,8 @@
       </tr>
 
       <tr class="myCollapse row-details expand-child" id="{{bushfire.id}}">
-        <td colspan="{% if actions %} 8 {% else %} 7 {% endif %}">
+        <td colspan="{% if actions %} 8 {% else %} 7 {% endif %}" style="padding:0;">
+          <div class="slide-wrapper" style="display:none;">
           <table class="table table-bordered table-striped table-sm">
             <tbody>
               <tr>
@@ -241,6 +242,7 @@
 
             </tbody>
           </table>
+        </div>
         </td>
       </tr>
 
@@ -333,7 +335,13 @@
       } else {
     target = $(this.getAttribute('href'));
       };
-      target.toggleClass("in");
+      var wrapper = target.find('.slide-wrapper');
+      if (wrapper.is(':visible')) {
+        wrapper.slideUp(200, function() { target.removeClass('show'); });
+      } else {
+        target.addClass('show');
+        wrapper.slideDown(200);
+      }
     });
 
     $("#table td a").on('click', function (e) { e.stopPropagation(); })
