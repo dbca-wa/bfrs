@@ -40,8 +40,8 @@
 
 {% if form.errors %}
     <p>Form Errors</p>
-    <div class="alert alert-error">
-        <button type="button" class="close" data-dismiss="alert">×</button>
+    <div class="alert alert-error d-flex align-items-start">
+        <div class="flex-grow-1">
         {% for field in form %} 
             {% if field.errors %}
             <font color="red"><li>{{ field.label }}: {{ field.errors|striptags }}</li></font>
@@ -52,7 +52,8 @@
         {% if form.non_field_errors %}
             {{ form.non_field_errors  }}
         {% endif %}
-
+        </div>
+        <button type="button" class="btn-close ms-2 flex-shrink-0" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 {% endif %}
 
@@ -96,7 +97,7 @@
 
 	{{form.fire_detected_date.as_hidden}}
         <tr>
-	    <th class="cbas" title=" Fire spread has been halted, though the fire may still be burning freely within the perimeter of the fire control lines">Date fire contained <i class="icon-info-sign icon-white"></i> *</th>
+	    <th class="cbas" title=" Fire spread has been halted, though the fire may still be burning freely within the perimeter of the fire control lines">Date fire contained <i class="bi bi-info-circle text-white"></i> *</th>
             <td class="cbas">{% if is_authorised %} {{snapshot.fire_contained_date}} {% else %} {{form.fire_contained_date}} {% endif %}</td>
 
             <th class="cbas" id="id_th_initial_attack_agency">Initial attack agency *<br><br><div class=div_other_first_attack style="display: none;">Other initial attack agency *</div></th>
@@ -107,7 +108,7 @@
         </tr>
 
         <tr>
-	    <th class="cbas" title="Complete perimeter of fire is secured and no breakaway is expected">Date fire controlled <i class="icon-info-sign icon-white"></i> *</th>
+	    <th class="cbas" title="Complete perimeter of fire is secured and no breakaway is expected">Date fire controlled <i class="bi bi-info-circle text-white"></i> *</th>
             <td class="cbas">{% if is_authorised %} {{snapshot.fire_controlled_date}} {% else %} {{form.fire_controlled_date}} {% endif %}</td>
 
             <th class="cbas" id="id_th_initial_controlling_agency">Initial controlling agency *<br><br><div class=div_other_initial_control style="display: none;">Other initial controlling agency *</div></th>
@@ -118,7 +119,7 @@
         </tr>
 
         <tr>
-	    <th class="cbas" title='Placeholder ...'>Date fire safe <i class="icon-info-sign icon-white"></i> *</th>
+	    <th class="cbas" title='Placeholder ...'>Date fire safe <i class="bi bi-info-circle text-white"></i> *</th>
             <td class="cbas">{% if is_authorised %} {{snapshot.fire_safe_date}} {% else %} {{form.fire_safe_date}} {% endif %}</td>
 
             <th class="cbas" id="id_th_final_controlling_agency">Final controlling agency *<br><br><div class=div_other_final_control style="display: none;">Other final controlling agency *</div></th>
@@ -183,18 +184,10 @@
 </div> <!-- div_form_invalidate -->
 
 {% if not action %}
-<div class="navbar navbar-fixed-bottom">
-  <div class="navbar-inner">
-    <div class="container">
-      <p class="pull-right">
-      <input type="submit" {% if object.report_status >= object.STATUS_FINAL_AUTHORISED %}value="Save final"{% else %} value="Save draft"{% endif %} class="btn btn-primary btn-success" name="_save" {% if is_authorised %}title="Initial Report cannot be edited" disabled{% endif %} />
-
-      <input type="submit" value="Authorise" class="btn btn-primary btn-success" name="authorise_final" {% if object.report_status >= object.STATUS_FINAL_AUTHORISED %}title="Final Report already authorised on {{object.authorised_date}} by {{object.authorised_by}}" disabled{% elif is_authorised %}disabled{% else %}title="Save and authorise"{% endif %} />
-
-      <a id="id_cancel_btn" href="{% main_url %}" class="btn btn-primary btn-danger">Cancel</a>
-      </p>
-    </div>
-  </div>
+<div class="fixed-bottom bg-light border-top d-flex justify-content-end gap-2 px-3 py-2">
+  <input type="submit" {% if object.report_status >= object.STATUS_FINAL_AUTHORISED %}value="Save final"{% else %}value="Save draft"{% endif %} class="btn btn-success" name="_save" {% if is_authorised %}title="Initial Report cannot be edited" disabled{% endif %} />
+  <input type="submit" value="Authorise" class="btn btn-success" name="authorise_final" {% if object.report_status >= object.STATUS_FINAL_AUTHORISED %}title="Final Report already authorised on {{object.authorised_date}} by {{object.authorised_by}}" disabled{% elif is_authorised %}disabled{% else %}title="Save and authorise"{% endif %} />
+  <a id="id_cancel_btn" href="{% main_url %}" class="btn btn-danger text-white">Cancel</a>
 </div>
 {% endif %}
 
@@ -210,7 +203,7 @@
     <input type="submit" class="btn" value="{% trans "Yes, I'm sure" %}" />
 	{% comment %}
 	<!-- Below line causes an error in the Django Formset -->
-        <a href="javascript: history.go(-1)" class="btn btn-danger">Cancel</a>
+        <a href="javascript: history.go(-1)" class="btn btn-danger text-white">Cancel</a>
 	{% endcomment %}
     <a id="id_cancel_btn" href="{% url 'bushfire:bushfire_final' object.id %}" class="btn btn-primary btn-danger">Cancel</a>
   </div>
@@ -226,7 +219,7 @@ $('#id_field_officer').prop('class', 'selectpicker dropup');
 $('#id_duty_officer').prop('class', 'selectpicker dropup');
 
 $('.selectpicker').selectpicker({
-  style: 'btn-default',
+  style: 'btn-secondary',
   size: 6,
   liveSearch: true,
   dropupAuto: false,
@@ -277,14 +270,14 @@ $('#id_arson_squad_notified_1').on('change', function() {
 $('.collapse').collapse()
 
 $('.close-all').click(function(){
-  $('.panel-collapse.in').collapse('hide');
+  $('.panel-collapse.show').collapse('hide');
   // toggle the buttons also
   $(".close-all").hide();
   $(".open-all").show();
 });
 
 $('.open-all').click(function(){
-  $('.panel-collapse:not(".in")').collapse('show');
+  $('.panel-collapse:not(".show")').collapse('show');
   // toggle the buttons also
   $(".close-all").show();
   $(".open-all").hide();

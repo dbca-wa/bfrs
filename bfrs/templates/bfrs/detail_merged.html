@@ -177,15 +177,15 @@
 </table>
 
 <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
-  <div class="panel-default">
+  <div class="card">
     <div role="tab" id="pn_fire_behaviour">
-      <h4 class="panel-title">
-        <a role="button" data-toggle="collapse" data-parent="#accordion" href="#fire_behaviour" aria-expanded="true" aria-controls="fire_behaviour">
+      <h4 class="card-title">
+        <a role="button" data-bs-toggle="collapse" data-bs-parent="#accordion" href="#fire_behaviour" aria-expanded="true" aria-controls="fire_behaviour">
           <div style="background: black; color: white; text-align: left; font-size: 16px; padding: 12px;" > FIRE REPORT (Click to expand/collapse)</div>
         </a>
       </h4>
     </div>
-    <div id="fire_behaviour" role="tabpanel" aria-labelledby="pn_fire_behaviour" class="panel-collapse collapse in">
+    <div id="fire_behaviour" role="tabpanel" aria-labelledby="pn_fire_behaviour" class="collapse show">
       <table class="table table-bordered table-striped table-condensed">
           <tbody>
               <tr>
@@ -226,7 +226,7 @@
               </tr>
       
               <tr>
-           	      <th class="cbas" id="id_th_fire_contained_date" title=" Fire spread has been halted, though the fire may still be burning freely within the perimeter of the fire control lines">Date fire contained <i class="icon-info-sign icon-white"></i> *</th>
+           	      <th class="cbas" id="id_th_fire_contained_date" title=" Fire spread has been halted, though the fire may still be burning freely within the perimeter of the fire control lines">Date fire contained <i class="bi bi-info-circle text-white"></i> *</th>
                   <td class="cbas">{{form.fire_contained_date.as_widget}}</td>
       
                   <th class="cbas" id="id_th_initial_attack_agency">Initial attack agency *</th>
@@ -234,7 +234,7 @@
               </tr>
       
               <tr>
-      	          <th class="cbas" id="id_th_fire_controlled_date" title="Complete perimeter of fire is secured and no breakaway is expected">Date fire controlled <i class="icon-info-sign icon-white"></i> *</th>
+      	          <th class="cbas" id="id_th_fire_controlled_date" title="Complete perimeter of fire is secured and no breakaway is expected">Date fire controlled <i class="bi bi-info-circle text-white"></i> *</th>
                   <td class="cbas">{{form.fire_controlled_date.as_widget}}</td>
       
                   <th class="cbas" id="id_th_final_controlling_agency">Final controlling agency *</th>
@@ -242,7 +242,7 @@
               </tr>
       
               <tr>
-                  <th class="cbas" title='Placeholder ...'>Date fire inactive <i class="icon-info-sign icon-white"></i> *</th>
+                  <th class="cbas" title='Placeholder ...'>Date fire inactive <i class="bi bi-info-circle text-white"></i> *</th>
                   <td class="cbas">{{form.fire_safe_date.as_widget}}</td>
       
                   <th class="cbas">Maximum Fire Level *</th>
@@ -291,25 +291,20 @@
 
 {% include "bfrs/inc/report_timeline.html" %}
 
+<div class="pb-5"></div>
 {% if submit_actions or link_actions %}
-<div class="navbar navbar-fixed-bottom">
-  <div class="navbar-inner">
-    <div class="container">
-        <p class="pull-right">
-        {% if submit_actions %}
-            {% if action %}
-                <input type="hidden" name="confirm_action" value="{{action}}" />
-            {% endif %}
-            {% for submit_action in submit_actions %}
-            <button type="submit" class="btn btn-primary {{submit_action.2}}"  name="action" value="{{submit_action.0}}"/>{{submit_action.1}} </button>
-            {% endfor %}
+<div class="fixed-bottom bg-light border-top d-flex justify-content-end gap-2 px-3 py-2">
+    {% if submit_actions %}
+        {% if action %}
+            <input type="hidden" name="confirm_action" value="{{action}}" />
         {% endif %}
-        {% for link_action in link_actions %}
-        <button type="button" class="btn btn-primary {{link_action.2}}"  onclick="window.location='{{link_action.0}}'">{{link_action.1}} </button>
+        {% for submit_action in submit_actions %}
+        <button type="submit" class="btn btn-primary {{submit_action.2}}" name="action" value="{{submit_action.0}}">{{submit_action.1}}</button>
         {% endfor %}
-      </p>
-    </div>
-  </div>
+    {% endif %}
+    {% for link_action in link_actions %}
+    <button type="button" class="btn btn-primary {{link_action.2}}" onclick="window.location='{{link_action.0}}'">{{link_action.1}}</button>
+    {% endfor %}
 </div>
 {% endif %}
 

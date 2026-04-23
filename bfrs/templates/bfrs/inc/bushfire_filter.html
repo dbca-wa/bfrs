@@ -1,94 +1,57 @@
-<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true" style="margin-bottom:10px">
+<div id="accordion" style="margin-bottom:10px">
+  <div id="filter" class="collapse show">
+    <form id="bushfire_filter" action="" method="get">
+      <div class="d-flex flex-wrap align-items-end gap-3 p-3 rounded-1" style="background-color:#f5f0e1;">
 
-  <div class="panel-primary">
-    <a role="button" data-toggle="collapse" data-parent="#accordion" href="#filter" aria-expanded="true" aria-controls="filter"><button><i class="icon-filter icon-white"></i> Filter tools</button></a>
-    <div id="filter" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pn_filter">
-      <div class="panel-body">
+        <div id="div_id_region">
+          <label class="form-label mb-1 d-block" for="{{ filter.form.region.id_for_label }}">Region</label>
+          {{ form.region }}
+        </div>
 
-          {% comment %}
-          <table>
-            <body>
-                <div class="cbas" >
-                    <div id="div_id_filter" class="form-group"> 
-                        <!--<form action="" method="get">-->
-                        <form class="filter-form">
-                            {{ filter.form.as_p }}
-                            <input type="submit" value="Submit" />
-                        </form>
-                    </div>
-                </div>
-            </body>
-          </table>
-          {% endcomment %}
+        <div id="div_id_district">
+          <label class="form-label mb-1 d-block" for="{{ filter.form.district.id_for_label }}">District</label>
+          {{ form.district }}
+        </div>
 
-        <!--<form action="" method="get">-->
-	<form id="bushfire_filter" action="" method="get">
-        <table class="table table-bordered table-striped table-condensed" style="margin-bottom:0px">
-          <body>
+        <div id="div_id_year">
+          <label class="form-label mb-1 d-block" for="{{ filter.form.year.id_for_label }}">Year</label>
+          {{ form.year }}
+        </div>
 
-            <tr>
-              <td class="cbas">
-                <div class="col-sm-2" >
-                  <div id="div_id_region" class="form-group"> 
-                    <label class="nowrap" for="{{ filter.form.region.id_for_label  }}">Region</label>
-                    <div class="controls ">{{ form.region }}</div><br>
-		            <button type="submit"><i class="icon-refresh icon-white"></i> Update</button>
-                  </div>
-                </div>
+        {% if can_maintain_data %}
+        <div id="div_id_reporting_year">
+          <label class="form-label mb-1 d-block" for="{{ filter.form.reporting_year.id_for_label }}">Reporting Year</label>
+          {{ form.reporting_year }}
+        </div>
+        {% endif %}
 
-                <div class="col-sm-2" >
-                  <div id="div_id_district" class="form-group"> 
-                    <label class="nowrap" for="{{ filter.form.district.id_for_label  }}">District</label>
-                    <div class="controls ">{{ form.district }}</div>
-                  </div>
-                </div>
+        <div id="div_id_report_status">
+          <label class="form-label mb-1 d-block" for="{{ filter.form.report_status.id_for_label }}">Report Status</label>
+          {{ form.report_status }}
+        </div>
 
-                <div class="col-sm-2" >
-                  <div id="div_id_year" class="form-group"> 
-                    <label class="nowrap" for="{{ filter.form.year.id_for_label  }}">Year</label>
-                    <div class="controls ">{{ form.year }}</div>
-                  </div>
-                </div>
+        <div id="div_id_archive">
+          <div class="d-flex align-items-center gap-1">
+            {{ form.include_archived }}
+            <label class="form-label mb-0" for="{{ filter.form.archive.id_for_archive }}">Include archived</label>
+          </div>
+          {% if can_maintain_data %}
+          <div class="d-flex align-items-center gap-1 mt-1">
+            {{ form.exclude_missing_final_fire_boundary }}
+            <label class="form-label mb-0">Exclude missing fire boundary</label>
+          </div>
+          {% endif %}
+        </div>
 
-                {% if can_maintain_data %}
-                <div class="col-sm-2" >
-                  <div id="div_id_reporting_year" class="form-group"> 
-                    <label class="nowrap" for="{{ filter.form.reporting_year.id_for_label  }}">Reporting Year</label>
-                    <div class="controls ">{{ form.reporting_year }}</div>
-                  </div>
-                </div>
-                {% endif %}
-
-                <div class="col-sm-2" > 
-                  <div id="div_id_report_status" class="form-group"> 
-                    <label class="nowrap" for="{{ filter.form.report_status.id_for_label  }}">Report Status</label>
-                    <div class="controls ">{{ form.report_status }}</div>
-                  </div>
-                </div>
-
-                <div class="col-sm-2" > 
-                  <div id="div_id_archive" class="form-group"> 
-                    <label class="nowrap" for="{{ filter.form.archive.id_for_archive  }}">Include archived</label>
-                    <div class="controls ">{{ form.include_archived }}</div>
-                    {% if can_maintain_data %}
-                      <label class="wrap">Exclude missing fire boundary</label>
-                      <div class="controls ">{{ form.exclude_missing_final_fire_boundary }}</div>
-                    {% endif %}
-                  </div>
-                </div>
-
-              </td>
-            </tr>
-
-          </body>
-        </table>
-        </form>
+        <div class="ms-auto">
+          <button type="submit" class="btn btn-light btn-sm border btn-admin-link"><i class="bi bi-arrow-clockwise"></i> Update</button>
+        </div>
 
       </div>
-    </div>
+    </form>
   </div>
-
 </div>
+
 
 <script>
 

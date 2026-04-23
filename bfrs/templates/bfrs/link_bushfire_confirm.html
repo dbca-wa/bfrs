@@ -16,13 +16,13 @@
 {% block content %}
 <script>
     function toggle(target,elementId){
-        if ($(target).hasClass('icon-chevron-down')) {
-            $(target).removeClass('icon-chevron-down')
-            $(target).addClass('icon-chevron-right')
+        if ($(target).hasClass('bi bi-chevron-down')) {
+            $(target).removeClass('bi bi-chevron-down')
+            $(target).addClass('bi bi-chevron-right')
             $("#" + elementId).hide()
         } else {
-            $(target).removeClass('icon-chevron-right')
-            $(target).addClass('icon-chevron-down')
+            $(target).removeClass('bi bi-chevron-right')
+            $(target).addClass('bi bi-chevron-down')
             $("#" + elementId).show()
         }
 
@@ -30,13 +30,13 @@
 </script>
 
 {% if errors %}
-<div style="margin-bottom:10px" class="alert alert-danger fade in">
-    <a href="#" class="close" data-dismiss="alert">&times;</a>
-    <ul>
+<div style="margin-bottom:10px" class="alert alert-danger fade show d-flex align-items-start">
+    <ul class="mb-0 flex-grow-1">
     {% for error in errors %}
         <li>{{error}}</li>
     {% endfor %}
     </ul>
+    <button type="button" class="btn-close ms-2 flex-shrink-0" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>
 {% endif %}
 
@@ -63,7 +63,7 @@
             {{form.name.as_widget}}
             </span>
             <div style="float:right">
-            {{form.report_status.as_widget}}  <i style="padding-left:30px;cursor:pointer" onclick="toggle(this,'id_body_{{form.instance.id}}')" class="icon-chevron-down" ></i></span>
+            {{form.report_status.as_widget}}  <i style="padding-left:30px;cursor:pointer" onclick="toggle(this,'id_body_{{form.instance.id}}')" class="bi bi-chevron-down" ></i></span>
 
             </div>
           </th>
@@ -94,7 +94,7 @@
             {{form.name.as_widget}}
             </span>
             <div style="float:right">
-            {{form.report_status.as_widget}} ({{target_status}})  <i style="padding-left:30px;cursor:pointer" onclick="toggle(this,'id_body_{{form.instance.id}}')" class="icon-chevron-down" ></i></span>
+            {{form.report_status.as_widget}} ({{target_status}})  <i style="padding-left:30px;cursor:pointer" onclick="toggle(this,'id_body_{{form.instance.id}}')" class="bi bi-chevron-down" ></i></span>
 
             </div>
           </th>
@@ -109,9 +109,8 @@
 
 
 <div class="navbar navbar-fixed-bottom">
-  <div class="navbar-inner">
     <div class="container">
-      <p class="pull-right">
+      <p class="float-end">
         <button type="submit" value="confirm" class="btn btn-primary btn-success" name="step" >Confirm {{action_name}}</button>
         <button type="submit" value="select_primary_bushfire" class="btn btn-primary btn-secondary" name="step" >Select Primary Bushfire Again</button>
         <a id="id_cancel_btn" href="{% main_url %}" class="btn btn-primary btn-danger">Cancel</a>

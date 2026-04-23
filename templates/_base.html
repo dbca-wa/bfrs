@@ -1,6 +1,16 @@
 {% extends "webtemplate_dbca/base.html" %}
 {% load static from static %}
 
+{% block base_style %}
+  <link rel="stylesheet" href="{% static 'twitter-bootstrap/5.3.3/css/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="{% static 'bootstrap-icons/1.11.3/bootstrap-icons.min.css' %}">
+{% endblock %}
+
+{% block base_js %}
+  <script src="{% static 'js/jquery-3.7.1.min.js' %}"></script>
+  <script src="{% static 'twitter-bootstrap/5.3.3/js/bootstrap.bundle.min.js' %}"></script>
+{% endblock %}
+
 {% block extra_head %}
   <style type="text/css" src="{{STATIC_URL}}css/jquery.tablesorter.pager.css"></style>
 {% endblock %}
@@ -67,7 +77,7 @@
     <!-- Breadcrumbs -->
     {% if breadcrumb_trail %}
     <div class="row">
-        <div class="col-xs-12">
+        <div class="col-12">
             <ol class="breadcrumb breadcrumb-arrow">
                 {{ breadcrumb_trail|safe }}
             </ol>

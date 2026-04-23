@@ -39,9 +39,9 @@
           <td>{{category.creator}}</td>
           <td>{{category.created}}</td>
           <td>
-            <a style="margin-left:10px" href="{% url "bushfire:documentcategory_detail" category.id %}" title="View Document Category"><i class="icon-eye-open"></i></a>
+            <a style="margin-left:10px" href="{% url "bushfire:documentcategory_detail" category.id %}" title="View Document Category"><i class="bi bi-eye"></i></a>
             {% if can_maintain_data  %}
-              <a style="margin-left:10px" href="{% url "bushfire:documentcategory_update" category.id %}" title="Edit Document Category"><i class="icon-edit"></i></a>
+              <a style="margin-left:10px" href="{% url "bushfire:documentcategory_update" category.id %}" title="Edit Document Category"><i class="bi bi-pencil"></i></a>
             {% endif %}
           </td>
       </tr>

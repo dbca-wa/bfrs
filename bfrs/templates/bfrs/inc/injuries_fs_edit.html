@@ -1,5 +1,5 @@
 <div class="div_injury_unknown" id="div_injury_unknown">
-    <div id="id_injury" class="row formset injury-formset">
+    <div id="id_injury" class="row g-0 formset injury-formset">
         <table class="table_fs" border="0">
             <tbody>
                 <th>Injury Type</th>
@@ -33,8 +33,8 @@
     $('.injury-formset tbody tr').formset({
         prefix: '{{ form.injury_formset.prefix }}',
         formCssClass: 'injury_fs',
-        addText: '<i class="icon-plus"></i> add another injury',
-        deleteText: '<i class="icon-remove"></i>',
+        addText: '<i class="bi bi-plus"></i> add another injury',
+        deleteText: '<i class="bi bi-trash"></i>',
         deleteCssClass: 'delete-row' + '-' + '{{ form.injury_formset.prefix  }}',
     });
 

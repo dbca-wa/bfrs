@@ -29,7 +29,7 @@
       </ol>
     {% endif %}
     <div>
-        <a id="id_ok_btn" {% if object.report_status == object.STATUS_INITIAL %} href="{% url 'bushfire:bushfire_initial' object.id %}" {% else %} href="{% url 'bushfire:bushfire_final' object.id %}"{% endif %} class="btn btn-info">Return</a>
+        <a id="id_ok_btn" {% if object.report_status == object.STATUS_INITIAL %} href="{% url 'bushfire:bushfire_initial' object.id %}" {% else %} href="{% url 'bushfire:bushfire_final' object.id %}"{% endif %} class="btn btn-info text-white">Return</a>
     </div>
 {% endblock %}
 

@@ -47,8 +47,8 @@
 
 {% if form.errors %}
     <h1 class="errornote">
+      <button type="button" class="btn-close float-end" data-bs-dismiss="alert" aria-label="Close"></button>
       <p>Form Errors</p>
-      <button type="button" class="close" data-dismiss="alert">×</button>
       <ul>
       {% for field in form %} 
           {% if field.errors %}
@@ -85,15 +85,10 @@
     <td class="cbas" >{{form.document_created}}</td>
 </tr>
 </table>
-<div class="navbar navbar-fixed-bottom">
-  <div class="navbar-inner">
-    <div class="container">
-        <p class="pull-right">
-            <button type="submit" class="btn btn-primary btn-success"  name="action" value="create"/>Upload </button>
-            <button type="button" class="btn btn-primary btn-danger"  onclick="window.location='{% url "bushfire:bushfire_document_list"  bushfireid=bushfire.id %}'">Cancel </button>
-      </p>
-    </div>
-  </div>
+<div class="pb-5"></div>
+<div class="fixed-bottom bg-light border-top d-flex justify-content-end gap-2 px-3 py-2">
+    <button type="submit" class="btn btn-success" name="action" value="create">Upload</button>
+    <button type="button" class="btn btn-danger" onclick="window.location='{% url "bushfire:bushfire_document_list" bushfireid=bushfire.id %}'">Cancel</button>
 </div>
 </form>
 {% endblock %}

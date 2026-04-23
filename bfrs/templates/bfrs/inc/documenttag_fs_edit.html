@@ -1,12 +1,10 @@
 <div>
-    <div id="id_documenttag" class="row formset documenttag-formset">
+    <div id="id_documenttag" class="row g-0 formset documenttag-formset">
         <table class="table_fs" border="0">
-            <tr>
-              <th></th>
-              {% for documenttag_form in form.documenttag_formset %}
+            {% for documenttag_form in form.documenttag_formset %}
               <tr>
                 <td>{{ documenttag_form.name }}</td>
-                <td>
+                <td style="width:0; padding:0; border:0; overflow:hidden;">
                   {% if documenttag_form.instance.pk %}{{ documenttag_form.DELETE }}{% endif %}
                   {{ documenttag_form.id }}
 
@@ -28,8 +26,8 @@
     $('.documenttag-formset tbody tr').formset({
         prefix: '{{ form.documenttag_formset.prefix }}',
         formCssClass: 'documenttag_fs',
-        addText: '<i class="icon-plus"></i> add another tag',
-        //deleteText: '<i class="icon-remove"></i>',
+        addText: '<i class="bi bi-plus"></i> add another tag',
+        //deleteText: '<i class="bi bi-trash"></i>',
         deleteText: '',
         deleteCssClass: 'delete-row' + '-' + '{{ form.documenttag_formset.prefix  }}',
     });

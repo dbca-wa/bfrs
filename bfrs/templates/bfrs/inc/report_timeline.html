@@ -1,14 +1,14 @@
 {% if object.pk %}
 <div class="panel-group" id="timeline_accordion" role="tablist" aria-multiselectable="true">
-  <div class="panel-default">
+  <div class="card">
     <div role="tab" id="pn_report_timeline">
-      <h4 class="panel-title">
-        <a role="button" data-toggle="collapse" data-parent="#timeline_accordion" href="#report_timeline" aria-expanded="true" aria-controls="report_timeline">
+      <h4 class="card-title">
+        <a role="button" data-bs-toggle="collapse" data-bs-parent="#timeline_accordion" href="#report_timeline" aria-expanded="true" aria-controls="report_timeline">
           <div colspan="6" style="background: black; color: white; text-align: left; font-size: 16px; padding: 12px;" > REPORT TIMELINE (Click to expand/collapse)</div>
         </a>
       </h4>
     </div>
-    <div id="report_timeline" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pn_report_timeline">
+    <div id="report_timeline" class="collapse show" role="tabpanel" aria-labelledby="pn_report_timeline">
         <table class="table table-bordered table-striped table-condensed">
             <tbody>
                 <tr>

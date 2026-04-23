@@ -4,7 +4,7 @@
 
 {% block content %}
     <div class="row">
-        <div class="col-xs-12">
+        <div class="col-12">
             <div class="page-header">
                 <h1 style="text-align:center">Welcome to the Bushfire Reporting System</h1>
             </div>
@@ -18,7 +18,7 @@
                             <input type="text" class="form-control" id="{{ form.username.auto_id }}"
                                    name="{{ form.username.name }}">
                             {% if form.username.errors %}
-                                <span class="glyphicon glyphicon-remove form-control-feedback"></span>
+                                <span class="bi bi-x-circle form-control-feedback"></span>
                                 <span class='text-danger'>{{ form.username.errors|join:'<br />' }}</span>
                             {% endif %}
                         </div>
@@ -27,7 +27,7 @@
                             <input type="password" class="form-control" id="{{ form.password.auto_id }}"
                                    name="{{ form.password.name }}">
                             {% if form.password.errors %}
-                                <span class="glyphicon glyphicon-remove form-control-feedback"></span>
+                                <span class="bi bi-x-circle form-control-feedback"></span>
                                 <span class='text-danger'>{{ form.password.errors|join:'<br />' }}</span>
                             {% endif %}
                         </div>

@@ -24,8 +24,8 @@
 
 {% if form.errors %}
     <h1 class="errornote">
+      <button type="button" class="btn-close float-end" data-bs-dismiss="alert" aria-label="Close"></button>
       <p>Form Errors</p>
-      <button type="button" class="close" data-dismiss="alert">×</button>
       <ul>
       {% for field in form %} 
           {% if field.errors %}
@@ -60,27 +60,21 @@
         </tr>
   </tbody>
 </table>
-
-<div class="navbar navbar-fixed-bottom">
-  <div class="navbar-inner">
-    <div class="container">
-        <p class="pull-right">
-        {% if submit_actions %}
-            {% for submit_action in submit_actions %}
-            {% if submit_action.3 %}
-                <button type="button" class="btn btn-primary {{submit_action.2}}"  onclick="if ({{submit_action.3}}) {$('#id_button_{{submit_action.0}}').click();};">{{submit_action.1}} </button>
-                <button type="submit" id="id_button_{{submit_action.0}}" name="action" value="{{submit_action.0}}" style="display:none"/>{{submit_action.1}} </button>
-            {% else %}
-                <button type="submit" class="btn btn-primary {{submit_action.2}}"  name="action" value="{{submit_action.0}}"/>{{submit_action.1}} </button>
-            {% endif %}
-            {% endfor %}
+<div class="pb-5"></div>
+<div class="fixed-bottom bg-light border-top d-flex justify-content-end gap-2 px-3 py-2">
+    {% if submit_actions %}
+        {% for submit_action in submit_actions %}
+        {% if submit_action.3 %}
+            <button type="button" class="btn btn-primary {{submit_action.2}}" onclick="if ({{submit_action.3}}) {$('#id_button_{{submit_action.0}}').click();}">{{submit_action.1}}</button>
+            <button type="submit" id="id_button_{{submit_action.0}}" name="action" value="{{submit_action.0}}" style="display:none">{{submit_action.1}}</button>
+        {% else %}
+            <button type="submit" class="btn btn-primary {{submit_action.2}}" name="action" value="{{submit_action.0}}">{{submit_action.1}}</button>
         {% endif %}
-        {% for link_action in link_actions %}
-            <button type="button" class="btn btn-primary {{link_action.2}}"  onclick="window.location='{{link_action.0}}'">{{link_action.1}} </button>
         {% endfor %}
-        </p>
-    </div>
-  </div>
+    {% endif %}
+    {% for link_action in link_actions %}
+        <button type="button" class="btn btn-primary {{link_action.2}}" onclick="window.location='{{link_action.0}}'">{{link_action.1}}</button>
+    {% endfor %}
 </div>
 </form>
 

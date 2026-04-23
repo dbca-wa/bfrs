@@ -5,15 +5,41 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Django",
+            "name": "Django: BS5 (port 9191)",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/manage.py",
+            "python": "${workspaceFolder}/venv/bin/python",
             "args": [
                 "runserver",
                 "0.0.0.0:9191"
             ],
-            "django": true
+            "django": true,
+            "justMyCode": false
         },
+        {
+            "name": "Django: BS3 (port 9192)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "/data/data/projects/bfrs-bs3/manage.py",
+            "python": "${workspaceFolder}/venv/bin/python",
+            "cwd": "/data/data/projects/bfrs-bs3",
+            "args": [
+                "runserver",
+                "0.0.0.0:9192"
+            ],
+            "django": true,
+            "justMyCode": false
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Django: BS3 + BS5 (compare)",
+            "configurations": [
+                "Django: BS5 (port 9191)",
+                "Django: BS3 (port 9192)"
+            ],
+            "stopAll": true
+        }
     ]
 }

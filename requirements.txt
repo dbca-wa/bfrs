@@ -12,7 +12,7 @@ python-decouple==3.8
 gunicorn==23.0.0
 whitenoise==5.3.0
 django-crispy-forms==2.3
-crispy-bootstrap3==2024.1
+crispy-bootstrap5==2026.3
 webtemplate-dbca==0.6.0
 django-tastypie==0.14.7
 django-model-utils==2.0.3
