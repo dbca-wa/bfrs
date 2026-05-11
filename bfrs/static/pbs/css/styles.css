@@ -1,5 +1,11 @@
 /* Remove bullet markers from Bootstrap 5 navbar list items and pagination */
 .navbar-nav > li,
+
+/* Align Bootstrap containers with .page max-width */
+.container {
+    max-width: 1210px;
+}
+
 .navbar-nav > li.nav-item,
 .nav-tabs > li,
 .nav-tabs > li.nav-item,
