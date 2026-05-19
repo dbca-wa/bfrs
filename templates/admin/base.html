@@ -130,7 +130,8 @@
         <ul class="navbar-nav" style="font-weight: bold;">
           <li class="nav-item"><a class="nav-link" href="{% url 'main' %}"><i class="bi bi-fire"></i> Bushfire Overview</a></li>
           <li class="nav-item"><a class="nav-link" href="{% url 'sss_home' %}" target="_blank"><i class="bi bi-link"></i> Spatial Support Home</a></li>
-          {% if not request.user|can_readonly and not request.user.is_superuser %}
+           {% comment %}{% if not request.user|can_readonly and not request.user.is_superuser %} {% endcomment %}
+           {% if request.user.is_superuser %}
           <li class="nav-item"><a class="nav-link" href="{% url 'bushfire:bushfire_create' %}"><i class="bi bi-plus"></i> Create Bushfire</a></li>
           {% endif %}
         </ul>
