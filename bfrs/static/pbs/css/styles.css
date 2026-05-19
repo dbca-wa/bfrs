@@ -211,6 +211,11 @@ ul#actionnav {
     background-color: #FCF8E3;
 }
 
+.table tbody tr td.cbas .bootstrap-select > .dropdown-toggle {
+    background-color: #FFFFFF;
+    background-image: none;
+}
+
 .table tbody tr td.success {
     background-color: #DFF0D8;
 }
