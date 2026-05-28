@@ -5,5 +5,10 @@
 15 18 * * * python /app/manage.py calculate_report_tables >> logs/cronjob.log 2>&1
 01 10 1 7 * python /app/manage.py complete_reporting_cadastre_update >> logs/cadastre_layer_sync.log 2>&1
 
+01 11 1 7 * python /app/manage.py complete_bfrs_region_update >> logs/complete_bfrs_region_update.log 2>&1
+01 12 1 7 * python /app/manage.py complete_reporting_dept_interest >> logs/complete_reporting_dept_interest.log 2>&1
+01 13 1 7 * python /app/manage.py complete_reporting_legislated_tenure >> logs/complete_reporting_legislated_tenure.log 2>&1
+01 14 1 7 * python /app/manage.py complete_reporting_state_forest >> logs/complete_reporting_state_forest.log 2>&1
+
 # Log Rotate
 1 0 * * *  /bin/log_rotate.sh  >> /app/logs/log_rotate.log 2>&1
