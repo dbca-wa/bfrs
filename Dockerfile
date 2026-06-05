@@ -67,6 +67,7 @@ COPY cadastre_table_update ./cadastre_table_update
 COPY legislated_tenure_update ./legislated_tenure_update
 COPY dept_interest_update ./dept_interest_update
 COPY state_forest_update ./state_forest_update
+COPY sqlscripts ./sqlscripts
 
 # NOTE: we can't currently run the collectstatic step due to how BFRS is written.
 # Always be sure to run collectstatic locally prior to building the image.
