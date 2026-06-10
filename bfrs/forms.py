@@ -616,6 +616,14 @@ class BaseBushfireEditForm(BushfireViewForm):
             reporting_year = cleaned_data.get('reporting_year')
             if reporting_year is not None and reporting_year < self.instance.year:
                 self.add_error('reporting_year', 'Cannot be before report financial year, {}/{}.'.format(self.instance.year, self.instance.year + 1))
+            if self.instance and self.instance.pk:
+                status = self.instance.report_status
+                if status > Bushfire.STATUS_FINAL_AUTHORISED:
+                    # reporting_year is not editable after STATUS_FINAL_AUTHORISED
+                    cleaned_data['reporting_year'] = self.instance.reporting_year
+                elif status == Bushfire.STATUS_FINAL_AUTHORISED and not self.can_maintain_data:
+                    # only Fire Information Management group can edit reporting_year at STATUS_FINAL_AUTHORISED
+                    cleaned_data['reporting_year'] = self.instance.reporting_year
 
         if self.is_editable('field_officer'):
             if 'field_officer' in cleaned_data:
@@ -797,6 +805,7 @@ class SubmittedBushfireForm(MergedBushfireForm):
             "fire_not_found":basefields.SwitchFieldFactory(Bushfire,"fire_not_found",("invalid_details",),true_value=True),
         }
         widgets = {
+            "reporting_year":None,
             "dfes_incident_no":forms.TextInput(attrs={"maxlength":8,"pattern":"[0-9]{6}|[0-9]{8}","title":"Must be 6 or 8 numeric digits","onblur":"this.value=this.value.trim()"}),
             "field_officer":basewidgets.SelectableSelect(),
             "other_field_officer":None,
@@ -884,7 +893,7 @@ class ReviewedBushfireFSSGForm(ReviewedBushfireForm):
         widgets = {
             "region":None,
             "district":None,
-            "reporting_year":None,
+            # "reporting_year":None,
             # "dispatch_pw":forms.RadioSelect(renderer=HorizontalRadioRenderer),
             "dispatch_pw":HorizontalRadioSelect(),
             "dispatch_pw_date":basewidgets.DatetimeInput(),
@@ -903,6 +912,7 @@ class InitialBushfireForm(SubmittedBushfireForm):
         widgets = {
             "__all__": basewidgets.TextDisplay(),
             "name":None,
+            "reporting_year":None,
             "fire_detected_date":fire_detected_date_widget,
             "duty_officer":basewidgets.SelectableSelect(),
             # "dispatch_pw":forms.RadioSelect(renderer=HorizontalRadioRenderer),
