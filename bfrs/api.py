@@ -1,4 +1,8 @@
 import traceback
+from datetime import timezone as dt_timezone
+import re
+import hashlib
+import zlib
 # from django.conf.urls import url
 from django.urls import include, path, re_path
 from django.conf import settings
@@ -16,6 +20,8 @@ from bfrs.utils import update_areas_burnt, invalidate_bushfire, serialize_bushfi
 
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point, GEOSGeometry, Polygon, MultiPolygon, GEOSException
+from django.db import connection
+from django.views import View
 from tastypie.http import HttpBadRequest, HttpUnauthorized, HttpAccepted
 from tastypie.exceptions import ImmediateHttpResponse, Unauthorized
 import json
@@ -506,6 +512,129 @@ class BushfireSpatialResource(ModelResource):
             else:
                 traceback.print_exc()
             raise
+
+class BushfireListLatestView(View):
+    """
+    Read-only endpoint that queries the bushfirelist_latest database view directly.
+
+    GET /api/bushfirelist_latest/
+
+    Optional query parameters (equality filters):
+        fire_number, year, region_id, district_id, report_status, fire_not_found
+
+    Also supports a simple GeoServer-style cql_filter, e.g.:
+        cql_filter=fire_not_found=0
+
+    Example URLs:
+        /api/bushfirelist_latest/
+        /api/bushfirelist_latest/?fire_not_found=0
+        /api/bushfirelist_latest/?cql_filter=fire_not_found=0
+        /api/bushfirelist_latest/?cql_filter=fire_not_found=0 AND year=2025
+    """
+    ALLOWED_FILTERS = {'fire_number', 'year', 'region_id', 'district_id', 'report_status', 'fire_not_found'}
+
+    def _build_geoserver_like_id(self, row):
+        """Build a stable GeoServer-like feature id string.
+
+        Example shape: bushfirelist_latest.fid--76262c7a_19eb5208f31_-2332
+        """
+        seed = "{}|{}|{}".format(row.get('id'), row.get('fire_number'), row.get('year'))
+        digest = hashlib.md5(seed.encode('utf-8')).hexdigest()
+        part1 = "-{}".format(digest[:8])
+        part2 = digest[8:20]
+        part3 = "-{:04d}".format(zlib.crc32(seed.encode('utf-8')) % 10000)
+        return "bushfirelist_latest.fid-{}_{}_{}".format(part1, part2, part3)
+
+    def _parse_cql_filter(self, cql_filter):
+        """Parse a simple CQL filter string of equality clauses joined by AND."""
+        filters = []
+        if not cql_filter:
+            return filters
+
+        clauses = re.split(r"\s+AND\s+", cql_filter, flags=re.IGNORECASE)
+        for clause in clauses:
+            if '=' not in clause:
+                continue
+
+            key, value = clause.split('=', 1)
+            key = key.strip()
+            value = value.strip().strip("'\"")
+
+            if key in self.ALLOWED_FILTERS:
+                filters.append((key, value))
+
+        return filters
+
+    def get(self, request):
+        if not request.user.is_authenticated:
+            return JsonResponse({'error': 'Authentication required.'}, status=401)
+
+        where_clauses = []
+        params = []
+        for key in self.ALLOWED_FILTERS:
+            value = request.GET.get(key)
+            if value is not None:
+                where_clauses.append("{} = %s".format(key))
+                params.append(value)
+
+        # Support GeoServer-style CQL filters such as fire_not_found=0.
+        cql_filter = request.GET.get('cql_filter')
+        for key, value in self._parse_cql_filter(cql_filter):
+            where_clauses.append("{} = %s".format(key))
+            params.append(value)
+
+        sql = "SELECT *, ST_AsGeoJSON(origin_point) AS origin_point_geojson FROM bushfirelist_latest"
+        if where_clauses:
+            sql += " WHERE " + " AND ".join(where_clauses)
+
+        with connection.cursor() as cursor:
+            cursor.execute(sql, params)
+            columns = [col[0] for col in cursor.description]
+            rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+        features = []
+        for row in rows:
+            geometry_raw = row.pop('origin_point_geojson', None)
+            row.pop('origin_point', None)
+
+            geometry = None
+            if geometry_raw:
+                geometry = json.loads(geometry_raw) if isinstance(geometry_raw, str) else geometry_raw
+
+            fire_boundary = row.get('fire_boundary')
+            if isinstance(fire_boundary, str) and fire_boundary:
+                try:
+                    row['fire_boundary'] = json.loads(fire_boundary)
+                except ValueError:
+                    pass
+
+            feature_id = self._build_geoserver_like_id(row)
+
+            features.append({
+                'type': 'Feature',
+                'id': feature_id,
+                'geometry': geometry,
+                'geometry_name': 'origin_point',
+                'properties': row,
+            })
+
+        feature_collection = {
+            'type': 'FeatureCollection',
+            'features': features,
+            'totalFeatures': len(features),
+            'numberMatched': len(features),
+            'numberReturned': len(features),
+            'timeStamp': timezone.now().astimezone(dt_timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z'),
+            'crs': {
+                'type': 'name',
+                'properties': {
+                    'name': 'urn:ogc:def:crs:EPSG::4326',
+                },
+            },
+        }
+
+        return JsonResponse(feature_collection, safe=True)
+
 
 v1_api = Api(api_name='v1')
 v1_api.register(BushfireResource())

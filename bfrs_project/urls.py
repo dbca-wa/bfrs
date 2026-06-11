@@ -3,7 +3,7 @@ from django.urls import include, path, re_path
 from django.views.generic import TemplateView
 from django.contrib import admin
 from bfrs import views
-from bfrs.api import v1_api
+from bfrs.api import v1_api, BushfireListLatestView
 
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect
@@ -60,6 +60,7 @@ urlpatterns = [
     # url(r'^options/js/(?P<chained_model_app>[a-zA-Z0-9\_\-]+)/(?P<chained_model_name>[a-zA-Z0-9\_\-]+)/(?P<model_app>[a-zA-Z0-9\_\-]+)/(?P<model_name>[a-zA-Z0-9\_\-]+)', ChainedModelChoicesView.as_view(),name="chained_model_choices"),
     # url(r'^$', home_view_selection_view, name='home'),
     # path('about/', TemplateView.as_view(template_name='about.html'), name='about'),
+    path('api/bushfirelist_latest/', BushfireListLatestView.as_view(), name='bushfirelist_latest'),
     path('api/', include(v1_api.urls)),
     path('profile/', views.ProfileView.as_view(), name='profile'),
     path('sss/', sss_selection_view, name="sss_home"),
