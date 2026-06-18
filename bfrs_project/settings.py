@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
+    "corsheaders",
     'reversion',
     'reversion_compare',
     'tastypie',
@@ -46,6 +47,7 @@ INSTALLED_APPS = [
     'appmonitor_client',
 ]
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -205,6 +207,14 @@ CACHES = {
 }
 CSRF_TRUSTED_ORIGINS_STRING = decouple.config("CSRF_TRUSTED_ORIGINS", default='[]')
 CSRF_TRUSTED_ORIGINS = json.loads(str(CSRF_TRUSTED_ORIGINS_STRING))
+CORS_ORIGIN_ALLOW_ALL = env('CORS_ORIGIN_ALLOW_ALL', False)
+CORS_ALLOW_CREDENTIALS = env('CORS_ALLOW_CREDENTIALS', True)
+CORS_ORIGIN_WHITELIST = env('CORS_ORIGIN_WHITELIST', [
+
+])
+CORS_ORIGIN_REGEX_WHITELIST = env('CORS_ORIGIN_WHITELIST', [
+    r'^.*$',
+])
 FILE_UPLOAD_PERMISSIONS = None
 
 
