@@ -4,6 +4,10 @@ import re
 import hashlib
 import zlib
 import html
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+import base64
+from django.contrib.auth import authenticate
 # from django.conf.urls import url
 from django.urls import include, path, re_path
 from django.conf import settings
@@ -514,6 +518,7 @@ class BushfireSpatialResource(ModelResource):
                 traceback.print_exc()
             raise
 
+@method_decorator(csrf_exempt, name='dispatch')
 class BushfireListLatestView(View):
     """
     Read-only endpoint that queries the bushfirelist_latest database view directly.
@@ -572,8 +577,26 @@ class BushfireListLatestView(View):
         return filters
 
     def get(self, request):
-        if not request.user.is_authenticated:
-            return JsonResponse({'error': 'Authentication required.'}, status=401)
+        if not settings.BYPASS_AUTHENTICATION and not request.user.is_authenticated:
+            auth_header = request.headers.get("Authorization")
+
+            if auth_header and auth_header.startswith("Basic "):
+                try:
+                    auth_type, creds = auth_header.split()
+                    decoded = base64.b64decode(creds).decode('utf-8')
+                    username, password = decoded.split(":", 1)
+
+                    user = authenticate(username=username, password=password)
+
+                    if user:
+                        request.user = user
+                    else:
+                        return JsonResponse({'error': 'Invalid credentials'}, status=401)
+
+                except Exception as e:
+                    return JsonResponse({'error': 'Invalid auth format'}, status=401)
+            else:
+                return JsonResponse({'error': 'Authentication required.'}, status=401)
 
         where_clauses = []
         params = []
