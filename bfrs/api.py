@@ -1,8 +1,9 @@
 import traceback
-from datetime import timezone as dt_timezone
+from datetime import datetime, timezone as dt_timezone
 import re
 import hashlib
 import zlib
+import html
 # from django.conf.urls import url
 from django.urls import include, path, re_path
 from django.conf import settings
@@ -531,7 +532,7 @@ class BushfireListLatestView(View):
         /api/bushfirelist_latest/?cql_filter=fire_not_found=0
         /api/bushfirelist_latest/?cql_filter=fire_not_found=0 AND year=2025
     """
-    ALLOWED_FILTERS = {'fire_number', 'year', 'region_id', 'district_id', 'report_status', 'fire_not_found'}
+    ALLOWED_FILTERS = {'fire_number', 'year', 'region_id', 'district_id', 'report_status', 'fire_not_found','fire_detected_or_created'}
 
     def _build_geoserver_like_id(self, row):
         """Build a stable GeoServer-like feature id string.
@@ -546,22 +547,27 @@ class BushfireListLatestView(View):
         return "bushfirelist_latest.fid-{}_{}_{}".format(part1, part2, part3)
 
     def _parse_cql_filter(self, cql_filter):
-        """Parse a simple CQL filter string of equality clauses joined by AND."""
         filters = []
         if not cql_filter:
             return filters
 
+        cql_filter = html.unescape(cql_filter)
+
         clauses = re.split(r"\s+AND\s+", cql_filter, flags=re.IGNORECASE)
+
         for clause in clauses:
-            if '=' not in clause:
+            clause = clause.strip().strip("()")
+
+            match = re.match(r"^(\w+)\s*(=|>=|<=|>|<)\s*(.+)$", clause)
+            if not match:
+                print("SKIPPED CLAUSE:", clause)  # debug
                 continue
 
-            key, value = clause.split('=', 1)
-            key = key.strip()
+            key, operator, value = match.groups()
             value = value.strip().strip("'\"")
 
             if key in self.ALLOWED_FILTERS:
-                filters.append((key, value))
+                filters.append((key, operator, value))
 
         return filters
 
@@ -579,8 +585,16 @@ class BushfireListLatestView(View):
 
         # Support GeoServer-style CQL filters such as fire_not_found=0.
         cql_filter = request.GET.get('cql_filter')
-        for key, value in self._parse_cql_filter(cql_filter):
-            where_clauses.append("{} = %s".format(key))
+        cql_filter = html.unescape(cql_filter or "")
+
+        for key, operator, value in self._parse_cql_filter(cql_filter):
+            if key == "fire_detected_or_created":
+                where_clauses.append(
+                    f"(CASE WHEN fire_detected_date IS NULL THEN created ELSE fire_detected_date END) {operator} %s"
+                )
+                params.append(value)
+                continue
+            where_clauses.append(f"{key} {operator} %s")
             params.append(value)
 
         sql = "SELECT *, ST_AsGeoJSON(origin_point) AS origin_point_geojson FROM bushfirelist_latest"
@@ -601,12 +615,14 @@ class BushfireListLatestView(View):
             if geometry_raw:
                 geometry = json.loads(geometry_raw) if isinstance(geometry_raw, str) else geometry_raw
 
+            
             fire_boundary = row.get('fire_boundary')
-            if isinstance(fire_boundary, str) and fire_boundary:
-                try:
-                    row['fire_boundary'] = json.loads(fire_boundary)
-                except ValueError:
-                    pass
+
+            # Always return as JSON string (for frontend compatibility)
+            if fire_boundary:
+                if not isinstance(fire_boundary, str):
+                    row['fire_boundary'] = json.dumps(fire_boundary)
+
 
             feature_id = self._build_geoserver_like_id(row)
 
