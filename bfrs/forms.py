@@ -1278,9 +1278,9 @@ class AreaBurntForm(forms.ModelForm):
 
 RECOMMENDATION_CHOICES = (
     (1, 'Noted'),
-    (2, 'Noted/Endorsed'),
-    (3, 'Noted/Endorsed with Amendment'),
-    (4, 'Accept/Attending'),
+    # (2, 'Noted/Endorsed'),
+    # (3, 'Noted/Endorsed with Amendment'),
+    # (4, 'Accept/Attending'),
 )
 
 
