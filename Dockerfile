@@ -50,11 +50,6 @@ RUN chown -R oim.oim /app
 FROM builder_base_bfrs as python_libs_bfrs
 WORKDIR /app
 USER oim
-RUN curl -O https://bootstrap.pypa.io/get-pip.py
-RUN python3 get-pip.py --user
-RUN python3 -m pip --version
-
-RUN python -m pip install --user virtualenv
 RUN virtualenv /app/venv
 ENV PATH=/app/venv/bin:$PATH
 COPY requirements.txt ./
