@@ -14,8 +14,10 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PASS_SSO="ThisIsNotReal" \
     EMAIL_HOST="localhost" \
     FROM_EMAIL="no-reply@dbca.wa.gov.au" \
-    SMS_POSTFIX="sms.url.endpoint"
+    SMS_POSTFIX="sms.url.endpoint" \
+    VIRTUAL_ENV=/app/venv
 
+    
 # Use Australian Mirrors
 #RUN sed 's/archive.ubuntu.com/au.archive.ubuntu.com/g' /etc/apt/sources.list > /etc/apt/sourcesau.list && \
 #    mv /etc/apt/sourcesau.list /etc/apt/sources.list
@@ -50,8 +52,8 @@ RUN chown -R oim.oim /app
 FROM builder_base_bfrs as python_libs_bfrs
 WORKDIR /app
 USER oim
-RUN virtualenv /app/venv
-ENV PATH=/app/venv/bin:$PATH
+RUN python3 -m venv $VIRTUAL_ENV
+ENV PATH=$VIRTUAL_ENV/bin:$PATH
 COPY requirements.txt ./
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt 
