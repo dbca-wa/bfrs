@@ -76,6 +76,8 @@ RUN touch /app/.env && \
     python manage.py collectstatic --noinput
 
 FROM collect_static_bfrs as launch_bfrs
+RUN gem install net-imap -v 0.4.24
+RUN gem install erb -v 4.0.3.1
 
 # Cleanup 
 USER root
