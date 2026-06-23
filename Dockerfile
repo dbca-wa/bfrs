@@ -1,7 +1,8 @@
 # syntax = docker/dockerfile:1.2
 
 # Prepare the base environment.
-FROM ghcr.io/dbca-wa/docker-apps-dev:ubuntu_2510_base_python AS builder_base_bfrs
+# FROM ghcr.io/dbca-wa/docker-apps-dev:ubuntu_2510_base_python AS builder_base_bfrs
+FROM ghcr.io/dbca-wa/docker-apps-dev:ubuntu_2604_base_python AS builder_base_bfrs
 
 LABEL maintainer="asi@dbca.wa.gov.au"
 
