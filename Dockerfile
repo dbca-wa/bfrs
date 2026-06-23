@@ -50,6 +50,7 @@ RUN chown -R oim.oim /app
 FROM builder_base_bfrs as python_libs_bfrs
 WORKDIR /app
 USER oim
+RUN python -m pip install --user virtualenv
 RUN virtualenv /app/venv
 ENV PATH=/app/venv/bin:$PATH
 COPY requirements.txt ./
