@@ -1,7 +1,5 @@
 # syntax = docker/dockerfile:1.2
-
 # Prepare the base environment.
-# FROM ghcr.io/dbca-wa/docker-apps-dev:ubuntu_2510_base_python AS builder_base_bfrs
 FROM ghcr.io/dbca-wa/docker-apps-dev:ubuntu_2604_base_python AS builder_base_bfrs
 
 LABEL maintainer="asi@dbca.wa.gov.au"
@@ -78,6 +76,10 @@ RUN touch /app/.env && \
     python manage.py collectstatic --noinput
 
 FROM collect_static_bfrs as launch_bfrs
+
+RUN wget https://raw.githubusercontent.com/dbca-wa/wagov_utils/refs/heads/main/wagov_utils/bin/package_cleanup_2604.sh -O /tmp/package_cleanup_2604.sh
+RUN chmod 755 /tmp/package_cleanup_2604.sh
+RUN /tmp/package_cleanup_2604.sh
 
 EXPOSE 8080
 HEALTHCHECK --interval=1m --timeout=5s --start-period=10s --retries=3 CMD ["wget", "-q", "-O", "-", "http://localhost:8080/"]
