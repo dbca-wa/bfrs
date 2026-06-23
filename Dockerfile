@@ -76,11 +76,15 @@ RUN touch /app/.env && \
     python manage.py collectstatic --noinput
 
 FROM collect_static_bfrs as launch_bfrs
-RUN gem install net-imap -v 0.4.24
-RUN gem install erb -v 4.0.3.1
+
 
 # Cleanup 
 USER root
+RUN gem install net-imap -v 0.5.15
+RUN gem install erb -v 4.0.3.1
+RUN gem install zlib -v 3.1.2
+RUN gem install uri -v 0.13.3
+
 RUN wget https://raw.githubusercontent.com/dbca-wa/wagov_utils/refs/heads/main/wagov_utils/bin/package_cleanup_2604.sh -O /tmp/package_cleanup_2604.sh
 RUN chmod 755 /tmp/package_cleanup_2604.sh
 RUN /tmp/package_cleanup_2604.sh
