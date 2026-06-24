@@ -34,7 +34,7 @@ class Command(BaseCommand):
                 SELECT
                         id,
                         fire_number,
-                        ROUND((ST_Area(ST_Transform(fire_boundary, 900914)) / 10000)::numeric, 2)::float AS spatial_geometry_total_area,
+                        ROUND((ST_Area(ST_Transform(fire_boundary, 9473)) / 10000)::numeric, 2)::float AS spatial_geometry_total_area,
                         (
                                 SELECT
                                         area::float
@@ -73,7 +73,7 @@ class Command(BaseCommand):
         SELECT
                 id,
                 fire_number,
-                ROUND((ST_Area(ST_Transform(fire_boundary, 900914)) / 10000)::numeric, 2)::float AS spatial_geometry_total_area,
+                ROUND((ST_Area(ST_Transform(fire_boundary, 9473)) / 10000)::numeric, 2)::float AS spatial_geometry_total_area,
                 (
                         SELECT
                                 area::float
