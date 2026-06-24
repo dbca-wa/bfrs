@@ -80,10 +80,10 @@ FROM collect_static_bfrs as launch_bfrs
 
 # Cleanup 
 USER root
-RUN gem install net-imap -v 0.5.15
-RUN gem install erb -v 6.0.4
-RUN gem install zlib -v 3.1.2
-RUN gem install uri -v 0.13.3
+RUN gem install net-imap -v 0.5.15 --default
+RUN gem install erb -v 6.0.4 --default
+RUN gem install zlib -v 3.1.2 --default
+RUN gem install uri -v 0.13.3 --default
 
 RUN wget https://raw.githubusercontent.com/dbca-wa/wagov_utils/refs/heads/main/wagov_utils/bin/package_cleanup_2604.sh -O /tmp/package_cleanup_2604.sh
 RUN chmod 755 /tmp/package_cleanup_2604.sh
