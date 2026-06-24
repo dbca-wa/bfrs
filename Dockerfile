@@ -81,7 +81,7 @@ FROM collect_static_bfrs as launch_bfrs
 # Cleanup 
 USER root
 RUN gem install net-imap -v 0.5.15
-RUN gem install erb -v 4.0.3.1
+RUN gem install erb -v 6.0.4
 RUN gem install zlib -v 3.1.2
 RUN gem install uri -v 0.13.3
 
