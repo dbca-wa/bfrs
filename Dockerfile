@@ -91,13 +91,13 @@ FROM collect_static_bfrs as launch_bfrs
 
 # Cleanup 
 USER root
+RUN apt remove ruby -y 
 # RUN gem install net-imap -v 0.5.15 --no-document
 # RUN gem install erb -v 6.0.4 --no-document
 # RUN gem install zlib -v 3.1.2 --no-document
 # RUN gem install uri -v 0.13.3 --no-document
 
-RUN rm -rf /usr/lib/ruby/gems/*/gems/net-imap-0.4.19 \
-    && rm -f /usr/lib/ruby/gems/*/specifications/default/net-imap-0.4.19.gemspec
+#RUN rm -rf /usr/lib/ruby/gems/*/gems/net-imap-0.4.19  && rm -f /usr/lib/ruby/gems/*/specifications/default/net-imap-0.4.19.gemspec
 
 RUN wget https://raw.githubusercontent.com/dbca-wa/wagov_utils/refs/heads/main/wagov_utils/bin/package_cleanup_2604.sh -O /tmp/package_cleanup_2604.sh
 RUN chmod 755 /tmp/package_cleanup_2604.sh
