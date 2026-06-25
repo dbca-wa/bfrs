@@ -51,14 +51,14 @@ FROM builder_base_bfrs as python_libs_bfrs
 WORKDIR /app
 USER oim
 
-RUN git clone https://github.com/rbenv/rbenv.git /app/.rbenv \
-    export PATH="/app/.rbenv/bin:$PATH" \
-    eval "$(rbenv init -)" \
-    mkdir /app/.rbenv/plugins/ \
-    git clone https://github.com/rbenv/ruby-build.git /app/.rbenv/plugins/ruby-build \
-    rbenv install -l \
-    rbenv install 3.3.11 \
-    rbenv global 3.3.11 \
+RUN git clone https://github.com/rbenv/rbenv.git /app/.rbenv && \
+    export PATH="/app/.rbenv/bin:$PATH" && \
+    eval "$(rbenv init -)" && \
+    mkdir /app/.rbenv/plugins/ && \
+    git clone https://github.com/rbenv/ruby-build.git /app/.rbenv/plugins/ruby-build && \
+    rbenv install -l && \
+    rbenv install 3.3.11 && \
+    rbenv global 3.3.11 && \
     rm -rf /tmp/ruby-build.*
 
 RUN python3 -m venv $VIRTUAL_ENV
