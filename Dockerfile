@@ -1,7 +1,6 @@
 # syntax = docker/dockerfile:1.2
-
 # Prepare the base environment.
-FROM ghcr.io/dbca-wa/docker-apps-dev:ubuntu_2510_base_python AS builder_base_bfrs
+FROM ghcr.io/dbca-wa/docker-apps-dev:ubuntu_2604_base_python AS builder_base_bfrs
 
 LABEL maintainer="asi@dbca.wa.gov.au"
 
@@ -13,8 +12,10 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PASS_SSO="ThisIsNotReal" \
     EMAIL_HOST="localhost" \
     FROM_EMAIL="no-reply@dbca.wa.gov.au" \
-    SMS_POSTFIX="sms.url.endpoint"
+    SMS_POSTFIX="sms.url.endpoint" \
+    VIRTUAL_ENV=/app/venv
 
+    
 # Use Australian Mirrors
 #RUN sed 's/archive.ubuntu.com/au.archive.ubuntu.com/g' /etc/apt/sources.list > /etc/apt/sourcesau.list && \
 #    mv /etc/apt/sourcesau.list /etc/apt/sources.list
@@ -49,8 +50,8 @@ RUN chown -R oim.oim /app
 FROM builder_base_bfrs as python_libs_bfrs
 WORKDIR /app
 USER oim
-RUN virtualenv /app/venv
-ENV PATH=/app/venv/bin:$PATH
+RUN python3 -m venv $VIRTUAL_ENV
+ENV PATH=$VIRTUAL_ENV/bin:$PATH
 COPY requirements.txt ./
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt 
@@ -75,6 +76,19 @@ RUN touch /app/.env && \
     python manage.py collectstatic --noinput
 
 FROM collect_static_bfrs as launch_bfrs
+
+
+# Cleanup 
+USER root
+RUN gem install net-imap -v 0.5.15
+RUN gem install erb -v 4.0.3.1
+RUN gem install zlib -v 3.1.2
+RUN gem install uri -v 0.13.3
+
+RUN wget https://raw.githubusercontent.com/dbca-wa/wagov_utils/refs/heads/main/wagov_utils/bin/package_cleanup_2604.sh -O /tmp/package_cleanup_2604.sh
+RUN chmod 755 /tmp/package_cleanup_2604.sh
+RUN /tmp/package_cleanup_2604.sh
+USER oim
 
 EXPOSE 8080
 HEALTHCHECK --interval=1m --timeout=5s --start-period=10s --retries=3 CMD ["wget", "-q", "-O", "-", "http://localhost:8080/"]
