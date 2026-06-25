@@ -40,6 +40,7 @@ setuptools==82.0.0
 urllib3~=2.7.0
 # Security: pin minimum safe version for transitive dependency (requests-ntlm -> pyspnego -> cryptography)
 cryptography>=46.0.6
+dotenv==0.9.9
 
 
 

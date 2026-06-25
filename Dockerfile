@@ -30,7 +30,7 @@ RUN rm /openssl-legacy.conf
 # RUN --mount=type=cache,target=/var/cache/apt apt-get update
 RUN apt-get update
 RUN apt-get upgrade -y
-RUN apt-get install --no-install-recommends -y ipython3
+RUN apt-get install --no-install-recommends -y ipython3 ruby-dev
 
 #    texlive-full
 RUN apt-get install -y latexmk texlive-lang-english texlive-latex-recommended texlive-base texlive-latex-base texlive-fonts-recommended texlive-latex-extra
@@ -80,10 +80,13 @@ FROM collect_static_bfrs as launch_bfrs
 
 # Cleanup 
 USER root
-RUN gem install net-imap -v 0.5.15
-RUN gem install erb -v 4.0.3.1
-RUN gem install zlib -v 3.1.2
-RUN gem install uri -v 0.13.3
+RUN gem install net-imap -v 0.5.15 --no-document
+RUN gem install erb -v 6.0.4 --no-document
+RUN gem install zlib -v 3.1.2 --no-document
+RUN gem install uri -v 0.13.3 --no-document
+
+RUN rm -rf /usr/lib/ruby/gems/*/gems/net-imap-0.4.19 \
+    && rm -f /usr/lib/ruby/gems/*/specifications/default/net-imap-0.4.19.gemspec
 
 RUN wget https://raw.githubusercontent.com/dbca-wa/wagov_utils/refs/heads/main/wagov_utils/bin/package_cleanup_2604.sh -O /tmp/package_cleanup_2604.sh
 RUN chmod 755 /tmp/package_cleanup_2604.sh
