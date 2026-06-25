@@ -30,7 +30,7 @@ RUN rm /openssl-legacy.conf
 # RUN --mount=type=cache,target=/var/cache/apt apt-get update
 RUN apt-get update
 RUN apt-get upgrade -y
-RUN apt-get install --no-install-recommends -y ipython3 ruby-dev libffi-dev libyaml-dev
+RUN apt-get install --no-install-recommends -y ipython3 libffi-dev libyaml-dev
 
 #    texlive-full
 RUN apt-get install -y latexmk texlive-lang-english texlive-latex-recommended texlive-base texlive-latex-base texlive-fonts-recommended texlive-latex-extra
@@ -50,6 +50,17 @@ RUN chown -R oim.oim /app
 FROM builder_base_bfrs as python_libs_bfrs
 WORKDIR /app
 USER oim
+
+RUN git clone https://github.com/rbenv/rbenv.git ~/.rbenv 
+RUN export PATH="$HOME/.rbenv/bin:$PATH"
+RUN eval "$(rbenv init -)"
+RUN mkdir ~/.rbenv/plugins/
+RUN git clone https://github.com/rbenv/ruby-build.git ~/.rbenv/plugins/ruby-build
+RUN rbenv install -l
+RUN rbenv install 3.3.11
+RUN rbenv global 3.3.11
+RUN rm -rf /tmp/ruby-build.*
+
 RUN python3 -m venv $VIRTUAL_ENV
 ENV PATH=$VIRTUAL_ENV/bin:$PATH
 COPY requirements.txt ./
@@ -80,10 +91,10 @@ FROM collect_static_bfrs as launch_bfrs
 
 # Cleanup 
 USER root
-RUN gem install net-imap -v 0.5.15 --no-document
-RUN gem install erb -v 6.0.4 --no-document
-RUN gem install zlib -v 3.1.2 --no-document
-RUN gem install uri -v 0.13.3 --no-document
+# RUN gem install net-imap -v 0.5.15 --no-document
+# RUN gem install erb -v 6.0.4 --no-document
+# RUN gem install zlib -v 3.1.2 --no-document
+# RUN gem install uri -v 0.13.3 --no-document
 
 RUN rm -rf /usr/lib/ruby/gems/*/gems/net-imap-0.4.19 \
     && rm -f /usr/lib/ruby/gems/*/specifications/default/net-imap-0.4.19.gemspec
