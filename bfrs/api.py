@@ -311,11 +311,11 @@ class BushfireSpatialResource(ModelResource):
             bundle.data['fire_boundary'] = MultiPolygon([Polygon(*p) for p in bundle.data['fire_boundary']])
             bundle.obj.fireboundary_uploaded_by = bundle.request.user
             bundle.obj.fireboundary_uploaded_date = timezone.now()
-
-            if bundle.obj.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED:
-                bundle.obj.final_fire_boundary = True
-            else:
-                bundle.obj.final_fire_boundary = False
+            bundle.obj.final_fire_boundary = True
+            # if bundle.obj.report_status >= Bushfire.STATUS_INITIAL_AUTHORISED:
+            #     bundle.obj.final_fire_boundary = True
+            # else:
+            #     bundle.obj.final_fire_boundary = False
 
             if bundle.obj.is_reviewed:
                 bundle.obj.reviewed_by = None
@@ -472,8 +472,8 @@ class BushfireSpatialResource(ModelResource):
                     #no burning area,
                     bundle.obj.tenures_burnt.all().delete()
                 else:
-                    #print("Clear tenure burnt data")
-                    if bundle.obj.report_status != Bushfire.STATUS_INITIAL and bundle.data['area'].get('layers'):
+                    # if bundle.obj.report_status != Bushfire.STATUS_INITIAL and bundle.data['area'].get('layers'):
+                    if bundle.data['area'].get('layers'): # initial report added to tenure_area
                         #report is not a initial report, and has area burnt data, save it.
                         #print("Populate new tenure burnt data")
                         update_areas_burnt(bundle.obj, bundle.data['area'])
