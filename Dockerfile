@@ -30,7 +30,7 @@ RUN rm /openssl-legacy.conf
 # RUN --mount=type=cache,target=/var/cache/apt apt-get update
 RUN apt-get update
 RUN apt-get upgrade -y
-RUN apt-get install --no-install-recommends -y ipython3 ruby-dev rbenv
+RUN apt-get install --no-install-recommends -y ipython3 ruby-dev libffi-dev libyaml-dev
 
 #    texlive-full
 RUN apt-get install -y latexmk texlive-lang-english texlive-latex-recommended texlive-base texlive-latex-base texlive-fonts-recommended texlive-latex-extra
