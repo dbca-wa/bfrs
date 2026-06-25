@@ -471,6 +471,7 @@ class BushfireSpatialResource(ModelResource):
                 if (bundle.data.get('area') or {}).get('total_area') == None:
                     #no burning area,
                     bundle.obj.tenures_burnt.all().delete()
+                else:
                     # if bundle.obj.report_status != Bushfire.STATUS_INITIAL and bundle.data['area'].get('layers'):
                     if bundle.data['area'].get('layers'): # initial report added to tenure_area
                         #report is not a initial report, and has area burnt data, save it.
