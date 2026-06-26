@@ -538,6 +538,7 @@ class BushfireListLatestView(View):
         /api/bushfirelist_latest/?cql_filter=fire_not_found=0 AND year=2025
     """
     ALLOWED_FILTERS = {'fire_number', 'year', 'region_id', 'district_id', 'report_status', 'fire_not_found','fire_detected_or_created'}
+    _fire_boundary_geojson_supported = None
 
     def _build_geoserver_like_id(self, row):
         """Build a stable GeoServer-like feature id string.
@@ -558,10 +559,31 @@ class BushfireListLatestView(View):
 
         cql_filter = html.unescape(cql_filter)
 
-        clauses = re.split(r"\s+AND\s+", cql_filter, flags=re.IGNORECASE)
+        placeholder = "__CQL_BETWEEN_AND__"
+
+        def _protect_between_and(match):
+            clause = match.group(0)
+            return re.sub(r"\s+AND\s+", " {} ".format(placeholder), clause, count=1, flags=re.IGNORECASE)
+
+        protected_filter = re.sub(
+            r"\b\w+\b\s+BETWEEN\s+(?:'[^']*'|\"[^\"]*\"|[^\s()]+)\s+AND\s+(?:'[^']*'|\"[^\"]*\"|[^\s()]+)",
+            _protect_between_and,
+            cql_filter,
+            flags=re.IGNORECASE,
+        )
+
+        clauses = re.split(r"\s+AND\s+", protected_filter, flags=re.IGNORECASE)
 
         for clause in clauses:
             clause = clause.strip().strip("()")
+            clause = clause.replace(placeholder, "AND")
+
+            between_match = re.match(r"^(\w+)\s+BETWEEN\s+(.+?)\s+AND\s+(.+)$", clause, flags=re.IGNORECASE)
+            if between_match:
+                key, start_value, end_value = between_match.groups()
+                if key in self.ALLOWED_FILTERS:
+                    filters.append((key, "BETWEEN", (start_value.strip().strip("'\""), end_value.strip().strip("'\""))))
+                continue
 
             match = re.match(r"^(\w+)\s*(=|>=|<=|>|<)\s*(.+)$", clause)
             if not match:
@@ -611,12 +633,25 @@ class BushfireListLatestView(View):
         cql_filter = html.unescape(cql_filter or "")
 
         for key, operator, value in self._parse_cql_filter(cql_filter):
+            if key == "fire_detected_or_created" and operator == "BETWEEN":
+                where_clauses.append(
+                    "(CASE WHEN fire_detected_date IS NULL THEN created ELSE fire_detected_date END) BETWEEN %s AND %s"
+                )
+                params.extend([value[0], value[1]])
+                continue
+
             if key == "fire_detected_or_created":
                 where_clauses.append(
                     f"(CASE WHEN fire_detected_date IS NULL THEN created ELSE fire_detected_date END) {operator} %s"
                 )
                 params.append(value)
                 continue
+
+            if operator == "BETWEEN":
+                where_clauses.append(f"{key} BETWEEN %s AND %s")
+                params.extend([value[0], value[1]])
+                continue
+
             where_clauses.append(f"{key} {operator} %s")
             params.append(value)
 
