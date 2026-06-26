@@ -26,7 +26,6 @@ from bfrs.utils import update_areas_burnt, invalidate_bushfire, serialize_bushfi
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point, GEOSGeometry, Polygon, MultiPolygon, GEOSException
 from django.db import connection
-from django.db.utils import ProgrammingError
 from django.views import View
 from tastypie.http import HttpBadRequest, HttpUnauthorized, HttpAccepted
 from tastypie.exceptions import ImmediateHttpResponse, Unauthorized
