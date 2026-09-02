@@ -12,7 +12,7 @@ def create_bushfirelist_view():
     CREATE OR REPLACE VIEW bfrs_bushfirelist_v AS
     SELECT b.id,
     b.origin_point,
-    CASE WHEN b.report_status >= 2 THEN ST_AsGeoJSON(st_envelope(b.fire_boundary))
+    CASE WHEN b.report_status >= 6 THEN ST_AsGeoJSON(st_envelope(b.fire_boundary))
          ELSE ST_AsGeoJSON(b.fire_boundary)
     END as fire_boundary,
     b.fb_validation_req,
