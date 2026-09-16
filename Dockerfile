@@ -63,6 +63,9 @@ RUN git clone https://github.com/rbenv/rbenv.git /app/.rbenv && \
     rbenv install $(rbenv install --list | grep -E '^4\.' | tail -1) && \
     rbenv global $(rbenv install --list | grep -E '^4\.' | tail -1) && \
     rm -rf /tmp/ruby-build.*
+ENV PATH="/app/.rbenv/bin:$PATH"  
+RUN gem install json -v '2.19.2'
+RUN rm -f /app/.rbenv/versions/4.0.7/lib/ruby/gems/4.0.0/specifications/default/json-2.18.0.gemspec
 
 RUN python3 -m venv $VIRTUAL_ENV
 ENV PATH=$VIRTUAL_ENV/bin:$PATH
