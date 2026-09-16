@@ -30,13 +30,14 @@ RUN rm /openssl-legacy.conf
 # RUN --mount=type=cache,target=/var/cache/apt apt-get update
 RUN apt-get update
 RUN apt-get upgrade -y
-RUN apt-get install --no-install-recommends -y ipython3 libffi-dev libyaml-dev
+#RUN apt-get install --no-install-recommends -y ipython3 libffi-dev libyaml-dev
+RUN apt-get install --no-install-recommends -y libffi-dev libyaml-dev
 
 #    texlive-full
-# RUN apt-get install -y latexmk texlive-lang-english texlive-latex-recommended texlive-base texlive-latex-base texlive-fonts-recommended texlive-latex-extra
+RUN apt-get install -y latexmk texlive-lang-english texlive-latex-recommended texlive-base texlive-latex-base texlive-fonts-recommended texlive-latex-extra
 RUN apt-get install patch
 
-RUN mamba install -y -c conda-forge texlive-core latexmk &&  mamba clean -afy
+# RUN mamba install -y -c conda-forge texlive-core latexmk &&  mamba clean -afy
 
 COPY startup.sh /
 RUN chmod 755 /startup.sh
@@ -53,15 +54,15 @@ FROM builder_base_bfrs as python_libs_bfrs
 WORKDIR /app
 USER oim
 
-# RUN git clone https://github.com/rbenv/rbenv.git /app/.rbenv && \
-#     export PATH="/app/.rbenv/bin:$PATH" && \
-#     eval "$(rbenv init -)" && \
-#     mkdir /app/.rbenv/plugins/ && \
-#     git clone https://github.com/rbenv/ruby-build.git /app/.rbenv/plugins/ruby-build && \
-#     rbenv install -l && \
-#     rbenv install 3.3.11 && \
-#     rbenv global 3.3.11 && \
-#     rm -rf /tmp/ruby-build.*
+RUN git clone https://github.com/rbenv/rbenv.git /app/.rbenv && \
+    export PATH="/app/.rbenv/bin:$PATH" && \
+    eval "$(rbenv init -)" && \
+    mkdir /app/.rbenv/plugins/ && \
+    git clone https://github.com/rbenv/ruby-build.git /app/.rbenv/plugins/ruby-build && \
+    rbenv install -l && \
+    rbenv install 3.3.11 && \
+    rbenv global 3.3.11 && \
+    rm -rf /tmp/ruby-build.*
 
 RUN python3 -m venv $VIRTUAL_ENV
 ENV PATH=$VIRTUAL_ENV/bin:$PATH
