@@ -60,8 +60,8 @@ RUN git clone https://github.com/rbenv/rbenv.git /app/.rbenv && \
     mkdir /app/.rbenv/plugins/ && \
     git clone https://github.com/rbenv/ruby-build.git /app/.rbenv/plugins/ruby-build && \
     rbenv install -l && \
-    rbenv install 3.3.11 && \
-    rbenv global 3.3.11 && \
+    rbenv install 3.3.12 && \
+    rbenv global 3.3.12 && \
     rm -rf /tmp/ruby-build.*
 
 RUN python3 -m venv $VIRTUAL_ENV
