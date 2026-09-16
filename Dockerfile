@@ -33,8 +33,10 @@ RUN apt-get upgrade -y
 RUN apt-get install --no-install-recommends -y ipython3 libffi-dev libyaml-dev
 
 #    texlive-full
-RUN apt-get install -y latexmk texlive-lang-english texlive-latex-recommended texlive-base texlive-latex-base texlive-fonts-recommended texlive-latex-extra
+# RUN apt-get install -y latexmk texlive-lang-english texlive-latex-recommended texlive-base texlive-latex-base texlive-fonts-recommended texlive-latex-extra
 RUN apt-get install patch
+
+RUN mamba install -y -c conda-forge texlive-core latexmk &&  mamba clean -afy
 
 COPY startup.sh /
 RUN chmod 755 /startup.sh
