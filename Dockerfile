@@ -62,8 +62,10 @@ RUN git clone https://github.com/rbenv/rbenv.git /app/.rbenv && \
     rbenv install -l && \
     rbenv install $(rbenv install --list | grep -E '^4\.' | tail -1) && \
     rbenv global $(rbenv install --list | grep -E '^4\.' | tail -1) && \
+    gem install json -v 2.19.2 --no-document && \
     rm -rf /tmp/ruby-build.*
 
+RUN rm -f /app/.rbenv/versions/4.0.7/lib/ruby/gems/4.0.0/specifications/default/json-2.18.0.gemspec
 
 RUN python3 -m venv $VIRTUAL_ENV
 ENV PATH=$VIRTUAL_ENV/bin:$PATH
@@ -97,8 +99,7 @@ FROM collect_static_bfrs as launch_bfrs
 USER root
 RUN apt remove ruby -y 
 
-RUN gem install json -v 2.19.2 --no-document
-RUN rm -f /app/.rbenv/versions/4.0.7/lib/ruby/gems/4.0.0/specifications/default/json-2.18.0.gemspec
+
 
 # RUN gem install net-imap -v 0.5.15 --no-document
 # RUN gem install erb -v 6.0.4 --no-document
