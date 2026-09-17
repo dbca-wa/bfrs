@@ -35,8 +35,7 @@ requests-ntlm==1.3.0
 ipython==9.6.0
 geojsplit==0.1.2
 openpyxl>=3.0.0
-# setuptools==80.9.0
-setuptools==82.0.0
+setuptools==84.0.0
 urllib3~=2.7.0
 # Security: pin minimum safe version for transitive dependency (requests-ntlm -> pyspnego -> cryptography)
 cryptography>=46.0.6
