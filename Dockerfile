@@ -130,7 +130,7 @@ FROM collect_static_bfrs as launch_bfrs
 
 # Cleanup 
 USER root
-RUN apt remove ruby -y 
+# RUN apt remove ruby -y 
 
 
 
