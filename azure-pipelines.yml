@@ -14,7 +14,8 @@ variables:
   isMain: $[eq(variables['Build.SourceBranch'], 'refs/heads/bfrs_django_5_bootstrap')]
   imageName: 'ghcr.io/dbca-wa/bfrs'
   devImageName: 'ghcr.io/dbca-wa/docker_app_dev'
-
+  DOCKER_BUILDKIT: 1
+  
 stages:
 - stage: Build
   condition: and(succeeded(), eq(variables.isMain, 'true'))
@@ -30,6 +31,16 @@ stages:
         SHORT_SHA=$(git rev-parse --short=7 $(Build.SourceVersion))
         echo "##vso[task.setvariable variable=shortSha]$SHORT_SHA"
       displayName: 'Generate Short Git SHA'
+    # 1b. FIX: Allocate 6 GB Swap Space to prevent memory exhaustion (95%+ RAM usage)
+    - script: |
+        echo "=== Creating 6GB Swapfile ==="
+        sudo fallocate -l 6G /swapfile
+        sudo chmod 600 /swapfile
+        sudo mkswap /swapfile
+        sudo swapon /swapfile
+        echo "=== Current Memory & Swap ==="
+        free -h
+      displayName: 'Increase VM Swap Memory'      
     # 2. Authenticate to GHCR natively before running commands
     - task: Docker@2
       displayName: 'Login to GHCR'
@@ -40,6 +51,7 @@ stages:
     - bash: |
         export DOCKER_BUILDKIT=1
         docker build \
+          --memory=6g \
           --build-arg IMAGE_TAG="$(tagDate)-$(shortSha)" \
           --build-arg IMAGE_NAME="$(imageName)" \
           -t $(imageName):latest \
@@ -55,6 +67,7 @@ stages:
     - bash: |
         export DOCKER_BUILDKIT=1
         docker build \
+          --memory=6g \
           --build-arg IMAGE_TAG="$(tagDate)-$(shortSha)" \
           --build-arg IMAGE_NAME="$(devImageName)" \
           -t $(devImageName):bfrs_dev_latest \
