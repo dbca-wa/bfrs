@@ -31,6 +31,7 @@ RUN apt-get update
 RUN apt-get upgrade -y
 #RUN apt-get install --no-install-recommends -y ipython3 libffi-dev libyaml-dev
 RUN apt-get install --no-install-recommends -y libffi-dev libyaml-dev
+RUN rm -rf /var/lib/apt/lists/*
 
 #    texlive-full
 # RUN apt-get install -y latexmk texlive-lang-english texlive-latex-recommended texlive-base texlive-latex-base texlive-fonts-recommended texlive-latex-extra
@@ -93,7 +94,9 @@ RUN git clone https://github.com/rbenv/rbenv.git /app/.rbenv && \
     rbenv install $(rbenv install --list | grep -E '^4\.' | tail -1) && \
     rbenv global $(rbenv install --list | grep -E '^4\.' | tail -1) && \
     gem install json -v 2.19.9 --no-document && \
-    rm -rf /tmp/ruby-build.*
+    rm -rf /tmp/ruby-build.* && \    
+    rm -rf /app/.rbenv/plugins/ruby-build/.git && \
+    rm -rf /app/.rbenv/.git    
 
 RUN rm -f /app/.rbenv/versions/4.0.7/lib/ruby/gems/4.0.0/specifications/default/json-2.18.0.gemspec
 
@@ -101,7 +104,7 @@ RUN python3 -m venv $VIRTUAL_ENV
 ENV PATH=$VIRTUAL_ENV/bin:$PATH
 COPY requirements.txt ./
 RUN pip install --upgrade pip
-RUN pip install -r requirements.txt 
+RUN pip install --no-cache-dir -r requirements.txt 
 
 # Install the project (ensure that frontend projects have been built prior to this step).
 FROM python_libs_bfrs as collect_static_bfrs
