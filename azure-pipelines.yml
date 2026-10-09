@@ -33,14 +33,16 @@ stages:
       displayName: 'Generate Short Git SHA'
     # 1b. FIX: Allocate 6 GB Swap Space to prevent memory exhaustion (95%+ RAM usage)
     - script: |
-        echo "=== Creating 6GB Swapfile ==="
+        echo "=== Recreating Swapfile to 6GB ==="
+        sudo swapoff /swapfile 2>/dev/null || true
+        sudo rm -f /swapfile
         sudo fallocate -l 6G /swapfile
         sudo chmod 600 /swapfile
         sudo mkswap /swapfile
         sudo swapon /swapfile
-        echo "=== Current Memory & Swap ==="
+        echo "=== Updated Memory & Swap ==="
         free -h
-      displayName: 'Increase VM Swap Memory'      
+      displayName: 'Increase VM Swap Memory' 
     # 2. Authenticate to GHCR natively before running commands
     - task: Docker@2
       displayName: 'Login to GHCR'
