@@ -1,6 +1,6 @@
 # syntax = docker/dockerfile:1.2
 # Prepare the base environment.
-FROM ghcr.io/dbca-wa/docker-apps-dev:ubuntu_2604_base_python AS builder_base_bfrs
+FROM ghcr.io/dbca-wa/docker-apps-dev:ubuntu_2604_base_python_latex AS builder_base_bfrs
 
 LABEL maintainer="asi@dbca.wa.gov.au"
 
@@ -14,7 +14,6 @@ ENV DEBIAN_FRONTEND=noninteractive \
     FROM_EMAIL="no-reply@dbca.wa.gov.au" \
     SMS_POSTFIX="sms.url.endpoint" \
     VIRTUAL_ENV=/app/venv
-
     
 # Use Australian Mirrors
 #RUN sed 's/archive.ubuntu.com/au.archive.ubuntu.com/g' /etc/apt/sources.list > /etc/apt/sourcesau.list && \
@@ -35,28 +34,28 @@ RUN apt-get install --no-install-recommends -y libffi-dev libyaml-dev
 
 #    texlive-full
 # RUN apt-get install -y latexmk texlive-lang-english texlive-latex-recommended texlive-base texlive-latex-base texlive-fonts-recommended texlive-latex-extra
-RUN apt-get install patch
-RUN cd /tmp && \
-    wget -q https://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz && \
-    tar -xzf install-tl-unx.tar.gz && \
-    cd install-tl-* && \
-    printf '%s\n' \
-      'selected_scheme scheme-small' \
-      'TEXDIR /opt/texlive' \
-      'TEXMFLOCAL /opt/texlive/texmf-local' \
-      'TEXMFSYSCONFIG /opt/texlive/texmf-config' \
-      'TEXMFSYSVAR /opt/texlive/texmf-var' \
-      > texlive.profile && \
-    ./install-tl -profile texlive.profile && \
-    /opt/texlive/bin/*/tlmgr install \
-      latexmk \
-      collection-latexextra \
-      collection-latex \
-      collection-latexrecommended \
-      collection-fontsrecommended \
-      collection-latexextra \
-      collection-langenglish && \      
-      rm -rf /tmp/install-tl*
+#  RUN apt-get install patch
+# RUN cd /tmp && \
+#     wget -q https://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz && \
+#     tar -xzf install-tl-unx.tar.gz && \
+#     cd install-tl-* && \
+#     printf '%s\n' \
+#       'selected_scheme scheme-small' \
+#       'TEXDIR /opt/texlive' \
+#       'TEXMFLOCAL /opt/texlive/texmf-local' \
+#       'TEXMFSYSCONFIG /opt/texlive/texmf-config' \
+#       'TEXMFSYSVAR /opt/texlive/texmf-var' \
+#       > texlive.profile && \
+#     ./install-tl -profile texlive.profile && \
+#     /opt/texlive/bin/*/tlmgr install \
+#       latexmk \
+#       collection-latexextra \
+#       collection-latex \
+#       collection-latexrecommended \
+#       collection-fontsrecommended \
+#       collection-latexextra \
+#       collection-langenglish && \      
+#       rm -rf /tmp/install-tl*
 
  
 
