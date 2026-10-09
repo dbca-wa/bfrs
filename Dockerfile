@@ -85,20 +85,20 @@ FROM builder_base_bfrs as python_libs_bfrs
 WORKDIR /app
 USER oim
 
-RUN git clone https://github.com/rbenv/rbenv.git /app/.rbenv && \
-    export PATH="/app/.rbenv/bin:$PATH" && \
-    eval "$(rbenv init -)" && \
-    mkdir /app/.rbenv/plugins/ && \
-    git clone https://github.com/rbenv/ruby-build.git /app/.rbenv/plugins/ruby-build && \
-    rbenv install -l && \
-    rbenv install $(rbenv install --list | grep -E '^4\.' | tail -1) && \
-    rbenv global $(rbenv install --list | grep -E '^4\.' | tail -1) && \
-    gem install json -v 2.19.9 --no-document && \
-    rm -rf /tmp/ruby-build.* && \    
-    rm -rf /app/.rbenv/plugins/ruby-build/.git && \
-    rm -rf /app/.rbenv/.git    
+# RUN git clone https://github.com/rbenv/rbenv.git /app/.rbenv && \
+#     export PATH="/app/.rbenv/bin:$PATH" && \
+#     eval "$(rbenv init -)" && \
+#     mkdir /app/.rbenv/plugins/ && \
+#     git clone https://github.com/rbenv/ruby-build.git /app/.rbenv/plugins/ruby-build && \
+#     rbenv install -l && \
+#     rbenv install $(rbenv install --list | grep -E '^4\.' | tail -1) && \
+#     rbenv global $(rbenv install --list | grep -E '^4\.' | tail -1) && \
+#     gem install json -v 2.19.9 --no-document && \
+#     rm -rf /tmp/ruby-build.* && \    
+#     rm -rf /app/.rbenv/plugins/ruby-build/.git && \
+#     rm -rf /app/.rbenv/.git    
 
-RUN rm -f /app/.rbenv/versions/4.0.7/lib/ruby/gems/4.0.0/specifications/default/json-2.18.0.gemspec
+# RUN rm -f /app/.rbenv/versions/4.0.7/lib/ruby/gems/4.0.0/specifications/default/json-2.18.0.gemspec
 
 RUN python3 -m venv $VIRTUAL_ENV
 ENV PATH=$VIRTUAL_ENV/bin:$PATH
