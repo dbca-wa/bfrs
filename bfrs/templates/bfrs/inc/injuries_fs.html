@@ -1,10 +1,26 @@
 <div class="div_injury_unknown">
-    <div id="id_injury" class="row g-0 formset injury-formset">
-        <table class="table_fs" border="0">
+    <style>
+        /* Defensive fallback: scroll instead of overlapping adjacent columns on narrow viewports */
+        .injury-formset {
+            overflow-x: auto;
+        }
+        .injury-formset input,
+        .injury-formset select {
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+        }
+    </style>
+    <div id="id_injury" class="formset injury-formset">
+        <table class="table_fs" border="0" style="width: 100%; table-layout: fixed;">
+            <thead>
+                <tr>
+                    <th style="width: 55%;">Injury Type</th>
+                    <th style="width: 32%;">Number</th>
+                    <th style="width: 13%; text-align: center;"></th>
+                </tr>
+            </thead>
             <tbody>
-                <th>Injury Type</th>
-                <th>Number</th>
-                <th></th>
                 {% for form in injury_formset %}
                 <tr>
                    <td>{{ form.injury_type }}</td>

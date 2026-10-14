@@ -127,22 +127,22 @@
   </tbody>
 </table>
 
-<table class="table table-bordered table-striped table-condensed cbas">
+<table class="table table-bordered table-striped table-condensed cbas" style="table-layout: fixed; width: 100%;">
     <thead>
-        <th class="cbas">Tenure of burnt area *</th>
-        <th class="cbas">Damage</th>
-        <th class="cbas" >Injuries and Fatalities</th>
+        <th class="cbas" style="width: 22%; vertical-align: top;">Tenure of burnt area *</th>
+        <th class="cbas" style="width: 48%; vertical-align: top;">Damage</th>
+        <th class="cbas" style="width: 30%; vertical-align: top;">Injuries and Fatalities</th>
     </thead>
     <tbody>
         <tr>
-            <td class="cbas">
+            <td class="cbas" style="width: 22%; vertical-align: top;">
                 {% include "bfrs/inc/tenure_veg.html" %}
             </td>
-            <td class="cbas">
+            <td class="cbas" style="width: 48%; vertical-align: top;">
                 {{form.damage_unknown}} No damage to report
                 {% include "bfrs/inc/damage_fs.html" %}
             </td>
-                <td class="cbas">
+                <td class="cbas" style="width: 30%; vertical-align: top;">
                 {{form.injury_unknown}} No injuries/fatalities to report
                 {% include "bfrs/inc/injuries_fs.html" %}
             </td>
