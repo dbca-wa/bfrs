@@ -11,5 +11,13 @@
 11. python manage.py complete_reporting_legislated_tenure
 12. python manage.py complete_reporting_state_forest
 13. test
+#Add following ENV Variables with the appropriate values for Prod/ Dev
+```
+EMAIL_INSTANCE = "DEV"
+NON_PROD_EMAIL = "value"
+PRODUCTION_EMAIL= "False"
+
+```
+
     
 
