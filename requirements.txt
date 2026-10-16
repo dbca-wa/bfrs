@@ -3,6 +3,7 @@ git+https://github.com/dbca-wa/dbca-utils.git@1.1.1#egg=dbca-utils
 git+https://github.com/dbca-wa/appmonitor_client.git#egg=appmonitor_client
 git+https://github.com/dbca-wa/django-media-serv.git#egg=django_media_serv
 git+https://github.com/dbca-wa/django-cron#egg=django-cron
+git+https://github.com/dbca-wa/wagov_utils.git#egg=wagov_utils
 psycopg2-binary==2.9.10
 Django~=5.2.0
 django-extensions==3.2.3

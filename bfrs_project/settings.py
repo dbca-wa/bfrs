@@ -116,9 +116,14 @@ FINAL_AUTHORISE_GROUP_USERS = env('FINAL_AUTHORISE_GROUP_USERS', [])
 FINAL_AUTHORISE_GROUP = env('FINAL_AUTHORISE_GROUP', 'Fire Final Authorise Group')
 
 # Email settings
+EMAIL_BACKEND = "wagov_utils.components.utils.email_backend.EmailBackend"
 EMAIL_HOST = env('EMAIL_HOST', required=True)
 EMAIL_PORT = env('EMAIL_PORT', 25)
 FROM_EMAIL = env('FROM_EMAIL', required=True)
+EMAIL_INSTANCE = env("EMAIL_INSTANCE", "DEV")
+NON_PROD_EMAIL = env("NON_PROD_EMAIL", "")
+PRODUCTION_EMAIL = env("PRODUCTION_EMAIL", False)
+EMAIL_DELIVERY = env("EMAIL_DELIVERY", "on")
 PICA_EMAIL = env('PICA_EMAIL', [])
 PVS_EMAIL = env('PVS_EMAIL', [])
 FPC_EMAIL = env('FPC_EMAIL', [])
