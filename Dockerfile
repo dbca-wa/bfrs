@@ -1,6 +1,6 @@
 # syntax = docker/dockerfile:1.2
 # Prepare the base environment.
-FROM ghcr.io/dbca-wa/docker-apps-dev:ubuntu_2604_base_python AS builder_base_bfrs
+FROM ghcr.io/dbca-wa/docker-apps-dev:ubuntu_2604_base_python_latex AS builder_base_bfrs
 
 LABEL maintainer="asi@dbca.wa.gov.au"
 
@@ -14,7 +14,6 @@ ENV DEBIAN_FRONTEND=noninteractive \
     FROM_EMAIL="no-reply@dbca.wa.gov.au" \
     SMS_POSTFIX="sms.url.endpoint" \
     VIRTUAL_ENV=/app/venv
-
     
 # Use Australian Mirrors
 #RUN sed 's/archive.ubuntu.com/au.archive.ubuntu.com/g' /etc/apt/sources.list > /etc/apt/sourcesau.list && \
@@ -30,11 +29,46 @@ RUN rm /openssl-legacy.conf
 # RUN --mount=type=cache,target=/var/cache/apt apt-get update
 RUN apt-get update
 RUN apt-get upgrade -y
-RUN apt-get install --no-install-recommends -y ipython3 libffi-dev libyaml-dev
+#RUN apt-get install --no-install-recommends -y ipython3 libffi-dev libyaml-dev
+RUN apt-get install --no-install-recommends -y libffi-dev libyaml-dev
+RUN rm -rf /var/lib/apt/lists/*
 
 #    texlive-full
-RUN apt-get install -y latexmk texlive-lang-english texlive-latex-recommended texlive-base texlive-latex-base texlive-fonts-recommended texlive-latex-extra
-RUN apt-get install patch
+# RUN apt-get install -y latexmk texlive-lang-english texlive-latex-recommended texlive-base texlive-latex-base texlive-fonts-recommended texlive-latex-extra
+#  RUN apt-get install patch
+# RUN cd /tmp && \
+#     wget -q https://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz && \
+#     tar -xzf install-tl-unx.tar.gz && \
+#     cd install-tl-* && \
+#     printf '%s\n' \
+#       'selected_scheme scheme-small' \
+#       'TEXDIR /opt/texlive' \
+#       'TEXMFLOCAL /opt/texlive/texmf-local' \
+#       'TEXMFSYSCONFIG /opt/texlive/texmf-config' \
+#       'TEXMFSYSVAR /opt/texlive/texmf-var' \
+#       > texlive.profile && \
+#     ./install-tl -profile texlive.profile && \
+#     /opt/texlive/bin/*/tlmgr install \
+#       latexmk \
+#       collection-latexextra \
+#       collection-latex \
+#       collection-latexrecommended \
+#       collection-fontsrecommended \
+#       collection-latexextra \
+#       collection-langenglish && \      
+#       rm -rf /tmp/install-tl*
+
+ 
+
+ENV PATH="/opt/texlive/bin/x86_64-linux:${PATH}"
+
+RUN which pdflatex && \
+
+    pdflatex --version && \
+
+    latexmk --version
+
+# RUN mamba install -y -c conda-forge texlive-core latexmk &&  mamba clean -afy
 
 COPY startup.sh /
 RUN chmod 755 /startup.sh
@@ -51,21 +85,26 @@ FROM builder_base_bfrs as python_libs_bfrs
 WORKDIR /app
 USER oim
 
-RUN git clone https://github.com/rbenv/rbenv.git /app/.rbenv && \
-    export PATH="/app/.rbenv/bin:$PATH" && \
-    eval "$(rbenv init -)" && \
-    mkdir /app/.rbenv/plugins/ && \
-    git clone https://github.com/rbenv/ruby-build.git /app/.rbenv/plugins/ruby-build && \
-    rbenv install -l && \
-    rbenv install 3.3.11 && \
-    rbenv global 3.3.11 && \
-    rm -rf /tmp/ruby-build.*
+# RUN git clone https://github.com/rbenv/rbenv.git /app/.rbenv && \
+#     export PATH="/app/.rbenv/bin:$PATH" && \
+#     eval "$(rbenv init -)" && \
+#     mkdir /app/.rbenv/plugins/ && \
+#     git clone https://github.com/rbenv/ruby-build.git /app/.rbenv/plugins/ruby-build && \
+#     rbenv install -l && \
+#     rbenv install $(rbenv install --list | grep -E '^4\.' | tail -1) && \
+#     rbenv global $(rbenv install --list | grep -E '^4\.' | tail -1) && \
+#     gem install json -v 2.19.9 --no-document && \
+#     rm -rf /tmp/ruby-build.* && \    
+#     rm -rf /app/.rbenv/plugins/ruby-build/.git && \
+#     rm -rf /app/.rbenv/.git    
+
+# RUN rm -f /app/.rbenv/versions/4.0.7/lib/ruby/gems/4.0.0/specifications/default/json-2.18.0.gemspec
 
 RUN python3 -m venv $VIRTUAL_ENV
 ENV PATH=$VIRTUAL_ENV/bin:$PATH
 COPY requirements.txt ./
 RUN pip install --upgrade pip
-RUN pip install -r requirements.txt 
+RUN pip install --no-cache-dir -r requirements.txt 
 
 # Install the project (ensure that frontend projects have been built prior to this step).
 FROM python_libs_bfrs as collect_static_bfrs
@@ -91,7 +130,10 @@ FROM collect_static_bfrs as launch_bfrs
 
 # Cleanup 
 USER root
-RUN apt remove ruby -y 
+# RUN apt remove ruby -y 
+
+
+
 # RUN gem install net-imap -v 0.5.15 --no-document
 # RUN gem install erb -v 6.0.4 --no-document
 # RUN gem install zlib -v 3.1.2 --no-document

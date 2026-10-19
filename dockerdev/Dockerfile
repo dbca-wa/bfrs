@@ -1,5 +1,5 @@
 # Prepare the base environment.
-FROM dbcawa/bfrs:latest as builder_base_bfrsdev
+FROM ghcr.io/dbca-wa/bfrs:latest as builder_base_bfrsdev
 USER root
 RUN apt-get update
 RUN apt-get install --no-install-recommends -y patch
