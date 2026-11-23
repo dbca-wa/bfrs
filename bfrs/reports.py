@@ -15,8 +15,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.core.mail import send_mail
 from django.db import connection
-# from cStringIO import StringIO
-from io import StringIO
+from io import BytesIO
 from django.core.mail import EmailMessage
 from django.conf import settings
 from django.utils import timezone
@@ -2639,7 +2638,7 @@ def email_outstanding_fires(region_id=None):
                 traceback.print_exc()
 
             if region:
-                f = StringIO()
+                f = BytesIO()
                 book = Workbook()
                 total_reports = outstanding_fires(book, region, qs, rpt_date)
                 book.add_sheet('Sheet 2')
@@ -2658,7 +2657,7 @@ def email_outstanding_fires(region_id=None):
                 message = EmailMessage(subject=subject, body=body, from_email=settings.FROM_EMAIL, to=email_to, cc=settings.CC_EMAIL, bcc=settings.BCC_EMAIL)
                 if total_reports > 0:
                     filename = 'outstanding_fires_{}_{}.xls'.format(region_name.replace(' ', '').lower(), rpt_date.strftime('%d-%b-%Y'))
-                    message.attach(filename, f.getvalue(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") #get the stream and set the correct mimetype
+                    message.attach(filename, f.getvalue(), "application/vnd.ms-excel")
 
                 message.send()
 
