@@ -19,10 +19,16 @@ SECRET_KEY = env('SECRET_KEY', required=True)
 CSRF_COOKIE_SECURE = env('CSRF_COOKIE_SECURE', True)
 SESSION_COOKIE_SECURE = env('SESSION_COOKIE_SECURE', True)
 SESSION_COOKIE_HTTPONLY = env('SESSION_COOKIE_HTTPONLY', True)
-if not DEBUG:
-    ALLOWED_HOSTS = env('ALLOWED_DOMAINS', ['localhost'])
-else:
+# if not DEBUG:
+#     ALLOWED_HOSTS = env('ALLOWED_DOMAINS', ['localhost'])
+# else:
+#     ALLOWED_HOSTS = ['*']
+
+if DEBUG:
     ALLOWED_HOSTS = ['*']
+else:
+    ALLOWED_HOSTS = env('ALLOWED_HOSTS', [])
+    
 INTERNAL_IPS = ['127.0.0.1', '::1']
 ROOT_URLCONF = 'bfrs_project.urls'
 WSGI_APPLICATION = 'bfrs_project.wsgi.application'
