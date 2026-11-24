@@ -23,6 +23,14 @@ variables (in a `.env` file). Minimum required settings are as follows:
     FROM_EMAIL="email@dbca.wa.gov.au"
     SMS_POSTFIX="sms.url.endpoint"
 
+Bushfire notification emails use `wagov_utils` template emails. Set
+`ALLOW_EMAIL_NOTIFICATION` to `True` and `EMAIL_DELIVERY` to `on` to send
+them. The template sender writes delivery attempts and gateway results to
+`logs/email.log`; this log includes subjects and intended To addresses, but not
+CC, BCC or backend-redirected recipients. Protect and retain it according to the
+deployment's logging policy. Gateway acceptance does not confirm delivery to
+recipients.
+
 # Running
 
 Use `runserver` to run a local copy of the application:

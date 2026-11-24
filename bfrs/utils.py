@@ -43,11 +43,15 @@ from django.db.models import Q
 import requests
 from requests.auth import HTTPBasicAuth
 from dateutil import tz
+from wagov_utils.components.utils.email import TemplateEmailBase
 from bfrs.dfes import P1CAD
 import os
 
 import logging
 logger = logging.getLogger(__name__)
+
+class BushfireTemplateEmail(TemplateEmailBase):
+    txt_template = None
 
 def breadcrumbs_li(links):
     """Returns HTML: an unordered list of URLs (no surrounding <ul> tags).
@@ -1177,7 +1181,7 @@ def concat_email_addresses(*args):
     else:
         return [result]
 
-def send_email(context):
+def send_email_orig(context):
     """
     Send email
     Return (send_status(True or False), message)
@@ -1240,6 +1244,75 @@ def send_email(context):
         return (True if ret else False,"")
     except Exception as ex:
         traceback.print_exc()
+        return (False,str(ex))
+
+def send_email(context):
+    """
+    Send email
+    Return (send_status(True or False), message)
+    """
+    if not settings.ALLOW_EMAIL_NOTIFICATION :
+        #email notification is disabled.        
+        return (False,'Email notification feature is disabled.')
+    elif context["bushfire"].fire_number in settings.EMAIL_EXCLUSIONS:
+        #email notification is disabled.        `
+        return (False,'Email notification for this bushfire is disabled.')
+
+    try:
+        #clear the send_failed status if it is true
+        if context.get("send_failed"):
+            del context["send_failed"]
+    
+        subject = context.get("subject") or ""
+        if settings.ENV_TYPE != "PROD":
+            subject += ' ({})'.format(settings.ENV_TYPE)
+        to_email = context.get("to_email") or None
+        cc_email = concat_email_addresses(context.get("cc_email",settings.CC_EMAIL),context.get("user_email"))
+        bcc_email = context.get("bcc_email",settings.BCC_EMAIL)
+        attachments = []
+        for attachment in context.get("attachments") or []:
+            with open(attachment[0],'rb') as f:
+                attachments.append((attachment[1],f.read(),attachment[2]))
+        if to_email or cc_email or bcc_email or settings.EMAIL_DELIVERY != "on":
+            message = BushfireTemplateEmail(subject=subject, html_template=context["template"])
+            ret = message.send(
+                to_email,
+                from_address=context.get("from_email",settings.FROM_EMAIL),
+                context=context,
+                attachments=attachments,
+                cc=cc_email,
+                bcc=bcc_email,
+            )
+            if ret is False and settings.EMAIL_DELIVERY != "on":
+                logger.warning("Email delivery is disabled; notification was not sent.")
+                return (False, "Email delivery is disabled.")
+        else:
+            ret = False
+    
+        if not ret :
+            subject = (context.get("failed_subject") or "Failed to send email \" {}\"").format(subject)
+            context["send_failed"] = True
+            context["original_subject"] = context.get("subject") or ""
+            email_address = lambda address: (address if isinstance(address,str) else ";".join(address))if address else ""
+            context["original_from_email"] = email_address(context.get("from_email",settings.FROM_EMAIL))
+            context["original_to_email"] = email_address(context.get("to_email"))
+            context["original_cc_email"] = email_address(concat_email_addresses(context.get("cc_email",settings.CC_EMAIL),context.get("user_email")))
+            context["original_bcc_email"] = email_address(context.get("bcc_email",settings.BCC_EMAIL))
+            context["from_email"] = settings.FROM_EMAIL
+            context["to_email"] = settings.SUPPORT_EMAIL
+            context["cc_email"] = context.get("user_email") or None
+            context["external_email"] = False
+            context["send_date"] = str(datetime.now())
+            if "bcc_email" in context:
+                del context["bcc_email"]
+    
+            body = render_to_string(context["template"],context=context)
+    
+            logger.error(subject)
+            support_email(subject,body,context.get("user_email"))
+        return (True if ret else False,"")
+    except Exception as ex:
+        logger.exception("Failed to send email notification")
         return (False,str(ex))
 
 def rdo_email_addresses(bushfire,related_bushfires=None):
